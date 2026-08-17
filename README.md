@@ -53,17 +53,20 @@ For an AI coding session, read in this order:
 ### Quick start placeholder
 The final implementation repository MUST replace this section with exact tested commands. Until then, the authoritative development workflow SHALL be defined in `docs/deployment.md` and `AGENTS.md`.
 
-Expected commands:
+Local workflow (from `server/`):
 ```bash
-composer install
-npm install
 cp .env.example .env
 php artisan key:generate
 php artisan migrate
-npm run dev
+./vendor/bin/phpunit
 ```
 
-Containerized workflow:
+Local PHP is optional: the same commands run through the `composer:2` Docker image, e.g.
+```bash
+docker run --rm -v "$PWD/..":/app -w /app/server composer:2 ./vendor/bin/phpunit
+```
+
+Containerized workflow (TASK-003):
 ```bash
 docker compose up -d --build
 docker compose exec app php artisan migrate

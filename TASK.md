@@ -39,9 +39,19 @@
 
 ### Phase 0 — Foundation
 #### TASK-001 — Repository skeleton
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- Acceptance: repository folders, Laravel app, docs baseline, tests baseline exist.
+- Acceptance:
+  - [x] repository folders exist (server/, resources/, tests/, infrastructure/, database/migrations/)
+  - [x] Laravel app exists (server/, Laravel 13, PHP 8.5, PostgreSQL default)
+  - [x] docs baseline exists (validate-repo.sh passes)
+  - [x] tests baseline exists (PHPUnit 2 tests pass)
+- Verification:
+  - [x] Unit/Feature baseline: `./vendor/bin/phpunit` → OK (2 tests)
+  - [x] Repo validation: `./scripts/validate-repo.sh .` → VALIDATION PASSED
+  - [x] Migrations resolve from root `database/migrations`
+- Evidence: server/ scaffold, commit reference (initial implementation commit)
+- Notes: Laravel app scaffolded via composer:2 image (local PHP not installed); migrations canonical at repo root `database/migrations/` (loaded via AppServiceProvider).
 
 #### TASK-002 — CI/lint/typecheck/test pipeline
 - Status: TODO

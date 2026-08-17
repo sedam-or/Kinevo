@@ -15,8 +15,8 @@ This document is a high-level mirror of execution progress. `TASK.md` is the gra
 Architecture baseline             ✅ DECIDED
 SRS v2.0.0                        ✅ FINALIZED
 Architecture spike                🟡 REQUIRES LOCAL EXECUTION VERIFICATION
-Laravel skeleton                  🔴
-PostgreSQL schema                 🔴
+Laravel skeleton                  ✅ DONE
+PostgreSQL schema                 🟡 migrations baseline only
 Core domain                       🔴
 Scheduling engine                 🔴
 Offline shell                     🔴
