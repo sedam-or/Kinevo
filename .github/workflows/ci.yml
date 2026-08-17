@@ -43,6 +43,9 @@ jobs:
       - name: Run PHPStan (static analysis)
         run: vendor/bin/phpstan analyse --memory-limit=512M --no-progress
 
+      - name: Generate application key
+        run: echo "APP_KEY=base64:$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+
       - name: Run test suite
         run: vendor/bin/phpunit
 
