@@ -1,0 +1,21 @@
+# LIFESYNC OS License
+
+### Recommended project license
+Use a permissive open-source license appropriate for the project owner’s intended redistribution model. The exact license MUST be selected and placed here before public release.
+
+### Third-party license rule
+Third-party components MUST retain their required notices and attribution. The project MUST NOT claim ownership of third-party source code.
+
+### Dependency provenance
+Every copied, forked, vendored, patched, or embedded third-party component MUST be recorded in `docs/third-party/licenses.md` with:
+- project name;
+- repository URL;
+- exact version or commit;
+- license;
+- whether source was modified;
+- where integrated;
+- redistribution obligations;
+- attribution obligations.
+
+---
+

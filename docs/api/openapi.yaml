@@ -1,0 +1,167 @@
+openapi: 3.1.0
+info:
+  title: LIFESYNC OS API
+  version: 2.0.0
+  description: |
+    Versioned REST API for LIFESYNC OS. Business mutations are validated server-side,
+    support operation identifiers, and use stable error codes.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: Today
+  - name: Tasks
+  - name: Goals
+  - name: Milestones
+  - name: Programs
+  - name: Scheduling
+  - name: Knowledge
+  - name: Canvas
+  - name: AI
+  - name: Offline
+
+paths:
+  /today:
+    get:
+      tags: [Today]
+      summary: Get canonical Today schedule
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200': { description: OK }
+        '401': { description: Unauthorized }
+
+  /tasks:
+    post:
+      tags: [Tasks]
+      summary: Create or Quick Capture a task
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '201': { description: Created }
+        '409': { description: Conflict }
+        '422': { description: Business rule violation }
+
+  /goals:
+    get:
+      tags: [Goals]
+      summary: List goals
+      responses: {'200': {description: OK}}
+    post:
+      tags: [Goals]
+      summary: Create goal
+      responses: {'201': {description: Created}}
+
+  /goals/{goalId}/breakdown-proposals:
+    post:
+      tags: [Goals]
+      summary: Generate milestone/work breakdown proposal
+      responses: {'202': {description: Proposal generation accepted}}
+
+  /milestones:
+    post:
+      tags: [Milestones]
+      summary: Create milestone
+      responses: {'201': {description: Created}}
+
+  /schedule/auto:
+    post:
+      tags: [Scheduling]
+      summary: Generate deterministic auto-schedule draft
+      responses: {'202': {description: Scheduler queued}}
+
+  /schedule/reschedule:
+    post:
+      tags: [Scheduling]
+      summary: Generate dynamic reschedule proposal
+      responses: {'202': {description: Proposal generated/queued}}
+
+  /schedule/apply:
+    post:
+      tags: [Scheduling]
+      summary: Apply an approved schedule proposal
+      responses:
+        '200': {description: Applied}
+        '409': {description: Version conflict}
+
+  /notes:
+    post:
+      tags: [Knowledge]
+      summary: Create note
+      responses: {'201': {description: Created}}
+
+  /notes/{noteId}:
+    get:
+      tags: [Knowledge]
+      summary: Get note
+      responses: {'200': {description: OK}}
+    put:
+      tags: [Knowledge]
+      summary: Update note with optimistic version
+      responses:
+        '200': {description: Updated}
+        '409': {description: Version conflict}
+
+  /canvases:
+    post:
+      tags: [Canvas]
+      summary: Create canvas
+      responses: {'201': {description: Created}}
+
+  /canvases/{canvasId}:
+    get:
+      tags: [Canvas]
+      summary: Get canvas
+      responses: {'200': {description: OK}}
+    put:
+      tags: [Canvas]
+      summary: Save canvas scene with optimistic version
+      responses:
+        '200': {description: Updated}
+        '409': {description: Canvas version conflict}
+
+  /ai/proposals:
+    post:
+      tags: [AI]
+      summary: Generate a structured AI proposal
+      responses:
+        '202': {description: Accepted}
+        '503': {description: AI unavailable}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    TaskCreateRequest:
+      type: object
+      required: [title, priority, duration_minutes]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        priority: {type: string, enum: [low, medium, high, urgent]}
+        duration_minutes: {type: integer, minimum: 1}
+        goal_id: {type: string, format: uuid, nullable: true}
+        milestone_id: {type: string, format: uuid, nullable: true}
+        program_id: {type: string, format: uuid, nullable: true}
+
+---
+
