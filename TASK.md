@@ -71,9 +71,20 @@
 - Notes: CI PHP 8.3 matrix; composer scripts are the single source for local/CI parity.
 
 #### TASK-003 — Docker development environment
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- Acceptance: app + PostgreSQL boot from clean checkout.
+- Acceptance:
+  - [x] app + PostgreSQL boot from clean checkout
+  - [x] migrations run automatically against PostgreSQL
+  - [x] app reachable on http://localhost:8000
+  - [x] tests pass inside container
+- Verification:
+  - [x] `docker compose -f infrastructure/docker-compose.yml up -d --build` → both services up, postgres healthy
+  - [x] `curl localhost:8000` → HTTP 200, title "LIFESYNC OS"
+  - [x] `psql \dt` → 9 tables (users, cache, jobs, sessions, ...) present in PostgreSQL
+  - [x] `./vendor/bin/phpunit` in container → OK (2 tests)
+- Evidence: infrastructure/docker/{Dockerfile,app-entrypoint.sh,docker-compose.yml}, Makefile up/down/migrate/logs/shell targets
+- Notes: PHP 8.4-FPM alpine (composer.lock requires >=8.4.1); entrypoint applies container DB_* env over .env; migrations live at repo-root database/migrations and are mounted at /var/www/database.
 
 #### TASK-004 — Environment/config/secrets baseline
 - Status: TODO
