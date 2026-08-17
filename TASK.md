@@ -103,9 +103,25 @@
 
 ### Phase 1 — Core Domain
 #### TASK-010 — Identity/profile
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- SRS: security/access requirements.
+- SRS: security/access requirements (NFR-02, SRS §15.1 ownership), profile/settings (SRS §7.1).
+- Acceptance:
+  - [x] Sanctum bearer-token auth wired (OpenAPI `bearerAuth`, NFR-02 token management)
+  - [x] First-owner registration creates user + default profile; further registration rejected (409)
+  - [x] Login issues token; logout revokes it; `/auth/me` returns authenticated identity
+  - [x] `profiles` migration (locale, timezone, week_start_day, display_name) with ownership `user_id`
+  - [x] Domain: `Profile` entity + `ProfileSettings` value object + `ProfileRepository` contract
+  - [x] Application use cases: RegisterUser, LoginUser, LogoutUser, GetProfile, UpdateProfile
+  - [x] HTTP: AuthController + ProfileController under `api/v1` (Identity tag)
+  - [x] All profile mutations require auth (401) and are scoped to the owner (SRS §15.1)
+- Verification:
+  - [x] tests in container → 17 passed (auth + profile feature tests)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS
+  - [x] migrations applied (users, profiles, personal_access_tokens)
+- Evidence: server/app/Domain/Identity, server/app/Application/Identity, server/app/Infrastructure/Identity, server/routes/api.php, database/migrations/2026_08_17_135300_create_profiles_table.php, docs/api/openapi.yaml (Identity paths/schemas)
+- Notes: single-owner model enforced at registration; profile settings validated server-side via ProfileSettings value object.
 
 #### TASK-011 — Goal aggregate
 - Status: TODO
