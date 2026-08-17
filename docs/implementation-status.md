@@ -16,6 +16,7 @@ Architecture baseline             ✅ DECIDED
 SRS v2.0.0                        ✅ FINALIZED
 Architecture spike                🟡 REQUIRES LOCAL EXECUTION VERIFICATION
 Laravel skeleton                  ✅ DONE
+CI/lint/typecheck/test pipeline   ✅ DONE
 PostgreSQL schema                 🟡 migrations baseline only
 Core domain                       🔴
 Scheduling engine                 🔴

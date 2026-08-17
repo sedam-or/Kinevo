@@ -54,9 +54,21 @@
 - Notes: Laravel app scaffolded via composer:2 image (local PHP not installed); migrations canonical at repo root `database/migrations/` (loaded via AppServiceProvider).
 
 #### TASK-002 — CI/lint/typecheck/test pipeline
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- Acceptance: PR checks fail correctly and pass on baseline.
+- Acceptance:
+  - [x] GitHub Actions workflow exists (`.github/workflows/ci.yml`)
+  - [x] Lint check fails on violations and passes on baseline (Pint)
+  - [x] Static analysis passes on baseline (Larastan/PHPStan level 5)
+  - [x] Test suite passes on baseline (PHPUnit)
+  - [x] Repository baseline validation runs in CI
+- Verification:
+  - [x] `vendor/bin/pint --test` → PASS (23 files)
+  - [x] `vendor/bin/phpstan analyse` → No errors
+  - [x] `vendor/bin/phpunit` → OK (2 tests)
+  - [x] `scripts/validate-repo.sh .` → VALIDATION PASSED
+- Evidence: workflow file, composer scripts (`lint`, `analyse`, `test`, `ci`), local check output
+- Notes: CI PHP 8.3 matrix; composer scripts are the single source for local/CI parity.
 
 #### TASK-003 — Docker development environment
 - Status: TODO

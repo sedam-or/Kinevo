@@ -1,0 +1,12 @@
+includes:
+    - vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - database
+    # Level 10 is the strictest Larastan supports; start at a baseline-friendly level.
+    level: 5
+    tmpDir: storage/framework/phpstan
+    parallel:
+        maximumNumberOfProcesses: 4
