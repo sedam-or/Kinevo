@@ -17,6 +17,7 @@ files=(
   docs/offline-sync.md
   docs/ai-architecture.md
   docs/deployment.md
+  docs/environment.md
   docs/test-strategy.md
   docs/implementation-status.md
   docs/api/openapi.yaml

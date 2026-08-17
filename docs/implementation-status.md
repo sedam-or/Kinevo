@@ -18,6 +18,7 @@ Architecture spike                🟡 REQUIRES LOCAL EXECUTION VERIFICATION
 Laravel skeleton                  ✅ DONE
 CI/lint/typecheck/test pipeline   ✅ DONE
 Docker development environment    ✅ DONE
+Environment/config/secrets        ✅ DONE
 PostgreSQL schema                 🟡 migrations baseline only
 Core domain                       🔴
 Scheduling engine                 🔴

@@ -87,9 +87,19 @@
 - Notes: PHP 8.4-FPM alpine (composer.lock requires >=8.4.1); entrypoint applies container DB_* env over .env; migrations live at repo-root database/migrations and are mounted at /var/www/database.
 
 #### TASK-004 — Environment/config/secrets baseline
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- Acceptance: `.env.example`, secret rules, non-secret defaults documented.
+- Acceptance:
+  - [x] `server/.env.example` annotated with secrets vs non-secret defaults
+  - [x] `docs/environment.md` documents secret rules (SRS NFR-02) and non-secret defaults
+  - [x] secret scan script (`scripts/check-secrets.sh`) enforced in CI
+- Verification:
+  - [x] `./scripts/validate-repo.sh .` → VALIDATION PASSED (incl. docs/environment.md)
+  - [x] `./scripts/check-secrets.sh .` → SECRET SCAN PASSED
+  - [x] app boots from compose with annotated `.env.example` → HTTP 200
+  - [x] tests in container → OK (2 tests)
+- Evidence: docs/environment.md, server/.env.example, scripts/check-secrets.sh, CI secret-scan step
+- Notes: real `.env` remains gitignored; production secrets injected via platform secret store per SRS NFR-02.
 
 ### Phase 1 — Core Domain
 #### TASK-010 — Identity/profile

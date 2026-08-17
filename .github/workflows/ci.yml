@@ -55,5 +55,8 @@ jobs:
       - name: Validate repository structure
         run: ./scripts/validate-repo.sh .
 
+      - name: Scan for committed secrets
+        run: ./scripts/check-secrets.sh .
+
       - name: Check task board consistency
         run: ./scripts/status.sh .
