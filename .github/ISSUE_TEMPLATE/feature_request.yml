@@ -1,0 +1,43 @@
+name: Feature Request
+description: Request a new capability or enhancement for LIFESYNC OS
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before requesting, check `docs/SRS.md` and `TASK.md` to avoid duplicating existing or planned work.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem are you trying to solve?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Proposed outcome
+      description: What should LIFESYNC OS do, ideally?
+    validations:
+      required: true
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Current workaround
+      description: How do you handle this today?
+  - type: input
+    id: domain
+    attributes:
+      label: Affected domain
+      description: e.g. Goals, Milestones, Tasks, Scheduling, Knowledge, Canvas, Offline, AI, Analytics, Settings.
+  - type: textarea
+    id: srs-impact
+    attributes:
+      label: Potential SRS impact
+      description: Which FR/NFR might change or be added? (Do not edit the SRS yourself.)
+  - type: textarea
+    id: migration-impact
+    attributes:
+      label: Potential migration/API impact
+      description: Likely schema or API changes this would require.

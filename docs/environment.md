@@ -76,6 +76,7 @@ in local development without modification:
 | `MAIL_MAILER`      | `log`             | dev mail sink                                 |
 | `LOG_CHANNEL`      | `stack`           | standard stack channel                        |
 | `LOG_LEVEL`        | `debug`           | debug in local, warning in production         |
+| `SANCTUM_STATEFUL_DOMAINS` | `localhost:8000` | SPA-origin allowlist for stateful Sanctum auth; set to the frontend origin in production |
 
 ## 4. `.env.example` rules
 

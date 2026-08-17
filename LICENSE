@@ -1,21 +1,21 @@
-# LIFESYNC OS License
+MIT License
 
-### Recommended project license
-Use a permissive open-source license appropriate for the project owner’s intended redistribution model. The exact license MUST be selected and placed here before public release.
+Copyright (c) 2026 LIFESYNC OS contributors
 
-### Third-party license rule
-Third-party components MUST retain their required notices and attribution. The project MUST NOT claim ownership of third-party source code.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-### Dependency provenance
-Every copied, forked, vendored, patched, or embedded third-party component MUST be recorded in `docs/third-party/licenses.md` with:
-- project name;
-- repository URL;
-- exact version or commit;
-- license;
-- whether source was modified;
-- where integrated;
-- redistribution obligations;
-- attribution obligations.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
----
-
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

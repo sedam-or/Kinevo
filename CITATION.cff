@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "LIFESYNC OS"
+abstract: >-
+  LIFESYNC OS is a personal operating system for planning, scheduling,
+  execution, knowledge capture, progress tracking, and optional local AI
+  assistance. It is a single-user, self-hostable, offline-capable,
+  deterministic-core modular monolith built on Laravel, Vue 3, and PostgreSQL.
+type: software
+license: MIT
+version: 0.4.0
+date-released: 2026-08-17
+keywords:
+  - productivity
+  - scheduling
+  - personal-operating-system
+  - offline-first
+  - laravel
+  - vue
+  - postgresql

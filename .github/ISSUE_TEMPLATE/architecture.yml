@@ -1,0 +1,72 @@
+name: Architecture Change / Decision
+description: Propose or question an architectural change or record an ADR discussion
+title: "[Architecture]: "
+labels: [architecture]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for decisions that affect `docs/architecture.md`, `docs/domain-model.md`,
+        or approved ADRs. Most feature work should NOT go through this template.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is the architectural problem or question?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Constraints, background, related SRS/FR/NFR requirements.
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current behavior
+      description: How does the system behave today?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Proposed alternatives
+      description: Options under consideration, with trade-offs.
+    validations:
+      required: true
+  - type: textarea
+    id: domain-impact
+    attributes:
+      label: Domain impact
+      description: Effect on entities, invariants, state machines, value objects.
+  - type: textarea
+    id: data-impact
+    attributes:
+      label: Data impact
+      description: Schema/migration consequences.
+  - type: textarea
+    id: api-impact
+    attributes:
+      label: API impact
+      description: OpenAPI/contract consequences.
+  - type: textarea
+    id: security-impact
+    attributes:
+      label: Security impact
+      description: Authorization, ownership, privacy, secret handling effects.
+  - type: textarea
+    id: migration-impact
+    attributes:
+      label: Migration impact
+      description: Breaking changes and how existing data/users are handled.
+  - type: dropdown
+    id: adr
+    attributes:
+      label: ADR required?
+      description: Will this need a new ADR under docs/adr/?
+      options:
+        - "Yes"
+        - "No"
+        - "Not sure"

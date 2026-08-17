@@ -1,0 +1,20 @@
+# CODEOWNERS
+# Assign review ownership for critical paths.
+# Replace @sedam-or with the actual maintainer handles once the team is
+# established. Do not invent handles that do not exist.
+
+# Default owner for the whole repository.
+*       @sedam-or
+
+# Critical governance and security surfaces.
+/docs/SRS.md                       @sedam-or
+/docs/adr/                         @sedam-or
+/SECURITY.md                       @sedam-or
+/AGENTS.md                         @sedam-or
+
+# Domain and contract surfaces.
+/docs/api/openapi.yaml             @sedam-or
+/database/migrations/              @sedam-or
+/server/app/Domain/                @sedam-or
+/server/app/Application/           @sedam-or
+/server/app/Infrastructure/        @sedam-or

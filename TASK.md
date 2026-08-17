@@ -101,6 +101,30 @@
 - Evidence: docs/environment.md, server/.env.example, scripts/check-secrets.sh, CI secret-scan step
 - Notes: real `.env` remains gitignored; production secrets injected via platform secret store per SRS NFR-02.
 
+#### TASK-005 — Open-source repository hardening & governance
+- Status: DONE
+- Priority: P0
+- SRS: NFR-02 (security disclosure), open-source governance; no requirement change.
+- Acceptance:
+  - [x] LICENSE replaced with MIT (approved decision); server/composer.json license aligned
+  - [x] CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, SUPPORT.md, CHANGELOG.md, CITATION.cff added
+  - [x] `.github/` hardened: issue templates (bug/feature/architecture), PR template, dependabot.yml, CODEOWNERS, security.yml, release.yml
+  - [x] third-party provenance updated (docs/third-party/licenses.md, attributions.md) for current runtime/dev deps
+  - [x] root config files added: .editorconfig, .gitattributes, .dockerignore; root .gitignore expanded
+  - [x] README rewritten as navigation surface; server/README replaced (no misleading Laravel boilerplate)
+  - [x] scripts/check-doc-links.sh + scripts/check-openapi.sh added and wired into Makefile + CI
+  - [x] docs synchronized: implementation-status, environment (SANCTUM_STATEFUL_DOMAINS)
+  - [x] stale `lifesync-bootstrap-kit.tar.gz` removed from tree
+- Verification:
+  - [x] `./scripts/validate-repo.sh .` → VALIDATION PASSED (incl. new governance files)
+  - [x] `./scripts/check-secrets.sh .` → SECRET SCAN PASSED
+  - [x] `./scripts/check-doc-links.sh .` → PASSED (15 links)
+  - [x] `./scripts/check-openapi.sh .` → PASSED (18 paths, bearerAuth present)
+  - [x] Pint → PASS; PHPStan → No errors; PHPUnit → 17 tests OK
+  - [x] TASK-001..TASK-010 implementation preserved (no code/architecture regression)
+- Evidence: LICENSE, CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md, SUPPORT.md, CHANGELOG.md, CITATION.cff, .github/*, scripts/check-*.sh, README.md
+- Notes: MIT selected by product owner for public release. CODEOWNERS uses repo owner handle with a note to replace as the maintainer team grows. Frontend typecheck/build Make targets intentionally deferred until frontend sources exist (per "no fake commands" rule).
+
 ### Phase 1 — Core Domain
 #### TASK-010 — Identity/profile
 - Status: DONE

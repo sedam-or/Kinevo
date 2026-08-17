@@ -1,0 +1,53 @@
+# Docker ignore — LIFESYNC OS
+
+# VCS
+.git
+.gitignore
+.gitattributes
+
+# Documentation (not needed in image)
+docs
+AGENTS.md
+TASK.md
+CHANGELOG.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+SUPPORT.md
+CITATION.cff
+LICENSE
+
+# CI and governance
+.github
+
+# Local development
+*.md
+Makefile
+scripts
+
+# Secrets — never ship
+**/.env
+**/.env.*
+!**/.env.example
+*.key
+*.pem
+
+# Dependencies (installed inside the image)
+server/vendor
+server/node_modules
+
+# Build artifacts
+server/public/build
+server/storage/framework/cache/*
+server/storage/framework/sessions/*
+server/storage/framework/views/*
+server/storage/logs/*
+!server/storage/framework/cache/.gitignore
+!server/storage/framework/sessions/.gitignore
+!server/storage/framework/views/.gitignore
+
+# Editor and OS junk
+.idea
+.vscode
+*.log
+.DS_Store

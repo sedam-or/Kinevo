@@ -1,10 +1,15 @@
 # LIFESYNC OS — AI Coding Agent Operating Contract
 
 ### Mission
-Build LIFESYNC OS as a maintainable, testable, explainable, offline-capable modular monolith while preserving the invariants defined by `docs/SRS.md`.
+Build LIFESYNC OS as a maintainable, testable, explainable, offline-capable,
+open-source modular monolith while preserving the invariants defined by
+`docs/SRS.md`, the architecture, and the test contracts. Never silently redefine
+product requirements; never overwrite completed implementation merely to match
+documentation.
 
 ### Normative source hierarchy
-When documents disagree, use this order unless an approved ADR explicitly states otherwise:
+When documents disagree, use this order unless an approved ADR explicitly states
+otherwise:
 1. `docs/SRS.md`
 2. `docs/architecture.md`
 3. `docs/domain-model.md`
@@ -20,20 +25,41 @@ When documents disagree, use this order unless an approved ADR explicitly states
 13. comments / temporary notes
 
 `TASK.md` controls execution order/status only. It never overrides requirements.
+Lower-level documents and existing code cannot redefine higher-level
+requirements. If a conflict exists between implementation and requirements,
+report it and determine the smallest safe correction — do not silently choose.
 
-### Mandatory agent behavior
-Before modifying code, the agent MUST:
-- identify the relevant SRS requirement IDs;
-- locate the current domain/API/schema implementation;
-- inspect related tests;
+### Repository governance documents
+Contributors and agents MUST respect the open-source governance files:
+- `CONTRIBUTING.md` — contributor guide (branch/commit/PR rules, SRS/ADR/migration/API processes).
+- `SECURITY.md` — vulnerability disclosure policy. Security issues are never
+  reported in public issues.
+- `docs/third-party/licenses.md` — license/provenance ledger. Check before
+  copying external source.
+- `.github/` — issue/PR templates, CI, Dependabot, CODEOWNERS.
+
+### Mandatory agent behavior — before modifying code
+The agent MUST:
+- identify the relevant SRS requirement IDs (FR-xx / NFR-xx);
+- inspect the affected sections of `docs/SRS.md`, `docs/domain-model.md`, and
+  `docs/api/openapi.yaml`;
+- locate the current domain/application/infrastructure implementation;
+- inspect related tests (`server/tests/`);
 - inspect relevant local `AGENTS.md` files if present;
+- determine whether a migration or API/schema change is required;
+- determine whether documentation must change;
 - explain the intended impact internally and keep the patch bounded;
 - avoid unrelated refactoring unless required for correctness.
 
-After modifying code, the agent MUST:
-- run relevant tests;
-- update API/schema/docs when contracts changed;
-- update `TASK.md` only when a task is actually completed or materially progressed;
+### Mandatory agent behavior — after modifying code
+The agent MUST:
+- run the relevant tests (`composer test` in `server/`, or `make test`);
+- run static analysis (`composer analyse`) and formatting/lint (`composer lint`);
+- update API/schema contracts when they changed (`docs/api/openapi.yaml`,
+  `database/migrations/`);
+- update documentation when required;
+- update `TASK.md` only when a task is actually completed or materially
+  progressed;
 - preserve migration safety;
 - report unresolved assumptions or failures honestly.
 
@@ -51,7 +77,8 @@ Prove behavior. Never weaken a test merely to get green.
 No intentional behavior change. Establish passing baseline first.
 
 #### Architecture-change mode
-Requires explicit impact analysis and an ADR unless already covered by an existing approved decision.
+Requires explicit impact analysis and an ADR (`docs/adr/`) unless already
+covered by an existing approved decision.
 
 ### Forbidden shortcuts
 - Do not create business logic in Vue components.
@@ -59,10 +86,18 @@ Requires explicit impact analysis and an ADR unless already covered by an existi
 - Do not let Eloquent models become the entire domain model.
 - Do not let the browser become authoritative for schedule state.
 - Do not allow LLM output to bypass domain validation.
-- Do not introduce a new dependency when an existing repository abstraction already solves the problem.
-- Do not copy external application source code merely because it is convenient; check `docs/third-party/licenses.md` first.
-- Do not expose secrets, note contents, AI prompts, or private document content in logs.
+- Do not introduce a new dependency when an existing repository abstraction
+  already solves the problem.
+- Do not copy external application source code merely because it is convenient;
+  check `docs/third-party/licenses.md` and `CONTRIBUTING.md` first.
+- Do not expose secrets, note contents, AI prompts, or private document content
+  in logs.
 - Do not silently introduce a second source of truth.
+- Do not silently drift the schema; any schema change requires a migration.
+- Do not make undocumented API or architecture changes.
+- Do not commit secrets, tokens, or private data.
+- Do not change tests merely to make them pass.
+- Do not declare a task done without evidence (test output, CI, commit).
 
 ### Domain implementation rule
 ```text
@@ -80,19 +115,26 @@ PostgreSQL / storage
 ```
 
 ### Scheduling rule
-Scheduling MUST be deterministic for the same inputs. AI may propose semantic decomposition or explanations, but it MUST NOT become the authoritative schedule generator.
+Scheduling MUST be deterministic for the same inputs. AI may propose semantic
+decomposition or explanations, but it MUST NOT become the authoritative schedule
+generator.
 
 ### Transaction rule
-Any mutation that must leave several entities consistent MUST use an explicit transaction boundary or a documented compensating action.
+Any mutation that must leave several entities consistent MUST use an explicit
+transaction boundary or a documented compensating action.
 
 ### Concurrency rule
-Use optimistic versioning for mutable aggregates where concurrent edits are possible. Return stable `409` conflicts rather than silently overwriting newer state.
+Use optimistic versioning for mutable aggregates where concurrent edits are
+possible. Return stable `409` conflicts rather than silently overwriting newer
+state.
 
 ### API rule
-Business API mutations MUST validate authorization, ownership, payload shape, state transition, and idempotency semantics server-side.
+Business API mutations MUST validate authorization, ownership, payload shape,
+state transition, and idempotency semantics server-side.
 
 ### Offline rule
-IndexedDB is cache/queue, never canonical source of truth. Offline operations must carry an operation UUID and reconcile through the server contract.
+IndexedDB is cache/queue, never canonical source of truth. Offline operations
+must carry an operation UUID and reconcile through the server contract.
 
 ### AI rule
 All AI output is untrusted input. Required path:
@@ -112,6 +154,11 @@ Human approval where mutation is material
 Transaction
 ```
 
+### External engine boundary
+Excalidraw owns drawing behavior. Tiptap owns editing behavior. Ollama owns
+inference behavior. LIFESYNC owns business semantics: identity, ownership,
+persistence, versioning, links, attachments, offline state, and domain rules.
+
 ### Definition of done
 A non-trivial feature is DONE only when:
 - requirement linkage exists;
@@ -124,10 +171,12 @@ A non-trivial feature is DONE only when:
 - no unresolved compile/test errors remain unless explicitly documented.
 
 ### Local developer tooling
-The preferred development coding model MAY include Qwythos 9B Q6_K GGUF, DeepCoder, Qwen Coder, or equivalent local models. These are development tools, not runtime product dependencies.
+The preferred development coding model MAY include Qwythos 9B Q6_K GGUF,
+DeepCoder, Qwen Coder, or equivalent local models. These are development tools,
+not runtime product dependencies.
 
 ### External open-source components
-Use adapters. Do not make Excalidraw, Tiptap, or any third-party editor the owner of LIFESYNC business semantics.
+Use adapters. Do not make Excalidraw, Tiptap, or any third-party editor the owner
+of LIFESYNC business semantics.
 
 ---
-

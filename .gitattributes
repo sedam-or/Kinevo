@@ -1,0 +1,26 @@
+# Git attributes — LIFESYNC OS
+
+# Normalize line endings
+* text=auto
+
+# Documentation and config
+*.md text
+*.yaml text
+*.yml text
+*.json text
+*.sh text eol=lf
+*.php text eol=lf
+
+# Binaries
+*.png binary
+*.jpg binary
+*.gif binary
+*.webp binary
+*.pdf binary
+*.tar.gz binary
+
+# Diff markers for common artifacts
+*.lock linguist-generated
+phpunit.xml linguist-generated=true
+composer.lock linguist-generated=true
+package-lock.json linguist-generated=true

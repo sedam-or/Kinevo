@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "lifesync-os/lifesync",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "LIFESYNC OS — a single-user, self-hostable, offline-capable personal operating system built as a Laravel modular monolith.",
+    "keywords": ["lifesync", "productivity", "scheduling", "laravel", "offline-first"],
     "license": "MIT",
     "require": {
         "php": "^8.4",

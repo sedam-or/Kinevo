@@ -1,3 +1,36 @@
-# LIFESYNC bootstrap helper
+# LIFESYNC OS — repository-level ignores
+
+# Bootstrap helper state
 .bootstrap-state/
 .aider*
+
+# Secrets — never commit
+**/.env
+**/.env.*
+!**/.env.example
+*.key
+*.pem
+*.crt
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs / temp
+*.log
+*.tmp
+
+# PHP / Composer artifacts
+server/vendor/
+server/.phpunit.result.cache
+server/.phpunit.cache/
+
+# Node
+server/node_modules/
+server/public/build/

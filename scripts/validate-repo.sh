@@ -8,6 +8,18 @@ files=(
   AGENTS.md
   TASK.md
   LICENSE
+  CONTRIBUTING.md
+  CODE_OF_CONDUCT.md
+  SECURITY.md
+  SUPPORT.md
+  CHANGELOG.md
+  CITATION.cff
+  .editorconfig
+  .gitattributes
+  .dockerignore
+  .github/dependabot.yml
+  .github/CODEOWNERS
+  .github/PULL_REQUEST_TEMPLATE.md
   docs/SRS.md
   docs/design.md
   docs/architecture.md

@@ -3,8 +3,15 @@ SHELL := /usr/bin/env bash
 PACK ?= LIFESYNC_DOCUMENTATION_MASTER_PACK.md
 SRS ?= LIFESYNC_OS_SRS_v2.0.0.md
 
-.PHONY: setup setup-force dry-run validate secrets status doctor up down logs migrate shell
+COMPOSE := docker compose -f infrastructure/docker-compose.yml
+APP := $(COMPOSE) exec -T app
 
+.PHONY: setup setup-force dry-run validate secrets status doctor \
+	up down logs migrate shell \
+	test lint format analyse ci \
+	check-links check-openapi
+
+# --- Documentation bootstrap -------------------------------------------------
 setup:
 	./scripts/bootstrap-docs.sh --pack "$(PACK)" --srs "$(SRS)"
 
@@ -14,6 +21,7 @@ setup-force:
 dry-run:
 	./scripts/bootstrap-docs.sh --pack "$(PACK)" --srs "$(SRS)" --dry-run
 
+# --- Repository validation ---------------------------------------------------
 validate:
 	./scripts/validate-repo.sh .
 
@@ -23,19 +31,45 @@ secrets:
 status:
 	./scripts/status.sh .
 
+check-links:
+	./scripts/check-doc-links.sh .
+
+check-openapi:
+	./scripts/check-openapi.sh .
+
 doctor: validate status
 
+# --- Docker services ---------------------------------------------------------
 up:
-	docker compose -f infrastructure/docker-compose.yml up -d --build
+	$(COMPOSE) up -d --build
 
 down:
-	docker compose -f infrastructure/docker-compose.yml down
+	$(COMPOSE) down
 
 logs:
-	docker compose -f infrastructure/docker-compose.yml logs -f
+	$(COMPOSE) logs -f
 
 migrate:
-	docker compose -f infrastructure/docker-compose.yml exec app php artisan migrate --force
+	$(APP) php artisan migrate --force
 
 shell:
-	docker compose -f infrastructure/docker-compose.yml exec app sh
+	$(APP) sh
+
+# --- Quality gates (run inside the app container) ---------------------------
+test:
+	$(APP) php artisan test
+
+lint:
+	$(APP) vendor/bin/pint --test
+
+format:
+	$(APP) vendor/bin/pint
+
+analyse:
+	$(APP) vendor/bin/phpstan analyse --memory-limit=512M
+
+# Frontend gates require a Node toolchain and frontend sources (Vue/TypeScript),
+# which are introduced with the frontend bootstrap task. They are not defined
+# until `server/package.json` scripts and sources exist.
+
+ci: validate secrets check-links check-openapi lint analyse test
