@@ -20,8 +20,10 @@ CI/lint/typecheck/test pipeline   ✅ DONE
 Docker development environment    ✅ DONE
 Environment/config/secrets        ✅ DONE
 Identity/profile                  ✅ DONE
+Goal aggregate                    ✅ DONE (TASK-011)
+Milestone aggregate               🔴 TASK-012+
 PostgreSQL schema                 🟡 migrations baseline only
-Core domain (goals/milestones)    🔴 TASK-011+
+Core domain (milestones)          🔴 TASK-012+
 Scheduling engine                 🔴 TASK-020+
 Offline shell                     🔴 TASK-050+
 Knowledge layer                   🔴 TASK-030+
@@ -56,3 +58,4 @@ A feature cannot become DONE because:
 | Docker dev environment | `infrastructure/docker/`, `infrastructure/docker-compose.yml` | TASK-003 |
 | Env/config/secrets | `docs/environment.md`, `server/.env.example`, `scripts/check-secrets.sh` | TASK-004 |
 | Identity/profile | Sanctum auth + `profiles`; 17 tests pass (commit `8a9a937`) | TASK-010 |
+| Goal aggregate | `goals` table, domain entity/VOs, CRUD + status lifecycle, deadline exposure; 36 tests pass | TASK-011 |

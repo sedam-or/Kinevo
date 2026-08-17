@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Domain\Goals\Contracts\GoalRepository;
 use App\Domain\Identity\Contracts\ProfileRepository;
+use App\Infrastructure\Goals\EloquentGoalRepository;
 use App\Infrastructure\Identity\EloquentProfileRepository;
 use Illuminate\Support\ServiceProvider;
 
@@ -14,6 +16,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(ProfileRepository::class, EloquentProfileRepository::class);
+        $this->app->singleton(GoalRepository::class, EloquentGoalRepository::class);
     }
 
     /**

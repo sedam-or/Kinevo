@@ -150,12 +150,102 @@ paths:
   /goals:
     get:
       tags: [Goals]
-      summary: List goals
-      responses: {'200': {description: OK}}
+      summary: List the owner's goals
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalListResponse'
+        '401': { description: Unauthorized }
     post:
       tags: [Goals]
-      summary: Create goal
-      responses: {'201': {description: Created}}
+      summary: Create a goal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation or active-limit violation }
+
+  /goals/{goalId}:
+    get:
+      tags: [Goals]
+      summary: Get a single goal
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Goal not found }
+    put:
+      tags: [Goals]
+      summary: Update editable goal fields
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Goal not found }
+        '422': { description: Validation error }
+
+  /goals/{goalId}/status:
+    post:
+      tags: [Goals]
+      summary: Apply an explicit goal state transition
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoalStatusRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Goal not found }
+        '422': { description: Invalid transition }
 
   /goals/{goalId}/breakdown-proposals:
     post:
@@ -304,6 +394,59 @@ components:
         goal_id: {type: string, format: uuid, nullable: true}
         milestone_id: {type: string, format: uuid, nullable: true}
         program_id: {type: string, format: uuid, nullable: true}
+    Goal:
+      type: object
+      required: [id, title, horizon, status, priority_tier]
+      properties:
+        id: {type: integer}
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, nullable: true}
+        horizon: {type: string, enum: [yearly, quarterly, monthly, custom]}
+        start_date: {type: string, format: date, nullable: true}
+        target_date: {type: string, format: date, nullable: true}
+        target_metric: {type: string, nullable: true, maxLength: 100}
+        status: {type: string, enum: [draft, active, paused, completed, archived, dropped]}
+        priority_tier: {type: integer, minimum: 1, maximum: 3}
+        progress_mode: {type: string, enum: [derived, manual], default: derived}
+        progress: {type: integer, minimum: 0, maximum: 100, default: 0}
+    GoalCreateRequest:
+      type: object
+      required: [title, horizon]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, nullable: true}
+        horizon: {type: string, enum: [yearly, quarterly, monthly, custom]}
+        start_date: {type: string, format: date, nullable: true}
+        target_date: {type: string, format: date, nullable: true}
+        target_metric: {type: string, nullable: true, maxLength: 100}
+        priority_tier: {type: integer, minimum: 1, maximum: 3, default: 3}
+    GoalUpdateRequest:
+      type: object
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, nullable: true}
+        horizon: {type: string, enum: [yearly, quarterly, monthly, custom]}
+        start_date: {type: string, format: date, nullable: true}
+        target_date: {type: string, format: date, nullable: true}
+        target_metric: {type: string, nullable: true, maxLength: 100}
+        priority_tier: {type: integer, minimum: 1, maximum: 3}
+    GoalStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, enum: [draft, active, paused, completed, archived, dropped]}
+    GoalResponse:
+      type: object
+      required: [goal]
+      properties:
+        goal: {$ref: '#/components/schemas/Goal'}
+    GoalListResponse:
+      type: object
+      required: [goals]
+      properties:
+        goals:
+          type: array
+          items: {$ref: '#/components/schemas/Goal'}
 
 ---
 

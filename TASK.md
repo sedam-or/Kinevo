@@ -148,9 +148,25 @@
 - Notes: single-owner model enforced at registration; profile settings validated server-side via ProfileSettings value object.
 
 #### TASK-011 — Goal aggregate
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- SRS: FR-50, existing goal FRs.
+- SRS: FR-50, FR-19, FR-20; SRS §7.2 (goals table), domain-model Goal entity/horizon/state.
+- Acceptance:
+  - [x] `goals` migration: user ownership, title 1–200, description, horizon enum (yearly|quarterly|monthly|custom), start/target date, target_metric, status, priority_tier 1–3, progress_mode, derived progress
+  - [x] Domain: `Goal` entity + `GoalHorizon` + `GoalStatus` VOs + `GoalRepository` contract; explicit status state machine (draft→active→paused→completed/archived/dropped)
+  - [x] FR-50: custom-horizon goal stands alone (no parent); deadline-bound goal exposes remaining calendar days (isDeadlineBound/remainingDays)
+  - [x] FR-19/FR-20 active limits: max 5 yearly, max 7 monthly goals enforced at create (422)
+  - [x] Application use cases: Create/List/Get/Update/SetGoalStatus
+  - [x] HTTP: `/goals` GET+POST, `/goals/{goalId}` GET+PUT, `/goals/{goalId}/status` POST, all under `auth:sanctum`, owner-scoped (404 on cross-user access, SRS §15.1)
+  - [x] OpenAPI Goals paths + Goal schemas synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (36 tests, 102 assertions)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS
+  - [x] migration applies to PostgreSQL (`migrate:status` Ran; goals table present)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` all pass
+- Evidence: server/app/Domain/Goals, server/app/Application/Goals, server/app/Infrastructure/Goals, server/app/Models/Goal.php, server/app/Http/Controllers/Api/GoalController.php, server/routes/api.php, database/migrations/2026_08_17_150000_create_goals_table.php, server/tests/Feature/Api/GoalApiTest.php, server/tests/Unit/GoalTest.php, docs/api/openapi.yaml (Goals paths/schemas)
+- Notes: single-owner scoping via user_id; progress stays derived (0) until contribution sources land in later tasks.
 
 #### TASK-012 — Milestone aggregate
 - Status: TODO
