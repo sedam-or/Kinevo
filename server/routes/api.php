@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\MilestoneController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\ProgramController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -30,4 +31,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/goals/{goalId}/milestones/{milestoneId}', [MilestoneController::class, 'show']);
     Route::put('/goals/{goalId}/milestones/{milestoneId}', [MilestoneController::class, 'update']);
     Route::post('/goals/{goalId}/milestones/{milestoneId}/status', [MilestoneController::class, 'status']);
+
+    Route::get('/programs', [ProgramController::class, 'index']);
+    Route::post('/programs', [ProgramController::class, 'store']);
+    Route::get('/programs/{programId}', [ProgramController::class, 'show']);
+    Route::put('/programs/{programId}', [ProgramController::class, 'update']);
+    Route::post('/programs/{programId}/status', [ProgramController::class, 'status']);
 });

@@ -398,6 +398,106 @@ paths:
         '404': { description: Milestone not found }
         '422': { description: Invalid transition }
 
+  /programs:
+    get:
+      tags: [Programs]
+      summary: List programs of the current user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramListResponse'
+        '401': { description: Unauthorized }
+    post:
+      tags: [Programs]
+      summary: Create a program (FR-26 workload types)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
+
+  /programs/{programId}:
+    get:
+      tags: [Programs]
+      summary: Get a single program
+      parameters:
+        - name: programId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Program not found }
+    put:
+      tags: [Programs]
+      summary: Update editable program fields
+      parameters:
+        - name: programId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Program not found }
+        '422': { description: Validation error }
+
+  /programs/{programId}/status:
+    post:
+      tags: [Programs]
+      summary: Apply an explicit FR-22 lifecycle transition
+      parameters:
+        - name: programId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramStatusRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgramResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Program not found }
+        '422': { description: Invalid transition }
+
   /schedule/auto:
     post:
       tags: [Scheduling]
@@ -643,6 +743,61 @@ components:
         milestones:
           type: array
           items: {$ref: '#/components/schemas/Milestone'}
+    Program:
+      type: object
+      required: [id, name, workload_type, status, version]
+      properties:
+        id: {type: integer}
+        name: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, nullable: true}
+        category: {type: string, maxLength: 100, nullable: true}
+        workload_type: {type: string, enum: [structured, range, flexible]}
+        weekly_target_minutes: {type: integer, minimum: 1, nullable: true}
+        min_weekly_minutes: {type: integer, minimum: 0, nullable: true}
+        max_weekly_minutes: {type: integer, minimum: 0, nullable: true}
+        status: {type: string, enum: [active, paused, completed, dropped]}
+        priority_tier: {type: integer, minimum: 1, maximum: 3, default: 3}
+        version: {type: integer}
+    ProgramCreateRequest:
+      type: object
+      required: [name, workload_type]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, nullable: true}
+        category: {type: string, maxLength: 100, nullable: true}
+        workload_type: {type: string, enum: [structured, range, flexible]}
+        weekly_target_minutes: {type: integer, minimum: 1, nullable: true}
+        min_weekly_minutes: {type: integer, minimum: 0, nullable: true}
+        max_weekly_minutes: {type: integer, minimum: 0, nullable: true}
+        priority_tier: {type: integer, minimum: 1, maximum: 3, default: 3}
+    ProgramUpdateRequest:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, nullable: true}
+        category: {type: string, maxLength: 100, nullable: true}
+        workload_type: {type: string, enum: [structured, range, flexible]}
+        weekly_target_minutes: {type: integer, minimum: 1, nullable: true}
+        min_weekly_minutes: {type: integer, minimum: 0, nullable: true}
+        max_weekly_minutes: {type: integer, minimum: 0, nullable: true}
+        priority_tier: {type: integer, minimum: 1, maximum: 3}
+    ProgramStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, enum: [active, paused, completed, dropped]}
+    ProgramResponse:
+      type: object
+      required: [program]
+      properties:
+        program: {$ref: '#/components/schemas/Program'}
+    ProgramListResponse:
+      type: object
+      required: [programs]
+      properties:
+        programs:
+          type: array
+          items: {$ref: '#/components/schemas/Program'}
 
 ---
 
