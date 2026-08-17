@@ -21,9 +21,9 @@ Docker development environment    ✅ DONE
 Environment/config/secrets        ✅ DONE
 Identity/profile                  ✅ DONE
 Goal aggregate                    ✅ DONE (TASK-011)
-Milestone aggregate               🔴 TASK-012+
+Milestone aggregate               ✅ DONE (TASK-012)
 PostgreSQL schema                 🟡 migrations baseline only
-Core domain (milestones)          🔴 TASK-012+
+Core domain (milestones)          ✅ DONE (TASK-012)
 Scheduling engine                 🔴 TASK-020+
 Offline shell                     🔴 TASK-050+
 Knowledge layer                   🔴 TASK-030+

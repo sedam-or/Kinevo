@@ -169,9 +169,24 @@
 - Notes: single-owner scoping via user_id; progress stays derived (0) until contribution sources land in later tasks.
 
 #### TASK-012 — Milestone aggregate
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- SRS: FR-51.
+- SRS: FR-51; SRS §7.3 (milestones table), domain-model Milestone entity/state.
+- Acceptance:
+  - [x] `milestones` migration per SRS §7.3: user+goal ownership, title 1–200, description, sequence, target_date, estimated_minutes, status (planned|active|blocked|completed|dropped), progress_mode, progress, completed_at, version, timestamps + (goal_id,sequence) & (user_id,status) indexes
+  - [x] Domain: `Milestone` entity + `MilestoneStatus` VO + `MilestoneRepository` contract; explicit status state machine (planned→active/blocked/dropped→completed, terminal completed/dropped); FR-51: milestone belongs to exactly one owned goal, no recursive nesting
+  - [x] Completing a milestone stamps completed_at and bumps optimistic `version`; progress bounded 0–100
+  - [x] Application use cases: Create/List/Get/Update/SetMilestoneStatus/Reorder
+  - [x] HTTP: `/goals/{goalId}/milestones` GET+POST, `/goals/{goalId}/milestones/reorder` POST, `/goals/{goalId}/milestones/{milestoneId}` GET+PUT, `/goals/{goalId}/milestones/{milestoneId}/status` POST, all under `auth:sanctum`, owner-scoped (404 on cross-user access, SRS §15.1)
+  - [x] OpenAPI Milestones paths + Milestone schemas synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (56 tests, 169 assertions)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (67 files)
+  - [x] migration applies to PostgreSQL (`migrate:status` Ran; milestones table present)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` all pass
+- Evidence: server/app/Domain/Milestones, server/app/Application/Milestones, server/app/Infrastructure/Milestones, server/app/Models/Milestone.php, server/app/Http/Controllers/Api/MilestoneController.php, server/routes/api.php, database/migrations/2026_08_17_160000_create_milestones_table.php, server/tests/Feature/Api/MilestoneApiTest.php, server/tests/Unit/MilestoneTest.php, docs/api/openapi.yaml (Milestones paths/schemas)
+- Notes: reorder only touches milestones that belong to the goal (422 on foreign ids); progress stays derived (0) until contribution sources land in later tasks.
 
 #### TASK-013 — Program domain
 - Status: TODO

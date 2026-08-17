@@ -253,11 +253,150 @@ paths:
       summary: Generate milestone/work breakdown proposal
       responses: {'202': {description: Proposal generation accepted}}
 
-  /milestones:
+  /goals/{goalId}/milestones:
+    get:
+      tags: [Milestones]
+      summary: List milestones of a goal, ordered by sequence
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneListResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Goal not found }
     post:
       tags: [Milestones]
-      summary: Create milestone
-      responses: {'201': {description: Created}}
+      summary: Create a milestone for a goal
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MilestoneCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Goal not found }
+        '422': { description: Validation error }
+
+  /goals/{goalId}/milestones/reorder:
+    post:
+      tags: [Milestones]
+      summary: Reorder milestones of a goal
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MilestoneReorderRequest'
+      responses:
+        '200': { description: Reordered }
+        '401': { description: Unauthorized }
+        '404': { description: Goal not found }
+        '422': { description: Validation error }
+
+  /goals/{goalId}/milestones/{milestoneId}:
+    get:
+      tags: [Milestones]
+      summary: Get a single milestone
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: milestoneId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Milestone not found }
+    put:
+      tags: [Milestones]
+      summary: Update editable milestone fields
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: milestoneId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MilestoneUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Milestone not found }
+        '422': { description: Validation error }
+
+  /goals/{goalId}/milestones/{milestoneId}/status:
+    post:
+      tags: [Milestones]
+      summary: Apply an explicit milestone state transition
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: milestoneId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MilestoneStatusRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Milestone not found }
+        '422': { description: Invalid transition }
 
   /schedule/auto:
     post:
@@ -447,6 +586,63 @@ components:
         goals:
           type: array
           items: {$ref: '#/components/schemas/Goal'}
+    Milestone:
+      type: object
+      required: [id, goal_id, title, sequence, status, version]
+      properties:
+        id: {type: integer}
+        goal_id: {type: integer}
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, nullable: true}
+        sequence: {type: integer, minimum: 0}
+        target_date: {type: string, format: date, nullable: true}
+        estimated_minutes: {type: integer, minimum: 1, nullable: true}
+        status: {type: string, enum: [planned, active, blocked, completed, dropped]}
+        progress_mode: {type: string, enum: [derived, manual], default: derived}
+        progress: {type: integer, minimum: 0, maximum: 100, default: 0}
+        completed_at: {type: string, format: date-time, nullable: true}
+        version: {type: integer}
+    MilestoneCreateRequest:
+      type: object
+      required: [title]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, nullable: true}
+        sequence: {type: integer, minimum: 0}
+        target_date: {type: string, format: date, nullable: true}
+        estimated_minutes: {type: integer, minimum: 1, nullable: true}
+    MilestoneUpdateRequest:
+      type: object
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, nullable: true}
+        sequence: {type: integer, minimum: 0}
+        target_date: {type: string, format: date, nullable: true}
+        estimated_minutes: {type: integer, minimum: 1, nullable: true}
+    MilestoneStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, enum: [planned, active, blocked, completed, dropped]}
+    MilestoneReorderRequest:
+      type: object
+      required: [ordered_ids]
+      properties:
+        ordered_ids:
+          type: array
+          items: {type: integer}
+    MilestoneResponse:
+      type: object
+      required: [milestone]
+      properties:
+        milestone: {$ref: '#/components/schemas/Milestone'}
+    MilestoneListResponse:
+      type: object
+      required: [milestones]
+      properties:
+        milestones:
+          type: array
+          items: {$ref: '#/components/schemas/Milestone'}
 
 ---
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\GoalController;
+use App\Http\Controllers\Api\MilestoneController;
 use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,4 +23,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/goals/{goalId}', [GoalController::class, 'show']);
     Route::put('/goals/{goalId}', [GoalController::class, 'update']);
     Route::post('/goals/{goalId}/status', [GoalController::class, 'status']);
+
+    Route::get('/goals/{goalId}/milestones', [MilestoneController::class, 'index']);
+    Route::post('/goals/{goalId}/milestones', [MilestoneController::class, 'store']);
+    Route::post('/goals/{goalId}/milestones/reorder', [MilestoneController::class, 'reorder']);
+    Route::get('/goals/{goalId}/milestones/{milestoneId}', [MilestoneController::class, 'show']);
+    Route::put('/goals/{goalId}/milestones/{milestoneId}', [MilestoneController::class, 'update']);
+    Route::post('/goals/{goalId}/milestones/{milestoneId}/status', [MilestoneController::class, 'status']);
 });

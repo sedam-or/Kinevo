@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Domain\Goals\Contracts\GoalRepository;
 use App\Domain\Identity\Contracts\ProfileRepository;
+use App\Domain\Milestones\Contracts\MilestoneRepository;
 use App\Infrastructure\Goals\EloquentGoalRepository;
 use App\Infrastructure\Identity\EloquentProfileRepository;
+use App\Infrastructure\Milestones\EloquentMilestoneRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ProfileRepository::class, EloquentProfileRepository::class);
         $this->app->singleton(GoalRepository::class, EloquentGoalRepository::class);
+        $this->app->singleton(MilestoneRepository::class, EloquentMilestoneRepository::class);
     }
 
     /**
