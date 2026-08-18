@@ -32,6 +32,7 @@ Hard constraint engine            ✅ DONE (TASK-021)
 Task ranking engine               ✅ DONE (TASK-022)
 Auto-schedule draft engine        ✅ DONE (TASK-023)
 Dynamic rescheduler preview/apply ✅ DONE (TASK-024)
+Capacity feedback               ✅ DONE (TASK-025)
 Offline shell                     🔴 TASK-050+
 Knowledge layer                   🔴 TASK-030+
 Canvas integration                🔴 TASK-040+
