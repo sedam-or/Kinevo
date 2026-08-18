@@ -626,8 +626,22 @@
 - Notes: The Today schedule endpoint (`GET /api/v1/today?date=`) is contractually defined (OpenAPI Today tag, SRS §8.4); the cache fetches and stores its response. Quick Capture offline queueing and mutation enqueue are the scope of TASK-052+. Cache staleness vs network refresh is surfaced to the UI via `isStale()`.
 
 #### TASK-052 — Mutation queue
-- Status: TODO
-- Priority: P0.
+- Status: DONE
+- Priority: P0
+- SRS: FR-44 (Quick Capture offline via outbound mutation queue, last-write-wins); SRS §9.3 (mutation envelope); SRS §9.4 (LWW for low-risk, conservative for versioned); offline-sync.md §Queue semantics + §Sync state machine.
+- Acceptance:
+  - [x] General, entity-agnostic `MutationEnvelope` (entity_type, entity_id, operation_type, payload, client_timestamp, base_version, status, attempt_count, last_error) per SRS §9.3
+  - [x] `MutationQueue` class: `enqueue(entityType, entityId, operationType, payload, baseVersion?)` persists before resolving (survives tab close, FR-44)
+  - [x] FIFO sync of pending mutations; retryable failures retained and retried; permanent failures surfaced
+  - [x] Conflict handling (SRS §9.4): versioned/rich-content conflicts preserved and surfaced, never silently discarded
+  - [x] Last-write-wins collapse for low-risk non-versioned mutations to the same entity (SRS §9.4); versioned mutations never collapsed
+  - [x] Sync state machine surfaced: idle/queued/syncing/conflict/failed_retryable/failed_permanent
+  - [x] `OfflineMutationStore` contract (entity-agnostic) + `IndexedDbQueueStore` + injectable in-memory store for tests
+- Verification:
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → 81 tests (10 new queue tests); `npm run build` → built OK
+  - [x] Backend regression: PHPUnit → OK (287 tests, 768 assertions); Pint PASS; PHPStan no errors
+- Evidence: server/resources/js/offline/{queue-types.ts,queue.ts,queue-store.ts,__tests__/queue.test.ts}
+- Notes: This general queue (TASK-052) supersedes the canvas-specific enqueue used by TASK-044 for general entities (tasks/notes/quick capture); the canvas path retains its snapshot persistence. Versioned rich content (canvas/notes) always uses the conservative rule; low-risk operations (task create/update without version) may collapse to last-write-wins.
 
 #### TASK-053 — Last-write-wins policy
 - Status: TODO
