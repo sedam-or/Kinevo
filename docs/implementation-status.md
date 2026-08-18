@@ -27,7 +27,7 @@ Core domain (milestones)          ✅ DONE (TASK-012)
 Program aggregate                 ✅ DONE (TASK-013)
 Task/subtask lifecycle            ✅ DONE (TASK-014)
 Activity log                      ✅ DONE (TASK-015)
-Scheduling engine                 🔴 TASK-020+
+Scheduling engine (primitives)     ✅ DONE (TASK-020)
 Offline shell                     🔴 TASK-050+
 Knowledge layer                   🔴 TASK-030+
 Canvas integration                🔴 TASK-040+
