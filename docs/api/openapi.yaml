@@ -806,6 +806,102 @@ paths:
         '409': { description: Version conflict }
         '422': { description: Validation error }
 
+  /notes/{noteId}/links:
+    get:
+      tags: [Knowledge]
+      summary: List knowledge links from a note
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: noteId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeLinkListResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Not found }
+    post:
+      tags: [Knowledge]
+      summary: Link a note to a domain object
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: noteId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKnowledgeLinkRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeLinkResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Note or target not found }
+        '409': { description: Link already exists }
+        '422': { description: Validation error }
+
+  /notes/{noteId}/links/{linkId}:
+    delete:
+      tags: [Knowledge]
+      summary: Remove a knowledge link from a note
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: noteId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: linkId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: No content }
+        '401': { description: Unauthorized }
+        '404': { description: Not found }
+
+  /knowledge/links:
+    get:
+      tags: [Knowledge]
+      summary: Reverse navigation - list knowledge items linked to a domain object
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: target_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [goal, milestone, program, task]
+        - name: target_id
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeLinkListResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Target not found }
+        '422': { description: Validation error }
+
   /canvases:
     post:
       tags: [Canvas]
@@ -1287,6 +1383,44 @@ components:
         notes:
           type: array
           items: {$ref: '#/components/schemas/Note'}
+    CreateKnowledgeLinkRequest:
+      type: object
+      required: [target_type, target_id, link_type]
+      properties:
+        target_type:
+          type: string
+          enum: [goal, milestone, program, task]
+        target_id: {type: integer, minimum: 1}
+        link_type:
+          type: string
+          enum: [supports, references, derived_from, evidence_for, related_to]
+    KnowledgeLink:
+      type: object
+      required: [id, source_type, source_id, target_type, target_id, link_type]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        source_type: {type: string, enum: [note]}
+        source_id: {type: integer}
+        target_type:
+          type: string
+          enum: [goal, milestone, program, task]
+        target_id: {type: integer}
+        link_type:
+          type: string
+          enum: [supports, references, derived_from, evidence_for, related_to]
+    KnowledgeLinkResponse:
+      type: object
+      required: [link]
+      properties:
+        link: {$ref: '#/components/schemas/KnowledgeLink'}
+    KnowledgeLinkListResponse:
+      type: object
+      required: [links]
+      properties:
+        links:
+          type: array
+          items: {$ref: '#/components/schemas/KnowledgeLink'}
 
 ---
 

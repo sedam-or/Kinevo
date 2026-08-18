@@ -450,7 +450,7 @@
 - Notes: Tiptap canonical empty document is a single empty paragraph (not zero content) — tests assert that. Editor adapter intentionally framework-agnostic (no Vue import) so the engine is replaceable behind the boundary; Vue binding is future work in the Notes UI task. `Level[]` must be typed via `@tiptap/extension-heading` type, not `number[]`.
 
 #### TASK-032 — Knowledge linking
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - SRS: FR-54.
 
