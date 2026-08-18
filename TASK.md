@@ -455,8 +455,25 @@
 - SRS: FR-54.
 
 #### TASK-033 — Knowledge search
-- Status: TODO
-- Priority: P1.
+- Status: DONE
+- Priority: P1
+- SRS: FR-53 (search text), knowledge-layer.md §Search (title, plain text, PostgreSQL full-text search).
+- Acceptance:
+  - [x] `GET /api/v1/knowledge/search?q=<query>` endpoint implemented
+  - [x] PostgreSQL full-text search via tsvector column + GIN index + trigger
+  - [x] LIKE-based fallback for SQLite (testing)
+  - [x] Search scoped to authenticated user (owner-only results, 401 on unauthenticated)
+  - [x] Results ordered by updated_at descending
+  - [x] Empty query returns 422 validation error
+  - [x] OpenAPI schema synchronized (KnowledgeSearchResponse)
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (255 tests, 692 assertions, 9 new search tests)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (205 files)
+  - [x] `check-openapi.sh` → PASS (39 paths)
+  - [x] `check-doc-links.sh` → PASS (15 links)
+- Evidence: server/app/Application/Knowledge/SearchNotesUseCase.php, server/app/Infrastructure/Knowledge/EloquentNoteRepository.php (searchForUser), server/app/Http/Controllers/Api/KnowledgeSearchController.php, server/routes/api.php, database/migrations/2026_08_18_000001_add_notes_search_vector.php, server/tests/Feature/Api/KnowledgeSearchApiTest.php, docs/api/openapi.yaml (KnowledgeSearchResponse schema + /knowledge/search path)
+- Notes: PostgreSQL full-text search preferred per knowledge-layer.md; SQLite uses LIKE fallback for CI/testing compatibility.
 
 ### Phase 4 — Canvas
 #### TASK-040 — Architecture Spike verification

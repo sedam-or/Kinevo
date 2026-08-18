@@ -6,6 +6,7 @@ use App\Domain\Knowledge\Contracts\NoteRepository;
 use App\Domain\Knowledge\Note;
 use App\Domain\Knowledge\NoteVersionConflict;
 use App\Models\Note as NoteModel;
+use Illuminate\Support\Facades\DB;
 
 final class EloquentNoteRepository implements NoteRepository
 {
@@ -64,6 +65,44 @@ final class EloquentNoteRepository implements NoteRepository
         $model->refresh();
 
         return $this->toDomain($model);
+    }
+
+    public function searchForUser(int $userId, string $query): array
+    {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'pgsql') {
+            return $this->fullTextSearch($userId, $query);
+        }
+
+        return $this->likeSearch($userId, $query);
+    }
+
+    private function fullTextSearch(int $userId, string $query): array
+    {
+        return NoteModel::query()
+            ->where('user_id', $userId)
+            ->whereRaw("search_vector @@ plainto_tsquery('english', ?)", [$query])
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map($this->toDomain(...))
+            ->all();
+    }
+
+    private function likeSearch(int $userId, string $query): array
+    {
+        $likePattern = '%'.$query.'%';
+
+        return NoteModel::query()
+            ->where('user_id', $userId)
+            ->where(function ($q) use ($likePattern) {
+                $q->where('title', 'LIKE', $likePattern)
+                    ->orWhere('plain_text_cache', 'LIKE', $likePattern);
+            })
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map($this->toDomain(...))
+            ->all();
     }
 
     private function toDomain(NoteModel $model): Note

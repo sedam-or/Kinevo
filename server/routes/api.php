@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\KnowledgeLinkController;
+use App\Http\Controllers\Api\KnowledgeSearchController;
 use App\Http\Controllers\Api\MilestoneController;
 use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\ProfileController;
@@ -66,4 +67,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notes/{noteId}/links', [KnowledgeLinkController::class, 'store']);
     Route::delete('/notes/{noteId}/links/{linkId}', [KnowledgeLinkController::class, 'destroy']);
     Route::get('/knowledge/links', [KnowledgeLinkController::class, 'byTarget']);
+    Route::get('/knowledge/search', [KnowledgeSearchController::class, 'search']);
 });
