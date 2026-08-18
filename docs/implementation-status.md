@@ -35,6 +35,8 @@ Dynamic rescheduler preview/apply ✅ DONE (TASK-024)
 Capacity feedback               ✅ DONE (TASK-025)
 Scheduler explainability         ✅ DONE (TASK-026)
 Note aggregate                    ✅ DONE (TASK-030)
+Frontend scaffold (Vue 3 + TS)     ✅ DONE (TASK-031)
+Tiptap editor adapter              ✅ DONE (TASK-031)
 Offline shell                     🔴 TASK-050+
 Knowledge layer                   🔴 TASK-030+
 Canvas integration                🔴 TASK-040+

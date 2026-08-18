@@ -6,6 +6,8 @@ RUN apk add --no-cache \
         libzip-dev \
         zip \
         git \
+        nodejs \
+        npm \
     && docker-php-ext-install \
         pdo_pgsql \
         pgsql \

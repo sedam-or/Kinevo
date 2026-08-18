@@ -9,6 +9,7 @@ APP := $(COMPOSE) exec -T app
 .PHONY: setup setup-force dry-run validate secrets status doctor \
 	up down logs migrate shell \
 	test lint format analyse ci \
+	frontend-install frontend-typecheck frontend-test frontend-build \
 	check-links check-openapi
 
 # --- Documentation bootstrap -------------------------------------------------
@@ -68,8 +69,19 @@ format:
 analyse:
 	$(APP) vendor/bin/phpstan analyse --memory-limit=512M
 
-# Frontend gates require a Node toolchain and frontend sources (Vue/TypeScript),
-# which are introduced with the frontend bootstrap task. They are not defined
-# until `server/package.json` scripts and sources exist.
+# --- Frontend gates (run inside the app container; Node is available in the
+# dev image) ------------------------------------------------------------------
+frontend-install:
+	$(APP) npm install --ignore-scripts
 
-ci: validate secrets check-links check-openapi lint analyse test
+frontend-typecheck:
+	$(APP) npm run typecheck
+
+frontend-test:
+	$(APP) npm run test
+
+frontend-build:
+	$(APP) npm run build
+
+ci: validate secrets check-links check-openapi lint analyse test \
+	frontend-typecheck frontend-test frontend-build

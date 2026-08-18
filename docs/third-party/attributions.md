@@ -46,12 +46,44 @@ License file retained at:
 
 - **Component:** Vue.js (v3)
 - **Repository:** https://github.com/vuejs/core
-- **Version/Commit:** pin at integration
+- **Version/Commit:** `^3.5.41` per `server/package-lock.json`
 - **License:** MIT
 - **Used for:** Frontend UI framework
 - **Modifications:** None
 - **Attribution text:** Copyright (c) 2013-present, Yuxi (Evan) You
 - **License file retained at:** node_modules/vue/LICENSE
+
+## Tiptap
+- **Component:** Tiptap (headless editor engine)
+- **Repository:** https://github.com/ueberdosis/tiptap
+- **Version/Commit:** `@tiptap/core@3.30.1` per `server/package-lock.json`
+- **License:** MIT
+- **Used for:** Rich-text editor engine, behind the LIFESYNC `EditorAdapter` boundary
+- **Modifications:** None (used as-is; bounded extension set configured by LIFESYNC)
+- **Attribution text:** Copyright (c) Tiptap contributors
+- **License file retained at:** node_modules/@tiptap/core/LICENSE
+
+## TypeScript
+
+- **Component:** TypeScript compiler and language service
+- **Repository:** https://github.com/microsoft/TypeScript
+- **Version/Commit:** `^5.9.3` per `server/package-lock.json`
+- **License:** Apache-2.0
+- **Used for:** Frontend static type checking
+- **Modifications:** None
+- **Attribution text:** Copyright (c) Microsoft Corporation
+- **License file retained at:** node_modules/typescript/LICENSE.txt
+
+## ProseMirror
+
+- **Component:** ProseMirror document model (Tiptap dependency chain)
+- **Repository:** https://github.com/ProseMirror
+- **Version/Commit:** per `server/package-lock.json` (`@tiptap/pm@3.30.1`)
+- **License:** MIT
+- **Used for:** Canonical structured-JSON document model (SRS §10.2)
+- **Modifications:** None
+- **Attribution text:** Copyright (c) Marijn Haverbeke and contributors
+- **License file retained at:** node_modules/@tiptap/pm/LICENSE
 
 ## Tailwind CSS
 
@@ -81,6 +113,4 @@ The following are planned but not yet integrated. Attribution entries MUST be
 added when they are adopted:
 
 - **Excalidraw** (MIT) — canvas engine, behind a bounded adapter.
-- **Tiptap** (MIT) — editor engine, behind a LIFESYNC adapter.
-- **ProseMirror** ecosystem (MIT/BSD) — Tiptap dependency chain.
 - **Ollama** — optional local AI runtime.

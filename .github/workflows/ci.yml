@@ -49,6 +49,33 @@ jobs:
       - name: Run test suite
         run: vendor/bin/phpunit
 
+  frontend:
+    name: Frontend typecheck / test / build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run Vitest suite
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
   repo:
     name: Repository baseline validation
     runs-on: ubuntu-latest
