@@ -326,9 +326,25 @@
 - Notes: no-deadline sentinel must be `-INF` (not `PHP_FLOAT_MIN`, which is the smallest positive float); `usort` comparator compares component scores in declared lexicographic order — component order in the constructor IS the precedence order.
 
 #### TASK-023 — Auto-schedule draft engine
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- Acceptance: deterministic simulation suite passes.
+- SRS: FR-27 weekly draft; SRS §3.1 Sacred Anchor, Dynamic Empty Slot; §6.5; scheduling-engine core algorithm (steps 1–13) + simulation test matrix.
+- Acceptance:
+  - [x] Deterministic draft: identical inputs → identical draft (verified by repeated generation)
+  - [x] `ScheduleTask` input VO (id, title, duration, priorityTier, goal/milestone/task deadlines, progress, contextFit, fragmentationPenalty, continuityPreference, isLocked, isSacredAnchor, existingSlot)
+  - [x] `DraftInput` (horizon, hardLandscape, existingAssignments, tasks, sacredAnchor, reservePercent)
+  - [x] `ScheduleDraft` result (assignments + unassigned with reason) + `DraftAssignment` + `UnassignedTask`
+  - [x] Core algorithm implemented (scheduling-engine steps): split horizon into days → occupied intervals → Dynamic Empty Slots (SlotCalculator) → Sacred Anchor first (first qualifying ≥25-min slot at/after 06:00, locked) → candidate set → hard constraints (HardConstraintEngine) → ranking (TaskRankingEngine) → greedy assignment, deadline/reserve respected
+  - [x] Locked tasks with existingSlot kept in place (never moved by automation, FR-04/FR-27)
+  - [x] No overlap between assignments; Hard Landscape never overlapped (adjacent blocks safe)
+  - [x] Unassigned tasks reported with deterministic reason (NO_AVAILABLE_SLOT / NO_AVAILABLE_ANCHOR_SLOT)
+- Verification:
+  - [x] Unit: `vendor/bin/phpunit` → OK (177 tests, 501 assertions)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (158 files)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` all pass (no API change)
+- Evidence: server/app/Domain/Scheduling/ScheduleDraftGenerator.php, ScheduleTask.php, DraftInput.php, ScheduleDraft.php, DraftAssignment.php, UnassignedTask.php, server/tests/Unit/Scheduling/ScheduleDraftGeneratorTest.php
+- Notes: locked tasks are placed before slot iteration; occupied intervals exclude double-counting (existingAssignments passed once); reserve check uses per-candidate context so a large single task over 7 days still fits (10080 min horizon, 30% reserve → 7056 limit).
 
 #### TASK-024 — Dynamic rescheduler preview/apply
 - Status: TODO
