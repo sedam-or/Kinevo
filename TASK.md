@@ -298,9 +298,32 @@
 - Notes: engine injects the candidate set into the validation context (overlap/reserve need the full set); reserve rule counts the candidate under evaluation; `max()` on TimeRange is invalid — use an explicit furthest-end merge.
 
 #### TASK-022 — Task ranking engine
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- SRS: FR-23, FR-64.
+- SRS: FR-23, FR-64; SRS §0.3 precedence (#7 tier, #9 soft signals); scheduling-engine §Soft ranking lexicographic ordering + §Soft scoring examples; FR-48 recovery nearest-deadline.
+- Acceptance:
+  - [x] FR-64: ranking applies ONLY to hard-feasible candidates (engine consumes post-HardConstraintEngine input); soft ordering can never override hard violations
+  - [x] `RankingCandidate` carries soft signals: priorityTier, goal/milestone/task deadlines, progress, contextFit, fragmentationPenalty, slot, continuityPreference, estimatedMinutes
+  - [x] `ScoreComponent` contract — independently testable, higher-is-better float score
+  - [x] 9 lexicographic components (scheduling-engine §Soft ranking):
+    - [x] `PriorityTierComponent` (priority_score): tier 1 > 2 > 3 (FR-23)
+    - [x] `GoalDeadlineComponent` (goal_deadline_score): nearest Yearly Goal deadline first — FR-23 equal-tier tie-break
+    - [x] `MilestoneUrgencyComponent` (milestone_score)
+    - [x] `TaskDeadlineComponent` (task_deadline_score) — FR-48 nearest-deadline recovery
+    - [x] `ProgressLeverageComponent` (progress_value_score)
+    - [x] `ContextFitComponent` (context_fit_score, null → neutral 0.5)
+    - [x] `FragmentationPenaltyComponent` (fragmentation_penalty)
+    - [x] `DurationFitComponent` (duration_fit_score) — exact fit preferred (SLOT_FIT_EXACT)
+    - [x] `ContinuityPreferenceComponent` (continuity_preference)
+  - [x] `TaskRankingEngine::rank()` — best-first lexicographic sort; stable for identical candidates
+  - [x] `RankedCandidate` exposes per-component scores for explainability (scheduling-engine §Explainability)
+- Verification:
+  - [x] Unit: `vendor/bin/phpunit` → OK (165 tests, 470 assertions)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (151 files)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` all pass (no API change)
+- Evidence: server/app/Domain/Scheduling/TaskRankingEngine.php, RankingCandidate.php, RankedCandidate.php, Contracts/ScoreComponent.php, Components/*.php, server/tests/Unit/Scheduling/TaskRankingEngineTest.php
+- Notes: no-deadline sentinel must be `-INF` (not `PHP_FLOAT_MIN`, which is the smallest positive float); `usort` comparator compares component scores in declared lexicographic order — component order in the constructor IS the precedence order.
 
 #### TASK-023 — Auto-schedule draft engine
 - Status: TODO
