@@ -2,17 +2,22 @@
 
 namespace App\Application\Tasks;
 
+use App\Application\ActivityLogs\RecordActivityUseCase;
+use App\Domain\ActivityLogs\ActivityLog;
+use App\Domain\ActivityLogs\ValueObjects\ActivityEventType;
 use App\Domain\Tasks\Contracts\TaskRepository;
 use App\Domain\Tasks\Task;
 use App\Domain\Tasks\ValueObjects\TaskStatus;
 
 /**
  * Applies an explicit state transition to a task (FR-09 lifecycle).
+ * Completing a task appends exactly one activity event (FR-34).
  */
 final readonly class SetTaskStatusUseCase
 {
     public function __construct(
         private TaskRepository $tasks,
+        private RecordActivityUseCase $recordActivity,
     ) {}
 
     public function __invoke(
@@ -24,6 +29,20 @@ final readonly class SetTaskStatusUseCase
 
         $updated = $task->withStatus($status);
 
-        return $this->tasks->update($updated);
+        $saved = $this->tasks->update($updated);
+
+        if ($saved->isCompleted()) {
+            $this->recordActivity->__invoke(ActivityLog::create(
+                $userId,
+                ActivityEventType::taskCompleted(),
+                'task',
+                $saved->id,
+                $saved->title,
+                operationId: "task:completed:{$saved->id}",
+                payload: ['status' => $saved->status->value, 'progress' => $saved->progress],
+            ));
+        }
+
+        return $saved;
     }
 }

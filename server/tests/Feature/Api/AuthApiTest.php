@@ -22,8 +22,10 @@ class AuthApiTest extends TestCase
         $response->assertStatus(201)
             ->assertJsonStructure(['user' => ['id', 'name', 'email'], 'token', 'profile']);
 
+        $userId = $response->json('user.id');
+
         $this->assertDatabaseHas('users', ['email' => 'owner@example.com']);
-        $this->assertDatabaseHas('profiles', ['user_id' => 1, 'locale' => 'en']);
+        $this->assertDatabaseHas('profiles', ['user_id' => $userId, 'locale' => 'en']);
         $this->assertDatabaseCount('personal_access_tokens', 1);
     }
 

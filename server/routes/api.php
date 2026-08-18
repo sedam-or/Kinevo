@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\MilestoneController;
@@ -50,4 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tasks/{taskId}/subtasks/{subtaskId}/toggle', [TaskController::class, 'toggleSubtask']);
     Route::put('/tasks/{taskId}/subtasks/{subtaskId}', [TaskController::class, 'updateSubtask']);
     Route::post('/subtasks/{subtaskId}/promote', [TaskController::class, 'promoteSubtask']);
+
+    Route::get('/logs', [ActivityLogController::class, 'index']);
+    Route::post('/export', [ActivityLogController::class, 'export']);
 });

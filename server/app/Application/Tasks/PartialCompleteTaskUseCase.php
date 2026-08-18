@@ -2,6 +2,9 @@
 
 namespace App\Application\Tasks;
 
+use App\Application\ActivityLogs\RecordActivityUseCase;
+use App\Domain\ActivityLogs\ActivityLog;
+use App\Domain\ActivityLogs\ValueObjects\ActivityEventType;
 use App\Domain\Tasks\Contracts\SubtaskRepository;
 use App\Domain\Tasks\Contracts\TaskRepository;
 use App\Domain\Tasks\Subtask;
@@ -13,6 +16,7 @@ use App\Domain\Tasks\ValueObjects\TaskStatus;
  * FR-09 Partial Completion: when incomplete subtasks remain, clone the remaining
  * subtasks + notes into a scheduled continuation Task and mark the original as
  * `continued`. When no subtasks remain, completion is a normal Complete.
+ * Appends exactly one activity event per completion (FR-34).
  */
 final readonly class PartialCompleteTaskUseCase
 {
@@ -20,6 +24,7 @@ final readonly class PartialCompleteTaskUseCase
         private TaskRepository $tasks,
         private SubtaskRepository $subtasks,
         private TaskProgressCalculator $calculator,
+        private RecordActivityUseCase $recordActivity,
     ) {}
 
     /**
@@ -37,7 +42,19 @@ final readonly class PartialCompleteTaskUseCase
             $completed = $task->withStatus(TaskStatus::completed());
             $completed = $completed->withProgress(100);
 
-            return ['task' => $this->tasks->update($completed), 'continuation' => null];
+            $saved = $this->tasks->update($completed);
+
+            $this->recordActivity->__invoke(ActivityLog::create(
+                $userId,
+                ActivityEventType::taskCompleted(),
+                'task',
+                $saved->id,
+                $saved->title,
+                operationId: "task:completed:{$saved->id}",
+                payload: ['status' => $saved->status->value, 'progress' => $saved->progress],
+            ));
+
+            return ['task' => $saved, 'continuation' => null];
         }
 
         // Schedule continuation (new Task) cloning remaining subtasks + notes.
@@ -69,7 +86,24 @@ final readonly class PartialCompleteTaskUseCase
             ->withStatus(TaskStatus::continued())
             ->withProgress($this->calculator->calculate($remaining));
 
-        return ['task' => $this->tasks->update($continued), 'continuation' => $continuation];
+        $saved = $this->tasks->update($continued);
+
+        $this->recordActivity->__invoke(ActivityLog::create(
+            $userId,
+            ActivityEventType::taskContinued(),
+            'task',
+            $saved->id,
+            $saved->title,
+            operationId: "task:continued:{$saved->id}:{$saved->version}",
+            payload: [
+                'status' => $saved->status->value,
+                'progress' => $saved->progress,
+                'continuation_task_id' => $continuation->id,
+                'remaining_subtasks' => count($remaining),
+            ],
+        ));
+
+        return ['task' => $saved, 'continuation' => $continuation];
     }
 
     /**

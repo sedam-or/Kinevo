@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Domain\ActivityLogs\Contracts\ActivityLogRepository;
 use App\Domain\Goals\Contracts\GoalRepository;
 use App\Domain\Identity\Contracts\ProfileRepository;
 use App\Domain\Milestones\Contracts\MilestoneRepository;
 use App\Domain\Programs\Contracts\ProgramRepository;
 use App\Domain\Tasks\Contracts\SubtaskRepository;
 use App\Domain\Tasks\Contracts\TaskRepository;
+use App\Infrastructure\ActivityLogs\EloquentActivityLogRepository;
 use App\Infrastructure\Goals\EloquentGoalRepository;
 use App\Infrastructure\Identity\EloquentProfileRepository;
 use App\Infrastructure\Milestones\EloquentMilestoneRepository;
@@ -29,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ProgramRepository::class, EloquentProgramRepository::class);
         $this->app->singleton(TaskRepository::class, EloquentTaskRepository::class);
         $this->app->singleton(SubtaskRepository::class, EloquentSubtaskRepository::class);
+        $this->app->singleton(ActivityLogRepository::class, EloquentActivityLogRepository::class);
     }
 
     /**
