@@ -644,8 +644,21 @@
 - Notes: This general queue (TASK-052) supersedes the canvas-specific enqueue used by TASK-044 for general entities (tasks/notes/quick capture); the canvas path retains its snapshot persistence. Versioned rich content (canvas/notes) always uses the conservative rule; low-risk operations (task create/update without version) may collapse to last-write-wins.
 
 #### TASK-053 — Last-write-wins policy
-- Status: TODO
-- Priority: P0.
+- Status: DONE
+- Priority: P0
+- SRS: §9.4 Conflict Strategy (LWW for narrow MVP queue where configured; conservative rule for versioned rich content/canvas, never silently discarded); FR-44 (Quick Capture LWW sync); offline-sync.md §Conflict strategy; domain-model `ConflictResolver`.
+- Acceptance:
+  - [x] Domain-owned, deterministic `LastWriteWinsPolicy` (pure, no I/O) deciding conflict resolution
+  - [x] `isLwwEligible(entityType, operationType, isVersioned)` — low-risk entities (task/subtask/goal/milestone/program/quick_capture) + low-risk ops (toggle/quick_capture) eligible ONLY when unversioned
+  - [x] Versioned rich content (canvas/note) and any baseVersion-bearing mutation are ALWAYS conservative (never LWW)
+  - [x] `resolveConflict(ctx)` returns `last_write_wins` for LWW-eligible stale mutations, `conflict` otherwise (SRS §9.4)
+  - [x] Unknown entities default to conservative (conflict) — no blind LWW
+  - [x] Deterministic for identical inputs; supports injectable allow-lists
+- Verification:
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → 94 tests (13 new policy tests); `npm run build` → built OK
+  - [x] Backend regression: PHPUnit → OK (287 tests, 768 assertions); Pint PASS; PHPStan no errors
+- Evidence: server/resources/js/offline/{lww-policy.ts,__tests__/lww-policy.test.ts}
+- Notes: This policy formalizes the decision already exercised by TASK-052's collapse logic; it is the single domain-owned source of truth for offline conflict resolution. The sync layer consults it when a queued mutation collides with server state.
 
 #### TASK-054 — EOD reconciliation
 - Status: TODO
