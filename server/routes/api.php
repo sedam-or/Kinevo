@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\MilestoneController;
+use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\TaskController;
@@ -54,4 +55,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/logs', [ActivityLogController::class, 'index']);
     Route::post('/export', [ActivityLogController::class, 'export']);
+
+    Route::get('/notes', [NoteController::class, 'index']);
+    Route::post('/notes', [NoteController::class, 'store']);
+    Route::get('/notes/{noteId}', [NoteController::class, 'show']);
+    Route::patch('/notes/{noteId}', [NoteController::class, 'update']);
 });
