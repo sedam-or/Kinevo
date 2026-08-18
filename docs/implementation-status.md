@@ -45,6 +45,7 @@ Canvas domain schema (incl. files)   ✅ DONE (TASK-041)
 Canvas adapter boundary (frontend)   ✅ DONE (TASK-040)
 Excalidraw adapter (tested)          ✅ DONE (TASK-042)
 Canvas autosave/versioning           ✅ DONE (TASK-043)
+Canvas offline mutation queue        ✅ DONE (TASK-044)
 Offline shell                     🔴 TASK-050+
 Knowledge layer (search)          ✅ DONE (TASK-033)
 Canvas full integration            🟡 TASK-041+ (schema done; Excalidraw island live in spike)

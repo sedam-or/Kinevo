@@ -572,9 +572,22 @@
 - Notes: Offline persistence of the pending scene (IndexedDB) and the offline sync state machine are the scope of TASK-044/offline tasks; this task handles the in-memory autosave orchestration and conflict surfacing. The server `PUT /canvases/{canvasId}` already returns `409 CANVAS_VERSION_CONFLICT` (TASK-040/041).
 
 #### TASK-044 — Canvas offline mutation queue
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- SRS: FR-57.
+- SRS: FR-57 (offline canvas mutations queueable via IndexedDB, sync on reconnect); SRS §9.2/§9.3/§9.4/§9.5; offline-sync.md.
+- Acceptance:
+  - [x] `MutationEnvelope` per SRS §9.3 + offline-sync.md (operation_id, entity_type, entity_id, operation_type, payload, client_timestamp, base_version, status, attempt_count, last_error)
+  - [x] `MutationStore` contract (enqueue/listPending/markSyncing/markApplied/markFailed + canvas snapshot) with IndexedDB implementation (`IndexedDbMutationStore`) and injectable in-memory store for tests
+  - [x] `CanvasOfflineQueue`: enqueue persists snapshot + envelope before reporting success (edit survives tab close, FR-57); FIFO sync; retryable failures retained and retried
+  - [x] Sync state machine surfaced (offline-sync.md): idle/queued/syncing/conflict/failed_retryable/failed_permanent
+  - [x] Conservative versioning (SRS §9.4): canvas conflicts are preserved for reconciliation and never silently last-write-wins overwritten
+  - [x] `OfflineAwarePersistence` integrates with the autosave controller: offline saves are queued + snapshot locally, non-offline failures propagate
+  - [x] Local canvas snapshot stored (SRS §9.2) so an offline edit is recoverable
+- Verification:
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → 54 tests (9 new offline tests); `npm run build` → built OK
+  - [x] Backend regression: PHPUnit → OK (287 tests, 768 assertions); Pint PASS; PHPStan no errors
+- Evidence: server/resources/js/canvas/{offline.ts,offline-queue.ts,offline-store.ts,offline-persistence.ts,__tests__/offline.test.ts}
+- Notes: IndexedDB is cache/queue, never canonical (offline-sync.md §Principle); PostgreSQL remains authoritative. Service Worker shell caching (TASK-050) and broader offline cache/today cache (TASK-051) are Phase 5 scope. The IndexedDB store requires a real IndexedDB (happy-dom lacks it), so the queue/sync logic is verified against the injectable in-memory store.
 
 ### Phase 5 — Offline/Recovery
 #### TASK-050 — Service Worker shell caching
