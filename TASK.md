@@ -271,9 +271,31 @@
 - Notes: primitives only, no persistence/API yet — consumed by TASK-021+; `diffInMinutes` returns float → cast to int; `toISOString()` includes microseconds; PHPUnit 11 requires test class name = file name.
 
 #### TASK-021 — Hard constraint engine
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- SRS: FR-27, FR-28, FR-64.
+- SRS: FR-27, FR-28, FR-64; SRS §0.3 requirement precedence; scheduling-engine hard constraint ordering; FR-04 Sacred Anchor rules.
+- Acceptance:
+  - [x] FR-64 separation: `HardConstraintEngine` validates feasibility BEFORE any soft scoring; soft changes can never make an invalid candidate executable
+  - [x] `CandidatePlacement` value object (taskId, title, duration, slot, deadline, isLocked, isSacredAnchor, existingSlot, priorityTier)
+  - [x] `ScheduleContext` (horizon, hardLandscape, existingAssignments, candidate set, reservePercent default 30)
+  - [x] `ConstraintViolation` (ruleCode, taskId, message) + `HardConstraintRule` contract
+  - [x] Rules in precedence order (scheduling-engine §Hard constraint ordering):
+    - [x] #1 `HardLandscapeCollisionRule` — no automation overlap with Hard Landscape (FR-04/FR-27)
+    - [x] #2 `LockedTaskMoveRule` — automation must not move locked tasks (same-slot re-place is not a move)
+    - [x] #3 `SacredAnchorRule` — exactly 25 min, at/after 06:00, locked against automation (FR-04)
+    - [x] #4 `TemporalValidityRule` — slot inside horizon
+    - [x] #5 `DeadlineFeasibilityRule` — slot end ≤ deadline
+    - [x] #6 `DurationFitRule` — task duration fits slot
+    - [x] #7 `IllegalOverlapRule` — no overlap with existing assignments or other candidates
+    - [x] #8 `SafetyReserveRule` — occupied (Hard Landscape + assignments + candidates, merged) ≤ (100−reserve)% of horizon (30% recharge/buffer reserve, FR-27)
+  - [x] `ValueObjects\PriorityTier` (1..3) + `ValueObjects\Deadline`
+- Verification:
+  - [x] Unit: `vendor/bin/phpunit` → OK (152 tests, 454 assertions)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (137 files)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` all pass (no API change)
+- Evidence: server/app/Domain/Scheduling/HardConstraintEngine.php, CandidatePlacement.php, ScheduleContext.php, ConstraintViolation.php, Contracts/HardConstraintRule.php, Rules/*.php, ValueObjects/{PriorityTier,Deadline}.php, server/tests/Unit/Scheduling/HardConstraintEngineTest.php
+- Notes: engine injects the candidate set into the validation context (overlap/reserve need the full set); reserve rule counts the candidate under evaluation; `max()` on TimeRange is invalid — use an explicit furthest-end merge.
 
 #### TASK-022 — Task ranking engine
 - Status: TODO

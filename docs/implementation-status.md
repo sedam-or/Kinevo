@@ -28,6 +28,7 @@ Program aggregate                 ✅ DONE (TASK-013)
 Task/subtask lifecycle            ✅ DONE (TASK-014)
 Activity log                      ✅ DONE (TASK-015)
 Scheduling engine (primitives)     ✅ DONE (TASK-020)
+Hard constraint engine            ✅ DONE (TASK-021)
 Offline shell                     🔴 TASK-050+
 Knowledge layer                   🔴 TASK-030+
 Canvas integration                🔴 TASK-040+
