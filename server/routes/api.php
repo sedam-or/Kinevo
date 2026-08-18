@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CanvasController;
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\KnowledgeLinkController;
 use App\Http\Controllers\Api\KnowledgeSearchController;
@@ -68,4 +69,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/notes/{noteId}/links/{linkId}', [KnowledgeLinkController::class, 'destroy']);
     Route::get('/knowledge/links', [KnowledgeLinkController::class, 'byTarget']);
     Route::get('/knowledge/search', [KnowledgeSearchController::class, 'search']);
+
+    Route::get('/canvases', [CanvasController::class, 'index']);
+    Route::post('/canvases', [CanvasController::class, 'store']);
+    Route::get('/canvases/{canvasId}', [CanvasController::class, 'show']);
+    Route::put('/canvases/{canvasId}', [CanvasController::class, 'save']);
 });

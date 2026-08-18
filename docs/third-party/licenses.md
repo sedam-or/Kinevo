@@ -27,12 +27,14 @@ Track every dependency or copied source component that creates redistribution ob
 | @tiptap/pm | `3.30.1` (package-lock) | MIT | https://github.com/ProseMirror | No | No | Check | Tiptap ProseMirror chain |
 | @tiptap/starter-kit | `3.30.1` (package-lock) | MIT | https://github.com/ueberdosis/tiptap | No | No | No | Bounded extension baseline |
 | @tiptap/vue-3 | `3.30.1` (package-lock) | MIT | https://github.com/ueberdosis/tiptap | No | No | No | Tiptap Vue bindings |
+| Excalidraw | `@excalidraw/excalidraw@0.18.1` (package-lock) | MIT | https://github.com/excalidraw/excalidraw | No | No | Yes | Canvas engine, behind `CanvasAdapter` boundary (TASK-040 spike) |
+| React | `react@19.2.8` (package-lock) | MIT | https://github.com/facebook/react | No | No | No | React island for Excalidraw (ADR-002/ADR-005) |
+| react-dom | `react-dom@19.2.8` (package-lock) | MIT | https://github.com/facebook/react | No | No | No | React island DOM renderer |
 
 ## Editor / canvas engines (integration adapters — not yet integrated)
 
 | Component | Version/Commit | License | Source | Modified? | Vendored? | Notice Required? | Notes |
 |---|---|---|---|---|---|---|---|
-| Excalidraw | pin at integration | MIT | https://github.com/excalidraw/excalidraw | TBD | TBD | Yes | Canvas engine, behind bounded adapter |
 | Ollama | deployment version | inspect distribution terms | https://github.com/ollama/ollama | No | No | Check | Optional runtime tool |
 
 ## Dev / CI dependencies (PHP)
@@ -61,5 +63,6 @@ Track every dependency or copied source component that creates redistribution ob
 `composer.lock` is the authoritative source for exact runtime/dev PHP versions.
 `server/package-lock.json` is the authoritative source for exact Node dependency
 versions. Tiptap and its ProseMirror chain were re-reviewed at integration time
-(TASK-031); Excalidraw/Ollama remain unintegrated and MUST be re-reviewed at
-their integration.
+(TASK-031); Excalidraw/React were re-reviewed at their integration (TASK-040
+architecture spike). Ollama remains unintegrated and MUST be re-reviewed at its
+integration.

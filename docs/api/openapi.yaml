@@ -928,22 +928,87 @@ paths:
         '422': { description: Validation error }
 
   /canvases:
+    get:
+      tags: [Canvas]
+      summary: List canvases for the authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanvasListResponse'
+        '401': { description: Unauthorized }
     post:
       tags: [Canvas]
       summary: Create canvas
-      responses: {'201': {description: Created}}
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CanvasCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanvasResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
 
   /canvases/{canvasId}:
     get:
       tags: [Canvas]
-      summary: Get canvas
-      responses: {'200': {description: OK}}
+      summary: Get canvas with scene document
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: canvasId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanvasWithDocumentResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Not found }
     put:
       tags: [Canvas]
       summary: Save canvas scene with optimistic version
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: canvasId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CanvasSaveRequest'
       responses:
-        '200': {description: Updated}
-        '409': {description: Canvas version conflict}
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanvasDocumentResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Not found }
+        '409': { description: Canvas version conflict }
+        '422': { description: Validation error }
 
   /ai/proposals:
     post:
@@ -1456,6 +1521,65 @@ components:
         query:
           type: string
           description: The search query that produced these results
+    Canvas:
+      type: object
+      required: [id, user_id, title, version]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        title: {type: string, maxLength: 200}
+        goal_id: {type: integer, nullable: true}
+        milestone_id: {type: integer, nullable: true}
+        program_id: {type: integer, nullable: true}
+        task_id: {type: integer, nullable: true}
+        version: {type: integer, minimum: 1}
+    CanvasCreateRequest:
+      type: object
+      required: [title]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        goal_id: {type: integer, nullable: true, minimum: 1}
+        milestone_id: {type: integer, nullable: true, minimum: 1}
+        program_id: {type: integer, nullable: true, minimum: 1}
+        task_id: {type: integer, nullable: true, minimum: 1}
+    CanvasDocument:
+      type: object
+      required: [id, canvas_id, schema_version, scene_json, version]
+      properties:
+        id: {type: integer}
+        canvas_id: {type: integer}
+        schema_version: {type: integer, minimum: 1}
+        scene_json: {type: object}
+        version: {type: integer, minimum: 1}
+    CanvasSaveRequest:
+      type: object
+      required: [scene_json, base_version]
+      properties:
+        scene_json: {type: object}
+        base_version: {type: integer, minimum: 0}
+    CanvasResponse:
+      type: object
+      required: [canvas]
+      properties:
+        canvas: {$ref: '#/components/schemas/Canvas'}
+    CanvasListResponse:
+      type: object
+      required: [canvases]
+      properties:
+        canvases:
+          type: array
+          items: {$ref: '#/components/schemas/Canvas'}
+    CanvasDocumentResponse:
+      type: object
+      required: [document]
+      properties:
+        document: {$ref: '#/components/schemas/CanvasDocument'}
+    CanvasWithDocumentResponse:
+      type: object
+      required: [canvas, document]
+      properties:
+        canvas: {$ref: '#/components/schemas/Canvas'}
+        document: {$ref: '#/components/schemas/CanvasDocument'}
 
 ---
 

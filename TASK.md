@@ -494,9 +494,23 @@
 
 ### Phase 4 — Canvas
 #### TASK-040 — Architecture Spike verification
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- Acceptance: Vue → adapter → React → Excalidraw → Laravel → PostgreSQL → IndexedDB path works.
+- SRS: FR-55 (Canvas lifecycle), FR-56 (version conflict); ADR-005 (Excalidraw behind adapter); ADR-002 (React island).
+- Acceptance:
+  - [x] Backend path verified: `canvases` + `canvas_documents` migrations → Canvas/CanvasDocument domain → CanvasRepository → CreateCanvas/ListCanvases/GetCanvas/SaveCanvas use cases → CanvasController (`GET/POST /canvases`, `GET/PUT /canvases/{canvasId}`) → PostgreSQL
+  - [x] FR-56 optimistic versioning: stale `PUT` returns `409` (CanvasVersionConflict); no silent overwrite
+  - [x] Frontend path verified: Vue `CanvasHost.vue` → framework-agnostic `CanvasAdapter` contract (`types.ts`) → `ExcalidrawCanvasAdapter` → React Island (`ExcalidrawIsland.tsx`) → Excalidraw
+  - [x] Boundary enforced: Vue layer depends only on `CanvasAdapter`, never on React/Excalidraw types (verified by typecheck + boundary test)
+  - [x] Excalidraw + React installed and licensed (MIT), ledger updated
+  - [x] `scene_json` stored as JSONB in PostgreSQL; schema_version recorded
+- Verification:
+  - [x] Backend: `vendor/bin/phpunit` → OK (277 tests, 744 assertions, 22 canvas tests)
+  - [x] `composer analyse` → PHPStan no errors; `composer lint` → Pint PASS (221 files)
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → 28 tests; `npm run build` → built OK
+  - [x] `check-openapi.sh` → PASS (39 paths); `check-doc-links.sh` → PASS (15 links)
+- Evidence: database/migrations/{2026_08_18_100000_create_canvases_table.php,2026_08_18_100001_create_canvas_documents_table.php}, server/app/Domain/Canvas/{Canvas,CanvasDocument,CanvasVersionConflict}.php, server/app/Domain/Canvas/Contracts/CanvasRepository.php, server/app/Infrastructure/Canvas/EloquentCanvasRepository.php, server/app/Application/Canvas/*.php, server/app/Http/Controllers/Api/CanvasController.php, server/routes/api.php, server/resources/js/canvas/{types.ts,ExcalidrawCanvasAdapter.ts,CanvasHost.vue,react/ExcalidrawIsland.tsx,__tests__/canvas-boundary.test.ts}, server/tests/{Unit/CanvasTest.php,Feature/Api/CanvasApiTest.php}, server/database/factories/{CanvasFactory.php,CanvasDocumentFactory.php}, docs/api/openapi.yaml, docs/third-party/licenses.md, docs/implementation-status.md
+- Notes: IndexedDB offline mutation queue is deferred to TASK-044 (FR-57); the spike verifies the in-memory path end-to-end. Excalidraw's imperative API is surfaced via the `excalidrawAPI` callback prop, projected onto the adapter's own handle so consumers stay decoupled from Excalidraw internal types.
 
 #### TASK-041 — Canvas domain schema
 - Status: TODO

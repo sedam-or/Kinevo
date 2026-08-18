@@ -38,9 +38,13 @@ Note aggregate                    ✅ DONE (TASK-030)
 Frontend scaffold (Vue 3 + TS)     ✅ DONE (TASK-031)
 Tiptap editor adapter              ✅ DONE (TASK-031)
 Knowledge linking                  ✅ DONE (TASK-032)
+Knowledge search                    ✅ DONE (TASK-033)
+Canvas architecture spike           ✅ DONE (TASK-040)
+Canvas backend (CRUD + versioning)   ✅ DONE (TASK-040)
+Canvas adapter boundary (frontend)   ✅ DONE (TASK-040)
 Offline shell                     🔴 TASK-050+
-Knowledge layer (search)          🟡 TASK-032+
-Canvas integration                🔴 TASK-040+
+Knowledge layer (search)          ✅ DONE (TASK-033)
+Canvas full integration            🟡 TASK-041+ (schema done; Excalidraw island live in spike)
 Adaptive context                  🔴 TASK-060+
 AI provider abstraction           🔴 TASK-070+
 Production deployment             🔴 TASK-080+
