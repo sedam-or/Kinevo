@@ -74,4 +74,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/canvases', [CanvasController::class, 'store']);
     Route::get('/canvases/{canvasId}', [CanvasController::class, 'show']);
     Route::put('/canvases/{canvasId}', [CanvasController::class, 'save']);
+    Route::get('/canvases/{canvasId}/files', [CanvasController::class, 'files']);
+    Route::post('/canvases/{canvasId}/files', [CanvasController::class, 'addFile']);
 });

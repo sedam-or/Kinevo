@@ -513,9 +513,26 @@
 - Notes: IndexedDB offline mutation queue is deferred to TASK-044 (FR-57); the spike verifies the in-memory path end-to-end. Excalidraw's imperative API is surfaced via the `excalidrawAPI` callback prop, projected onto the adapter's own handle so consumers stay decoupled from Excalidraw internal types.
 
 #### TASK-041 — Canvas domain schema
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- SRS: FR-55, FR-56.
+- SRS: FR-55, FR-56; SRS §7.5 Canvas Tables (canvases, canvas_documents, canvas_files).
+- Acceptance:
+  - [x] `canvases` migration: user ownership, title, optional goal/milestone/program/task context FKs, version, timestamps (SRS §7.5)
+  - [x] `canvas_documents` migration: canvas_id, schema_version, scene_json JSONB, version, timestamps (SRS §7.5)
+  - [x] `canvas_files` migration: canvas_id, storage_path, content_type, size_bytes, sha256, timestamps (SRS §7.5)
+  - [x] Binary files referenced by stable application-owned storage path; binary payloads live in object storage (SRS §7.5)
+  - [x] Domain: `Canvas`, `CanvasDocument`, `CanvasFile` entities + `CanvasRepository` contract (find/list/create/updateDocument + list/createFile)
+  - [x] FR-56 optimistic versioning: `version` monotonic, stale update → `CanvasVersionConflict` (409)
+  - [x] Application use cases: CreateCanvas, ListCanvases, GetCanvas, SaveCanvas, AddCanvasFile, ListCanvasFiles
+  - [x] HTTP: `/canvases` GET+POST, `/canvases/{canvasId}` GET+PUT, `/canvases/{canvasId}/files` GET+POST, owner-scoped (404 on cross-user, SRS §15.1)
+  - [x] OpenAPI Canvas + CanvasDocument + CanvasFile schemas synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (287 tests, 768 assertions, 32 canvas tests)
+  - [x] `composer analyse` → PHPStan no errors; `composer lint` → Pint PASS (227 files)
+  - [x] migrations apply to PostgreSQL (`migrate:status` Ran; canvases, canvas_documents, canvas_files present)
+  - [x] `check-openapi.sh` → PASS (40 paths); `check-doc-links.sh` → PASS
+- Evidence: database/migrations/{2026_08_18_100000_create_canvases_table.php,2026_08_18_100001_create_canvas_documents_table.php,2026_08_18_100002_create_canvas_files_table.php}, server/app/Domain/Canvas/{Canvas,CanvasDocument,CanvasFile,CanvasVersionConflict}.php, server/app/Domain/Canvas/Contracts/CanvasRepository.php, server/app/Infrastructure/Canvas/EloquentCanvasRepository.php, server/app/Application/Canvas/*.php, server/app/Http/Controllers/Api/CanvasController.php, server/app/Models/{Canvas,CanvasDocument,CanvasFile}.php, server/routes/api.php, server/tests/{Unit/CanvasTest.php,Unit/CanvasFileTest.php,Feature/Api/CanvasApiTest.php}, server/database/factories/{CanvasFactory.php,CanvasDocumentFactory.php,CanvasFileFactory.php}, docs/api/openapi.yaml
+- Notes: Note-context attachment (FR-55 "Note context") is a knowledge-layer concern (note↔canvas link via knowledge_links) rather than a `canvases.note_id` column, since the SRS §7.5 schema does not define note_id on canvases; the link model already supports it. Canvas archive behavior is a future lifecycle concern tracked at the Canvas UI layer.
 
 #### TASK-042 — Excalidraw adapter
 - Status: TODO

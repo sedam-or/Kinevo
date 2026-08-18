@@ -41,6 +41,7 @@ Knowledge linking                  ✅ DONE (TASK-032)
 Knowledge search                    ✅ DONE (TASK-033)
 Canvas architecture spike           ✅ DONE (TASK-040)
 Canvas backend (CRUD + versioning)   ✅ DONE (TASK-040)
+Canvas domain schema (incl. files)   ✅ DONE (TASK-041)
 Canvas adapter boundary (frontend)   ✅ DONE (TASK-040)
 Offline shell                     🔴 TASK-050+
 Knowledge layer (search)          ✅ DONE (TASK-033)

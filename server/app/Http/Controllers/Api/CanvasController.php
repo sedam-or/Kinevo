@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\Canvas\AddCanvasFileUseCase;
 use App\Application\Canvas\CreateCanvasUseCase;
 use App\Application\Canvas\GetCanvasUseCase;
 use App\Application\Canvas\ListCanvasesUseCase;
+use App\Application\Canvas\ListCanvasFilesUseCase;
 use App\Application\Canvas\SaveCanvasUseCase;
 use App\Domain\Canvas\CanvasVersionConflict;
 use App\Http\Controllers\Controller;
@@ -20,6 +22,8 @@ final class CanvasController extends Controller
         private readonly ListCanvasesUseCase $listCanvasesUseCase,
         private readonly GetCanvasUseCase $getCanvasUseCase,
         private readonly SaveCanvasUseCase $saveCanvasUseCase,
+        private readonly AddCanvasFileUseCase $addCanvasFileUseCase,
+        private readonly ListCanvasFilesUseCase $listCanvasFilesUseCase,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -100,5 +104,49 @@ final class CanvasController extends Controller
         }
 
         return response()->json(['document' => $document->toArray()]);
+    }
+
+    public function files(Request $request, int $canvasId): JsonResponse
+    {
+        try {
+            $files = $this->listCanvasFilesUseCase->__invoke($request->user()->id, $canvasId);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+
+        return response()->json([
+            'files' => array_map(fn ($file) => $file->toArray(), $files),
+        ]);
+    }
+
+    public function addFile(Request $request, int $canvasId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'storage_path' => ['required', 'string', 'min:1'],
+            'content_type' => ['required', 'string', 'min:1'],
+            'size_bytes' => ['required', 'integer', 'min:0'],
+            'sha256' => ['nullable', 'string', 'size:64'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $data = $validator->validated();
+
+        try {
+            $file = $this->addCanvasFileUseCase->__invoke(
+                $request->user()->id,
+                $canvasId,
+                $data['storage_path'],
+                $data['content_type'],
+                $data['size_bytes'],
+                $data['sha256'] ?? null,
+            );
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+
+        return response()->json(['file' => $file->toArray()], 201);
     }
 }

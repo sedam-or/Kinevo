@@ -1010,6 +1010,53 @@ paths:
         '409': { description: Canvas version conflict }
         '422': { description: Validation error }
 
+  /canvases/{canvasId}/files:
+    get:
+      tags: [Canvas]
+      summary: List binary files attached to a canvas
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: canvasId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanvasFileListResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Not found }
+    post:
+      tags: [Canvas]
+      summary: Register a binary file attachment on a canvas
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: canvasId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CanvasFileCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanvasFileResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Not found }
+        '422': { description: Validation error }
+
   /ai/proposals:
     post:
       tags: [AI]
@@ -1580,6 +1627,36 @@ components:
       properties:
         canvas: {$ref: '#/components/schemas/Canvas'}
         document: {$ref: '#/components/schemas/CanvasDocument'}
+    CanvasFile:
+      type: object
+      required: [id, canvas_id, storage_path, content_type, size_bytes]
+      properties:
+        id: {type: integer}
+        canvas_id: {type: integer}
+        storage_path: {type: string}
+        content_type: {type: string}
+        size_bytes: {type: integer, minimum: 0}
+        sha256: {type: string, nullable: true}
+    CanvasFileCreateRequest:
+      type: object
+      required: [storage_path, content_type, size_bytes]
+      properties:
+        storage_path: {type: string, minLength: 1}
+        content_type: {type: string, minLength: 1}
+        size_bytes: {type: integer, minimum: 0}
+        sha256: {type: string, nullable: true}
+    CanvasFileResponse:
+      type: object
+      required: [file]
+      properties:
+        file: {$ref: '#/components/schemas/CanvasFile'}
+    CanvasFileListResponse:
+      type: object
+      required: [files]
+      properties:
+        files:
+          type: array
+          items: {$ref: '#/components/schemas/CanvasFile'}
 
 ---
 

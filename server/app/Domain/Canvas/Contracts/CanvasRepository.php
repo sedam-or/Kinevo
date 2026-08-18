@@ -4,6 +4,7 @@ namespace App\Domain\Canvas\Contracts;
 
 use App\Domain\Canvas\Canvas;
 use App\Domain\Canvas\CanvasDocument;
+use App\Domain\Canvas\CanvasFile;
 
 interface CanvasRepository
 {
@@ -18,4 +19,11 @@ interface CanvasRepository
     public function createDocument(CanvasDocument $document): CanvasDocument;
 
     public function updateDocument(CanvasDocument $document, int $baseVersion): CanvasDocument;
+
+    /**
+     * @return array<int, CanvasFile>
+     */
+    public function listFilesForCanvas(int $canvasId): array;
+
+    public function createFile(CanvasFile $file): CanvasFile;
 }
