@@ -147,6 +147,210 @@ paths:
         '409': { description: Conflict }
         '422': { description: Business rule violation }
 
+  /tasks/{taskId}:
+    get:
+      tags: [Tasks]
+      summary: Get a single task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found }
+    put:
+      tags: [Tasks]
+      summary: Update editable task fields
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found }
+        '422': { description: Validation error }
+
+  /tasks/{taskId}/status:
+    post:
+      tags: [Tasks]
+      summary: Apply an explicit task state transition
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskStatusRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found }
+        '422': { description: Invalid transition }
+
+  /tasks/{taskId}/partial-complete:
+    post:
+      tags: [Tasks]
+      summary: Partial complete — clone remaining subtasks into a continuation task (FR-09)
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartialCompleteResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found }
+        '422': { description: Invalid state }
+
+  /tasks/{taskId}/subtasks:
+    get:
+      tags: [Tasks]
+      summary: List subtasks of a task, ordered by sequence
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubtaskListResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found }
+    post:
+      tags: [Tasks]
+      summary: Add a checklist subtask to a task (FR-09, no deeper hierarchy)
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubtaskCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubtaskResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found }
+        '422': { description: Validation error }
+
+  /tasks/{taskId}/subtasks/{subtaskId}:
+    put:
+      tags: [Tasks]
+      summary: Update subtask fields (FR-09)
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: subtaskId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubtaskUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubtaskUpdateResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Subtask not found }
+        '422': { description: Validation error }
+
+  /tasks/{taskId}/subtasks/{subtaskId}/toggle:
+    post:
+      tags: [Tasks]
+      summary: Toggle subtask complete/uncomplete and recalc task progress (FR-09)
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: subtaskId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubtaskUpdateResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Subtask not found }
+
+  /subtasks/{subtaskId}/promote:
+    post:
+      tags: [Tasks]
+      summary: Promote a subtask into a standalone task (FR-09)
+      parameters:
+        - name: subtaskId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromoteResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Subtask not found }
+
   /goals:
     get:
       tags: [Goals]
@@ -625,14 +829,110 @@ components:
         week_start_day: {type: string, enum: [monday, sunday, saturday]}
     TaskCreateRequest:
       type: object
-      required: [title, priority, duration_minutes]
+      required: [title]
       properties:
         title: {type: string, minLength: 1, maxLength: 200}
-        priority: {type: string, enum: [low, medium, high, urgent]}
-        duration_minutes: {type: integer, minimum: 1}
-        goal_id: {type: string, format: uuid, nullable: true}
-        milestone_id: {type: string, format: uuid, nullable: true}
-        program_id: {type: string, format: uuid, nullable: true}
+        description: {type: string, nullable: true}
+        program_id: {type: integer, nullable: true}
+        goal_id: {type: integer, nullable: true}
+        milestone_id: {type: integer, nullable: true}
+        priority_tier: {type: integer, minimum: 1, maximum: 3, default: 3}
+        estimated_minutes: {type: integer, minimum: 1, nullable: true}
+        due_at: {type: string, format: date-time, nullable: true}
+    TaskUpdateRequest:
+      type: object
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, nullable: true}
+        program_id: {type: integer, nullable: true}
+        goal_id: {type: integer, nullable: true}
+        milestone_id: {type: integer, nullable: true}
+        priority_tier: {type: integer, minimum: 1, maximum: 3}
+        estimated_minutes: {type: integer, minimum: 1, nullable: true}
+        due_at: {type: string, format: date-time, nullable: true}
+    TaskStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, enum: [backlog, scheduled, in_progress, partial, continued, completed, skipped, missed, conflict]}
+    Task:
+      type: object
+      required: [id, title, status, priority_tier, version]
+      properties:
+        id: {type: integer}
+        program_id: {type: integer, nullable: true}
+        goal_id: {type: integer, nullable: true}
+        milestone_id: {type: integer, nullable: true}
+        title: {type: string, minLength: 1, maxLength: 200}
+        description: {type: string, nullable: true}
+        status: {type: string, enum: [backlog, scheduled, in_progress, partial, continued, completed, skipped, missed, conflict]}
+        priority_tier: {type: integer, minimum: 1, maximum: 3}
+        estimated_minutes: {type: integer, minimum: 1, nullable: true}
+        due_at: {type: string, format: date-time, nullable: true}
+        progress_mode: {type: string, enum: [derived, manual], default: derived}
+        progress: {type: integer, minimum: 0, maximum: 100, default: 0}
+        version: {type: integer}
+    TaskResponse:
+      type: object
+      required: [task]
+      properties:
+        task: {$ref: '#/components/schemas/Task'}
+    SubtaskCreateRequest:
+      type: object
+      required: [title]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        notes: {type: string, nullable: true}
+        sequence: {type: integer, minimum: 0}
+    SubtaskUpdateRequest:
+      type: object
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        notes: {type: string, nullable: true}
+        sequence: {type: integer, minimum: 0}
+    Subtask:
+      type: object
+      required: [id, task_id, title, completed, version]
+      properties:
+        id: {type: integer}
+        task_id: {type: integer}
+        title: {type: string, minLength: 1, maxLength: 200}
+        notes: {type: string, nullable: true}
+        sequence: {type: integer, minimum: 0}
+        completed: {type: boolean, default: false}
+        version: {type: integer}
+    SubtaskResponse:
+      type: object
+      required: [subtask]
+      properties:
+        subtask: {$ref: '#/components/schemas/Subtask'}
+    SubtaskListResponse:
+      type: object
+      required: [subtasks]
+      properties:
+        subtasks:
+          type: array
+          items: {$ref: '#/components/schemas/Subtask'}
+    SubtaskUpdateResponse:
+      type: object
+      required: [subtask, task]
+      properties:
+        subtask: {$ref: '#/components/schemas/Subtask'}
+        task: {$ref: '#/components/schemas/Task'}
+    PartialCompleteResponse:
+      type: object
+      required: [task, continuation]
+      properties:
+        task: {$ref: '#/components/schemas/Task'}
+        continuation:
+          allOf: [{$ref: '#/components/schemas/Task'}]
+          nullable: true
+    PromoteResponse:
+      type: object
+      required: [task, source_task]
+      properties:
+        task: {$ref: '#/components/schemas/Task'}
+        source_task: {$ref: '#/components/schemas/Task'}
     Goal:
       type: object
       required: [id, title, horizon, status, priority_tier]

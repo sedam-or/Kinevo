@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\MilestoneController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProgramController;
+use App\Http\Controllers\Api\TaskController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -37,4 +38,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/programs/{programId}', [ProgramController::class, 'show']);
     Route::put('/programs/{programId}', [ProgramController::class, 'update']);
     Route::post('/programs/{programId}/status', [ProgramController::class, 'status']);
+
+    Route::get('/tasks', [TaskController::class, 'index']);
+    Route::post('/tasks', [TaskController::class, 'store']);
+    Route::get('/tasks/{taskId}', [TaskController::class, 'show']);
+    Route::put('/tasks/{taskId}', [TaskController::class, 'update']);
+    Route::post('/tasks/{taskId}/status', [TaskController::class, 'status']);
+    Route::post('/tasks/{taskId}/partial-complete', [TaskController::class, 'partialComplete']);
+    Route::get('/tasks/{taskId}/subtasks', [TaskController::class, 'subtasks']);
+    Route::post('/tasks/{taskId}/subtasks', [TaskController::class, 'addSubtask']);
+    Route::post('/tasks/{taskId}/subtasks/{subtaskId}/toggle', [TaskController::class, 'toggleSubtask']);
+    Route::put('/tasks/{taskId}/subtasks/{subtaskId}', [TaskController::class, 'updateSubtask']);
+    Route::post('/subtasks/{subtaskId}/promote', [TaskController::class, 'promoteSubtask']);
 });

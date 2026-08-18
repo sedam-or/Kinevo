@@ -25,6 +25,7 @@ Milestone aggregate               ✅ DONE (TASK-012)
 PostgreSQL schema                 🟡 migrations baseline only
 Core domain (milestones)          ✅ DONE (TASK-012)
 Program aggregate                 ✅ DONE (TASK-013)
+Task/subtask lifecycle            ✅ DONE (TASK-014)
 Scheduling engine                 🔴 TASK-020+
 Offline shell                     🔴 TASK-050+
 Knowledge layer                   🔴 TASK-030+
