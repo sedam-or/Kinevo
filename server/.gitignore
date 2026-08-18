@@ -18,6 +18,7 @@
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
+/public/sw.js
 /storage/*.key
 /storage/pail
 /storage/framework/phpstan

@@ -591,8 +591,22 @@
 
 ### Phase 5 — Offline/Recovery
 #### TASK-050 — Service Worker shell caching
-- Status: TODO
+- Status: DONE
 - Priority: P0
+- SRS: FR-44 (offline support via Service Worker); offline-sync.md §Service Worker (cache app shell, enable offline navigation in scope, never a second business-logic engine); SRS §9.1.
+- Acceptance:
+  - [x] Testable, browser-agnostic SW cache-strategy core (`sw-core.ts`): precache on install, network-first navigations with cache fallback, cache-first shell assets
+  - [x] `installShellCaching` wires install/activate/fetch: precache shell, claim clients + purge stale caches on activate, serve navigations offline
+  - [x] Service Worker NEVER intercepts business API requests (pass-through) — it is not a business-logic engine (offline-sync.md §Service Worker)
+  - [x] SW entry (`sw.ts`) binds browser globals (self, caches, clients, fetch) to the testable core
+  - [x] Vite plugin builds the SW and injects a precache manifest of the hashed shell assets (app.css, app.js, fonts); final `sw.js` copied to web root for full-origin scope
+  - [x] Guarded SW registration in `app.js` (only secure contexts + SW-capable browsers; failures swallowed)
+  - [x] `public/sw.js` build artifact gitignored
+- Verification:
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → 63 tests (9 new sw-core tests); `npm run build` → built OK, `public/sw.js` precaches app shell assets
+  - [x] Backend regression: PHPUnit → OK (287 tests, 768 assertions); Pint PASS; PHPStan no errors
+- Evidence: server/resources/js/offline/{sw-core.ts,sw.ts,sw-env.d.ts,register-sw.ts,__tests__/sw-core.test.ts}, server/resources/js/app.js, server/vite.config.ts, server/vite-shell-precache-plugin.ts, server/.gitignore
+- Notes: This task caches the app SHELL (HTML/CSS/JS/fonts) for offline navigation. Today/business data caching is TASK-051 (FR-44). The SW core is tested with an injectable browser-environment mock since happy-dom lacks a real Service Worker/Cache Storage; `Request`/`Response` are used directly.
 
 #### TASK-051 — Today cache
 - Status: TODO

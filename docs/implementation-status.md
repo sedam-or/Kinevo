@@ -46,7 +46,8 @@ Canvas adapter boundary (frontend)   ✅ DONE (TASK-040)
 Excalidraw adapter (tested)          ✅ DONE (TASK-042)
 Canvas autosave/versioning           ✅ DONE (TASK-043)
 Canvas offline mutation queue        ✅ DONE (TASK-044)
-Offline shell                     🔴 TASK-050+
+Offline shell (Service Worker)       ✅ DONE (TASK-050)
+Offline shell                     🔴 TASK-051+ (Today cache)
 Knowledge layer (search)          ✅ DONE (TASK-033)
 Canvas full integration            🟡 TASK-041+ (schema done; Excalidraw island live in spike)
 Adaptive context                  🔴 TASK-060+

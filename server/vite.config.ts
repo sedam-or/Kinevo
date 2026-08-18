@@ -4,11 +4,16 @@ import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import tailwindcss from '@tailwindcss/vite';
+import { viteShellPrecache } from './vite-shell-precache-plugin';
 
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: [
+                'resources/css/app.css',
+                'resources/js/app.js',
+                'resources/js/offline/sw.ts',
+            ],
             refresh: true,
             fonts: [
                 bunny('Instrument Sans', {
@@ -18,6 +23,7 @@ export default defineConfig({
         }),
         vue(),
         tailwindcss(),
+        viteShellPrecache(),
     ],
     resolve: {
         alias: {
