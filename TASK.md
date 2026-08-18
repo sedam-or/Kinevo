@@ -609,9 +609,21 @@
 - Notes: This task caches the app SHELL (HTML/CSS/JS/fonts) for offline navigation. Today/business data caching is TASK-051 (FR-44). The SW core is tested with an injectable browser-environment mock since happy-dom lacks a real Service Worker/Cache Storage; `Request`/`Response` are used directly.
 
 #### TASK-051 — Today cache
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- SRS: FR-44.
+- SRS: FR-44 (offline Today cache, "Today has been loaded online at least once for full baseline cache"); SRS §9.1 (Today view cache), §9.2 (cached entities + schedule snapshot in IndexedDB); offline-sync.md.
+- Acceptance:
+  - [x] `TodayData` snapshot type (date, tasks, subtasks, schedule slots, cachedAt) matching the Today view surface
+  - [x] `TodayCacheStore` contract (put/get/clear by date) + `IndexedDbTodayCacheStore` (IndexedDB) + injectable in-memory store for tests
+  - [x] `TodayCache` orchestration: online first-load fetches `GET /api/v1/today?date=` and persists snapshot (FR-44 baseline cache precondition)
+  - [x] Offline reads serve the cached snapshot (SRS §9.1 "Today view cache"); returns `none` if never loaded online
+  - [x] `refresh()` forces a network fetch on reconnect; `isStale()` detects stale cache; `clear()` removes a superseded snapshot
+  - [x] IndexedDB is cache only — PostgreSQL remains authoritative (offline-sync.md §Principle)
+- Verification:
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → 71 tests (8 new Today cache tests); `npm run build` → built OK
+  - [x] Backend regression: PHPUnit → OK (287 tests, 768 assertions); Pint PASS; PHPStan no errors
+- Evidence: server/resources/js/offline/{today-types.ts,today-cache.ts,today-store.ts,__tests__/today-cache.test.ts}
+- Notes: The Today schedule endpoint (`GET /api/v1/today?date=`) is contractually defined (OpenAPI Today tag, SRS §8.4); the cache fetches and stores its response. Quick Capture offline queueing and mutation enqueue are the scope of TASK-052+. Cache staleness vs network refresh is surfaced to the UI via `isStale()`.
 
 #### TASK-052 — Mutation queue
 - Status: TODO
