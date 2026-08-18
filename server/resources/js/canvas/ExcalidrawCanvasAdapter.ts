@@ -1,4 +1,4 @@
-import { createRoot, type Root } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import { createElement, type RefObject } from 'react';
 import { ExcalidrawIsland, type ExcalidrawIslandHandle } from './react/ExcalidrawIsland';
 import type {
@@ -12,6 +12,34 @@ import type {
 
 const EMPTY_APP_STATE: Record<string, unknown> = {};
 
+/** Minimal React root surface the adapter needs (enables DI in tests). */
+export interface CanvasRootLike {
+    render(element: unknown): void;
+    unmount(): void;
+}
+
+/** Create a React root for a host element. Injectable for tests. */
+export type CanvasRootFactory = (host: HTMLElement) => CanvasRootLike;
+
+/**
+ * Island surface the adapter drives. Injectable so tests can substitute a
+ * fake without a real DOM/canvas (Excalidraw needs WebGL/canvas, absent in
+ * happy-dom).
+ */
+export interface CanvasIslandFactory {
+    /** Build a new island element from props. */
+    create(props: Record<string, unknown>): unknown;
+    /** The imperative handle object used as the island ref. */
+    makeHandle(): RefObject<ExcalidrawIslandHandle | null>;
+}
+
+const defaultRootFactory: CanvasRootFactory = (host) => createRoot(host);
+
+const defaultIslandFactory: CanvasIslandFactory = {
+    create: (props) => createElement(ExcalidrawIsland, props as never),
+    makeHandle: () => ({ current: null }),
+};
+
 /**
  * Excalidraw canvas adapter behind the Kinevo CanvasAdapter boundary.
  *
@@ -20,17 +48,28 @@ const EMPTY_APP_STATE: Record<string, unknown> = {};
  * The engine can be replaced without touching the Vue layer.
  */
 export class ExcalidrawCanvasAdapter implements CanvasAdapter {
-    private root: Root | null = null;
-    private handle: RefObject<ExcalidrawIslandHandle | null> = { current: null };
+    private root: CanvasRootLike | null = null;
+    private handle: RefObject<ExcalidrawIslandHandle | null>;
     private listeners = new Set<(change: CanvasChange) => void>();
     private scene: CanvasScene | null = null;
     private readOnly = false;
     private theme: CanvasTheme = 'auto';
     private host: HTMLElement | null = null;
+    private readonly islandFactory: CanvasIslandFactory;
+    private readonly rootFactory: CanvasRootFactory;
+
+    constructor(
+        islandFactory: CanvasIslandFactory = defaultIslandFactory,
+        rootFactory: CanvasRootFactory = defaultRootFactory,
+    ) {
+        this.islandFactory = islandFactory;
+        this.rootFactory = rootFactory;
+        this.handle = islandFactory.makeHandle();
+    }
 
     mount(host: HTMLElement): void {
         this.host = host;
-        this.root = createRoot(host);
+        this.root = this.rootFactory(host);
         this.renderIsland();
     }
 
@@ -94,22 +133,19 @@ export class ExcalidrawCanvasAdapter implements CanvasAdapter {
         const initialTheme = this.theme;
         const initialScene = this.scene;
 
-        const island = createElement(
-            ExcalidrawIsland,
-            {
-                ref: this.handle,
-                initialScene,
-                initialReadOnly,
-                initialTheme,
-                onSceneChange: (scene: CanvasScene) => {
-                    this.scene = scene;
-                    for (const listener of this.listeners) {
-                        listener({ scene });
-                    }
-                },
+        const element = this.islandFactory.create({
+            ref: this.handle,
+            initialScene,
+            initialReadOnly,
+            initialTheme,
+            onSceneChange: (scene: CanvasScene) => {
+                this.scene = scene;
+                for (const listener of this.listeners) {
+                    listener({ scene });
+                }
             },
-        );
+        });
 
-        this.root?.render(island);
+        this.root?.render(element);
     }
 }

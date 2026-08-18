@@ -535,8 +535,22 @@
 - Notes: Note-context attachment (FR-55 "Note context") is a knowledge-layer concern (note↔canvas link via knowledge_links) rather than a `canvases.note_id` column, since the SRS §7.5 schema does not define note_id on canvases; the link model already supports it. Canvas archive behavior is a future lifecycle concern tracked at the Canvas UI layer.
 
 #### TASK-042 — Excalidraw adapter
-- Status: TODO
+- Status: DONE
 - Priority: P0
+- SRS: FR-55; ADR-005 (Excalidraw behind a Kinevo CanvasAdapter boundary); ADR-002 (React island).
+- Acceptance:
+  - [x] Framework-agnostic `CanvasAdapter` contract (types.ts): mount/load/getScene/save/setReadOnly/setTheme/subscribe/flush/destroy
+  - [x] `ExcalidrawCanvasAdapter` implements the contract behind the boundary; Vue talks only to the adapter, never to React/Excalidraw types
+  - [x] `ExcalidrawIsland` React component renders Excalidraw; imperative API surfaced via `excalidrawAPI` callback and projected onto an adapter-owned handle
+  - [x] `CanvasHost.vue` mounts the adapter and forwards scene/readOnly/theme; emits `change` + `ready` events
+  - [x] Adapter refactored for testability: island + React-root factories injectable (DI seam), so orchestration is verifiable without a WebGL/canvas environment
+  - [x] 9 unit tests verify adapter orchestration (mount/load/save/subscribe/flush/destroy + engine forwarding) via fake island/root
+  - [x] Excalidraw scene JSON is the canonical representation; Kinevo owns persistence/versioning/ownership
+- Verification:
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → 37 tests (9 new adapter tests); `npm run build` → built OK
+  - [x] Backend regression: PHPUnit → OK (287 tests, 768 assertions); Pint PASS; PHPStan no errors
+- Evidence: server/resources/js/canvas/{types.ts,ExcalidrawCanvasAdapter.ts,CanvasHost.vue,react/ExcalidrawIsland.tsx,__tests__/ExcalidrawCanvasAdapter.test.ts,__tests__/canvas-boundary.test.ts}
+- Notes: The React island module is `vi.mock`-ed in the adapter test because Excalidraw requires a WebGL/canvas environment absent from happy-dom; the DI seam (injectable island/root factories) lets the adapter's own boundary logic be tested in isolation.
 
 #### TASK-043 — Canvas autosave/versioning
 - Status: TODO
