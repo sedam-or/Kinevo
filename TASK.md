@@ -553,8 +553,23 @@
 - Notes: The React island module is `vi.mock`-ed in the adapter test because Excalidraw requires a WebGL/canvas environment absent from happy-dom; the DI seam (injectable island/root factories) lets the adapter's own boundary logic be tested in isolation.
 
 #### TASK-043 — Canvas autosave/versioning
-- Status: TODO
+- Status: DONE
 - Priority: P0
+- SRS: FR-56 (optimistic versioning, 409 on stale); design.md §Canvas save states (Saved/Saving/Offline/Syncing/Conflict/Failed).
+- Acceptance:
+  - [x] Framework-agnostic `CanvasAutosaveController` orchestrates adapter + server save
+  - [x] Debounced autosave on adapter scene changes (configurable wait, cancellable timer)
+  - [x] Optimistic versioning: tracks base version, sends it with each save, advances from server response (FR-56)
+  - [x] Save-state lifecycle surfaced for UI: idle/dirty/saving/saved/offline/conflict/failed (design.md)
+  - [x] 409-style conflict detected (`CANVAS_VERSION_CONFLICT`) → `conflict` state, autosave paused until `reconcile()`
+  - [x] `reconcile(scene, serverVersion)` adopts authoritative version + scene, returns to idle
+  - [x] `flush()`/`saveNow()` immediate save bypassing debounce; `dispose()` stops autosave
+  - [x] `CanvasPersistence` contract injectable (HTTP layer implements `PUT /canvases/{canvasId}`)
+- Verification:
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → 45 tests (8 new autosave tests); `npm run build` → built OK
+  - [x] Backend regression: PHPUnit → OK (287 tests, 768 assertions); Pint PASS; PHPStan no errors
+- Evidence: server/resources/js/canvas/autosave.ts, server/resources/js/canvas/__tests__/autosave.test.ts
+- Notes: Offline persistence of the pending scene (IndexedDB) and the offline sync state machine are the scope of TASK-044/offline tasks; this task handles the in-memory autosave orchestration and conflict surfacing. The server `PUT /canvases/{canvasId}` already returns `409 CANVAS_VERSION_CONFLICT` (TASK-040/041).
 
 #### TASK-044 — Canvas offline mutation queue
 - Status: TODO
