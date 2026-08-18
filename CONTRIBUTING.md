@@ -1,4 +1,4 @@
-# Contributing to LIFESYNC OS
+# Contributing to Kinevo
 
 Thanks for your interest in contributing. This guide keeps contributions aligned
 with the project's requirements, architecture, and governance. Please read it
@@ -137,7 +137,7 @@ Reference the relevant task when applicable, e.g.
 
 ## 13. License / provenance rules
 
-- LIFESYNC OS is licensed under the MIT License (see `LICENSE`).
+- Kinevo is licensed under the MIT License (see `LICENSE`).
 - Third-party components retain their own licenses and required notices.
 - Never strip license headers from copied source.
 - Record provenance (name, URL, version, license, modifications) for any

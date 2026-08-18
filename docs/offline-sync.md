@@ -1,4 +1,4 @@
-# LIFESYNC OS — Offline & Synchronization
+# Kinevo — Offline & Synchronization
 
 ### Principle
 Offline mode increases continuity, but PostgreSQL remains authoritative.

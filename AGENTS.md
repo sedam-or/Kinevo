@@ -1,7 +1,7 @@
-# LIFESYNC OS — AI Coding Agent Operating Contract
+# Kinevo — AI Coding Agent Operating Contract
 
 ### Mission
-Build LIFESYNC OS as a maintainable, testable, explainable, offline-capable,
+Build Kinevo as a maintainable, testable, explainable, offline-capable,
 open-source modular monolith while preserving the invariants defined by
 `docs/SRS.md`, the architecture, and the test contracts. Never silently redefine
 product requirements; never overwrite completed implementation merely to match
@@ -156,7 +156,7 @@ Transaction
 
 ### External engine boundary
 Excalidraw owns drawing behavior. Tiptap owns editing behavior. Ollama owns
-inference behavior. LIFESYNC owns business semantics: identity, ownership,
+inference behavior. Kinevo owns business semantics: identity, ownership,
 persistence, versioning, links, attachments, offline state, and domain rules.
 
 ### Definition of done
@@ -177,6 +177,6 @@ not runtime product dependencies.
 
 ### External open-source components
 Use adapters. Do not make Excalidraw, Tiptap, or any third-party editor the owner
-of LIFESYNC business semantics.
+of Kinevo business semantics.
 
 ---

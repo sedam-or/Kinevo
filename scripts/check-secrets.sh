@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "${1:-.}" && pwd)"
 errors=0
 
-printf '%s\n' "LIFESYNC secret scan"
+printf '%s\n' "Kinevo secret scan"
 printf '%s\n' "Root: $ROOT"
 printf '%s\n\n' "----------------------------------------"
 

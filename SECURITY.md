@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-LIFESYNC OS is pre-1.0 software. Only the latest published release receives
+Kinevo is pre-1.0 software. Only the latest published release receives
 security fixes. Backporting to older versions is considered on a case-by-case
 basis; assume the current `main` branch and latest release are the only
 supported targets.

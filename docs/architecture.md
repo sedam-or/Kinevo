@@ -1,7 +1,7 @@
-# LIFESYNC OS — Technical Architecture
+# Kinevo — Technical Architecture
 
 ### Architectural style
-LIFESYNC uses a **modular monolith**. It is one deployable Laravel application with explicit domain/application/infrastructure boundaries.
+Kinevo uses a **modular monolith**. It is one deployable Laravel application with explicit domain/application/infrastructure boundaries.
 
 ### Why modular monolith
 - single-user product;
@@ -82,10 +82,10 @@ React Island
 Excalidraw
 ```
 
-Excalidraw owns visual editing. LIFESYNC owns canvas entity, ownership, links, persistence, versioning, and offline synchronization.
+Excalidraw owns visual editing. Kinevo owns canvas entity, ownership, links, persistence, versioning, and offline synchronization.
 
 ### Knowledge boundary
-Tiptap owns document editing mechanics. LIFESYNC owns note identity, links, persistence, access, attachments, and domain semantics.
+Tiptap owns document editing mechanics. Kinevo owns note identity, links, persistence, access, attachments, and domain semantics.
 
 ### AI boundary
 LLMs are untrusted external-like providers. All outputs pass schema validation and domain validation.

@@ -1,4 +1,4 @@
-# LIFESYNC OS — Implementation Status
+# Kinevo — Implementation Status
 
 ### Purpose
 This document is a high-level mirror of execution progress. `TASK.md` is the granular execution board.

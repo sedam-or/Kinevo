@@ -1,14 +1,14 @@
 # ADR-005 — Excalidraw Behind a Canvas Adapter
 
 ### Decision
-Use Excalidraw as the initial canvas engine behind a LIFESYNC adapter.
+Use Excalidraw as the initial canvas engine behind a Kinevo adapter.
 
 ### Boundary
 ```text
 Vue → Canvas Adapter → React Island → Excalidraw
 ```
 
-### LIFESYNC owns
+### Kinevo owns
 - canvas identity;
 - domain links;
 - persistence;

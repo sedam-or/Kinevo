@@ -1,7 +1,7 @@
 # Third-Party Attributions
 
 ### Purpose
-Human-readable attribution list for OSS components used by LIFESYNC OS.
+Human-readable attribution list for OSS components used by Kinevo.
 
 ### Governance
 This file is updated as dependencies are introduced. Attribution wording is copied
@@ -58,8 +58,8 @@ License file retained at:
 - **Repository:** https://github.com/ueberdosis/tiptap
 - **Version/Commit:** `@tiptap/core@3.30.1` per `server/package-lock.json`
 - **License:** MIT
-- **Used for:** Rich-text editor engine, behind the LIFESYNC `EditorAdapter` boundary
-- **Modifications:** None (used as-is; bounded extension set configured by LIFESYNC)
+- **Used for:** Rich-text editor engine, behind the Kinevo `EditorAdapter` boundary
+- **Modifications:** None (used as-is; bounded extension set configured by Kinevo)
 - **Attribution text:** Copyright (c) Tiptap contributors
 - **License file retained at:** node_modules/@tiptap/core/LICENSE
 

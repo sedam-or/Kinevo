@@ -38,8 +38,8 @@ for part in parts:
     if priority in priority_counts:
         priority_counts[priority] += 1
 
-print('LIFESYNC TASK STATUS')
-print('====================')
+print('KINEVO TASK STATUS')
+print('==================')
 print(f'Total tasks: {len(tasks)}')
 print()
 print('Status:')

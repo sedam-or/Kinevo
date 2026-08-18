@@ -69,14 +69,14 @@ describe('documentToMarkdown', () => {
                         content: [
                             {
                                 type: 'text',
-                                text: 'LIFESYNC',
-                                marks: [{ type: 'link', attrs: { href: 'https://lifesync.local' } }],
+                                text: 'Kinevo',
+                                marks: [{ type: 'link', attrs: { href: 'https://kinevo.local' } }],
                             },
                         ],
                     },
                 ]),
             ),
-        ).toBe('[LIFESYNC](https://lifesync.local)\n');
+        ).toBe('[Kinevo](https://kinevo.local)\n');
     });
 
     it('serializes bullet lists with nesting', () => {

@@ -11,18 +11,18 @@ The schema MUST represent at minimum:
 - programs;
 - contributions;
 - tasks;
-- subtasks;# LIFESYNC OS — Software Requirements Specification
+- subtasks;# Kinevo — Software Requirements Specification
 
 ### Source
-This file MUST be populated with the complete contents of **LIFESYNC OS SRS v2.0.0** already finalized as the project’s requirements baseline.
+This file MUST be populated with the complete contents of **Kinevo SRS v2.0.0** already finalized as the project’s requirements baseline.
 
 ### Rule
-Do not manually rewrite a shortened version here. Copy the authoritative `LIFESYNC_OS_SRS_v2.0.0.md` content verbatim into `docs/SRS.md`, then update only through controlled SRS version changes.
+Do not manually rewrite a shortened version here. Copy the authoritative `KINEVO_SRS_v2.0.0.md` content verbatim into `docs/SRS.md`, then update only through controlled SRS version changes.
 
 ### Required metadata
 - SRS Version: 2.0.0 at initial repository bootstrap.
 - Status: Implementable Baseline / Single Source of Truth.
-- Product: LIFESYNC OS.
+- Product: Kinevo.
 - Requirement owner: Product/System Owner.
 - Primary user: single-user owner.
 

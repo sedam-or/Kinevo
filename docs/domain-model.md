@@ -1,4 +1,4 @@
-# LIFESYNC OS — Domain Model
+# Kinevo — Domain Model
 
 ### Core principle
 Business concepts must be represented explicitly. Eloquent is a persistence mechanism, not a substitute for domain semantics.

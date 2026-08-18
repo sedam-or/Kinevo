@@ -1,4 +1,4 @@
-# LIFESYNC OS — AI Architecture
+# Kinevo — AI Architecture
 
 ### Position
 AI is optional intelligence assistance. Core product correctness MUST NOT depend on an LLM.

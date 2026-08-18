@@ -1,9 +1,9 @@
 openapi: 3.1.0
 info:
-  title: LIFESYNC OS API
+  title: Kinevo API
   version: 2.0.0
   description: |
-    Versioned REST API for LIFESYNC OS. Business mutations are validated server-side,
+    Versioned REST API for Kinevo. Business mutations are validated server-side,
     support operation identifiers, and use stable error codes.
 servers:
   - url: /api/v1

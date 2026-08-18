@@ -21,8 +21,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-COPY app-entrypoint.sh /usr/local/bin/lifesync-entrypoint
-RUN chmod +x /usr/local/bin/lifesync-entrypoint
-ENTRYPOINT ["/usr/local/bin/lifesync-entrypoint"]
+COPY kinevo-entrypoint.sh /usr/local/bin/kinevo-entrypoint
+RUN chmod +x /usr/local/bin/kinevo-entrypoint
+ENTRYPOINT ["/usr/local/bin/kinevo-entrypoint"]
 
 EXPOSE 9000

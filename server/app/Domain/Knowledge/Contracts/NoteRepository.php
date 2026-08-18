@@ -16,4 +16,9 @@ interface NoteRepository
     public function create(int $userId, Note $note): Note;
 
     public function update(Note $note, int $baseVersion): Note;
+
+    /**
+     * @return array<int, Note>
+     */
+    public function searchForUser(int $userId, string $query): array;
 }

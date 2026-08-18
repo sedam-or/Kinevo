@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "lifesync-os/lifesync",
+    "name": "kinevo-os/kinevo",
     "type": "project",
-    "description": "LIFESYNC OS — a single-user, self-hostable, offline-capable personal operating system built as a Laravel modular monolith.",
-    "keywords": ["lifesync", "productivity", "scheduling", "laravel", "offline-first"],
+    "description": "Kinevo — a single-user, self-hostable, offline-capable personal operating system built as a Laravel modular monolith.",
+    "keywords": ["kinevo", "productivity", "scheduling", "laravel", "offline-first"],
     "license": "MIT",
     "require": {
         "php": "^8.4",

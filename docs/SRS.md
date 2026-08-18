@@ -1,15 +1,15 @@
 # Software Requirements Specification (SRS)
-# LIFESYNC OS
+# Kinevo
 
 **Status:** Architecture-Frozen / Implementable Baseline / Single Source of Truth
 
 **SRS Version:** 2.0.0
 
-**Baseline PRD:** LIFESYNC OS PRD v2.1 — *Final — Dynamic Capacity Edition*
+**Baseline PRD:** Kinevo PRD v2.1 — *Final — Dynamic Capacity Edition*
 
 **PRD Date:** 12 Agustus 2026
 
-**SRS Supersedes:** LIFESYNC OS SRS v1.0.0
+**SRS Supersedes:** Kinevo SRS v1.0.0
 
 **Product Type:** Personal Productivity & Life Management System, Single-User, Open-Source
 
@@ -25,11 +25,11 @@
 
 | Item | Value |
 |---|---|
-| Product | LIFESYNC OS |
+| Product | Kinevo |
 | SRS ID | LSOS-SRS-001 |
 | Version | 2.0.0 |
 | Supersedes | 1.0.0 |
-| Baseline PRD | LIFESYNC OS PRD v2.1 |
+| Baseline PRD | Kinevo PRD v2.1 |
 | Requirement Owner | Product/System Owner |
 | Primary User | Single owner/user |
 | Architecture Style | Modular monolith |
@@ -39,8 +39,8 @@
 | Offline | Service Worker + IndexedDB + Cache Storage |
 | Queue | Laravel Queue; Redis optional |
 | Scheduler Runtime | Laravel Scheduler + queue workers |
-| Canvas Engine | Excalidraw behind a LIFESYNC Canvas Adapter |
-| Note Editor | Tiptap behind a LIFESYNC Knowledge/Editor boundary |
+| Canvas Engine | Excalidraw behind a Kinevo Canvas Adapter |
+| Note Editor | Tiptap behind a Kinevo Knowledge/Editor boundary |
 | AI Runtime | Provider abstraction; Ollama supported; external providers optional |
 | Storage | S3-compatible object storage |
 | Reverse Proxy / TLS | Nginx + Cloudflare-compatible edge |
@@ -55,7 +55,7 @@ SRS 2.0 retains the PRD functional baseline and resolves the principal architect
 
 1. Existing PRD intent SHALL be preserved unless an explicit architectural refinement is documented below.
 2. New capabilities SHALL be additive unless they require a change to an existing invariant.
-3. Open-source engines SHALL remain bounded components; they SHALL NOT become owners of LIFESYNC business semantics.
+3. Open-source engines SHALL remain bounded components; they SHALL NOT become owners of Kinevo business semantics.
 4. AI SHALL remain advisory and schema-constrained; the deterministic domain model remains authoritative.
 5. Self-hosting SHALL be supported without making Oracle Cloud a hard dependency.
 6. Development-time models (including local coding models) are tooling, not product runtime requirements.
@@ -83,11 +83,11 @@ Automation MUST never resolve a lower-priority rule by silently violating a high
 
 ## 1.1 Tujuan Dokumen
 
-This SRS defines the complete implementation baseline for LIFESYNC OS, including product behavior, domain semantics, architecture, persistence, APIs, offline synchronization, scheduling, adaptive productivity behavior, knowledge/canvas integration, AI boundaries, test strategy, and deployment constraints.
+This SRS defines the complete implementation baseline for Kinevo, including product behavior, domain semantics, architecture, persistence, APIs, offline synchronization, scheduling, adaptive productivity behavior, knowledge/canvas integration, AI boundaries, test strategy, and deployment constraints.
 
 ## 1.2 Product Vision
 
-LIFESYNC OS is a personal operating system for planning, executing, learning from, and adapting meaningful work. The system connects long-horizon outcomes to concrete daily execution while protecting time, human capacity, cognitive bandwidth, and historical integrity.
+Kinevo is a personal operating system for planning, executing, learning from, and adapting meaningful work. The system connects long-horizon outcomes to concrete daily execution while protecting time, human capacity, cognitive bandwidth, and historical integrity.
 
 The product is intentionally **not** an autonomous productivity authority. It SHALL help the user make better decisions, preserve explicit commitments, and provide explainable proposals rather than silently taking destructive scheduling actions.
 
@@ -1756,7 +1756,7 @@ Sensitive note content MUST NOT be emitted to logs.
 
 ## 5.1 Architectural Style
 
-LIFESYNC SHALL use a **modular monolith**. All principal business domains run in one deployable backend application while retaining strict module boundaries. Microservices are explicitly rejected for MVP because the system is single-user and the dominant complexity is business/domain correctness rather than distributed scale.
+Kinevo SHALL use a **modular monolith**. All principal business domains run in one deployable backend application while retaining strict module boundaries. Microservices are explicitly rejected for MVP because the system is single-user and the dominant complexity is business/domain correctness rather than distributed scale.
 
 ## 5.2 High-Level Architecture
 
@@ -1848,15 +1848,15 @@ Settings
 
 ### 5.5.1 Knowledge Boundary
 
-Tiptap is an editor engine. LIFESYNC owns note identity, links, ownership, metadata, persistence, versioning, authorization, and AI integration.
+Tiptap is an editor engine. Kinevo owns note identity, links, ownership, metadata, persistence, versioning, authorization, and AI integration.
 
 ### 5.5.2 Canvas Boundary
 
-Excalidraw is a canvas engine. LIFESYNC owns canvas identity, context links, persistence, versioning, ownership, attachments, and domain semantics.
+Excalidraw is a canvas engine. Kinevo owns canvas identity, context links, persistence, versioning, ownership, attachments, and domain semantics.
 
 ### 5.5.3 AI Boundary
 
-Ollama or another provider is an inference engine. LIFESYNC owns prompts/templates, structured schemas, policy checks, context selection, approval flow, audit, and mutation execution.
+Ollama or another provider is an inference engine. Kinevo owns prompts/templates, structured schemas, policy checks, context selection, approval flow, audit, and mutation execution.
 
 ## 5.6 Scheduler Architecture
 
@@ -1991,7 +1991,7 @@ Knowledge Items SHALL support:
 
 ## 6.7 Canvas Semantics
 
-A Canvas is a versioned visual document. The canonical relational metadata is owned by LIFESYNC; scene serialization is stored as structured document data; binary assets are stored in object storage when required.
+A Canvas is a versioned visual document. The canonical relational metadata is owned by Kinevo; scene serialization is stored as structured document data; binary assets are stored in object storage when required.
 
 ## 6.8 Progress Events
 
@@ -2395,7 +2395,7 @@ Remove Queue           Keep Local Data
 
 ## 10.1 Editor Architecture
 
-The default rich-text editor SHALL use Tiptap or another replaceable editor adapter. LIFESYNC SHALL own the document entity and persistence.
+The default rich-text editor SHALL use Tiptap or another replaceable editor adapter. Kinevo SHALL own the document entity and persistence.
 
 ## 10.2 Document Model
 
@@ -2412,7 +2412,7 @@ The editor SHOULD support domain-aware references such as:
 - Canvas embed.
 - File/attachment reference.
 
-These MUST resolve through LIFESYNC APIs rather than storing uncontrolled arbitrary HTML/URLs as business semantics.
+These MUST resolve through Kinevo APIs rather than storing uncontrolled arbitrary HTML/URLs as business semantics.
 
 ## 10.4 Search
 
@@ -2428,7 +2428,7 @@ Any Knowledge Item MAY link to one or more Goals, Milestones, Programs, Tasks, o
 
 ## 11.1 Architectural Position
 
-Excalidraw SHALL be treated as an editor/renderer engine and MUST NOT own LIFESYNC domain state. LIFESYNC SHALL expose a Canvas Adapter boundary.
+Excalidraw SHALL be treated as an editor/renderer engine and MUST NOT own Kinevo domain state. Kinevo SHALL expose a Canvas Adapter boundary.
 
 ## 11.2 Frontend Integration Boundary
 
@@ -3003,7 +3003,7 @@ Version rules:
 
 # 22. SOURCE OF TRUTH DECLARATION
 
-This file is the **LIFESYNC OS SRS v2.0.0 Single Source of Truth**. It supersedes SRS v1.0.0.
+This file is the **Kinevo SRS v2.0.0 Single Source of Truth**. It supersedes SRS v1.0.0.
 
 The document retains the original PRD functional baseline while introducing an architecture-frozen implementation model centered on a modular monolith, Goal/Milestone semantics, deterministic scheduling, Knowledge/Canvas integration, adaptive context, and optional provider-abstracted AI.
 

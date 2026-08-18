@@ -52,8 +52,8 @@ problem, the proposed outcome, the current workaround, and the affected domain.
   `SECURITY.md`. Never post secrets, tokens, or passwords in issues.
 - **Confidential personal data** — private notes, private attachments, or
   production database dumps.
-- **Support for other products** — issues here cover LIFESYNC OS only.
+- **Support for other products** — issues here cover Kinevo only.
 
 ## License
 
-LIFESYNC OS is MIT-licensed. See `LICENSE`.
+Kinevo is MIT-licensed. See `LICENSE`.

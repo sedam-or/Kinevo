@@ -1,5 +1,5 @@
 name: Feature Request
-description: Request a new capability or enhancement for LIFESYNC OS
+description: Request a new capability or enhancement for Kinevo
 title: "[Feature]: "
 labels: [enhancement]
 body:
@@ -18,7 +18,7 @@ body:
     id: outcome
     attributes:
       label: Proposed outcome
-      description: What should LIFESYNC OS do, ideally?
+      description: What should Kinevo do, ideally?
     validations:
       required: true
   - type: textarea

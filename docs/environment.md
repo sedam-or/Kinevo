@@ -1,4 +1,4 @@
-# LIFESYNC OS — Environment Configuration Baseline
+# Kinevo — Environment Configuration Baseline
 
 ### Scope
 This document is the normative baseline for environment configuration. It governs
@@ -30,7 +30,7 @@ A variable is a **secret** if its value must be kept private and varies per depl
 Secrets MUST NEVER be committed to the repository, including in `.env.example`,
 example files, tests, fixtures, or documentation.
 
-LIFESYNC secrets:
+Kinevo secrets:
 
 - `APP_KEY` (application encryption key)
 - `DB_PASSWORD` (PostgreSQL credentials)
@@ -56,7 +56,7 @@ in local development without modification:
 
 | Variable           | Default           | Purpose                                        |
 |--------------------|-------------------|------------------------------------------------|
-| `APP_NAME`         | `LIFESYNC OS`     | product identity                              |
+| `APP_NAME`         | `Kinevo`     | product identity                              |
 | `APP_ENV`          | `local`           | environment mode                              |
 | `APP_DEBUG`        | `true`            | local debugging; false in production          |
 | `APP_URL`          | `http://localhost:8000` | base URL for links                        |
@@ -64,8 +64,8 @@ in local development without modification:
 | `DB_CONNECTION`    | `pgsql`           | canonical store (architecture decision)       |
 | `DB_HOST`          | `127.0.0.1`       | local default; `postgres` in Docker compose   |
 | `DB_PORT`          | `5432`            | PostgreSQL port                               |
-| `DB_DATABASE`      | `lifesync`        | database name                                 |
-| `DB_USERNAME`      | `lifesync`        | database user                                 |
+| `DB_DATABASE`      | `kinevo`        | database name                                 |
+| `DB_USERNAME`      | `kinevo`        | database user                                 |
 | `DB_SSLMODE`       | `prefer`          | TLS posture for local; `require` in prod      |
 | `SESSION_DRIVER`   | `database`        | sessions in canonical store                   |
 | `SESSION_LIFETIME` | `120`             | minutes                                       |

@@ -1,6 +1,6 @@
-# LIFESYNC OS — Server
+# Kinevo — Server
 
-This directory contains the Laravel modular monolith backend for LIFESYNC OS.
+This directory contains the Laravel modular monolith backend for Kinevo.
 
 ## Layout
 

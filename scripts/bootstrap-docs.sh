@@ -7,7 +7,7 @@ Usage:
   ./scripts/bootstrap-docs.sh [OPTIONS]
 
 Options:
-  --pack FILE        Master documentation pack (default: ./LIFESYNC_DOCUMENTATION_MASTER_PACK.md)
+  --pack FILE        Master documentation pack (default: ./KINEVO_DOCUMENTATION_MASTER_PACK.md)
   --srs FILE         Authoritative SRS file to install as docs/SRS.md (optional)
   --root DIR         Target repository root (default: current directory)
   --force            Overwrite files extracted from the pack
@@ -20,7 +20,7 @@ are treated as directories; other sections are materialized as files.
 USAGE
 }
 
-PACK="./LIFESYNC_DOCUMENTATION_MASTER_PACK.md"
+PACK="./KINEVO_DOCUMENTATION_MASTER_PACK.md"
 SRS=""
 ROOT="$(pwd)"
 FORCE=0
@@ -150,7 +150,7 @@ for d in ('scripts',):
 
 if not skip_gitignore:
     gi = root / '.gitignore'
-    marker = '# LIFESYNC bootstrap helper'
+    marker = '# Kinevo bootstrap helper'
     content = gi.read_text(encoding='utf-8') if gi.exists() else ''
     lines = [x.rstrip('\n') for x in content.splitlines()]
     if marker not in lines:

@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: ./docker
-    image: lifesync-app:dev
+    image: kinevo-app:dev
     working_dir: /var/www/html
     volumes:
       - ../server:/var/www/html
@@ -13,8 +13,8 @@ services:
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_DATABASE: lifesync
-      DB_USERNAME: lifesync
+      DB_DATABASE: kinevo
+      DB_USERNAME: kinevo
       DB_PASSWORD: secret
       DB_SSLMODE: disable
     depends_on:
@@ -25,19 +25,19 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_DB: lifesync
-      POSTGRES_USER: lifesync
+      POSTGRES_DB: kinevo
+      POSTGRES_USER: kinevo
       POSTGRES_PASSWORD: secret
     ports:
       - "5432:5432"
     volumes:
-      - lifesync_pgdata:/var/lib/postgresql/data
+      - kinevo_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lifesync -d lifesync"]
+      test: ["CMD-SHELL", "pg_isready -U kinevo -d kinevo"]
       interval: 5s
       timeout: 5s
       retries: 10
     restart: unless-stopped
 
 volumes:
-  lifesync_pgdata:
+  kinevo_pgdata:

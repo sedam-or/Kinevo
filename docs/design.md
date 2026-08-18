@@ -1,10 +1,10 @@
-# LIFESYNC OS — UI/UX Design System & Interaction Specification
+# Kinevo — UI/UX Design System & Interaction Specification
 
 ### Purpose
 `design.md` adalah implementable UX/UI specification. Ia menerjemahkan requirements menjadi information architecture, interaction patterns, component behavior, accessibility, responsive behavior, visual hierarchy, states, empty states, error handling, motion, and usability rules. Dokumen ini tidak boleh mengubah business rules dari SRS.
 
 ### Design philosophy
-LIFESYNC harus membuat planning dan execution terasa ringan. UI harus:
+Kinevo harus membuat planning dan execution terasa ringan. UI harus:
 - mengurangi cognitive load;
 - memperjelas “what now?”;
 - menjaga context;
@@ -384,7 +384,7 @@ Entry points:
 - Task → Canvas;
 - Note → embedded canvas.
 
-Canvas chrome SHOULD be minimal and expose LIFESYNC context at the edges rather than modifying Excalidraw’s core semantics.
+Canvas chrome SHOULD be minimal and expose Kinevo context at the edges rather than modifying Excalidraw’s core semantics.
 
 ### Canvas save states
 Display:
@@ -396,7 +396,7 @@ Display:
 - Failed.
 
 ### Canvas context panel
-A LIFESYNC side panel MAY expose:
+A Kinevo side panel MAY expose:
 - linked goal;
 - milestone;
 - program;
@@ -404,7 +404,7 @@ A LIFESYNC side panel MAY expose:
 - related tasks;
 - AI actions.
 
-This panel belongs to LIFESYNC, not to Excalidraw core.
+This panel belongs to Kinevo, not to Excalidraw core.
 
 ### AI UX
 AI actions MUST be framed as proposals.

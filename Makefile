@@ -1,7 +1,7 @@
 SHELL := /usr/bin/env bash
 
-PACK ?= LIFESYNC_DOCUMENTATION_MASTER_PACK.md
-SRS ?= LIFESYNC_OS_SRS_v2.0.0.md
+PACK ?= KINEVO_DOCUMENTATION_MASTER_PACK.md
+SRS ?= KINEVO_SRS_v2.0.0.md
 
 COMPOSE := docker compose -f infrastructure/docker-compose.yml
 APP := $(COMPOSE) exec -T app

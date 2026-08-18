@@ -1,4 +1,4 @@
-# LIFESYNC OS — Test Strategy
+# Kinevo — Test Strategy
 
 ### Quality philosophy
 Testing proves behavior, not code volume.

@@ -54,7 +54,7 @@ dirs=(
 )
 
 errors=0
-printf '%s\n' "LIFESYNC repository validation"
+printf '%s\n' "Kinevo repository validation"
 printf '%s\n' "Root: $ROOT"
 printf '%s\n\n' "----------------------------------------"
 
@@ -77,10 +77,10 @@ for d in "${dirs[@]}"; do
 done
 
 if [[ -f "$ROOT/docs/SRS.md" ]]; then
-  if grep -q 'LIFESYNC OS' "$ROOT/docs/SRS.md"; then
-    echo "  [OK] SRS contains LIFESYNC identity"
+  if grep -q 'Kinevo OS' "$ROOT/docs/SRS.md"; then
+    echo "  [OK] SRS contains Kinevo identity"
   else
-    echo " [WARN] SRS does not contain expected LIFESYNC identity"
+    echo " [WARN] SRS does not contain expected Kinevo identity"
   fi
 fi
 

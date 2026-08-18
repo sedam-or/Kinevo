@@ -1,7 +1,7 @@
-# LIFESYNC OS — Knowledge Layer
+# Kinevo — Knowledge Layer
 
 ### Purpose
-Provide a first-class knowledge system connected to goals, milestones, programs, tasks, and canvases without turning LIFESYNC into an unbounded general-purpose workspace clone.
+Provide a first-class knowledge system connected to goals, milestones, programs, tasks, and canvases without turning Kinevo into an unbounded general-purpose workspace clone.
 
 ### Components
 - Notes.

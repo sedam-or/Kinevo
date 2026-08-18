@@ -1,8 +1,8 @@
-# LIFESYNC Repository Bootstrap & Validation Utilities
+# Kinevo Repository Bootstrap & Validation Utilities
 
 ## Purpose
 
-These scripts convert the LIFESYNC Documentation Master Pack into the repository
+These scripts convert the Kinevo Documentation Master Pack into the repository
 structure while preserving the document boundaries defined by `## <path>`
 headings, then validate that the repository stays structurally consistent.
 

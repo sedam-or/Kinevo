@@ -1,4 +1,4 @@
-# LIFESYNC OS — Master Execution Task Board
+# Kinevo — Master Execution Task Board
 
 ### Purpose
 `TASK.md` adalah execution control document. Ia memecah implementation roadmap menjadi unit kerja yang dapat dieksekusi AI/human, mencatat dependency, status, evidence, dan blocking condition.
@@ -80,7 +80,7 @@
   - [x] tests pass inside container
 - Verification:
   - [x] `docker compose -f infrastructure/docker-compose.yml up -d --build` → both services up, postgres healthy
-  - [x] `curl localhost:8000` → HTTP 200, title "LIFESYNC OS"
+  - [x] `curl localhost:8000` → HTTP 200, title "Kinevo"
   - [x] `psql \dt` → 9 tables (users, cache, jobs, sessions, ...) present in PostgreSQL
   - [x] `./vendor/bin/phpunit` in container → OK (2 tests)
 - Evidence: infrastructure/docker/{Dockerfile,app-entrypoint.sh,docker-compose.yml}, Makefile up/down/migrate/logs/shell targets
@@ -114,7 +114,7 @@
   - [x] README rewritten as navigation surface; server/README replaced (no misleading Laravel boilerplate)
   - [x] scripts/check-doc-links.sh + scripts/check-openapi.sh added and wired into Makefile + CI
   - [x] docs synchronized: implementation-status, environment (SANCTUM_STATEFUL_DOMAINS)
-  - [x] stale `lifesync-bootstrap-kit.tar.gz` removed from tree
+  - [x] stale `kinevo-bootstrap-kit.tar.gz` removed from tree
 - Verification:
   - [x] `./scripts/validate-repo.sh .` → VALIDATION PASSED (incl. new governance files)
   - [x] `./scripts/check-secrets.sh .` → SECRET SCAN PASSED
@@ -431,7 +431,7 @@
 #### TASK-031 — Tiptap editor adapter
 - Status: DONE
 - Priority: P0
-- SRS: §10.1–10.3 Knowledge Layer (Tiptap or replaceable adapter behind LIFESYNC boundary; canonical structured JSON; domain-aware references resolve through LIFESYNC APIs); §5.3 layering (Domain must not import Tiptap); architecture.md "Knowledge boundary"; ADR-002 (Vue 3 + TS + Vite); ADR-004 (headless editor); ADR-009.
+- SRS: §10.1–10.3 Knowledge Layer (Tiptap or replaceable adapter behind Kinevo boundary; canonical structured JSON; domain-aware references resolve through Kinevo APIs); §5.3 layering (Domain must not import Tiptap); architecture.md "Knowledge boundary"; ADR-002 (Vue 3 + TS + Vite); ADR-004 (headless editor); ADR-009.
 - Acceptance:
   - [x] Frontend scaffold per ADR-002: Vue 3 + TypeScript + Vite + Pinia; `vue-tsc` typecheck, Vitest (happy-dom), Vite build all wired into `package.json` scripts
   - [x] Editor adapter boundary: framework-agnostic `EditorAdapter` contract (types.ts) with `load(document)`, `getDocument()`, `getDerived()`, `save(baseVersion)`, `setReadOnly(enabled)`, `setTheme(theme)`, `subscribe(listener)`, `flush()`, `destroy()`

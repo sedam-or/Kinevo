@@ -1,4 +1,4 @@
-# LIFESYNC OS
+# Kinevo
 
 > A personal operating system for planning, scheduling, execution, knowledge
 > capture, progress tracking, and optional local AI assistance. Single-user,
@@ -13,7 +13,7 @@ and [`TASK.md`](TASK.md) for the current execution board.
 
 ## What it is
 
-LIFESYNC OS helps one person plan goals and milestones, schedule tasks against a
+Kinevo helps one person plan goals and milestones, schedule tasks against a
 deterministic engine, capture knowledge, track progress, and optionally use a
 local AI model for assistance — without surrendering schedule authority to a
 black box. Scheduling is deterministic; AI is optional, untrusted, and validated.
@@ -54,14 +54,14 @@ Laravel Modular Monolith
 ```
 
 External engines are always behind bounded adapters: **Excalidraw owns drawing,
-Tiptap owns editing, Ollama owns inference — LIFESYNC owns business semantics.**
+Tiptap owns editing, Ollama owns inference — Kinevo owns business semantics.**
 
 ## Technology stack
 
 - Backend: Laravel (PHP 8.4+) — modular monolith.
 - Frontend: Vue 3 + TypeScript + Inertia.js + Vite + Pinia.
 - Database: PostgreSQL (canonical store).
-- Rich text: Tiptap behind a LIFESYNC editor adapter.
+- Rich text: Tiptap behind a Kinevo editor adapter.
 - Canvas: Excalidraw behind a bounded integration adapter.
 - Offline: Service Worker + Cache Storage + IndexedDB (cache/queue, never
   authoritative).
@@ -161,7 +161,7 @@ See [`SUPPORT.md`](SUPPORT.md) for where to ask questions and get help.
 
 ## License
 
-LIFESYNC OS is licensed under the **MIT License** — see [`LICENSE`](LICENSE).
+Kinevo is licensed under the **MIT License** — see [`LICENSE`](LICENSE).
 Third-party components retain their own licenses; see
 [`docs/third-party/licenses.md`](docs/third-party/licenses.md) for the
 provenance ledger.

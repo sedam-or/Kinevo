@@ -4,7 +4,7 @@
 Adopt Laravel modular monolith.
 
 ### Context
-LIFESYNC is single-user but domain-rich. Scheduling, goals, tasks, capacity, recovery, knowledge, and audit state have strong transactional coupling.
+Kinevo is single-user but domain-rich. Scheduling, goals, tasks, capacity, recovery, knowledge, and audit state have strong transactional coupling.
 
 ### Alternatives rejected
 - microservices;

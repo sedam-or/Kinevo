@@ -1,7 +1,7 @@
 /**
  * Framework-agnostic editor adapter contract.
  *
- * Tiptap owns document editing mechanics. LIFESYNC owns note identity,
+ * Tiptap owns document editing mechanics. Kinevo owns note identity,
  * persistence, versioning, access, and business semantics (SRS §10.1,
  * architecture.md "Knowledge boundary"). This interface is the boundary
  * that any replaceable editor engine must implement.
@@ -57,7 +57,7 @@ export type Unsubscribe = () => void;
 
 /**
  * Application-level editor contract. Implementations MUST keep the canonical
- * document JSON authoritative and MUST NOT store LIFESYNC business state
+ * document JSON authoritative and MUST NOT store Kinevo business state
  * inside the editor engine.
  */
 export interface EditorAdapter {

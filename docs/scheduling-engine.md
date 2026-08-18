@@ -1,4 +1,4 @@
-# LIFESYNC OS — Scheduling Engine Contract
+# Kinevo — Scheduling Engine Contract
 
 ### Mission
 Generate safe, explainable, deterministic schedules and reschedule proposals while preserving user-controlled constraints.

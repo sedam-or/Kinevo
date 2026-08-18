@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to LIFESYNC OS are documented here.
+All notable changes to Kinevo are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 semantic-version-compatible. Version numbers below refer to the **application**.
@@ -55,7 +55,7 @@ separately in `docs/SRS.md` and `docs/api/openapi.yaml` respectively.
 - ADR baseline (ADR-001..ADR-007).
 - Repository bootstrap tooling (`scripts/`, `Makefile`).
 
-[0.4.0]: https://github.com/sedam-or/Lifesync-OS/compare/v0.3.0...v0.4.0
-[0.3.0]: https://github.com/sedam-or/Lifesync-OS/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/sedam-or/Lifesync-OS/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/sedam-or/Lifesync-OS/releases/tag/v0.1.0
+[0.4.0]: https://github.com/sedam-or/Kinevo/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/sedam-or/Kinevo/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/sedam-or/Kinevo/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/sedam-or/Kinevo/releases/tag/v0.1.0

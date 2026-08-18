@@ -1,4 +1,4 @@
-# LIFESYNC OS — Deployment & Operations
+# Kinevo — Deployment & Operations
 
 ### Deployment target
 Primary reference: Linux Docker-compatible host. Oracle Cloud Always Free is a supported personal deployment profile but not a software architecture dependency.

@@ -1,7 +1,7 @@
 /**
  * Tiptap implementation of the EditorAdapter boundary.
  *
- * LIFESYNC owns note identity, links, persistence, access, and business
+ * Kinevo owns note identity, links, persistence, access, and business
  * semantics (architecture.md "Knowledge boundary"). This adapter only wraps
  * the editing mechanics of Tiptap behind the application-level contract.
  *
@@ -53,7 +53,7 @@ export class TiptapEditorAdapter implements EditorAdapter {
 
         const editorProps: Editor['options']['editorProps'] = {
             attributes: {
-                class: 'lifesync-editor-prose',
+                class: 'kinevo-editor-prose',
                 'data-editor-theme': 'light',
             },
             handleKeyDown: (_view, event) => {
@@ -140,7 +140,7 @@ export class TiptapEditorAdapter implements EditorAdapter {
         this.editor.setOptions({
             editorProps: {
                 attributes: {
-                    class: 'lifesync-editor-prose',
+                    class: 'kinevo-editor-prose',
                     'data-editor-theme': theme,
                 },
             },
