@@ -452,7 +452,24 @@
 #### TASK-032 — Knowledge linking
 - Status: DONE
 - Priority: P0
-- SRS: FR-54.
+- SRS: FR-54 (explicit links between Notes and Goals/Milestones/Programs/Tasks).
+- Acceptance:
+  - [x] `knowledge_links` migration: user ownership, source/target type+id, link_type enum
+  - [x] Domain: `KnowledgeLink` entity + `KnowledgeTargetType` + `KnowledgeLinkType` VOs + `KnowledgeLinkRepository` contract
+  - [x] FR-54: links are domain relationships (not arbitrary HTML); orphan/preserve policy on deletion
+  - [x] `POST /notes/{noteId}/links` — create link (409 on duplicate)
+  - [x] `GET /notes/{noteId}/links` — list links from a note
+  - [x] `DELETE /notes/{noteId}/links/{linkId}` — remove link
+  - [x] `GET /knowledge/links?target_type=X&target_id=Y` — reverse navigation to find notes linked to an entity
+  - [x] All endpoints require auth (401) and ownership scope (404 on cross-user access, SRS §15.1)
+  - [x] OpenAPI KnowledgeLink schemas synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (255 tests, 692 assertions)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (205 files)
+  - [x] `check-openapi.sh` → PASS (39 paths)
+- Evidence: server/app/Domain/Knowledge/KnowledgeLink.php, server/app/Domain/Knowledge/ValueObjects/{KnowledgeTargetType,KnowledgeLinkType}.php, server/app/Domain/Knowledge/Contracts/KnowledgeLinkRepository.php, server/app/Infrastructure/Knowledge/EloquentKnowledgeLinkRepository.php, server/app/Application/Knowledge/{CreateNoteLinkUseCase,ListNoteLinksUseCase,ListTargetLinksUseCase,RemoveNoteLinkUseCase}.php, server/app/Http/Controllers/Api/KnowledgeLinkController.php, server/routes/api.php, database/migrations/*knowledge_links*.php, server/tests/{Unit/Feature}/Api/KnowledgeLinkApiTest.php, docs/api/openapi.yaml
+- Notes: Canvas links deferred until Canvas (TASK-042) exists; link_type supports: supports|references|derived_from|evidence_for|related_to.
 
 #### TASK-033 — Knowledge search
 - Status: DONE
