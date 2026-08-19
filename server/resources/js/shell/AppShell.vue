@@ -2,12 +2,21 @@
 import { computed } from 'vue';
 import { useShellStore } from './store';
 import { isShellView, type ShellView } from './navigation';
+import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
+import type { VisualStateValue } from '../visualstate/types';
 
 const shell = useShellStore();
 
 const resolvedActive = computed<ShellView>(() =>
     isShellView(shell.activeView) ? shell.activeView : 'today',
 );
+
+const syncStateBadge = computed<VisualStateValue>(() => {
+    const valid: VisualStateValue[] = ['online', 'offline', 'syncing', 'queued', 'failed', 'saved'];
+    return valid.includes(shell.syncState as VisualStateValue)
+        ? (shell.syncState as VisualStateValue)
+        : 'online';
+});
 
 function selectView(view: ShellView): void {
     shell.setView(view);
@@ -26,14 +35,8 @@ function cycleTheme(): void {
         <header class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-3">
             <div class="flex items-center gap-3">
                 <span class="font-semibold">Kinevo</span>
-                <span
-                    class="inline-flex items-center gap-1 text-xs rounded-sm px-2 py-0.5"
-                    :class="{
-                        'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300': true,
-                    }"
-                    data-testid="sync-state"
-                >
-                    {{ shell.syncState }}
+                <span data-testid="sync-state">
+                    <VisualStateBadge :state="syncStateBadge" />
                 </span>
                 <span v-if="shell.unreadCount > 0" class="text-xs" data-testid="notifications">
                     {{ shell.unreadCount }} unread

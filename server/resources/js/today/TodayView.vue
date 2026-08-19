@@ -3,6 +3,8 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { todayApi } from './api';
 import { useTodayStore } from './store';
 import { useShellStore } from '../shell/store';
+import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
+import { taskStates } from '../visualstate/derive';
 import type { EmptySlot, HardLandscapeEvent, TodayEvent } from './types';
 
 const props = defineProps<{
@@ -51,6 +53,21 @@ const nextEvent = computed<TodayEvent | null>(() => {
     return [...today.events]
         .filter((e) => new Date(e.assignment.start_at).getTime() >= nowMs)
         .sort((a, b) => new Date(a.assignment.start_at).getTime() - new Date(b.assignment.start_at).getTime())[0] ?? null;
+});
+
+const nowStates = computed(() => {
+    if (!currentEvent.value) {
+        return [];
+    }
+    return taskStates(
+        {
+            locked: currentEvent.value.locked,
+            conflict: currentEvent.value.conflict,
+            status: currentEvent.value.task?.status,
+            dueAt: currentEvent.value.task?.due_at,
+        },
+        today.date ?? props.date,
+    );
 });
 
 const sortedEvents = computed(() =>
@@ -171,8 +188,7 @@ async function quickCapture(): Promise<void> {
                     </div>
                     <div v-if="contextLabel(currentEvent)" class="text-sm text-gray-600 dark:text-gray-400">{{ contextLabel(currentEvent) }}</div>
                     <div class="flex gap-2 mt-1 text-xs">
-                        <span v-if="currentEvent.locked" class="rounded-sm px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700" data-testid="now-locked">Locked</span>
-                        <span v-if="currentEvent.conflict" class="rounded-sm px-1.5 py-0.5 bg-[#fff2f2] dark:bg-[#1D0002] text-[#F53003]" data-testid="now-conflict">Conflict</span>
+                        <VisualStateBadge v-for="s in nowStates" :key="s" :state="s" />
                     </div>
                 </div>
                 <button

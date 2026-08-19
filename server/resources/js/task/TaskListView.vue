@@ -2,12 +2,24 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useTaskStore } from './store';
 import { TASK_TRANSITIONS, type Task, type TaskStatusValue } from './types';
+import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
+import { taskStates } from '../visualstate/derive';
+import type { VisualStateValue } from '../visualstate/types';
 
 const emit = defineEmits<{
     (e: 'select', taskId: number): void;
 }>();
 
 const tasks = useTaskStore();
+
+function todayDate(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function taskBadges(task: Task): VisualStateValue[] {
+    return taskStates({ status: task.status, dueAt: task.due_at }, todayDate());
+}
 
 const createForm = reactive({
     title: '',
@@ -109,9 +121,12 @@ async function applyStatus(task: Task, status: TaskStatusValue): Promise<void> {
                     >
                         {{ task.title }}
                     </button>
-                    <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5" data-testid="task-status">
-                        {{ statusLabel(task.status) }}
-                    </span>
+                    <div class="flex items-center gap-2">
+                        <VisualStateBadge v-for="s in taskBadges(task)" :key="s" :state="s" />
+                        <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5" data-testid="task-status">
+                            {{ statusLabel(task.status) }}
+                        </span>
+                    </div>
                 </div>
                 <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     {{ task.priority_tier === 1 ? 'High' : task.priority_tier === 2 ? 'Medium' : 'Low' }}

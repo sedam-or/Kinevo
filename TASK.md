@@ -1631,6 +1631,25 @@ Color MUST NOT be the only signal.
 
 Scheduler explanations MUST expose the already-implemented reason codes.
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-100 (shell), TASK-103/105 (Today/Task views), TASK-026 (scheduler reason codes)
+- SRS: FR-63 (explainability reason codes); design.md §State visibility, §Lock interaction, §Conflict UI, §Global UI states.
+- Acceptance:
+  - [x] Shared `VisualStateBadge` component + `VISUAL_STATES` map covering locked, conflict, overdue, draft, proposed, offline, syncing, queued, failed (plus saved/online).
+  - [x] Non-color signals for every state: glyph/icon + text label + dashed border pattern where appropriate — color is never the only signal.
+  - [x] `taskStates` derive helper marks overdue (past-due non-terminal) and propagates lock/conflict.
+  - [x] Applied consistently: Today NOW card (lock/conflict/overdue badges), Task list (overdue badges), AppShell sync indicator (offline/syncing/queued/saved/failed).
+  - [x] Scheduler explanation reason codes (HARD_CONSTRAINT_FILTERED, LOCK_PROTECTED, SACRED_ANCHOR, DEADLINE_PRIORITY, CAPACITY_FIT, ENERGY_FIT, CONTEXT_SWITCH_PENALTY, PROGRESS_VALUE, CONTINUITY_PREFERENCE) exposed via `SchedulerExplanation` + `explanation.ts`, rendered in the Schedule Draft view (FR-63).
+- Verification:
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (213 tests; 15 new visualstate tests: derive, definitions, explanation, badges, SchedulerExplanation)
+  - [x] `npm run build` → built OK
+  - [x] Backend regression: `composer test` → OK (628 tests, 1702 assertions)
+  - [x] Repo gates (secrets/doc-links/validate/changelog) all PASS
+- Evidence: server/resources/js/visualstate/{types.ts,derive.ts,explanation.ts,VisualStateBadge.vue,SchedulerExplanation.vue}, server/resources/js/visualstate/__tests__/*.test.ts, server/resources/js/{today/TodayView.vue,task/TaskListView.vue,shell/AppShell.vue,schedulerdraft/ScheduleDraftView.vue}
+- Release Impact: MINOR (new frontend surface; no backend/API change)
+
 ---
 
 # 9. PHASE 11 — KNOWLEDGE / CANVAS UI

@@ -14,6 +14,11 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added a consistent Conflict / Lock / Explainability UI (TASK-109): a shared
+  visual-state badge system (glyph + text + non-color pattern for locked,
+  conflict, overdue, draft, proposed, offline, syncing, queued, failed) applied
+  across Today, the task list, and the sync indicator, plus scheduler
+  explanation reason codes surfaced in the Schedule Draft view (FR-63).
 - Added the Schedule Draft / Dynamic Rescheduler UI (TASK-108): generate and
   preview a deterministic weekly draft (accepted/rejected tasks with reasons),
   apply it atomically at the next schedule version, and propose/apply a dynamic

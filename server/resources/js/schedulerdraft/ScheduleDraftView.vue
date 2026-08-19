@@ -2,6 +2,8 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useScheduleDraftStore } from './store';
 import { formatDate, formatTime } from './date';
+import SchedulerExplanation from '../visualstate/SchedulerExplanation.vue';
+import { SCHEDULER_REASONS } from '../visualstate/explanation';
 
 const emit = defineEmits<{
     (e: 'reschedule'): void;
@@ -118,6 +120,12 @@ function reasonLabel(reason: string): string {
                 This deterministic draft respects Hard Landscape, locked tasks, deadlines, and the 30% safety reserve.
                 Applying it bumps the schedule version; stale applies return 409.
             </p>
+
+            <!-- Scheduler explanation reason codes (FR-63) -->
+            <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-3" data-testid="draft-reason-codes">
+                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Scheduler reason codes</div>
+                <SchedulerExplanation :codes="SCHEDULER_REASONS.map((r) => r.code)" />
+            </section>
 
             <!-- Apply / Cancel -->
             <div class="flex gap-2">
