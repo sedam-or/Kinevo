@@ -13,7 +13,8 @@ COMPOSE_PROD := docker compose -f infrastructure/docker-compose.prod.yml
 	frontend-install frontend-typecheck frontend-test frontend-build \
 	check-links check-openapi \
 	ollama-up ollama-down ai-status ai-smoke \
-	prod-build prod-up prod-down prod-migrate prod-logs prod-certbot
+	prod-build prod-up prod-down prod-migrate prod-logs prod-certbot \
+	prod-backup prod-backup-list prod-restore
 
 # --- Documentation bootstrap -------------------------------------------------
 setup:
@@ -99,6 +100,25 @@ prod-certbot:
 		--webroot -w /var/www/certbot \
 		--email "$(EMAIL)" --agree-tos --no-eff-email \
 		-d "$${SERVER_NAME}"
+
+# --- Backup & restore (TASK-082, SRS §16.4/NFR-05) ---------------------------
+# Run an on-demand backup against the running prod postgres. Remote copy is
+# enabled with REMOTE_BUCKET=s3://bucket/prefix.
+prod-backup:
+	$(COMPOSE_PROD) run --rm backup /backup/backup.sh
+
+# List local backups in the backup volume.
+prod-backup-list:
+	$(COMPOSE_PROD) run --rm --entrypoint /bin/sh backup -c "ls -lht /backups"
+
+# Restore the newest local backup (or BACKUP_FILE). DESTRUCTIVE — requires
+# CONFIRM_RESTORE=yes.
+prod-restore:
+	$(COMPOSE_PROD) run --rm -e CONFIRM_RESTORE="$(CONFIRM_RESTORE)" \
+		-e BACKUP_DIR=/backups \
+		-e "BACKUP_FILE=$(BACKUP_FILE)" \
+		--entrypoint /bin/sh backup -c \
+		"apk add --no-cache bash >/dev/null 2>&1 && /backup/restore.sh \"$$BACKUP_FILE\""
 
 # --- Quality gates (run inside the app container) ---------------------------
 test:

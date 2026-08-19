@@ -946,8 +946,22 @@
 - Notes: First-time cert issuance is a manual/release step (`make prod-certbot`); renewal is a scheduled `certbot renew`. Cloudflare edge (SRS "Nginx + Cloudflare-compatible edge") is an equally supported TLS profile documented as the alternative to self-managed LetsEncrypt.
 
 #### TASK-082 — Backup/restore automation
-- Status: TODO
-- Priority: P0.
+- Status: DONE
+- Priority: P0
+- SRS: §16.4 (daily DB backup, remote backup copy, manual export, restore test), NFR-05 (daily backup, RPO ≤24h / RTO ≤4h suggested), §16.3 deployment (backups automated, restore tested); docs/deployment.md (backup strategy, restore procedure).
+- Acceptance:
+  - [x] `scripts/backup.sh`: timestamped gzipped `pg_dump` of the canonical store, retention prune (`BACKUP_KEEP`, default 7), optional S3-compatible remote copy (`--remote-bucket`, `aws`/`mc`)
+  - [x] `scripts/restore.sh`: terminates connections, drops+recreates the DB, applies the backup; destructive flow guarded by `CONFIRM_RESTORE=yes` and DB-identifier validation
+  - [x] Compose `backup` service: runs `backup.sh` on a daily loop into the `kinevo_backups` volume; remote copy via env; depends on healthy postgres
+  - [x] Makefile targets: `prod-backup`, `prod-backup-list`, `prod-restore`
+  - [x] docs/deployment.md "Backup & restore automation" section (scripts, compose, usage, restore test, RPO/RTO); manual JSON/CSV export noted (existing `GET /export`)
+- Verification:
+  - [x] `bash -n` syntax check on both scripts
+  - [x] End-to-end: backup ran against the dev postgres (valid gzipped dump); restore aborted without `CONFIRM_RESTORE` and completed with it (terminate→drop→create→apply); schema (migrations) intact after restore
+  - [x] `docker compose -f docker-compose.prod.yml config` valid (backup service + volume)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` all pass
+- Evidence: scripts/backup.sh, scripts/restore.sh, infrastructure/docker-compose.prod.yml (backup service + kinevo_backups volume), Makefile (prod-backup/list/restore), docs/deployment.md
+- Notes: Remote copy requires `aws`/`mc` present in the backup environment (the compose backup image can be extended with a client if off-box copy is needed); §16.4 remote backup copy is wired via `REMOTE_BUCKET`/`AWS_*`. Periodic restore testing remains an operational checklist item (SRS §16.4).
 
 #### TASK-083 — Observability
 - Status: TODO

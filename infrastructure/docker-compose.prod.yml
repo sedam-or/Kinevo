@@ -99,6 +99,42 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # Daily database backup (SRS §16.4, NFR-05, TASK-082). Runs scripts/backup.sh
+  # on a schedule inside the postgres image (which ships pg_dump/psql). Backups
+  # are written to a named volume; copy off-box via --remote-bucket for the
+  # required remote backup copy.
+  backup:
+    image: postgres:17-alpine
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        apk add --no-cache bash >/dev/null 2>&1
+        while true; do
+          /backup/backup.sh || echo "[backup] run failed; retrying next cycle"
+          sleep 86400
+        done
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: kinevo
+      DB_USERNAME: kinevo
+      DB_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required}"
+      BACKUP_DIR: /backups
+      BACKUP_KEEP: "${BACKUP_KEEP:-7}"
+      REMOTE_BUCKET: "${REMOTE_BUCKET:-}"
+      AWS_ENDPOINT_URL: "${AWS_ENDPOINT_URL:-}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID:-}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-}"
+    volumes:
+      - ./scripts/backup.sh:/backup/backup.sh:ro
+      - ./scripts/restore.sh:/backup/restore.sh:ro
+      - kinevo_backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
   # Optional local AI inference (opt-in). Internal network only.
   ollama:
     image: ollama/ollama:latest
@@ -118,5 +154,6 @@ services:
 volumes:
   kinevo_pgdata:
   kinevo_ollama:
+  kinevo_backups:
   certbot_conf:
   certbot_www:

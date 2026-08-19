@@ -53,6 +53,39 @@ At minimum:
 - periodic full JSON/CSV export;
 - documented restore procedure.
 
+---
+
+### Backup & restore automation (TASK-082, SRS §16.4, NFR-05)
+
+**Scripts** (`scripts/backup.sh`, `scripts/restore.sh`):
+- `backup.sh` dumps the canonical PostgreSQL store to a timestamped gzipped
+  file, prunes local backups to `BACKUP_KEEP`, and optionally copies to a
+  remote S3-compatible bucket (`--remote-bucket s3://bucket/prefix`,
+  `AWS_*`/`mc`).
+- `restore.sh` terminates active connections, drops and recreates the DB, and
+  applies the chosen backup. It is **destructive** and guarded: it aborts
+  unless `CONFIRM_RESTORE=yes`, and validates the DB identifier.
+
+**Compose** (`docker-compose.prod.yml`): a `backup` service (postgres image,
+which ships `pg_dump`/`psql`) runs `backup.sh` on a daily loop into the
+`kinevo_backups` volume; optional remote copy via env.
+
+**Usage**
+```bash
+make prod-backup           # on-demand backup (remote copy via REMOTE_BUCKET)
+make prod-backup-list      # list local backups
+make prod-restore CONFIRM_RESTORE=yes [BACKUP_FILE=...]   # DESTRUCTIVE
+```
+
+**Restore test**: periodically run the restore flow against a scratch copy to
+prove recoverability (SRS §16.4 "restore test periodically"). The manual
+JSON/CSV export remains available via the `GET /export` activity-log endpoint.
+
+**RPO/RTO**: the suggested personal baseline is RPO ≤24h (daily backup) and
+RTO ≤4h; a remote backup copy is required for the remote-copy part of §16.4.
+
+---
+
 ### Disaster recovery
 Exact RPO/RTO MUST be finalized from operational needs. Suggested personal deployment baseline may target RPO <= 24h and RTO <= 4h.
 

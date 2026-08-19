@@ -66,6 +66,7 @@ Note summarization/extraction        ✅ DONE (TASK-074)
 Canvas generation proposal           ✅ DONE (TASK-075)
 Production Docker profile            ✅ DONE (TASK-080)
 Reverse proxy / TLS                  ✅ DONE (TASK-081)
+Backup / restore automation          ✅ DONE (TASK-082)
 ```
 
 ### Evidence rule
