@@ -96,3 +96,9 @@ jobs:
 
       - name: Check task board consistency
         run: ./scripts/status.sh .
+
+      - name: Check changelog structure
+        run: ./scripts/check-changelog.sh .
+
+      - name: Check version consistency
+        run: ./scripts/check-version.sh .

@@ -11,6 +11,19 @@ environment, environment/secrets baseline, and an Identity/profile baseline are
 complete through **TASK-010**. See [`docs/implementation-status.md`](docs/implementation-status.md)
 and [`TASK.md`](TASK.md) for the current execution board.
 
+## Releases
+
+- **Current stable release:** none yet published (pre-1.0; the first canonical
+  tagged release is pending).
+- **Development status:** 0.x pre-release; implementation continues task by task.
+- **Versioning:** [Semantic Versioning](https://semver.org/) — governance in
+  [`docs/release-management.md`](docs/release-management.md).
+- **Changelog:** [`CHANGELOG.md`](CHANGELOG.md) ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/)).
+- **Compatibility matrix:** [`docs/compatibility.md`](docs/compatibility.md).
+- **License:** MIT (see below).
+- **Supported deployment:** self-hosted Docker (see
+  [`docs/deployment.md`](docs/deployment.md)).
+
 ## What it is
 
 Kinevo helps one person plan goals and milestones, schedule tasks against a

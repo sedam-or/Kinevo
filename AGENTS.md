@@ -179,4 +179,23 @@ not runtime product dependencies.
 Use adapters. Do not make Excalidraw, Tiptap, or any third-party editor the owner
 of Kinevo business semantics.
 
+### Release & documentation lifecycle
+- Versioning follows SemVer; the changelog follows Keep a Changelog; commits
+  follow Conventional Commits. Governance: `docs/release-management.md`.
+- `TASK.md` (execution state) and `CHANGELOG.md` (user-facing outcomes) are
+  separate documents — never merge them, never dump git history into the
+  changelog.
+- The canonical application version comes from the latest `v*` git tag; there is
+  no committed `VERSION` file. The SRS version and API major version are
+  separate contracts.
+- Before a release candidate, run `make changelog-check`, `make version-check`,
+  and `make release-dry-run`; never weaken a gate to get green. Publishing a tag
+  / GitHub Release is a deliberate manual action — the agent never tags or pushes
+  a release without explicit instruction.
+- Keep every document in one lifecycle state (ACTIVE / AUTHORITATIVE / REFERENCE
+  / TEMPORARY / DEPRECATED / ARCHIVED). Promote durable decisions to ADRs /
+  `docs/architecture.md` / `docs/SRS.md`; archive or remove spikes, prompts, and
+  scratch. Never let a temporary document silently become architecture
+  authority, and never edit published release tags.
+
 ---

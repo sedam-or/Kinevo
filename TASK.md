@@ -1121,5 +1121,31 @@
 - Completed work MUST include evidence: commit, test output, screenshot, trace, or deployment proof.
 - Dependencies MUST be respected; do not parallelize tasks that would create incompatible migrations or contracts.
 
+### Phase 10 — Release & Documentation Hygiene
+#### TASK-160 — Repository Documentation Hygiene & Release Readiness
+- Status: IN_PROGRESS
+- Priority: P1
+- SRS: no requirement change (governance/tooling only).
+- Acceptance:
+  - [x] `docs/release-management.md` added (versioning, channels, cadence, eligibility, changelog, release notes, tagging, GitHub Releases, migration/API policy, pre-releases, security releases, rollback, doc cleanup, post-release verification).
+  - [x] `docs/compatibility.md` added (app ↔ SRS ↔ API ↔ migration head matrix).
+  - [x] `CHANGELOG.md` standardized with `## [Unreleased]` staging section.
+  - [x] `scripts/check-version.sh` added (SemVer, monotonic bump, changelog consistency).
+  - [x] `scripts/check-changelog.sh` added (Keep a Changelog structure validation).
+  - [x] `scripts/release-dry-run.sh` added (non-destructive readiness gate → READY/BLOCKED).
+  - [x] Makefile targets: `version`, `version-check`, `changelog-check`, `release-check`, `release-dry-run`, `release-prepare`.
+  - [x] CI wired: changelog + version checks in `ci.yml`; release dry-run gate in `release.yml`.
+  - [ ] No duplicate authoritative docs; no obsolete architecture docs.
+  - [ ] `AGENTS.md` contains current rules only (release/document-hygiene rules reviewed).
+  - [ ] spike/prompt artifacts classified (none present).
+  - [ ] release workflow documented and scripts validated.
+- Verification:
+  - [x] `make changelog-check` → PASS
+  - [x] `make version-check` → PASS
+  - [x] `make release-dry-run` → READY
+  - [x] `./scripts/validate-repo.sh .` → VALIDATION PASSED
+- Evidence: docs/release-management.md, docs/compatibility.md, scripts/{check-version,check-changelog,release-dry-run}.sh, Makefile, .github/workflows/{ci,release}.yml
+- Release Impact: NONE (internal governance/tooling; no user-facing behavior change)
+
 ---
 

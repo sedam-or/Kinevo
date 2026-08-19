@@ -31,6 +31,8 @@ files=(
   docs/deployment.md
   docs/environment.md
   docs/test-strategy.md
+  docs/release-management.md
+  docs/compatibility.md
   docs/implementation-status.md
   docs/api/openapi.yaml
   docs/adr/ADR-001-architecture.md

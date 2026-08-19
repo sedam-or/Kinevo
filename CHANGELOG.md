@@ -2,10 +2,19 @@
 
 All notable changes to Kinevo are documented here.
 
-Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-semantic-version-compatible. Version numbers below refer to the **application**.
-The **SRS version** (currently 2.0.0) and **API version** (v1) are tracked
-separately in `docs/SRS.md` and `docs/api/openapi.yaml` respectively.
+This project follows Semantic Versioning. Format based on
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version numbers below
+refer to the **application**. The **SRS version** (currently 2.0.0) and **API
+version** (v1) are tracked separately in `docs/SRS.md` and
+`docs/api/openapi.yaml` respectively.
+
+Release governance: see `docs/release-management.md`.
+
+## [Unreleased]
+
+### Added
+
+- Added release-management lifecycle documentation and release validation tooling.
 
 ## [0.4.0] — 2026-08-17
 

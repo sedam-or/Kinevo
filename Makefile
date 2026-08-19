@@ -12,6 +12,7 @@ COMPOSE_PROD := docker compose -f infrastructure/docker-compose.prod.yml
 	test lint format analyse ci \
 	frontend-install frontend-typecheck frontend-test frontend-build \
 	check-links check-openapi \
+	version version-check changelog-check release-check release-dry-run release-prepare \
 	ollama-up ollama-down ai-status ai-smoke \
 	prod-build prod-up prod-down prod-migrate prod-logs prod-certbot \
 	prod-backup prod-backup-list prod-restore
@@ -41,6 +42,39 @@ check-links:
 
 check-openapi:
 	./scripts/check-openapi.sh .
+
+# --- Release management (non-destructive; see docs/release-management.md) ----
+# None of these targets publish. Tagging + GitHub Releases are deliberate manual
+# actions (the release.yml workflow only responds to an already-created v* tag).
+version:
+	./scripts/check-version.sh .
+
+version-check:
+	./scripts/check-version.sh . $(VERSION)
+
+changelog-check:
+	./scripts/check-changelog.sh .
+
+release-check:
+	./scripts/release-dry-run.sh .
+
+release-dry-run:
+	./scripts/release-dry-run.sh . $(VERSION)
+
+# Prepare-release is a documentation checklist aid; it does NOT tag or push.
+# usage: make release-prepare VERSION=0.6.0
+release-prepare:
+	@echo "Release preparation checklist (see docs/release-management.md):"
+	@echo "  1. Confirm release scope (tasks/features/breaking/migration changes)"
+	@echo "  2. Update CHANGELOG.md '## [Unreleased]' with user-facing entries"
+	@echo "  3. Ensure eligibility gates pass (test, lint, analyse, build, security)"
+	@echo "  4. Run: make version-check VERSION=$(VERSION)"
+	@echo "  5. Run: make changelog-check"
+	@echo "  6. Run: make release-dry-run VERSION=$(VERSION)"
+	@echo "  7. Rename '## [Unreleased]' to '## [$(VERSION)] - YYYY-MM-DD'"
+	@echo "  8. Commit + create annotated tag v$(VERSION)"
+	@echo "  9. Push tag (release.yml creates the GitHub Release)"
+	@echo "Publishing remains a deliberate manual action."
 
 doctor: validate status
 

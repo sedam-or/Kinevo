@@ -18,6 +18,9 @@ jobs:
       - name: Verify CHANGELOG exists
         run: test -f CHANGELOG.md
 
+      - name: Run release dry-run gate
+        run: ./scripts/release-dry-run.sh . "${GITHUB_REF_NAME#v}"
+
       - name: Verify tag matches CHANGELOG
         run: |
           TAG="${GITHUB_REF_NAME#v}"
