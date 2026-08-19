@@ -266,6 +266,101 @@ paths:
         '401': { description: Unauthorized }
         '404': { description: Hard Landscape event not found }
 
+  /schedule-overrides:
+    get:
+      tags: [Scheduling]
+      summary: List Schedule Overrides for the authenticated user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleOverrideListResponse'
+        '401': { description: Unauthorized }
+    post:
+      tags: [Scheduling]
+      summary: Create a Schedule Override (permanent shift or one-time exception)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleOverrideCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleOverrideResponse'
+        '401': { description: Unauthorized }
+        '409': { description: Overlaps another override for the same source }
+        '422': { description: Validation error }
+
+  /schedule-overrides/{overrideId}:
+    get:
+      tags: [Scheduling]
+      summary: Get a single Schedule Override
+      parameters:
+        - name: overrideId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleOverrideResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Schedule override not found }
+    patch:
+      tags: [Scheduling]
+      summary: Update a Schedule Override
+      parameters:
+        - name: overrideId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleOverrideUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleOverrideResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Schedule override not found }
+        '409': { description: Overlaps another override for the same source }
+        '422': { description: Validation error }
+    delete:
+      tags: [Scheduling]
+      summary: Delete a Schedule Override
+      parameters:
+        - name: overrideId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted: { type: boolean, default: true }
+        '401': { description: Unauthorized }
+        '404': { description: Schedule override not found }
+
   /auth/register:
     post:
       tags: [Identity]
@@ -2211,6 +2306,54 @@ components:
         hard_landscape:
           type: array
           items: {$ref: '#/components/schemas/HardLandscapeEvent'}
+    ScheduleOverride:
+      type: object
+      required: [id, user_id, hard_landscape_event_id, type, effective_from, effective_to, override_start_at, override_end_at]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        hard_landscape_event_id: {type: integer}
+        type: {type: string, enum: [permanent, one_time]}
+        effective_from: {type: string, format: date-time}
+        effective_to: {type: string, format: date-time}
+        override_start_at: {type: string, format: date-time}
+        override_end_at: {type: string, format: date-time}
+        reason: {type: string, nullable: true}
+        created_at: {type: string, format: date-time, nullable: true}
+        updated_at: {type: string, format: date-time, nullable: true}
+    ScheduleOverrideCreateRequest:
+      type: object
+      required: [hard_landscape_event_id, type, effective_from, effective_to, override_start_at, override_end_at]
+      properties:
+        hard_landscape_event_id: {type: integer}
+        type: {type: string, enum: [permanent, one_time]}
+        effective_from: {type: string, format: date-time}
+        effective_to: {type: string, format: date-time}
+        override_start_at: {type: string, format: date-time}
+        override_end_at: {type: string, format: date-time}
+        reason: {type: string, nullable: true}
+    ScheduleOverrideUpdateRequest:
+      type: object
+      properties:
+        hard_landscape_event_id: {type: integer}
+        type: {type: string, enum: [permanent, one_time]}
+        effective_from: {type: string, format: date-time}
+        effective_to: {type: string, format: date-time}
+        override_start_at: {type: string, format: date-time}
+        override_end_at: {type: string, format: date-time}
+        reason: {type: string, nullable: true}
+    ScheduleOverrideResponse:
+      type: object
+      required: [override]
+      properties:
+        override: {$ref: '#/components/schemas/ScheduleOverride'}
+    ScheduleOverrideListResponse:
+      type: object
+      required: [overrides]
+      properties:
+        overrides:
+          type: array
+          items: {$ref: '#/components/schemas/ScheduleOverride'}
     SubtaskCreateRequest:
       type: object
       required: [title]

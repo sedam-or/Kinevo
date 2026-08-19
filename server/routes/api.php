@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ProgressEventController;
 use App\Http\Controllers\Api\RecoveryController;
 use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\ScheduleOverrideController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TodayController;
 use App\Http\Controllers\Api\WeekController;
@@ -137,4 +138,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/hard-landscape/{eventId}', [HardLandscapeController::class, 'show']);
     Route::patch('/hard-landscape/{eventId}', [HardLandscapeController::class, 'update']);
     Route::delete('/hard-landscape/{eventId}', [HardLandscapeController::class, 'destroy']);
+
+    // Schedule Overrides (FR-25; SRS §7.1).
+    Route::get('/schedule-overrides', [ScheduleOverrideController::class, 'index']);
+    Route::post('/schedule-overrides', [ScheduleOverrideController::class, 'store']);
+    Route::get('/schedule-overrides/{overrideId}', [ScheduleOverrideController::class, 'show']);
+    Route::patch('/schedule-overrides/{overrideId}', [ScheduleOverrideController::class, 'update']);
+    Route::delete('/schedule-overrides/{overrideId}', [ScheduleOverrideController::class, 'destroy']);
 });

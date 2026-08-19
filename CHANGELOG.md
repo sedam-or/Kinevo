@@ -14,6 +14,11 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added Schedule Overrides (CRUD under `/schedule-overrides`) supporting
+  permanent shifts and one-time exceptions on recurring Hard Landscape series,
+  with explicit placement precedence (hard landscape > locked task > explicit
+  override > recurrence > ordinary) and no silent mutation of source history
+  (FR-25).
 - Added a deterministic, timezone-aware recurrence engine (RFC-5545 subset:
   daily/weekly, BYDAY, INTERVAL, COUNT/UNTIL) with bounded occurrence
   generation, duplicate prevention, and exception/cancelled-occurrence support

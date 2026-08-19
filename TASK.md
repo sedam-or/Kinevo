@@ -1084,16 +1084,17 @@
 - Release Impact: MINOR (reusable domain capability; no API/schema change)
 
 #### TASK-097 — Schedule Overrides
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Depends On: TASK-095, TASK-096
 - SRS: FR-25.
 - Acceptance:
-  - [ ] Permanent override and one-time exception; explicit precedence (hard landscape > locked task > explicit override > recurrence-generated event > ordinary generated schedule).
-  - [ ] No silent historical mutation.
+  - [x] Permanent override and one-time exception; explicit precedence (hard landscape > locked task > explicit override > recurrence-generated event > ordinary generated schedule).
+  - [x] No silent historical mutation.
 - Verification:
-  - [ ] Unit + Feature tests.
-- Evidence: server/app/Domain/Scheduling/ScheduleOverride.php
+  - [x] Unit + Feature tests.
+- Evidence: server/app/Domain/Scheduling/ScheduleOverride.php, server/app/Domain/Scheduling/ValueObjects/{ScheduleOverrideType,SchedulePrecedence}.php, server/app/Domain/Scheduling/Contracts/ScheduleOverrideRepository.php, server/app/Infrastructure/Scheduling/EloquentScheduleOverrideRepository.php, server/app/Application/Scheduling/*ScheduleOverrideUseCase.php, server/app/Http/Controllers/Api/ScheduleOverrideController.php, database/migrations/2026_08_19_130000_create_schedule_overrides_table.php, docs/api/openapi.yaml, server/tests/Unit/Scheduling/ScheduleOverrideTest.php, server/tests/Feature/Scheduling/ScheduleOverrideRepositoryTest.php, server/tests/Feature/Api/ScheduleOverrideApiTest.php
+- Release Impact: MINOR (new optional CRUD capability; additive table; no breaking change)
 
 #### TASK-098 — Quick Capture Placement
 - Status: TODO
