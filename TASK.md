@@ -927,8 +927,23 @@
 - Notes: Reverse proxy + TLS termination is TASK-081 (nginx routes to the app's internal :9000). Backup/restore is TASK-082, observability TASK-083. `config:cache` runs at container boot rather than image build to avoid freezing the build placeholder APP_KEY (a security/correctness concern identified during implementation).
 
 #### TASK-081 — Reverse proxy/TLS
-- Status: TODO
-- Priority: P0.
+- Status: DONE
+- Priority: P0
+- SRS: NFR-02 (HTTPS/TLS for all traffic, security headers), §16.4 (only HTTP/HTTPS externally exposed; PostgreSQL/Ollama internal), §16.1 network trust boundaries ("Public HTTP enters through Nginx/Cloudflare"); docs/architecture.md §Network trust boundaries, docs/deployment.md (80/443 only through reverse proxy, Cloudflare edge).
+- Acceptance:
+  - [x] Nginx reverse-proxy config (`infrastructure/docker/nginx/default.conf`): HTTP→HTTPS redirect (except ACME challenge), TLS 1.2/1.3 termination with mounted certs, security headers, serves Vite `/build/` (immutable cache) + `sw.js` (no-cache), proxies to app php-fpm `:9000` via fastcgi, forwards `X-Forwarded-Proto https`
+  - [x] `reverse-proxy` service in `docker-compose.prod.yml` publishing only 80/443; shared `certbot_conf`/`certbot_www` volumes; app publishes no host port
+  - [x] `certbot` companion service (webroot) behind the `certbot` profile; `make prod-certbot EMAIL=...` issues/renews; Cloudflare-edge documented as an equal TLS profile
+  - [x] App trusts the proxy (`trustProxies('*')` in `bootstrap/app.php`) so HTTPS URLs/schemes are generated correctly behind nginx
+  - [x] docs/deployment.md "Reverse proxy & TLS" section (config, compose, first-time webroot issuance, renewal, Cloudflare option)
+- Verification:
+  - [x] `docker compose -f docker-compose.prod.yml config` valid; services include `reverse-proxy`; `certbot` behind `certbot` profile
+  - [x] Nginx template envsubst verified (SERVER_NAME substituted; nginx runtime vars preserved); config syntactically valid (only "host not found in upstream app" outside the compose network, expected)
+  - [x] `vendor/bin/phpunit` → OK (467 tests, 1278 assertions; trustProxies change covered)
+  - [x] `composer analyse` → PHPStan no errors; `composer lint` → Pint PASS (350 files)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` all pass
+- Evidence: infrastructure/docker/nginx/default.conf, infrastructure/docker-compose.prod.yml (reverse-proxy + certbot services/volumes), Makefile (prod-certbot), server/bootstrap/app.php (trustProxies), docs/deployment.md
+- Notes: First-time cert issuance is a manual/release step (`make prod-certbot`); renewal is a scheduled `certbot renew`. Cloudflare edge (SRS "Nginx + Cloudflare-compatible edge") is an equally supported TLS profile documented as the alternative to self-managed LetsEncrypt.
 
 #### TASK-082 — Backup/restore automation
 - Status: TODO

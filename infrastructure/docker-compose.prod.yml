@@ -1,15 +1,40 @@
 # Kinevo production compose (deployment.md "Production containers").
-# Roles: app (php-fpm), queue-worker, scheduler, postgres, optional ollama.
-# Reverse proxy/TLS is TASK-081 (nginx handled separately; the app binds :9000
-# internally). Migrations run explicitly as a release step (`make prod-migrate`),
-# not implicitly on boot.
+# Roles: reverse-proxy (nginx TLS, TASK-081), app (php-fpm), queue-worker,
+# scheduler, postgres, optional ollama. Public 80/443 enter only via the
+# reverse proxy; the app, PostgreSQL, and Ollama stay internal (SRS §16.4).
+# Migrations run explicitly as a release step (`make prod-migrate`).
 #
 # Secrets are injected via the environment (platform secret store), never baked
-# into the image. APP_KEY / DB_PASSWORD MUST be provided at deploy time.
+# into the image. APP_KEY / DB_PASSWORD / SERVER_NAME MUST be provided at deploy.
 
 name: kinevo-prod
 
 services:
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SERVER_NAME: "${SERVER_NAME:?SERVER_NAME is required (e.g. kinevo.example.com)}"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  # Let's Encrypt ACME companion (webroot). Run once per domain, then the
+  # reverse proxy serves the certificates. See docs/deployment.md TASK-081.
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    profiles: ["certbot"]
+    restart: "no"
+
   app:
     image: kinevo-app:prod
     build:
@@ -93,3 +118,5 @@ services:
 volumes:
   kinevo_pgdata:
   kinevo_ollama:
+  certbot_conf:
+  certbot_www:

@@ -173,3 +173,36 @@ remain internal-network services (SRS §16.4).
 
 ---
 
+### Reverse proxy & TLS (TASK-081, SRS NFR-02)
+
+Public 80/443 enter only through the nginx reverse proxy; the app (php-fpm),
+PostgreSQL, and Ollama stay on the internal network (SRS §16.4).
+
+**Reverse proxy** (`infrastructure/docker/nginx/default.conf`):
+- HTTP → HTTPS redirect (except the ACME challenge path);
+- TLS termination (TLS 1.2/1.3, security headers) with certificates mounted;
+- serves Vite-built assets (`/build/`, long-lived cache) and `sw.js`
+  (no-cache), proxies everything else to the app php-fpm on `:9000`;
+- forwards `X-Forwarded-Proto https`; the app trusts the proxy
+  (`trustProxies('*')` in `bootstrap/app.php`) so HTTPS URLs/schemes are correct.
+
+**Compose** (`docker-compose.prod.yml`):
+- `reverse-proxy` publishes `80`/`443` only; `app` publishes no host port;
+- shared `certbot_conf` (LetsEncrypt certs) and `certbot_www` (ACME challenge)
+  volumes;
+- `certbot` companion service behind the `certbot` profile.
+
+**First-time TLS (webroot)** — with the proxy up:
+```bash
+export SERVER_NAME=kinevo.example.com
+make prod-certbot EMAIL=admin@example.com   # issues a cert into certbot_conf
+make prod-up                                  # proxy now serves HTTPS
+```
+
+**Renewal**: `certbot renew` (webroot) on a schedule; the proxy reloads to pick
+up renewed certs. Cloudflare edge is an equally supported TLS profile (SRS
+"Reverse Proxy / TLS": Nginx + Cloudflare-compatible edge); with Cloudflare
+terminating TLS in front, the nginx `443` server can serve the origin cert.
+
+---
+

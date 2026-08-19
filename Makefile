@@ -13,7 +13,7 @@ COMPOSE_PROD := docker compose -f infrastructure/docker-compose.prod.yml
 	frontend-install frontend-typecheck frontend-test frontend-build \
 	check-links check-openapi \
 	ollama-up ollama-down ai-status ai-smoke \
-	prod-build prod-up prod-down prod-migrate prod-logs
+	prod-build prod-up prod-down prod-migrate prod-logs prod-certbot
 
 # --- Documentation bootstrap -------------------------------------------------
 setup:
@@ -90,6 +90,15 @@ prod-migrate:
 
 prod-logs:
 	$(COMPOSE_PROD) logs -f
+
+# Issue/renew a Let's Encrypt cert for SERVER_NAME via the webroot method
+# (TASK-081). Requires the reverse-proxy to be up and SERVER_NAME + an email.
+# usage: make prod-certbot EMAIL=admin@example.com
+prod-certbot:
+	$(COMPOSE_PROD) --profile certbot run --rm certbot certonly \
+		--webroot -w /var/www/certbot \
+		--email "$(EMAIL)" --agree-tos --no-eff-email \
+		-d "$${SERVER_NAME}"
 
 # --- Quality gates (run inside the app container) ---------------------------
 test:

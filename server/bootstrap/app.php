@@ -28,6 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return route('login');
         });
+
+        // The app only ever listens on the internal compose network behind the
+        // reverse proxy (TASK-081). Trust forwarded headers so HTTPS URLs and
+        // schemes are generated correctly (SRS NFR-02).
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
