@@ -14,6 +14,9 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Task UI (TASK-105): task list, creation, detail and edit, backend-
+  validated status transitions, subtasks (add/toggle/promote), and partial
+  completion, wired to the Task APIs (FR-09/FR-45).
 - Added the Week / Calendar UI (TASK-104): a 7-day week grid and monthly
   calendar with date navigation, capacity/overload indication, per-day deadline
   markers and task assignments, wired to the real `GET /week`, `GET /calendar`,

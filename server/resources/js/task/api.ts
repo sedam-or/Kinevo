@@ -1,0 +1,73 @@
+import { apiClient } from '../api/client';
+import type {
+    CreateTaskPayload,
+    PartialCompleteResponse,
+    PromoteSubtaskResponse,
+    SubtaskListResponse,
+    SubtaskResponse,
+    TaskListResponse,
+    TaskResponse,
+    TaskStatusValue,
+    ToggleSubtaskResponse,
+    UpdateTaskPayload,
+} from './types';
+
+export const taskApi = {
+    list(): Promise<TaskListResponse> {
+        return apiClient.request<TaskListResponse>('/tasks');
+    },
+
+    create(payload: CreateTaskPayload): Promise<TaskResponse> {
+        return apiClient.request<TaskResponse>('/tasks', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    },
+
+    show(taskId: number): Promise<TaskResponse> {
+        return apiClient.request<TaskResponse>(`/tasks/${taskId}`);
+    },
+
+    update(taskId: number, payload: UpdateTaskPayload): Promise<TaskResponse> {
+        return apiClient.request<TaskResponse>(`/tasks/${taskId}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+        });
+    },
+
+    setStatus(taskId: number, status: TaskStatusValue): Promise<TaskResponse> {
+        return apiClient.request<TaskResponse>(`/tasks/${taskId}/status`, {
+            method: 'POST',
+            body: JSON.stringify({ status }),
+        });
+    },
+
+    partialComplete(taskId: number): Promise<PartialCompleteResponse> {
+        return apiClient.request<PartialCompleteResponse>(`/tasks/${taskId}/partial-complete`, {
+            method: 'POST',
+        });
+    },
+
+    subtasks(taskId: number): Promise<SubtaskListResponse> {
+        return apiClient.request<SubtaskListResponse>(`/tasks/${taskId}/subtasks`);
+    },
+
+    addSubtask(taskId: number, title: string, notes?: string | null): Promise<SubtaskResponse> {
+        return apiClient.request<SubtaskResponse>(`/tasks/${taskId}/subtasks`, {
+            method: 'POST',
+            body: JSON.stringify({ title, notes: notes ?? null }),
+        });
+    },
+
+    toggleSubtask(taskId: number, subtaskId: number): Promise<ToggleSubtaskResponse> {
+        return apiClient.request<ToggleSubtaskResponse>(`/tasks/${taskId}/subtasks/${subtaskId}/toggle`, {
+            method: 'POST',
+        });
+    },
+
+    promoteSubtask(subtaskId: number): Promise<PromoteSubtaskResponse> {
+        return apiClient.request<PromoteSubtaskResponse>(`/subtasks/${subtaskId}/promote`, {
+            method: 'POST',
+        });
+    },
+};

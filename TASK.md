@@ -1438,6 +1438,27 @@ All state transitions MUST use backend rules.
 
 The frontend may present actions; it must not become the state authority.
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-102 (API client), TASK-100 (shell), TASK-014 (task/subtask lifecycle)
+- SRS: FR-09 (partial-complete, promote), FR-45 (subtask hierarchy), §6.5; design.md §Task states, §Lock interaction; TaskStatus state machine.
+- Acceptance:
+  - [x] Task list (`GET /tasks`), creation (`POST /tasks`), and a "Tasks" nav view.
+  - [x] Task detail (`GET /tasks/{id}`) with edit (`PUT /tasks/{id}`): title, description, priority, duration, due date.
+  - [x] Status transitions presented from the TaskStatus state machine (`TASK_TRANSITIONS`) via `POST /tasks/{id}/status`; the backend remains the state authority (no client-side state mutation).
+  - [x] Subtasks: list, add (`POST /tasks/{id}/subtasks`), toggle (`POST .../toggle`) updating task progress.
+  - [x] Partial completion (`POST /tasks/{id}/partial-complete`) when in_progress.
+  - [x] Promote subtask (`POST /subtasks/{id}/promote`) to a standalone task.
+  - [x] Typed Task API client + Pinia store; TaskView container switches list/detail.
+- Verification:
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (173 tests; 10 new Task tests: store, TaskListView, TaskDetailView)
+  - [x] `npm run build` → built OK
+  - [x] Backend regression: `composer test` → OK (616 tests, 1647 assertions)
+  - [x] Repo gates (secrets/doc-links/validate/changelog) all PASS
+- Evidence: server/resources/js/task/{types.ts,api.ts,store.ts,TaskView.vue,TaskListView.vue,TaskDetailView.vue}, server/resources/js/task/__tests__/*.test.ts, server/resources/js/shell/navigation.ts (Tasks nav), server/resources/js/auth/AuthHost.vue (Task wiring)
+- Release Impact: MINOR (new frontend surface; no backend/API change)
+
 ---
 
 # TASK-106 — Goals / Milestones / Programs UI

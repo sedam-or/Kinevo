@@ -84,6 +84,7 @@ Authentication UI                    ✅ DONE (TASK-101)
 Global API / state client            ✅ DONE (TASK-102)
 Today UI                             ✅ DONE (TASK-103)
 Week / Calendar UI                   ✅ DONE (TASK-104)
+Task UI                              ✅ DONE (TASK-105)
 ```
 
 ### Evidence rule
