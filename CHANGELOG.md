@@ -14,6 +14,11 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Today UI (TASK-103): the primary execution surface with a dated
+  header, sync state, NOW and NEXT cards, a 06:00–24:00 timeline (scheduled
+  tasks, Hard Landscape, empty slots, lock/conflict states), capacity
+  indication, and global Quick Capture wired to `GET /today` and
+  `POST /quick-capture` (FR-01/FR-02/FR-27).
 - Added the global typed API / state client (TASK-102): a shared `fetch`-based
   client with a canonical error taxonomy (401/403/404/409/422/429/503),
   automatic retry with backoff, offline detection, and a global API state store

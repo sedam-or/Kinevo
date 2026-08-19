@@ -8,6 +8,7 @@ import AppErrorBoundary from '../shell/AppErrorBoundary.vue';
 import LoginView from './LoginView.vue';
 import RegisterView from './RegisterView.vue';
 import ProfileView from './ProfileView.vue';
+import TodayView from '../today/TodayView.vue';
 
 const auth = useAuthStore();
 const shell = useShellStore();
@@ -16,6 +17,14 @@ const api = useApiStore();
 const authMode = ref<'login' | 'register'>('login');
 
 const ready = ref(false);
+
+const todayDate = computed(() => {
+    const local = new Date();
+    const y = local.getFullYear();
+    const m = String(local.getMonth() + 1).padStart(2, '0');
+    const d = String(local.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+});
 
 function handleOnline(): void {
     api.setOnline(true);
@@ -86,6 +95,7 @@ const viewTitle = computed(() => {
             </div>
 
             <ProfileView v-if="shell.activeView === 'settings'" />
+            <TodayView v-else-if="shell.activeView === 'today'" :date="todayDate" />
             <div v-else data-testid="view-content">
                 <p class="text-sm text-gray-600 dark:text-gray-400">
                     The {{ shell.activeView }} view is wired into the shell and will be

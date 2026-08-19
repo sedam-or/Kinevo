@@ -1346,6 +1346,28 @@ canvas link
 
 Do not dump analytics into Today.
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-102 (API client), TASK-100 (shell), TASK-094 (Today API)
+- SRS: FR-01 (Today view), FR-02 (dynamic empty slots), FR-27 (hard landscape); design.md §Today screen, §Slot visualization, §Quick Capture.
+- Acceptance:
+  - [x] Header with formatted date and sync state (shell sync indicator).
+  - [x] NOW card: title, duration, time range, goal/milestone/program context, lock + conflict badges.
+  - [x] NEXT card: next upcoming scheduled event.
+  - [x] Timeline (`/today`): scheduled tasks, Hard Landscape, empty slots, lock/conflict visual states, 06:00–24:00 axis.
+  - [x] Capacity indicator (scheduled vs available, overload) — no analytics dumped into Today.
+  - [x] Quick Capture form (title, priority, duration) posting to `POST /quick-capture`, then reloading Today.
+  - [x] Typed Today API client + Pinia Today store (`today/`); wired into the shell for the `today` view.
+  - [x] No mock data — uses the real `GET /today` schedule API (FR-01).
+- Verification:
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (155 tests; 7 new Today tests: store, TodayView)
+  - [x] `npm run build` → built OK
+  - [x] Backend regression: `composer test` → OK (616 tests, 1647 assertions)
+  - [x] Repo gates (secrets/doc-links/validate/changelog/openapi) all PASS
+- Evidence: server/resources/js/today/{types.ts,api.ts,store.ts,TodayView.vue}, server/resources/js/today/__tests__/*.test.ts, server/resources/js/auth/AuthHost.vue (Today wiring)
+- Release Impact: MINOR (new frontend surface; no backend/API change)
+
 ---
 
 # TASK-104 — Week / Calendar UI

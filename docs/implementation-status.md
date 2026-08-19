@@ -82,6 +82,7 @@ Release & doc hygiene                ✅ DONE (TASK-160)
 Vue application shell                ✅ DONE (TASK-100)
 Authentication UI                    ✅ DONE (TASK-101)
 Global API / state client            ✅ DONE (TASK-102)
+Today UI                             ✅ DONE (TASK-103)
 ```
 
 ### Evidence rule
