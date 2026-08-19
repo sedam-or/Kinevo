@@ -1276,6 +1276,28 @@ Provide consistent typed responses.
 
 Do not place business logic in API composables.
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-101 (auth UI), TASK-031 (frontend scaffold)
+- SRS: §8.2 API contract; offline-sync.md §Sync/conflict; §5.3 layering (no business logic in API composables).
+- Acceptance:
+  - [x] Global typed API client (`api/client.ts`, `ApiClient`) built on `fetch`, injected base URL + bearer token, shared by all API modules.
+  - [x] Error taxonomy (`api/types.ts`): 401 UNAUTHORIZED, 403 FORBIDDEN, 404 NOT_FOUND, 409 CONFLICT, 422 VALIDATION, 429 TOO_MANY_REQUESTS, 503 UNAVAILABLE, plus SERVER/NETWORK/OFFLINE/UNKNOWN.
+  - [x] Parsed `ApiError` with `code`, `status`, `message`, field `errors`, stable server `serverCode` (e.g. `SCHEDULE_VERSION_CONFLICT`), and `retryable`.
+  - [x] Automatic retry with backoff for transient/network/5xx/429 (default 2 retries, linear delay); never retries 4xx; `noRetry` opt-out.
+  - [x] Offline detection: `isOnline` hook throws OFFLINE when disconnected; network `TypeError` → NETWORK error; connectivity wired to the shell sync indicator via online/offline listeners.
+  - [x] Global API state store (`api/store.ts`): in-flight/loading count, last error, online state, offline queue count.
+  - [x] Auth client refactored to use the shared `ApiClient` (token storage moved to `api/token.ts`); no duplicated request logic.
+  - [x] Consistent typed responses (`request<T>` returning typed JSON, `204 → undefined`); no business logic in API composables.
+- Verification:
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (148 tests; 16 new API tests: client, store)
+  - [x] `npm run build` → built OK
+  - [x] Backend regression: `composer test` → OK (616 tests, 1647 assertions)
+  - [x] Repo gates (secrets/doc-links/validate/changelog) all PASS
+- Evidence: server/resources/js/api/{client.ts,types.ts,token.ts,store.ts}, server/resources/js/api/__tests__/*.test.ts, server/resources/js/auth/client.ts (refactored), server/resources/js/auth/AuthHost.vue (connectivity wiring)
+- Release Impact: MINOR (new frontend infrastructure; no backend/API change)
+
 ---
 
 # TASK-103 — Today UI

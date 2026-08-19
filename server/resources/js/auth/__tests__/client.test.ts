@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { authApi, clearToken, readToken, writeToken } from '../client';
+import { authApi } from '../client';
+import { clearToken, readToken, writeToken } from '../../api/token';
 
 const originalFetch = globalThis.fetch;
 

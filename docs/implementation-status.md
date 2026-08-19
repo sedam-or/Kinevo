@@ -81,6 +81,7 @@ Auto Swap                            ✅ DONE (TASK-099)
 Release & doc hygiene                ✅ DONE (TASK-160)
 Vue application shell                ✅ DONE (TASK-100)
 Authentication UI                    ✅ DONE (TASK-101)
+Global API / state client            ✅ DONE (TASK-102)
 ```
 
 ### Evidence rule

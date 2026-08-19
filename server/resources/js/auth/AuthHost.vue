@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useAuthStore } from './store';
 import { useShellStore } from '../shell/store';
+import { useApiStore } from '../api/store';
 import AppShell from '../shell/AppShell.vue';
 import AppErrorBoundary from '../shell/AppErrorBoundary.vue';
 import LoginView from './LoginView.vue';
@@ -10,14 +11,35 @@ import ProfileView from './ProfileView.vue';
 
 const auth = useAuthStore();
 const shell = useShellStore();
+const api = useApiStore();
 
 const authMode = ref<'login' | 'register'>('login');
 
 const ready = ref(false);
 
+function handleOnline(): void {
+    api.setOnline(true);
+    shell.setSyncState('online');
+}
+
+function handleOffline(): void {
+    api.setOnline(false);
+    shell.setSyncState('offline');
+}
+
 onMounted(async () => {
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        handleOffline();
+    }
     await auth.restoreSession();
     ready.value = true;
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
 });
 
 function goToRegister(): void {

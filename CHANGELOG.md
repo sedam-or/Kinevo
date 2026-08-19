@@ -14,6 +14,10 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the global typed API / state client (TASK-102): a shared `fetch`-based
+  client with a canonical error taxonomy (401/403/404/409/422/429/503),
+  automatic retry with backoff, offline detection, and a global API state store
+  for loading/error/connectivity — now shared by the auth client.
 - Added the Authentication UI (TASK-101): login and first-owner registration
   forms, session restoration on load, logout, and profile/settings (display
   name, timezone, locale, week start) wired to the existing Sanctum bearer-token

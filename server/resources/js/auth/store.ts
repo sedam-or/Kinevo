@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { authApi, clearToken, readToken, writeToken } from './client';
+import { authApi } from './client';
+import { clearToken, readToken, writeToken } from '../api/token';
 import type { Profile, UpdateProfilePayload, User } from './types';
 
 export type AuthStatus = 'unknown' | 'authenticated' | 'guest';
