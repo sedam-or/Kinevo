@@ -89,6 +89,7 @@ Goals / Milestones / Programs UI     ✅ DONE (TASK-106)
 Quick Capture UI                     ✅ DONE (TASK-107)
 Schedule Draft / Rescheduler UI      ✅ DONE (TASK-108)
 Conflict / Lock / Explainability UI  ✅ DONE (TASK-109)
+Notes UI                             ✅ DONE (TASK-110)
 ```
 
 ### Evidence rule

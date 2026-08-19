@@ -14,6 +14,10 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Notes UI (TASK-110): note list and full-text search, create and
+  edit with debounced autosave and Saved/Saving/Error/Offline/Conflict states
+  (optimistic versioning, 409 conflict), and linked-entity display, wired into
+  the Knowledge view (FR-53/FR-54).
 - Added a consistent Conflict / Lock / Explainability UI (TASK-109): a shared
   visual-state badge system (glyph + text + non-color pattern for locked,
   conflict, overdue, draft, proposed, offline, syncing, queued, failed) applied

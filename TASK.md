@@ -1681,6 +1681,28 @@ Task link
 Attachments
 ```
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-102 (API client), TASK-109 (visual states), TASK-030/032/033 (Note + links + search API)
+- SRS: FR-53 (notes/search), FR-54 (knowledge links), §7.4; design.md §Notes UX, §Autosave indicator.
+- Acceptance:
+  - [x] Note list (`GET /notes`) and search (`GET /knowledge/search`) in a NotesListView under the Knowledge nav view.
+  - [x] Create note (`POST /notes`).
+  - [x] Edit note (`PATCH /notes/{id}`) with optimistic `base_version` (409 → conflict).
+  - [x] Autosave with debounce + explicit "Save now"; Saved/Saving/Error/Offline/Conflict states shown via the shared VisualStateBadge.
+  - [x] Offline: autosave reports Offline (uses the api connectivity state) instead of attempting to sync.
+  - [x] Linked entities displayed from `GET /notes/{id}/links` (goal/milestone/program/task/canvas).
+  - [x] Typed Note client + store; wired into the shell Knowledge view.
+  - Note: delete/archive and file attachments are not exposed by the current Note API (no DELETE/attachments endpoints) — out of scope until the backend lifecycle/attachment contract lands (tracked with Canvas import tasks).
+- Verification:
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (224 tests; 11 new note tests: store, NotesListView, NoteEditView)
+  - [x] `npm run build` → built OK
+  - [x] Backend regression: `composer test` → OK (628 tests, 1702 assertions)
+  - [x] Repo gates (secrets/doc-links/validate/changelog) all PASS
+- Evidence: server/resources/js/note/{types.ts,api.ts,store.ts,NotesListView.vue,NoteEditView.vue,NoteView.vue}, server/resources/js/note/__tests__/*.test.ts, server/resources/js/auth/AuthHost.vue (Knowledge wiring)
+- Release Impact: MINOR (new frontend surface; no backend/API change)
+
 ---
 
 # TASK-111 — Tiptap Vue Binding

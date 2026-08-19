@@ -14,6 +14,7 @@ import CalendarView from '../week/CalendarView.vue';
 import TaskView from '../task/TaskView.vue';
 import GoalView from '../goal/GoalView.vue';
 import ScheduleView from '../schedulerdraft/ScheduleView.vue';
+import NoteView from '../note/NoteView.vue';
 import QuickCapture from '../quickcapture/QuickCapture.vue';
 import { useQuickCaptureStore } from '../quickcapture/store';
 
@@ -112,6 +113,7 @@ const viewTitle = computed(() => {
             <TaskView v-else-if="shell.activeView === 'tasks'" />
             <GoalView v-else-if="shell.activeView === 'goals'" />
             <ScheduleView v-else-if="shell.activeView === 'schedule'" />
+            <NoteView v-else-if="shell.activeView === 'knowledge'" />
             <div v-else data-testid="view-content">
                 <p class="text-sm text-gray-600 dark:text-gray-400">
                     The {{ shell.activeView }} view is wired into the shell and will be
