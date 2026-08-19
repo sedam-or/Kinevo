@@ -1135,6 +1135,1039 @@
 - Completed work MUST include evidence: commit, test output, screenshot, trace, or deployment proof.
 - Dependencies MUST be respected; do not parallelize tasks that would create incompatible migrations or contracts.
 
+# 8. PHASE 10 — CORE FRONTEND PRODUCT
+
+Create:
+
+```text
+Phase 10 — Frontend Product Surface
+TASK-100 … TASK-109
+```
+
+This phase turns backend systems into an actual application.
+
+---
+
+# TASK-100 — Vue Application Shell
+
+Implement:
+
+```text
+App shell
+Primary navigation
+Responsive layout
+Global error boundary
+Global loading state
+Sync indicator
+Notification indicator
+Theme handling
+Mobile navigation
+Desktop navigation
+```
+
+Navigation MUST include:
+
+```text
+Today
+Week
+Calendar
+Goals / Roadmap
+Knowledge
+Analytics
+Settings
+```
+
+Use `design.md` as the UI contract.
+
+Do not build a dashboard full of metrics.
+
+Today remains the primary execution surface.
+
+---
+
+# TASK-101 — Authentication UI
+
+Implement:
+
+```text
+Login
+First-owner registration
+Session restoration
+Logout
+401 handling
+Profile/settings
+Timezone
+Locale
+Week start
+```
+
+Connect to existing Sanctum API.
+
+Do not implement a second authentication mechanism.
+
+---
+
+# TASK-102 — Global API / State Client
+
+Create the frontend application infrastructure for:
+
+```text
+API client
+auth state
+request errors
+422 validation
+401 unauthorized
+403
+404
+409 conflict
+422 state violations
+429
+503
+offline
+retry
+```
+
+Provide consistent typed responses.
+
+Do not place business logic in API composables.
+
+---
+
+# TASK-103 — Today UI
+
+This is one of the highest-priority tasks.
+
+Implement:
+
+```text
+Header
+Date
+Sync state
+Recovery notice
+NOW
+NEXT
+Timeline
+Quick Capture
+Today actions
+```
+
+Timeline MUST render:
+
+```text
+Hard Landscape
+Scheduled Tasks
+Recharge
+Buffer
+Empty Slots
+Conflict
+Locked Tasks
+```
+
+NOW card MUST expose:
+
+```text
+title
+duration
+context
+goal/milestone/program
+lock
+conflict
+completion
+notes
+canvas link
+```
+
+Do not dump analytics into Today.
+
+---
+
+# TASK-104 — Week / Calendar UI
+
+Implement:
+
+```text
+Week view
+Monthly calendar
+Date navigation
+Capacity awareness
+Overload indication
+Deadline awareness
+Hard Landscape visualization
+Task assignments
+```
+
+Use real schedule APIs.
+
+No mock schedule after integration is available.
+
+---
+
+# TASK-105 — Task UI
+
+Implement:
+
+```text
+Task list
+Task detail
+Task creation
+Edit
+Status transitions
+Subtasks
+Partial completion
+Promote subtask
+Lock
+Schedule
+Notes
+Attachments
+Activity history
+AI actions where approved
+```
+
+All state transitions MUST use backend rules.
+
+The frontend may present actions; it must not become the state authority.
+
+---
+
+# TASK-106 — Goals / Milestones / Programs UI
+
+Implement:
+
+```text
+Goal list
+Goal detail
+Milestone timeline
+Program list
+Progress
+Deadline
+Workload
+Linked knowledge
+Next actions
+```
+
+Goal detail should follow:
+
+```text
+Outcome
+Deadline
+Progress
+Milestones
+Programs
+Knowledge
+Capacity impact
+Next actions
+History
+```
+
+---
+
+# TASK-107 — Quick Capture UI
+
+Global quick capture:
+
+```text
+title
+priority
+duration
+program
+goal
+milestone
+due date
+```
+
+When slot is full:
+
+```text
+Manual Swap
+Auto Swap
+Schedule Later
+```
+
+must be visibly actionable.
+
+---
+
+# TASK-108 — Schedule Draft / Rescheduler UI
+
+Implement:
+
+```text
+Generate Draft
+Preview
+Reasoning
+Accepted tasks
+Rejected tasks
+Changes
+Conflicts
+Apply
+Cancel
+```
+
+Dynamic Rescheduler MUST show:
+
+```text
+BEFORE
+AFTER
+REASON
+```
+
+Never show only:
+
+> “Schedule updated.”
+
+---
+
+# TASK-109 — Conflict / Lock / Explainability UI
+
+Implement consistent visual states:
+
+```text
+locked
+conflict
+overdue
+draft
+proposed
+offline
+syncing
+queued
+failed
+```
+
+Color MUST NOT be the only signal.
+
+Scheduler explanations MUST expose the already-implemented reason codes.
+
+---
+
+# 9. PHASE 11 — KNOWLEDGE / CANVAS UI
+
+Create:
+
+```text
+TASK-110 … TASK-115
+```
+
+---
+
+# TASK-110 — Notes UI
+
+Implement:
+
+```text
+Note list
+Search
+Create
+Edit
+Delete/archive according to approved lifecycle
+Autosave
+Saved/Saving/Error/Offline/Conflict states
+Goal link
+Milestone link
+Program link
+Task link
+Attachments
+```
+
+---
+
+# TASK-111 — Tiptap Vue Binding
+
+Connect:
+
+```text
+Vue
+ ↓
+EditorAdapter
+ ↓
+TiptapEditorAdapter
+```
+
+Do NOT bypass the adapter.
+
+The editor engine must remain replaceable.
+
+---
+
+# TASK-112 — Knowledge Linking UI
+
+Implement user-facing creation and removal of links:
+
+```text
+Note → Goal
+Note → Milestone
+Note → Program
+Note → Task
+Note ↔ Canvas
+```
+
+Show linked entities in context.
+
+---
+
+# TASK-113 — Canvas Workspace UI
+
+Implement:
+
+```text
+Canvas list
+Create canvas
+Open canvas
+Rename
+Save state
+Read-only mode
+Theme
+Delete/archive if approved
+```
+
+Canvas must use:
+
+```text
+Vue
+ ↓
+CanvasHost
+ ↓
+CanvasAdapter
+ ↓
+React Island
+ ↓
+Excalidraw
+```
+
+Do not bypass the adapter.
+
+---
+
+# TASK-114 — Canvas Context / Linking
+
+Canvas must be attachable to:
+
+```text
+Goal
+Milestone
+Program
+Task
+Note
+```
+
+Use `knowledge_links` where the approved domain model defines relational linking rather than adding duplicate foreign keys.
+
+---
+
+# TASK-115 — Offline Synchronization UX
+
+Implement visible states:
+
+```text
+Online
+Offline
+Queued
+Syncing
+Saved
+Conflict
+Retrying
+Failed
+```
+
+Users must understand whether their mutation is:
+
+```text
+persisted server-side
+stored locally
+waiting for synchronization
+in conflict
+```
+
+---
+
+# 10. PHASE 12 — PRODUCTIVITY / RECOVERY
+
+Create:
+
+```text
+TASK-120 … TASK-126
+```
+
+---
+
+# TASK-120 — Execution Timer
+
+Implement:
+
+```text
+start
+pause
+resume
+complete
+abandon
+```
+
+Connect execution to:
+
+```text
+FocusSession
+Task status
+Activity Log
+Progress Events
+```
+
+Do not create a timer state model disconnected from persistence.
+
+---
+
+# TASK-121 — Recharge Timer
+
+Implement Recharge according to the SRS.
+
+Recharge MUST contribute to:
+
+```text
+RechargeMinutes
+```
+
+and therefore:
+
+```text
+WorkRatio
+RechargeRatio
+```
+
+---
+
+# TASK-122 — Mini Pause
+
+Implement:
+
+* select current task;
+* move to next eligible slot;
+* preserve constraints;
+* update assignment transactionally;
+* log action;
+* explain resulting change.
+
+---
+
+# TASK-123 — Emergency Pause
+
+Implement:
+
+```text
+Emergency Pause
+```
+
+Behavior:
+
+* classify the period as exceptional;
+* shift affected tasks according to SRS;
+* suppress relevant notifications;
+* tag exceptional capacity period;
+* visually identify recovery state;
+* preserve task ownership;
+* do not delete tasks.
+
+---
+
+# TASK-124 — Break Mode
+
+Implement:
+
+```text
+start break
+end break
+capacity handling
+notification behavior
+schedule effects
+summary
+```
+
+Respect the SRS safe capacity rules.
+
+---
+
+# TASK-125 — Boost Mode
+
+Implement:
+
+```text
+boost eligibility
+capacity ceiling
+burnout suppression
+user confirmation
+temporary target behavior
+summary
+```
+
+Existing capacity feedback should be reused.
+
+Do not duplicate capacity calculations.
+
+---
+
+# TASK-126 — Work-Life Ratio
+
+Implement the complete product pipeline:
+
+```text
+productive sessions
++
+recharge sessions
+        ↓
+WorkRatio
+RechargeRatio
+        ↓
+analytics
+```
+
+Use the normative formula from the SRS.
+
+Do not represent the ratio as a health diagnosis.
+
+---
+
+# 11. PHASE 13 — ANALYTICS
+
+Create:
+
+```text
+TASK-130 … TASK-135
+```
+
+The analytics layer should consume already-generated data.
+
+Do not duplicate business calculations inside controllers.
+
+---
+
+# TASK-130 — Analytics Read Models
+
+Create optimized read models/services for:
+
+```text
+task completion
+goal progress
+milestones
+capacity
+activity
+focus
+progress events
+work-life ratio
+```
+
+Prefer read-side services over repeated ad-hoc calculations in Vue.
+
+---
+
+# TASK-131 — Goal Progress Analytics
+
+Implement:
+
+```text
+Goal completion
+Milestone progression
+Program contribution
+deadline health
+workload completion
+```
+
+---
+
+# TASK-132 — Capacity Analytics
+
+Implement:
+
+```text
+available capacity
+scheduled load
+overload
+effective capacity
+realization ratio
+capacity trend
+```
+
+Reuse:
+
+```text
+CapacityCalculator
+```
+
+rather than recreating the algorithm.
+
+---
+
+# TASK-133 — Pillar Analytics
+
+Implement the four-pillar representation from the SRS.
+
+Do not invent additional pillars.
+
+---
+
+# TASK-134 — Heatmap
+
+Implement:
+
+```text
+date
+productive time
+recharge
+completion
+progress
+```
+
+with understandable legends and accessible alternatives.
+
+---
+
+# TASK-135 — Work-Life Analytics
+
+Implement:
+
+```text
+WorkRatio
+RechargeRatio
+period comparison
+trend
+exceptions
+```
+
+Do not present “70:30” as a medical or biological optimum.
+
+---
+
+# 12. PHASE 14 — IMPORT / EXPORT / ATTACHMENTS
+
+Create:
+
+```text
+TASK-140 … TASK-144
+```
+
+---
+
+# TASK-140 — Task Attachments / Evidence
+
+Implement:
+
+```text
+upload
+download
+list
+delete
+ownership
+size validation
+MIME allowlist
+hash/checksum
+```
+
+Enforce SRS:
+
+```text
+max 3 per task
+max 5 MB
+JPG/PNG/PDF
+```
+
+Do not trust MIME type from the browser alone.
+
+---
+
+# TASK-141 — PDF KRS Import
+
+Implement:
+
+```text
+upload
+validate
+parse
+preview
+confirm
+persist
+fallback manual entry
+```
+
+Important:
+
+> PDF parser failure MUST NOT corrupt existing schedule/task data.
+
+Use a staging transaction/state.
+
+---
+
+# TASK-142 — iCal Import
+
+Implement:
+
+```text
+upload/import calendar
+parse VEVENT
+timezone handling
+conflict preview
+confirmation
+```
+
+Do not automatically overwrite existing Hard Landscape.
+
+---
+
+# TASK-143 — iCal Export
+
+Export selected schedules in valid iCalendar format.
+
+Do not expose internal database identifiers unnecessarily.
+
+---
+
+# TASK-144 — Import Preview / Fallback
+
+Every import feature MUST have:
+
+```text
+Preview
+Validation Errors
+Warnings
+Accept
+Cancel
+Manual Fallback
+```
+
+Never silently import invalid data.
+
+---
+
+# 13. PHASE 15 — END-TO-END / UAT
+
+Create:
+
+```text
+TASK-150 … TASK-156
+```
+
+This phase is mandatory.
+
+---
+
+# TASK-150 — Golden One-Week E2E
+
+Implement the complete user journey:
+
+```text
+Login
+ ↓
+Goal
+ ↓
+Milestone
+ ↓
+Program
+ ↓
+Task
+ ↓
+Schedule
+ ↓
+Today
+ ↓
+Execute
+ ↓
+Complete
+ ↓
+Activity
+ ↓
+Progress
+ ↓
+Analytics
+ ↓
+Capacity
+ ↓
+Future Schedule
+```
+
+The test MUST verify user-visible behavior.
+
+Database-only assertions are insufficient.
+
+---
+
+# TASK-151 — Offline UAT
+
+Test:
+
+```text
+load Today online
+ ↓
+disconnect
+ ↓
+open Today
+ ↓
+Quick Capture
+ ↓
+edit task
+ ↓
+queue mutation
+ ↓
+reconnect
+ ↓
+sync
+ ↓
+verify server state
+```
+
+Also test:
+
+```text
+offline conflict
+version conflict
+retry
+permanent failure
+```
+
+---
+
+# TASK-152 — Scheduler Simulation Suite
+
+Create the complete simulation suite.
+
+At minimum:
+
+```text
+empty day
+hard landscape
+locked task
+sacred anchor
+deadline pressure
+multiple goals
+overload
+reserve
+context fit
+capacity reduction
+capacity boost
+conflicts
+dynamic reschedule
+```
+
+Every simulation MUST be deterministic.
+
+---
+
+# TASK-153 — Canvas E2E
+
+Verify:
+
+```text
+open canvas
+draw
+autosave
+reload
+offline edit
+reconnect
+sync
+version conflict
+read-only
+linked Goal
+linked Task
+```
+
+---
+
+# TASK-154 — Knowledge E2E
+
+Verify:
+
+```text
+create Note
+edit Note
+save
+search
+link Goal
+link Milestone
+link Program
+link Task
+create Canvas
+link Canvas
+```
+
+---
+
+# TASK-155 — AI Golden Flows
+
+Verify:
+
+```text
+Goal
+ ↓
+AI breakdown proposal
+ ↓
+Preview
+ ↓
+Accept
+ ↓
+Milestones
+```
+
+and:
+
+```text
+Note
+ ↓
+Task extraction
+ ↓
+Preview
+ ↓
+Accept
+ ↓
+Tasks
+```
+
+and:
+
+```text
+AI unavailable
+ ↓
+core app still works
+```
+
+Also verify:
+
+```text
+malformed AI JSON
+cross-user proposal
+stale proposal
+rejected proposal
+```
+
+---
+
+# TASK-156 — Production Smoke Test
+
+From clean environment:
+
+```text
+build
+ ↓
+deploy
+ ↓
+migrate
+ ↓
+health
+ ↓
+login
+ ↓
+create goal
+ ↓
+create task
+ ↓
+schedule
+ ↓
+Today
+ ↓
+backup
+ ↓
+restore
+```
+
+The smoke test must cover the actual production Docker path.
+
+---
+
+
+
 ### Phase 10 — Release & Documentation Hygiene
 #### TASK-160 — Repository Documentation Hygiene & Release Readiness
 - Status: DONE
