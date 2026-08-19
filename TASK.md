@@ -1032,17 +1032,17 @@
 - Evidence: server/app/Application/Scheduling/ApplyScheduleDraftUseCase.php, server/app/Application/Scheduling/ScheduleApplyResult.php, server/app/Domain/Scheduling/ScheduleAssignmentLockedConflict.php, server/app/Domain/Scheduling/Contracts/ScheduleAssignmentRepository.php, server/app/Infrastructure/Scheduling/EloquentScheduleAssignmentRepository.php, server/tests/{Unit,Feature}/Scheduling/ApplyScheduleDraftUseCaseTest.php
 
 #### TASK-093 — Apply Dynamic Reschedule Proposal
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Depends On: TASK-090, TASK-091, TASK-092
 - SRS: FR-28; scheduling-engine §RESCHEDULE_PROPOSAL.
 - Acceptance:
-  - [ ] `ApplyRescheduleProposalUseCase` applies `RescheduleProposal` atomically.
-  - [ ] Preview non-mutating; stale version → `409 SCHEDULE_VERSION_CONFLICT`.
-  - [ ] Locked tasks untouched; conflicts visible; no task deletion; affected assignments update consistently.
+  - [x] `ApplyRescheduleProposalUseCase` applies `RescheduleProposal` atomically.
+  - [x] Preview non-mutating; stale version → `409 SCHEDULE_VERSION_CONFLICT`.
+  - [x] Locked tasks untouched; conflicts visible; no task deletion; affected assignments update consistently.
 - Verification:
-  - [ ] Unit + Feature tests for proposal apply, conflict, version conflict, locked protection.
-- Evidence: server/app/Application/Scheduling/ApplyRescheduleProposalUseCase.php
+  - [x] Unit + Feature tests for proposal apply, conflict, version conflict, locked protection.
+- Evidence: server/app/Application/Scheduling/ApplyRescheduleProposalUseCase.php, server/app/Application/Scheduling/RescheduleApplyResult.php, server/tests/{Unit,Feature}/Scheduling/ApplyRescheduleProposalUseCaseTest.php, server/tests/Support/FakeAssignmentStore.php
 
 #### TASK-094 — Schedule Query API
 - Status: TODO
