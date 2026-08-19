@@ -8,6 +8,7 @@ use App\Domain\Scheduling\ScheduleAssignmentOverlap;
 use App\Domain\Scheduling\ScheduleAssignmentVersionConflict;
 use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentSource;
 use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentStatus;
+use App\Domain\Scheduling\ValueObjects\ScheduleVersion;
 use App\Models\Task;
 use App\Models\TaskAssignment as TaskAssignmentModel;
 use Carbon\CarbonImmutable;
@@ -22,6 +23,15 @@ final class EloquentScheduleAssignmentRepository implements ScheduleAssignmentRe
             ->find($assignmentId);
 
         return $model === null ? null : $this->toDomain($model);
+    }
+
+    public function currentScheduleVersion(int $userId): ScheduleVersion
+    {
+        $max = TaskAssignmentModel::query()
+            ->where('user_id', $userId)
+            ->max('schedule_version');
+
+        return new ScheduleVersion($max !== null ? (int) $max : 1);
     }
 
     public function listForUserOnDate(int $userId, CarbonImmutable $date): array
@@ -51,6 +61,17 @@ final class EloquentScheduleAssignmentRepository implements ScheduleAssignmentRe
     {
         return TaskAssignmentModel::query()
             ->where('task_id', $taskId)
+            ->orderBy('start_at')
+            ->get()
+            ->map($this->toDomain(...))
+            ->all();
+    }
+
+    public function listForUserAtVersion(int $userId, ScheduleVersion $version): array
+    {
+        return TaskAssignmentModel::query()
+            ->where('user_id', $userId)
+            ->where('schedule_version', $version->value)
             ->orderBy('start_at')
             ->get()
             ->map($this->toDomain(...))

@@ -1018,18 +1018,18 @@
 - Evidence: database/migrations/2026_08_19_110000_create_task_assignments_table.php, server/app/Models/TaskAssignment.php, server/app/Infrastructure/Scheduling/EloquentScheduleAssignmentRepository.php, server/app/Providers/AppServiceProvider.php, server/tests/Feature/Scheduling/ScheduleAssignmentRepositoryTest.php
 
 #### TASK-092 — Apply Schedule Draft
-- Status: READY
+- Status: DONE
 - Priority: P0
 - Depends On: TASK-090, TASK-091
 - SRS: FR-27; scheduling-engine §Draft versus applied schedule, §Schedule versioning.
 - Acceptance:
-  - [ ] `ApplyScheduleDraftUseCase` generates (or receives) a `ScheduleDraft` and persists assignments atomically.
-  - [ ] Generate draft never mutates schedule; apply is explicit.
-  - [ ] Idempotent retry; stale schedule version → 409.
-  - [ ] Locked tasks remain protected; invalid draft never partially persists.
+  - [x] `ApplyScheduleDraftUseCase` generates (or receives) a `ScheduleDraft` and persists assignments atomically.
+  - [x] Generate draft never mutates schedule; apply is explicit.
+  - [x] Idempotent retry; stale schedule version → 409.
+  - [x] Locked tasks remain protected; invalid draft never partially persists.
 - Verification:
-  - [ ] Unit + Feature tests: apply success, retry, partial failure, version conflict, locked task, overlap, transaction rollback.
-- Evidence: server/app/Application/Scheduling/ApplyScheduleDraftUseCase.php, server/tests/{Unit,Feature}/Scheduling/ApplyScheduleDraftUseCaseTest.php
+  - [x] Unit + Feature tests: apply success, retry, partial failure, version conflict, locked task, overlap, transaction rollback.
+- Evidence: server/app/Application/Scheduling/ApplyScheduleDraftUseCase.php, server/app/Application/Scheduling/ScheduleApplyResult.php, server/app/Domain/Scheduling/ScheduleAssignmentLockedConflict.php, server/app/Domain/Scheduling/Contracts/ScheduleAssignmentRepository.php, server/app/Infrastructure/Scheduling/EloquentScheduleAssignmentRepository.php, server/tests/{Unit,Feature}/Scheduling/ApplyScheduleDraftUseCaseTest.php
 
 #### TASK-093 — Apply Dynamic Reschedule Proposal
 - Status: TODO

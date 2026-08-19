@@ -3,11 +3,18 @@
 namespace App\Domain\Scheduling\Contracts;
 
 use App\Domain\Scheduling\ScheduleAssignment;
+use App\Domain\Scheduling\ValueObjects\ScheduleVersion;
 use Carbon\CarbonImmutable;
 
 interface ScheduleAssignmentRepository
 {
     public function findForUser(int $userId, int $assignmentId): ?ScheduleAssignment;
+
+    /**
+     * The user's current schedule version: the highest persisted
+     * `schedule_version` (baseline version 1 when no assignments exist).
+     */
+    public function currentScheduleVersion(int $userId): ScheduleVersion;
 
     /**
      * @return array<int, ScheduleAssignment>
@@ -23,6 +30,11 @@ interface ScheduleAssignmentRepository
      * @return array<int, ScheduleAssignment>
      */
     public function listForTask(int $taskId): array;
+
+    /**
+     * @return array<int, ScheduleAssignment>
+     */
+    public function listForUserAtVersion(int $userId, ScheduleVersion $version): array;
 
     public function create(ScheduleAssignment $assignment): ScheduleAssignment;
 
