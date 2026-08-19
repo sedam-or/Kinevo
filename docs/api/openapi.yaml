@@ -171,6 +171,101 @@ paths:
         '401': { description: Unauthorized }
         '422': { description: Validation error }
 
+  /hard-landscape:
+    get:
+      tags: [Scheduling]
+      summary: List Hard Landscape events for the authenticated user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardLandscapeListResponse'
+        '401': { description: Unauthorized }
+    post:
+      tags: [Scheduling]
+      summary: Create a Hard Landscape event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HardLandscapeCreateRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardLandscapeResponse'
+        '401': { description: Unauthorized }
+        '409': { description: Overlaps an existing Hard Landscape event }
+        '422': { description: Validation error }
+
+  /hard-landscape/{eventId}:
+    get:
+      tags: [Scheduling]
+      summary: Get a single Hard Landscape event
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardLandscapeResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Hard Landscape event not found }
+    patch:
+      tags: [Scheduling]
+      summary: Update a Hard Landscape event
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HardLandscapeUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HardLandscapeResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Hard Landscape event not found }
+        '409': { description: Overlaps an existing Hard Landscape event }
+        '422': { description: Validation error }
+    delete:
+      tags: [Scheduling]
+      summary: Delete a Hard Landscape event
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted: { type: boolean, default: true }
+        '401': { description: Unauthorized }
+        '404': { description: Hard Landscape event not found }
+
   /auth/register:
     post:
       tags: [Identity]
@@ -2074,6 +2169,48 @@ components:
               day: {type: integer}
               task_count: {type: integer}
               scheduled_minutes: {type: integer}
+    HardLandscapeEvent:
+      type: object
+      required: [id, user_id, title, type, start_at, end_at]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        title: {type: string, minLength: 1, maxLength: 200}
+        type: {type: string, enum: [permanent, recurring, one_time]}
+        start_at: {type: string, format: date-time}
+        end_at: {type: string, format: date-time}
+        recurrence: {type: string, nullable: true}
+        created_at: {type: string, format: date-time, nullable: true}
+        updated_at: {type: string, format: date-time, nullable: true}
+    HardLandscapeCreateRequest:
+      type: object
+      required: [title, type, start_at, end_at]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        type: {type: string, enum: [permanent, recurring, one_time]}
+        start_at: {type: string, format: date-time}
+        end_at: {type: string, format: date-time}
+        recurrence: {type: string, nullable: true}
+    HardLandscapeUpdateRequest:
+      type: object
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        type: {type: string, enum: [permanent, recurring, one_time]}
+        start_at: {type: string, format: date-time}
+        end_at: {type: string, format: date-time}
+        recurrence: {type: string, nullable: true}
+    HardLandscapeResponse:
+      type: object
+      required: [hard_landscape]
+      properties:
+        hard_landscape: {$ref: '#/components/schemas/HardLandscapeEvent'}
+    HardLandscapeListResponse:
+      type: object
+      required: [hard_landscape]
+      properties:
+        hard_landscape:
+          type: array
+          items: {$ref: '#/components/schemas/HardLandscapeEvent'}
     SubtaskCreateRequest:
       type: object
       required: [title]

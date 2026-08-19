@@ -5,7 +5,9 @@ namespace App\Application\Scheduling;
 use App\Domain\Goals\Contracts\GoalRepository;
 use App\Domain\Milestones\Contracts\MilestoneRepository;
 use App\Domain\Programs\Contracts\ProgramRepository;
+use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
+use App\Domain\Scheduling\HardLandscapeEvent;
 use App\Domain\Scheduling\ScheduleAssignment;
 use App\Domain\Scheduling\SlotCalculator;
 use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentStatus;
@@ -18,17 +20,16 @@ use Carbon\CarbonImmutable;
  * Read-model service for the schedule query endpoints (FR-01/FR-11/FR-15; SRS
  * §8.2). It composes an immutable view of the canonical schedule for a day,
  * range, week, or month — including task/program/goal/milestone context, lock
- * and conflict state, capacity indicators, and empty (fillable) slots.
+ * and conflict state, Hard Landscape boundaries, capacity indicators, and empty
+ * (fillable) slots.
  *
- * This service is read-only and never mutates schedule state. Hard Landscape
- * persistence is owned by TASK-095; until that lands the `hard_landscape`
- * collection in a day view is empty and the response contract already reserves
- * the field.
+ * This service is read-only and never mutates schedule state.
  */
 final readonly class ScheduleQueryService
 {
     public function __construct(
         private ScheduleAssignmentRepository $assignments,
+        private HardLandscapeRepository $hardLandscape,
         private TaskRepository $tasks,
         private GoalRepository $goals,
         private MilestoneRepository $milestones,
@@ -57,11 +58,14 @@ final readonly class ScheduleQueryService
             $assignments,
         );
 
-        // Dynamic Empty Slots (FR-02): free intervals between occupied events,
-        // excluding gaps shorter than the minimum fillable duration.
-        $occupied = array_map(
-            static fn (ScheduleAssignment $a) => $a->timeRange(),
-            $assignments,
+        // Hard Landscape boundaries on this day (FR-01/FR-27/FR-28).
+        $landscape = $this->hardLandscape->listForUserOnDate($userId, $date);
+
+        // Dynamic Empty Slots (FR-02): free intervals between occupied events and
+        // Hard Landscape, excluding gaps shorter than the minimum fillable duration.
+        $occupied = array_merge(
+            array_map(static fn (ScheduleAssignment $a) => $a->timeRange(), $assignments),
+            array_map(static fn (HardLandscapeEvent $e) => $e->timeRange(), $landscape),
         );
         $emptySlots = $this->slots->calculate($this->dayRange($date), $occupied);
 
@@ -87,7 +91,10 @@ final readonly class ScheduleQueryService
                 ],
                 $emptySlots,
             ),
-            'hard_landscape' => [],
+            'hard_landscape' => array_map(
+                static fn (HardLandscapeEvent $e) => $e->toArray(),
+                $landscape,
+            ),
             'capacity' => [
                 'scheduled_minutes' => $scheduledMinutes,
                 'available_minutes' => $availableMinutes,

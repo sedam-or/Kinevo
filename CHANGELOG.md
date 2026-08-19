@@ -14,6 +14,11 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Hard Landscape domain and CRUD API (`GET/POST /hard-landscape`,
+  `GET/PATCH/DELETE /hard-landscape/{id}`) for defining non-negotiable schedule
+  boundaries, with type (permanent/recurring/one-time), recurrence support, and
+  overlap conflict detection (FR-27/FR-28). Hard Landscape is now reported in
+  the Today schedule view.
 - Added the Schedule Query API (`GET /today`, `GET /schedule`, `GET /week`,
   `GET /calendar`) exposing the canonical Today/range/week/month schedule with
   task, program/goal/milestone context, lock and conflict state, capacity

@@ -1058,17 +1058,18 @@
 - Release Impact: MINOR (new optional read-only query endpoints; no breaking change)
 
 #### TASK-095 — Hard Landscape Domain
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Depends On: TASK-091
 - SRS: FR-27; SRS §7.1 (hard_landscape_events); scheduling-engine hard-constraint ordering.
 - Acceptance:
-  - [ ] `HardLandscapeEvent` aggregate + `HardLandscapeRepository` + recurrence/context support.
-  - [ ] CRUD API `GET/POST /hard-landscape`, `GET/PATCH/DELETE /hard-landscape/{id}`.
-  - [ ] Ownership, start/end, title, type, permanent rule, one-time override, conflict detection.
+  - [x] `HardLandscapeEvent` aggregate + `HardLandscapeRepository` + recurrence/context support.
+  - [x] CRUD API `GET/POST /hard-landscape`, `GET/PATCH/DELETE /hard-landscape/{id}`.
+  - [x] Ownership, start/end, title, type, permanent rule, one-time override, conflict detection.
 - Verification:
-  - [ ] Unit + Feature tests.
-- Evidence: server/app/Domain/Scheduling/HardLandscapeEvent.php, server/app/Infrastructure/Scheduling/EloquentHardLandscapeRepository.php, server/app/Http/Controllers/Api/HardLandscapeController.php
+  - [x] Unit + Feature tests.
+- Evidence: server/app/Domain/Scheduling/{HardLandscapeEvent,HardLandscapeConflict}.php, server/app/Domain/Scheduling/ValueObjects/HardLandscapeType.php, server/app/Domain/Scheduling/Contracts/HardLandscapeRepository.php, server/app/Infrastructure/Scheduling/EloquentHardLandscapeRepository.php, server/app/Application/Scheduling/*HardLandscapeUseCase.php, server/app/Http/Controllers/Api/HardLandscapeController.php, database/migrations/2026_08_19_120000_create_hard_landscape_events_table.php, docs/api/openapi.yaml, server/tests/Unit/Scheduling/HardLandscapeEventTest.php, server/tests/Feature/Scheduling/HardLandscapeRepositoryTest.php, server/tests/Feature/Api/HardLandscapeApiTest.php
+- Release Impact: MINOR (new optional CRUD capability; no breaking change)
 
 #### TASK-096 — Recurring Schedule
 - Status: TODO

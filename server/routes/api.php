@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\CanvasController;
 use App\Http\Controllers\Api\FocusSessionController;
 use App\Http\Controllers\Api\GoalController;
+use App\Http\Controllers\Api\HardLandscapeController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\KnowledgeLinkController;
 use App\Http\Controllers\Api\KnowledgeSearchController;
@@ -129,4 +130,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/schedule', [ScheduleController::class, 'index']);
     Route::get('/week', [WeekController::class, 'index']);
     Route::get('/calendar', [CalendarController::class, 'index']);
+
+    // Hard Landscape (SRS §7.1; FR-27/FR-28).
+    Route::get('/hard-landscape', [HardLandscapeController::class, 'index']);
+    Route::post('/hard-landscape', [HardLandscapeController::class, 'store']);
+    Route::get('/hard-landscape/{eventId}', [HardLandscapeController::class, 'show']);
+    Route::patch('/hard-landscape/{eventId}', [HardLandscapeController::class, 'update']);
+    Route::delete('/hard-landscape/{eventId}', [HardLandscapeController::class, 'destroy']);
 });
