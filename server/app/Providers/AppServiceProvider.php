@@ -16,8 +16,11 @@ use App\Domain\Knowledge\Contracts\KnowledgeLinkRepository;
 use App\Domain\Knowledge\Contracts\NoteRepository;
 use App\Domain\Milestones\Contracts\MilestoneRepository;
 use App\Domain\Notifications\Contracts\NotificationRepository;
+use App\Domain\Observability\Contracts\SchedulerRunRepository;
+use App\Domain\Observability\ObservabilityService;
 use App\Domain\Programs\Contracts\ProgramRepository;
 use App\Domain\Progress\Contracts\ProgressEventRepository;
+use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
 use App\Domain\Tasks\Contracts\SubtaskRepository;
 use App\Domain\Tasks\Contracts\TaskRepository;
 use App\Infrastructure\ActivityLogs\EloquentActivityLogRepository;
@@ -33,8 +36,10 @@ use App\Infrastructure\Knowledge\EloquentKnowledgeLinkRepository;
 use App\Infrastructure\Knowledge\EloquentNoteRepository;
 use App\Infrastructure\Milestones\EloquentMilestoneRepository;
 use App\Infrastructure\Notifications\EloquentNotificationRepository;
+use App\Infrastructure\Observability\EloquentSchedulerRunRepository;
 use App\Infrastructure\Programs\EloquentProgramRepository;
 use App\Infrastructure\Progress\EloquentProgressEventRepository;
+use App\Infrastructure\Scheduling\EloquentScheduleAssignmentRepository;
 use App\Infrastructure\Tasks\EloquentSubtaskRepository;
 use App\Infrastructure\Tasks\EloquentTaskRepository;
 use Illuminate\Support\ServiceProvider;
@@ -60,10 +65,20 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(CanvasRepository::class, EloquentCanvasRepository::class);
         $this->app->singleton(FocusSessionRepository::class, EloquentFocusSessionRepository::class);
         $this->app->singleton(ProgressEventRepository::class, EloquentProgressEventRepository::class);
+        $this->app->singleton(ScheduleAssignmentRepository::class, EloquentScheduleAssignmentRepository::class);
         $this->app->singleton(AiProviderResolver::class, ConfigAiProviderResolver::class);
         $this->app->singleton(AiRunRepository::class, EloquentAiRunRepository::class);
         $this->app->singleton(AiProposalRepository::class, EloquentAiProposalRepository::class);
         $this->app->singleton(AiOrchestrator::class, static fn ($app) => new AiOrchestrator($app->make(AiProviderResolver::class)));
+        $this->app->singleton(SchedulerRunRepository::class, EloquentSchedulerRunRepository::class);
+        $this->app->singleton(ObservabilityService::class, static function ($app) {
+            $resolver = $app->make(AiProviderResolver::class);
+
+            return new ObservabilityService(
+                $app->make(SchedulerRunRepository::class),
+                static fn () => $resolver->resolve()->status(),
+            );
+        });
     }
 
     /**

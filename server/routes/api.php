@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CanvasController;
 use App\Http\Controllers\Api\FocusSessionController;
 use App\Http\Controllers\Api\GoalController;
+use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\KnowledgeLinkController;
 use App\Http\Controllers\Api\KnowledgeSearchController;
 use App\Http\Controllers\Api\MilestoneController;
@@ -23,6 +24,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
 });
+
+// Public readiness probe for the reverse proxy / orchestrator (SRS §16.3/§16.5).
+Route::get('/health', [HealthController::class, 'health']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
@@ -94,6 +98,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ai/extract-tasks', [AiController::class, 'extractTasks']);
     Route::post('/ai/suggest-canvas', [AiController::class, 'suggestCanvas']);
     Route::get('/ai/runs', [AiController::class, 'runs']);
+
+    Route::get('/metrics', [HealthController::class, 'metrics']);
+    Route::get('/observability/runs', [HealthController::class, 'runs']);
 
     Route::get('/notes', [NoteController::class, 'index']);
     Route::post('/notes', [NoteController::class, 'store']);

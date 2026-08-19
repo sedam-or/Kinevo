@@ -23,13 +23,70 @@ tags:
   - name: Focus
   - name: Progress
   - name: AI
+  - name: Observability
   - name: Scheduling
   - name: Knowledge
   - name: Canvas
-  - name: AI
   - name: Offline
 
 paths:
+  /health:
+    get:
+      tags: [Observability]
+      summary: Public readiness probe (SRS §16.3/§16.5)
+      description: >-
+        Used by the reverse proxy / orchestrator. Reports DB health and storage
+        writability. Public; no sensitive content.
+      responses:
+        '200':
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Degraded (database unhealthy)
+
+  /metrics:
+    get:
+      tags: [Observability]
+      summary: SRS §16.5 minimum telemetry snapshot
+      description: >-
+        Authenticated snapshot of DB health, queue pending/failed, storage,
+        AI provider status, and recent scheduler runs. Safe metadata only —
+        never sensitive content.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+        '401': { description: Unauthorized }
+
+  /observability/runs:
+    get:
+      tags: [Observability]
+      summary: Recent scheduler runs (SRS §7.8)
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [runs]
+                properties:
+                  runs:
+                    type: array
+                    items: {$ref: '#/components/schemas/SchedulerRun'}
+        '401': { description: Unauthorized }
+        '422': { description: Invalid query parameters }
+
   /today:
     get:
       tags: [Today]
@@ -2379,6 +2436,67 @@ components:
       properties:
         error: {type: string}
         code: {type: string}
+    HealthResponse:
+      type: object
+      required: [status, database, storage, checked_at]
+      properties:
+        status: {type: string, enum: [ok, degraded]}
+        database:
+          type: object
+          required: [healthy]
+          properties:
+            healthy: {type: boolean}
+        storage:
+          type: object
+          required: [writable]
+          properties:
+            writable: {type: boolean}
+        checked_at: {type: string, format: date-time}
+    SchedulerRun:
+      type: object
+      required: [id, job, status, duration_ms, started_at]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer, nullable: true}
+        job: {type: string}
+        status: {type: string, enum: [success, failed]}
+        duration_ms: {type: integer, minimum: 0}
+        error: {type: string, nullable: true}
+        started_at: {type: string, format: date-time}
+    MetricsResponse:
+      type: object
+      required: [metrics]
+      properties:
+        metrics:
+          type: object
+          required: [database, queue, storage, scheduler_runs, collected_at]
+          properties:
+            database:
+              type: object
+              properties:
+                healthy: {type: boolean}
+            queue:
+              type: object
+              properties:
+                pending: {type: integer}
+                failed: {type: integer}
+            storage:
+              type: object
+              properties:
+                writable: {type: boolean}
+            ai_provider:
+              type: object
+              nullable: true
+              properties:
+                provider: {type: string}
+                model: {type: string}
+                available: {type: boolean}
+                latency_ms: {type: integer, nullable: true}
+                error: {type: string, nullable: true}
+            scheduler_runs:
+              type: array
+              items: {$ref: '#/components/schemas/SchedulerRun'}
+            collected_at: {type: string, format: date-time}
     Note:
       type: object
       required: [id, user_id, title, version]

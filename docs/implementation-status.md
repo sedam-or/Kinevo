@@ -67,6 +67,9 @@ Canvas generation proposal           ✅ DONE (TASK-075)
 Production Docker profile            ✅ DONE (TASK-080)
 Reverse proxy / TLS                  ✅ DONE (TASK-081)
 Backup / restore automation          ✅ DONE (TASK-082)
+Observability                        ✅ DONE (TASK-083)
+Schedule Assignment aggregate        ✅ DONE (TASK-090)
+Schedule Assignment persistence      ✅ DONE (TASK-091)
 ```
 
 ### Evidence rule

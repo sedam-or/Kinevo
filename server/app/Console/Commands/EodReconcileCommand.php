@@ -2,12 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Application\Observability\RecordSchedulerRunUseCase;
 use App\Application\Reconciliation\RunEodDeadlineUseCase;
 use App\Application\Reconciliation\RunEodPromptUseCase;
 use App\Domain\Identity\Contracts\ProfileRepository;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
+use Throwable;
 
 /**
  * End-of-Day reconciliation job (FR-47, TASK-054).
@@ -17,6 +19,9 @@ use Illuminate\Console\Command;
  * exactly one reconciliation notification per user/day, and deadline
  * transitions are validated by the Task state machine, so retries never create
  * duplicate notifications or state transitions (FR-47 Exception Flows).
+ *
+ * Each run records scheduler telemetry (SRS §7.8, §16.5) with safe metadata
+ * only.
  */
 final class EodReconcileCommand extends Command
 {
@@ -28,6 +33,7 @@ final class EodReconcileCommand extends Command
         private readonly RunEodPromptUseCase $runPrompt,
         private readonly RunEodDeadlineUseCase $runDeadline,
         private readonly ProfileRepository $profiles,
+        private readonly RecordSchedulerRunUseCase $recordRun,
     ) {
         parent::__construct();
     }
@@ -35,7 +41,25 @@ final class EodReconcileCommand extends Command
     public function handle(): int
     {
         $phase = $this->option('phase');
+        $started = hrtime(true);
+        $job = "eod:reconcile:{$phase}";
 
+        try {
+            $this->runPhase($phase);
+        } catch (Throwable $e) {
+            $this->recordRun->failed(null, $job, (int) ((hrtime(true) - $started) / 1_000_000), $e->getMessage());
+            $this->error("EOD {$phase} failed: {$e->getMessage()}");
+
+            return self::FAILURE;
+        }
+
+        $this->recordRun->success(null, $job, (int) ((hrtime(true) - $started) / 1_000_000));
+
+        return self::SUCCESS;
+    }
+
+    private function runPhase(string $phase): void
+    {
         foreach ($this->ownerIds() as $userId) {
             if ($phase === 'prompt') {
                 $notification = $this->runPrompt->__invoke($userId, $this->localDay($userId));
@@ -49,8 +73,6 @@ final class EodReconcileCommand extends Command
                 $this->info(sprintf('EOD deadline (user %d): %d task(s) marked missed (Terlewat).', $userId, count($reconciled)));
             }
         }
-
-        return self::SUCCESS;
     }
 
     /**

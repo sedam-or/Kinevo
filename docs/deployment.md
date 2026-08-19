@@ -102,6 +102,30 @@ Monitor:
 - CPU utilization;
 - backup success.
 
+---
+
+### Observability (TASK-083, SRS §16.5)
+
+A built-in telemetry layer exposes the SRS §16.5 minimum telemetry. Safe
+metadata only — sensitive content is never logged or emitted.
+
+Endpoints:
+- `GET /api/v1/health` — **public** readiness probe (DB health + storage
+  writability); returns `503` when degraded. Used by the reverse proxy /
+  orchestrator healthcheck.
+- `GET /api/v1/metrics` — **authenticated** SRS §16.5 snapshot: DB health,
+  queue pending/failed, storage, AI provider status, recent scheduler runs.
+- `GET /api/v1/observability/runs` — **authenticated** recent scheduler runs
+  (SRS §7.8).
+
+Scheduler telemetry: every scheduled job run (e.g. `eod:reconcile`) records a
+row in `scheduler_runs` (job, status, duration_ms, error) at run time.
+
+Point the reverse proxy healthcheck at `/api/v1/health`; poll `/api/v1/metrics`
+from your monitoring/alerting tooling.
+
+---
+
 ### Oracle profile
 For Oracle Always Free personal deployment, size services conservatively around the 2 OCPU / 12 GB RAM baseline. Ollama should use a small quantized model and be loaded on demand where possible. Large coding models belong on the development workstation rather than the free production VPS.
 

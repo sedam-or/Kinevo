@@ -964,8 +964,156 @@
 - Notes: Remote copy requires `aws`/`mc` present in the backup environment (the compose backup image can be extended with a client if off-box copy is needed); §16.4 remote backup copy is wired via `REMOTE_BUCKET`/`AWS_*`. Periodic restore testing remains an operational checklist item (SRS §16.4).
 
 #### TASK-083 — Observability
+- Status: DONE
+- Priority: P1
+- SRS: §16.5 (minimum telemetry: scheduler run status/duration, queue failures, API error rate, offline queue backlog, import failures, storage failures, AI provider status, database health; sensitive content MUST NOT be logged), §7.8 (scheduler_runs index), §16.3 (database health); docs/deployment.md Monitoring.
+- Acceptance:
+  - [x] `scheduler_runs` migration (SRS §7.8): job, status, duration_ms, error, started_at + (user_id, started_at) & (status, started_at) indexes; every scheduled job run (e.g. `eod:reconcile`) records success/failure + duration at runtime
+  - [x] `ObservabilityService` (domain): DB health (live query), queue pending/failed, storage writability, AI provider status, recent scheduler runs; safe metadata only — never payloads/notes/prompts (SRS §16.5)
+  - [x] Use cases: `GetHealthUseCase` (public readiness), `GetMetricsUseCase` (SRS §16.5 snapshot), `ListSchedulerRunsUseCase`, `RecordSchedulerRunUseCase` (wired into EOD command)
+  - [x] HTTP: `GET /api/v1/health` (public; 200 ok / 503 degraded), `GET /api/v1/metrics` (authenticated telemetry snapshot), `GET /api/v1/observability/runs` (recent scheduler runs); OpenAPI Observability tag/paths/schemas synchronized
+  - [x] docs/deployment.md "Observability" section (endpoints, scheduler telemetry, healthcheck wiring)
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (475 tests, 1307 assertions; +8: DB health, queue counts, snapshot no-sensitive-fields, public health, metrics auth+snapshot, scheduler run recording+listing, limit validation)
+  - [x] `composer analyse` → PHPStan no errors; `composer lint` → Pint PASS (362 files)
+  - [x] migration applied to PostgreSQL (scheduler_runs table + §7.8 indexes present)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (62 paths) all pass
+- Evidence: database/migrations/2026_08_19_100000_create_scheduler_runs_table.php, server/app/Domain/Observability/{ObservabilityService.php,SchedulerRun.php,Contracts/SchedulerRunRepository.php}, server/app/Infrastructure/Observability/EloquentSchedulerRunRepository.php, server/app/Application/Observability/{GetHealth,GetMetrics,ListSchedulerRuns,RecordSchedulerRun}UseCase.php, server/app/Models/SchedulerRun.php, server/app/Http/Controllers/Api/HealthController.php, server/app/Console/Commands/EodReconcileCommand.php, server/routes/api.php, server/app/Providers/AppServiceProvider.php, server/tests/{Unit/ObservabilityServiceTest.php,Feature/Api/HealthApiTest.php}, docs/api/openapi.yaml (Observability paths/schemas), docs/deployment.md
+- Notes: "API error rate", "offline queue backlog", and "import failures" (SRS §16.5) are not yet instrumented as dedicated counters — they require request middleware, the offline queue table, and import parsing respectively, which are out of scope here (the queue pending/failed counters cover queue health). AI provider status, DB health, storage, and scheduler runs are covered. Sensitive content is excluded by construction.
+
+### Phase 9 — Scheduling Application & Calendar
+#### TASK-090 — Schedule Assignment Aggregate
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-020..TASK-026 (scheduling primitives), TASK-014 (task lifecycle)
+- SRS: FR-01, FR-02, FR-08, FR-27, FR-28; SRS §7.1, §7.8 (task_assignments); domain-model Assignment.
+- Acceptance:
+  - [x] `ScheduleAssignment` domain aggregate exists with id, user_id, task_id, date, start_at, end_at, duration_minutes, status, source, schedule_version, locked, version, timestamps.
+  - [x] `ScheduleAssignmentStatus` and `ScheduleAssignmentSource` value objects enforce closed sets.
+  - [x] Aggregate invariants enforced: start < end, positive duration matching start/end, ownership, positive task reference, schedule-version consistency, optimistic versioning on mutation.
+  - [x] `ScheduleAssignmentRepository` contract exists (find/list-by-date/list-by-range/list-by-task/create/update/delete/cancel).
+  - [x] Unit tests cover invariants and overlap detection.
+- Verification:
+  - [x] Unit: `vendor/bin/phpunit` → OK (501 tests, 1375 assertions)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (372 files)
+- Evidence: server/app/Domain/Scheduling/{ScheduleAssignment,ScheduleAssignmentOverlap,ScheduleAssignmentVersionConflict}.php, server/app/Domain/Scheduling/ValueObjects/{ScheduleAssignmentStatus,ScheduleAssignmentSource}.php, server/app/Domain/Scheduling/Contracts/ScheduleAssignmentRepository.php, server/tests/Unit/Scheduling/ScheduleAssignmentTest.php
+- Notes: No scheduler algorithm is duplicated here. The aggregate is the persistent representation that bridges the in-memory `ScheduleDraft`/`ScheduleState` to `task_assignments`. Optimistic version increments on domain mutations; the repository accepts a `baseVersion` for the concurrency check (same pattern as Note).
+
+#### TASK-091 — Schedule Assignment Persistence
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-090
+- SRS: FR-01, FR-02, FR-08; SRS §7.1, §7.8 (task_assignments indexes).
+- Acceptance:
+  - [x] `task_assignments` migration: id, user_id, task_id, date, start_at, end_at, duration_minutes, status, source, schedule_version, locked, version, timestamps.
+  - [x] Required indexes: `(user_id, date, start_at)`, `(user_id, start_at, end_at)`, `(task_id)`.
+  - [x] Ownership scoping, FK to users/tasks, efficient day/range/task queries.
+  - [x] Eloquent `TaskAssignment` model and `EloquentScheduleAssignmentRepository` implement repository contract.
+  - [x] Optimistic concurrency via `version` check on update.
+- Verification:
+  - [x] Feature/API tests for create/update/delete/list scoping and overlap.
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS
+- Evidence: database/migrations/2026_08_19_110000_create_task_assignments_table.php, server/app/Models/TaskAssignment.php, server/app/Infrastructure/Scheduling/EloquentScheduleAssignmentRepository.php, server/app/Providers/AppServiceProvider.php, server/tests/Feature/Scheduling/ScheduleAssignmentRepositoryTest.php
+
+#### TASK-092 — Apply Schedule Draft
+- Status: READY
+- Priority: P0
+- Depends On: TASK-090, TASK-091
+- SRS: FR-27; scheduling-engine §Draft versus applied schedule, §Schedule versioning.
+- Acceptance:
+  - [ ] `ApplyScheduleDraftUseCase` generates (or receives) a `ScheduleDraft` and persists assignments atomically.
+  - [ ] Generate draft never mutates schedule; apply is explicit.
+  - [ ] Idempotent retry; stale schedule version → 409.
+  - [ ] Locked tasks remain protected; invalid draft never partially persists.
+- Verification:
+  - [ ] Unit + Feature tests: apply success, retry, partial failure, version conflict, locked task, overlap, transaction rollback.
+- Evidence: server/app/Application/Scheduling/ApplyScheduleDraftUseCase.php, server/tests/{Unit,Feature}/Scheduling/ApplyScheduleDraftUseCaseTest.php
+
+#### TASK-093 — Apply Dynamic Reschedule Proposal
 - Status: TODO
-- Priority: P1.
+- Priority: P0
+- Depends On: TASK-090, TASK-091, TASK-092
+- SRS: FR-28; scheduling-engine §RESCHEDULE_PROPOSAL.
+- Acceptance:
+  - [ ] `ApplyRescheduleProposalUseCase` applies `RescheduleProposal` atomically.
+  - [ ] Preview non-mutating; stale version → `409 SCHEDULE_VERSION_CONFLICT`.
+  - [ ] Locked tasks untouched; conflicts visible; no task deletion; affected assignments update consistently.
+- Verification:
+  - [ ] Unit + Feature tests for proposal apply, conflict, version conflict, locked protection.
+- Evidence: server/app/Application/Scheduling/ApplyRescheduleProposalUseCase.php
+
+#### TASK-094 — Schedule Query API
+- Status: TODO
+- Priority: P0
+- Depends On: TASK-091
+- SRS: FR-01, FR-11, FR-15; SRS §8.2, §8.4.
+- Acceptance:
+  - [ ] `GET /schedule?date=`, `GET /schedule?from=&to=`, `GET /today?date=`, `GET /week?date=`, `GET /calendar?month=` implemented (reuse existing stubs).
+  - [ ] Response contains task, assignment, program/goal/milestone context, hard landscape, lock/conflict state, capacity indicators, scheduler explanation.
+- Verification:
+  - [ ] Feature/API tests; OpenAPI schemas synchronized.
+- Evidence: server/app/Http/Controllers/Api/{TodayController,ScheduleController}.php, server/routes/api.php, docs/api/openapi.yaml
+
+#### TASK-095 — Hard Landscape Domain
+- Status: TODO
+- Priority: P0
+- Depends On: TASK-091
+- SRS: FR-27; SRS §7.1 (hard_landscape_events); scheduling-engine hard-constraint ordering.
+- Acceptance:
+  - [ ] `HardLandscapeEvent` aggregate + `HardLandscapeRepository` + recurrence/context support.
+  - [ ] CRUD API `GET/POST /hard-landscape`, `GET/PATCH/DELETE /hard-landscape/{id}`.
+  - [ ] Ownership, start/end, title, type, permanent rule, one-time override, conflict detection.
+- Verification:
+  - [ ] Unit + Feature tests.
+- Evidence: server/app/Domain/Scheduling/HardLandscapeEvent.php, server/app/Infrastructure/Scheduling/EloquentHardLandscapeRepository.php, server/app/Http/Controllers/Api/HardLandscapeController.php
+
+#### TASK-096 — Recurring Schedule
+- Status: TODO
+- Priority: P0
+- Depends On: TASK-095
+- SRS: FR-25; SRS §7.1 (task_templates, schedule_overrides).
+- Acceptance:
+  - [ ] Recurrence definition, bounded occurrence generation, timezone awareness, deterministic, no duplicates, exceptions/cancellation/override.
+- Verification:
+  - [ ] Tests: daily, weekly, multiple weekdays, timezone boundary, exception day, deleted occurrence, duplicate prevention.
+- Evidence: server/app/Domain/Scheduling/Recurrence/*.php
+
+#### TASK-097 — Schedule Overrides
+- Status: TODO
+- Priority: P0
+- Depends On: TASK-095, TASK-096
+- SRS: FR-25.
+- Acceptance:
+  - [ ] Permanent override and one-time exception; explicit precedence (hard landscape > locked task > explicit override > recurrence-generated event > ordinary generated schedule).
+  - [ ] No silent historical mutation.
+- Verification:
+  - [ ] Unit + Feature tests.
+- Evidence: server/app/Domain/Scheduling/ScheduleOverride.php
+
+#### TASK-098 — Quick Capture Placement
+- Status: TODO
+- Priority: P0
+- Depends On: TASK-090, TASK-091
+- SRS: FR-03.
+- Acceptance:
+  - [ ] Quick Capture flow: create task → attempt placement → slot exists → task+assignment, else return strategies (Manual Swap, Auto Swap, Schedule Later).
+  - [ ] Task never disappears; `TASK_NO_CAPACITY` error semantics.
+- Verification:
+  - [ ] Feature tests.
+- Evidence: server/app/Application/Scheduling/QuickCapturePlacementUseCase.php
+
+#### TASK-099 — Auto Swap
+- Status: TODO
+- Priority: P0
+- Depends On: TASK-090, TASK-091, TASK-098
+- SRS: FR-03, FR-23, FR-28.
+- Acceptance:
+  - [ ] Explicit Auto Swap: never move locked, never violate Hard Landscape, reuse ranking engine + explainability, atomic transaction, audit/activity preserved, user-visible explanation.
+- Verification:
+  - [ ] Unit + Feature tests.
+- Evidence: server/app/Application/Scheduling/AutoSwapUseCase.php
 
 ### Execution rules
 - A task may move to `DONE` only when acceptance and verification boxes are satisfied.
