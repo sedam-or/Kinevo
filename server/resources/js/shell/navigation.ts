@@ -8,6 +8,7 @@ export const NAV_ITEMS: NavItem[] = [
     { key: 'today', label: 'Today', icon: 'today' },
     { key: 'week', label: 'Week', icon: 'week' },
     { key: 'calendar', label: 'Calendar', icon: 'calendar' },
+    { key: 'schedule', label: 'Schedule', icon: 'schedule' },
     { key: 'goals', label: 'Goals / Roadmap', icon: 'goals' },
     { key: 'tasks', label: 'Tasks', icon: 'tasks' },
     { key: 'knowledge', label: 'Knowledge', icon: 'knowledge' },

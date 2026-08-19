@@ -14,6 +14,12 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Schedule Draft / Dynamic Rescheduler UI (TASK-108): generate and
+  preview a deterministic weekly draft (accepted/rejected tasks with reasons),
+  apply it atomically at the next schedule version, and propose/apply a dynamic
+  reschedule showing per-move BEFORE / AFTER / REASON and conflict flags —
+  backed by new `POST /schedule/draft[/apply]` and
+  `POST /schedule/reschedule[/apply]` endpoints (FR-27/FR-28).
 - Added the global Quick Capture UI (TASK-107): a modal reachable from any
   authenticated view with title, priority, size/duration, program, goal,
   milestone, and due-date fields; when the day has no free slot it presents the

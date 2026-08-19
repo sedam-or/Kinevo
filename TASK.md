@@ -1588,6 +1588,27 @@ Never show only:
 
 > “Schedule updated.”
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-023/024 (draft + rescheduler engines), TASK-092/093 (apply use cases), TASK-102 (API client)
+- SRS: FR-27 (weekly draft), FR-28 (dynamic reschedule preview/apply); scheduling-engine §RESCHEDULE_PROPOSAL mode, §Draft vs applied schedule, §Schedule versioning.
+- Acceptance:
+  - [x] Backend endpoints added: `POST /schedule/draft`, `/schedule/draft/apply`, `/schedule/reschedule`, `/schedule/reschedule/apply` (owner-scoped, version-conflict 409, locked 422) — documented in OpenAPI.
+  - [x] Generate Draft (date range) → preview of accepted assignments and rejected/unassigned tasks with reasons (NO_AVAILABLE_SLOT etc.).
+  - [x] Reasoning note (deterministic, respects Hard Landscape/locked/deadlines/reserve).
+  - [x] Apply Draft atomically at the next schedule version (stale → 409 shown).
+  - [x] Dynamic Rescheduler: propose → BEFORE / AFTER / REASON per move, conflict flags; Apply / Cancel.
+  - [x] Never shows only “Schedule updated.” — always shows the diff.
+  - [x] Typed frontend client + store; wired into the shell under a Schedule nav view.
+- Verification:
+  - [x] Backend: `composer test` → OK (628 tests; 12 new ScheduleDraftApi tests); Pint PASS; PHPStan no errors
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (198 tests; 8 new schedulerdraft tests)
+  - [x] `npm run build` → built OK
+  - [x] Repo gates (openapi 72 paths / doc-links / secrets / validate / changelog) all PASS
+- Evidence: server/app/Http/Controllers/Api/ScheduleDraftController.php, server/tests/Feature/Api/ScheduleDraftApiTest.php, server/routes/api.php, docs/api/openapi.yaml, server/resources/js/schedulerdraft/{types.ts,api.ts,store.ts,date.ts,ScheduleDraftView.vue,RescheduleView.vue,ScheduleView.vue}, server/resources/js/schedulerdraft/__tests__/*.test.ts, server/resources/js/auth/AuthHost.vue, server/resources/js/shell/navigation.ts
+- Release Impact: MINOR (new endpoints + frontend surface)
+
 ---
 
 # TASK-109 — Conflict / Lock / Explainability UI

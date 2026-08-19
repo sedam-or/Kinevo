@@ -1115,25 +1115,89 @@ paths:
         '404': { description: Program not found }
         '422': { description: Invalid transition }
 
-  /schedule/auto:
+  /schedule/draft:
     post:
       tags: [Scheduling]
-      summary: Generate deterministic auto-schedule draft
-      responses: {'202': {description: Scheduler queued}}
+      summary: Generate a deterministic auto-schedule draft for a date range (FR-27)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleDraftRequest'
+      responses:
+        '200':
+          description: Draft generated (non-mutating)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleDraftResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
+
+  /schedule/draft/apply:
+    post:
+      tags: [Scheduling]
+      summary: Apply an approved schedule draft atomically at the next version (FR-27)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleDraftApplyRequest'
+      responses:
+        '200':
+          description: Applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleApplyResultResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found }
+        '409': { description: Version conflict }
+        '422': { description: Validation error }
 
   /schedule/reschedule:
     post:
       tags: [Scheduling]
-      summary: Generate dynamic reschedule proposal
-      responses: {'202': {description: Proposal generated/queued}}
+      summary: Generate a dynamic reschedule proposal (preview, non-mutating) (FR-28)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleDraftRequest'
+      responses:
+        '200':
+          description: Proposal generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RescheduleProposalResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
 
-  /schedule/apply:
+  /schedule/reschedule/apply:
     post:
       tags: [Scheduling]
-      summary: Apply an approved schedule proposal
+      summary: Apply an approved reschedule proposal atomically at the next version (FR-28)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RescheduleApplyRequest'
       responses:
-        '200': {description: Applied}
-        '409': {description: Version conflict}
+        '200':
+          description: Applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RescheduleApplyResultResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found }
+        '409': { description: Version conflict }
+        '422': { description: Validation error }
 
   /notes:
     get:
@@ -2338,6 +2402,115 @@ components:
         events:
           type: array
           items: {$ref: '#/components/schemas/ScheduleEvent'}
+    ScheduleDraftRequest:
+      type: object
+      required: [from, to]
+      properties:
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+    DraftAssignment:
+      type: object
+      required: [task_id, title, start, end]
+      properties:
+        task_id: {type: string}
+        title: {type: string}
+        start: {type: string, format: date-time}
+        end: {type: string, format: date-time}
+    UnassignedTask:
+      type: object
+      required: [task_id, title, reason]
+      properties:
+        task_id: {type: string}
+        title: {type: string}
+        reason: {type: string}
+    ScheduleDraftResponse:
+      type: object
+      required: [draft, base_version]
+      properties:
+        draft:
+          type: object
+          properties:
+            assignments:
+              type: array
+              items: {$ref: '#/components/schemas/DraftAssignment'}
+            unassigned:
+              type: array
+              items: {$ref: '#/components/schemas/UnassignedTask'}
+        base_version: {type: integer}
+    ScheduleDraftApplyRequest:
+      type: object
+      required: [draft, base_version]
+      properties:
+        draft: {$ref: '#/components/schemas/ScheduleDraft'}
+        base_version: {type: integer}
+    ScheduleDraft:
+      type: object
+      required: [assignments, unassigned]
+      properties:
+        assignments:
+          type: array
+          items: {$ref: '#/components/schemas/DraftAssignment'}
+        unassigned:
+          type: array
+          items: {$ref: '#/components/schemas/UnassignedTask'}
+    ScheduleApplyResultResponse:
+      type: object
+      required: [version, applied, assignments]
+      properties:
+        version: {type: integer}
+        applied: {type: boolean}
+        assignments: {type: array, items: {type: object}}
+    TimeSlot:
+      type: object
+      required: [start, end]
+      properties:
+        start: {type: string, format: date-time}
+        end: {type: string, format: date-time}
+    ProposalMove:
+      type: object
+      required: [task_id, title, to]
+      properties:
+        task_id: {type: string}
+        title: {type: string}
+        from: {$ref: '#/components/schemas/TimeSlot', nullable: true}
+        to: {$ref: '#/components/schemas/TimeSlot'}
+    RescheduleProposalResponse:
+      type: object
+      required: [proposal, has_changes]
+      properties:
+        proposal:
+          type: object
+          required: [base_version, new_version, moves, conflict_task_ids]
+          properties:
+            base_version: {type: integer}
+            new_version: {type: integer}
+            moves:
+              type: array
+              items: {$ref: '#/components/schemas/ProposalMove'}
+            conflict_task_ids: {type: array, items: {type: string}}
+        has_changes: {type: boolean}
+    RescheduleApplyRequest:
+      type: object
+      required: [proposal, base_version]
+      properties:
+        proposal:
+          type: object
+          required: [base_version, new_version, moves, conflict_task_ids]
+          properties:
+            base_version: {type: integer}
+            new_version: {type: integer}
+            moves:
+              type: array
+              items: {$ref: '#/components/schemas/ProposalMove'}
+            conflict_task_ids: {type: array, items: {type: string}}
+        base_version: {type: integer}
+    RescheduleApplyResultResponse:
+      type: object
+      required: [version, applied, conflict_task_ids]
+      properties:
+        version: {type: integer}
+        applied: {type: boolean}
+        conflict_task_ids: {type: array, items: {type: string}}
     WeekResponse:
       type: object
       required: [start, end, schedule_version, days]

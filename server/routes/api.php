@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ProgressEventController;
 use App\Http\Controllers\Api\RecoveryController;
 use App\Http\Controllers\Api\ScheduleController;
+use App\Http\Controllers\Api\ScheduleDraftController;
 use App\Http\Controllers\Api\ScheduleOverrideController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TodayController;
@@ -140,6 +141,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/hard-landscape/{eventId}', [HardLandscapeController::class, 'show']);
     Route::patch('/hard-landscape/{eventId}', [HardLandscapeController::class, 'update']);
     Route::delete('/hard-landscape/{eventId}', [HardLandscapeController::class, 'destroy']);
+
+    // Schedule Draft / Dynamic Rescheduler (FR-27/FR-28; SRS §7.1).
+    Route::post('/schedule/draft', [ScheduleDraftController::class, 'draft']);
+    Route::post('/schedule/draft/apply', [ScheduleDraftController::class, 'apply']);
+    Route::post('/schedule/reschedule', [ScheduleDraftController::class, 'reschedule']);
+    Route::post('/schedule/reschedule/apply', [ScheduleDraftController::class, 'rescheduleApply']);
 
     // Schedule Overrides (FR-25; SRS §7.1).
     Route::get('/schedule-overrides', [ScheduleOverrideController::class, 'index']);
