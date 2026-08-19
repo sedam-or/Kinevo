@@ -1097,16 +1097,17 @@
 - Release Impact: MINOR (new optional CRUD capability; additive table; no breaking change)
 
 #### TASK-098 — Quick Capture Placement
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Depends On: TASK-090, TASK-091
 - SRS: FR-03.
 - Acceptance:
-  - [ ] Quick Capture flow: create task → attempt placement → slot exists → task+assignment, else return strategies (Manual Swap, Auto Swap, Schedule Later).
-  - [ ] Task never disappears; `TASK_NO_CAPACITY` error semantics.
+  - [x] Quick Capture flow: create task → attempt placement → slot exists → task+assignment, else return strategies (Manual Swap, Auto Swap, Schedule Later).
+  - [x] Task never disappears; `TASK_NO_CAPACITY` error semantics.
 - Verification:
-  - [ ] Feature tests.
-- Evidence: server/app/Application/Scheduling/QuickCapturePlacementUseCase.php
+  - [x] Feature tests.
+- Evidence: server/app/Application/Scheduling/{QuickCapturePlacementUseCase,QuickCaptureResult}.php, server/app/Http/Controllers/Api/TaskController.php (quickCapture), server/routes/api.php (`POST /quick-capture`), docs/api/openapi.yaml, server/tests/Feature/Scheduling/QuickCapturePlacementUseCaseTest.php, server/tests/Feature/Api/QuickCaptureApiTest.php
+- Release Impact: MINOR (new optional endpoint; no breaking change)
 
 #### TASK-099 — Auto Swap
 - Status: TODO

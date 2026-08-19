@@ -14,6 +14,11 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added Quick Capture placement (`POST /quick-capture`): capture a task and
+  attempt immediate placement into the first feasible empty slot today,
+  returning a task + assignment on success, or `TASK_NO_CAPACITY` with the
+  Manual Swap / Auto Swap / Schedule Later strategies when no slot fits
+  (FR-03).
 - Added Schedule Overrides (CRUD under `/schedule-overrides`) supporting
   permanent shifts and one-time exceptions on recurring Hard Landscape series,
   with explicit placement precedence (hard landscape > locked task > explicit

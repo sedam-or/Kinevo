@@ -472,6 +472,31 @@ paths:
         '409': { description: Conflict }
         '422': { description: Business rule violation }
 
+  /quick-capture:
+    post:
+      tags: [Tasks]
+      summary: Quick Capture a task and attempt immediate placement (FR-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuickCaptureRequest'
+      responses:
+        '201':
+          description: Placed (task + assignment)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuickCaptureResponse'
+        '200':
+          description: Created but no capacity (strategies returned)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuickCaptureResponse'
+        '422': { description: Validation error }
+
   /tasks/{taskId}:
     get:
       tags: [Tasks]
@@ -2167,6 +2192,28 @@ components:
       required: [task]
       properties:
         task: {$ref: '#/components/schemas/Task'}
+    QuickCaptureRequest:
+      type: object
+      required: [title]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
+        priority_tier: {type: integer, minimum: 1, maximum: 3}
+        size: {type: string, enum: [cepat, sedang, berat]}
+        duration_minutes: {type: integer, minimum: 1, nullable: true}
+        program_id: {type: integer, nullable: true}
+        goal_id: {type: integer, nullable: true}
+        date: {type: string, format: date, nullable: true}
+    QuickCaptureResponse:
+      type: object
+      required: [task, placed, code, strategies]
+      properties:
+        task: {$ref: '#/components/schemas/Task'}
+        placed: {type: boolean}
+        assignment: {$ref: '#/components/schemas/ScheduleAssignment', nullable: true}
+        code: {type: string, enum: [PLACED, TASK_NO_CAPACITY]}
+        strategies:
+          type: array
+          items: {type: string, enum: [manual_swap, auto_swap, schedule_later]}
     ScheduleAssignment:
       type: object
       required: [id, user_id, task_id, date, start_at, end_at, duration_minutes, status, source, schedule_version, locked, version]

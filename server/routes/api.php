@@ -63,6 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/tasks', [TaskController::class, 'index']);
     Route::post('/tasks', [TaskController::class, 'store']);
+    Route::post('/quick-capture', [TaskController::class, 'quickCapture']);
     Route::get('/tasks/{taskId}', [TaskController::class, 'show']);
     Route::put('/tasks/{taskId}', [TaskController::class, 'update']);
     Route::post('/tasks/{taskId}/status', [TaskController::class, 'status']);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\Scheduling\QuickCapturePlacementUseCase;
 use App\Application\Tasks\AddSubtaskUseCase;
 use App\Application\Tasks\CreateTaskUseCase;
 use App\Application\Tasks\GetTaskUseCase;
@@ -34,6 +35,7 @@ final class TaskController extends Controller
         private readonly UpdateSubtaskUseCase $updateSubtaskUseCase,
         private readonly PromoteSubtaskUseCase $promoteSubtaskUseCase,
         private readonly PartialCompleteTaskUseCase $partialCompleteTaskUseCase,
+        private readonly QuickCapturePlacementUseCase $quickCapturePlacementUseCase,
         private readonly SubtaskRepository $subtaskRepository,
     ) {}
 
@@ -45,6 +47,44 @@ final class TaskController extends Controller
         );
 
         return response()->json(['tasks' => $tasks]);
+    }
+
+    public function quickCapture(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => ['required', 'string', 'min:1', 'max:200'],
+            'priority_tier' => ['sometimes', 'integer', 'between:1,3'],
+            'size' => ['sometimes', 'string', 'in:cepat,sedang,berat'],
+            'duration_minutes' => ['nullable', 'integer', 'min:1'],
+            'program_id' => ['nullable', 'integer'],
+            'goal_id' => ['nullable', 'integer'],
+            'date' => ['nullable', 'date'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $data = $validator->validated();
+
+        try {
+            $result = $this->quickCapturePlacementUseCase->__invoke(
+                $request->user()->id,
+                $data['title'],
+                $data['priority_tier'] ?? 3,
+                $data['size'] ?? null,
+                $data['duration_minutes'] ?? null,
+                $data['program_id'] ?? null,
+                $data['goal_id'] ?? null,
+                isset($data['date']) ? CarbonImmutable::parse($data['date']) : null,
+            );
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        $status = $result->placed ? 201 : 200;
+
+        return response()->json($result->toArray(), $status);
     }
 
     public function show(Request $request, int $taskId): JsonResponse

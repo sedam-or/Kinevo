@@ -23,6 +23,7 @@ use App\Domain\Progress\Contracts\ProgressEventRepository;
 use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
 use App\Domain\Scheduling\Contracts\ScheduleOverrideRepository;
+use App\Domain\Scheduling\HardConstraintEngine;
 use App\Domain\Tasks\Contracts\SubtaskRepository;
 use App\Domain\Tasks\Contracts\TaskRepository;
 use App\Infrastructure\ActivityLogs\EloquentActivityLogRepository;
@@ -72,6 +73,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ScheduleAssignmentRepository::class, EloquentScheduleAssignmentRepository::class);
         $this->app->singleton(HardLandscapeRepository::class, EloquentHardLandscapeRepository::class);
         $this->app->singleton(ScheduleOverrideRepository::class, EloquentScheduleOverrideRepository::class);
+        $this->app->singleton(HardConstraintEngine::class, static fn () => HardConstraintEngine::default());
         $this->app->singleton(AiProviderResolver::class, ConfigAiProviderResolver::class);
         $this->app->singleton(AiRunRepository::class, EloquentAiRunRepository::class);
         $this->app->singleton(AiProposalRepository::class, EloquentAiProposalRepository::class);
