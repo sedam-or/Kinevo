@@ -1389,6 +1389,28 @@ Use real schedule APIs.
 
 No mock schedule after integration is available.
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-102 (API client), TASK-100 (shell), TASK-094 (Week/Calendar/range APIs)
+- SRS: FR-11 (week view), FR-15 (monthly calendar); design.md §Week screen, §Responsive behavior.
+- Acceptance:
+  - [x] Week view (`/week?date=`): 7-day summary grid with day columns, task count, and scheduled minutes per day.
+  - [x] Monthly calendar (`/calendar?month=`): month grid with per-day task indicators and leading blank cells for weekday alignment.
+  - [x] Date navigation: prev/next week and month, plus "Today"/"This month" reset.
+  - [x] Capacity awareness + overload indication: weekly totals, per-day scheduled minutes, and an overload badge when a day exceeds a 720-minute threshold (design.md §Week screen).
+  - [x] Deadline awareness: per-day "due" markers from task `due_at` via `/schedule?from=&to=` range fetch.
+  - [x] Task assignments: per-day assignment list in the week view from the range events.
+  - [x] Typed Week/Calendar API client + Pinia store; wired into the shell for the `week` and `calendar` nav views.
+  - [x] No mock schedule — uses the real `GET /week`, `GET /calendar`, `GET /schedule` APIs.
+- Verification:
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (163 tests; 8 new Week/Calendar tests: store, WeekView, CalendarView)
+  - [x] `npm run build` → built OK
+  - [x] Backend regression: `composer test` → OK (616 tests, 1647 assertions)
+  - [x] Repo gates (secrets/doc-links/validate/changelog) all PASS
+- Evidence: server/resources/js/week/{types.ts,api.ts,store.ts,WeekView.vue,CalendarView.vue}, server/resources/js/week/__tests__/*.test.ts, server/resources/js/auth/AuthHost.vue (Week/Calendar wiring)
+- Release Impact: MINOR (new frontend surface; no backend/API change)
+
 ---
 
 # TASK-105 — Task UI

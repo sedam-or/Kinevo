@@ -14,6 +14,10 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Week / Calendar UI (TASK-104): a 7-day week grid and monthly
+  calendar with date navigation, capacity/overload indication, per-day deadline
+  markers and task assignments, wired to the real `GET /week`, `GET /calendar`,
+  and `GET /schedule` APIs (FR-11/FR-15).
 - Added the Today UI (TASK-103): the primary execution surface with a dated
   header, sync state, NOW and NEXT cards, a 06:00–24:00 timeline (scheduled
   tasks, Hard Landscape, empty slots, lock/conflict states), capacity

@@ -9,6 +9,8 @@ import LoginView from './LoginView.vue';
 import RegisterView from './RegisterView.vue';
 import ProfileView from './ProfileView.vue';
 import TodayView from '../today/TodayView.vue';
+import WeekView from '../week/WeekView.vue';
+import CalendarView from '../week/CalendarView.vue';
 
 const auth = useAuthStore();
 const shell = useShellStore();
@@ -96,6 +98,8 @@ const viewTitle = computed(() => {
 
             <ProfileView v-if="shell.activeView === 'settings'" />
             <TodayView v-else-if="shell.activeView === 'today'" :date="todayDate" />
+            <WeekView v-else-if="shell.activeView === 'week'" :anchor-date="todayDate" />
+            <CalendarView v-else-if="shell.activeView === 'calendar'" :anchor-date="todayDate" />
             <div v-else data-testid="view-content">
                 <p class="text-sm text-gray-600 dark:text-gray-400">
                     The {{ shell.activeView }} view is wired into the shell and will be
