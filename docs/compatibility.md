@@ -11,7 +11,7 @@ basename of the newest migration file at the release's commit.
 | App version | SRS | API | Migration head | Min PHP | Status |
 |---|---|---|---|---|---|
 | 0.4.0 (historical) | 2.0.0 | v1 | — (pre-release notes) | ^8.4 | Superseded by 0.5.x |
-| 0.5.x (planned) | 2.0.0 | v1 | `2026_08_19_110000_create_task_assignments_table.php` | ^8.4 | Next candidate |
+| 0.5.x (planned) | 2.0.0 | v1 | `2026_08_19_130000_create_schedule_overrides_table.php` | ^8.4 | Next candidate |
 
 > The 0.1.0–0.4.0 entries in `CHANGELOG.md` predate the release-management
 > lifecycle and were not published as tagged GitHub Releases. The first

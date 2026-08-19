@@ -1137,7 +1137,7 @@
 
 ### Phase 10 — Release & Documentation Hygiene
 #### TASK-160 — Repository Documentation Hygiene & Release Readiness
-- Status: IN_PROGRESS
+- Status: DONE
 - Priority: P1
 - SRS: no requirement change (governance/tooling only).
 - Acceptance:
@@ -1149,16 +1149,19 @@
   - [x] `scripts/release-dry-run.sh` added (non-destructive readiness gate → READY/BLOCKED).
   - [x] Makefile targets: `version`, `version-check`, `changelog-check`, `release-check`, `release-dry-run`, `release-prepare`.
   - [x] CI wired: changelog + version checks in `ci.yml`; release dry-run gate in `release.yml`.
-  - [ ] No duplicate authoritative docs; no obsolete architecture docs.
-  - [ ] `AGENTS.md` contains current rules only (release/document-hygiene rules reviewed).
-  - [ ] spike/prompt artifacts classified (none present).
-  - [ ] release workflow documented and scripts validated.
+  - [x] No duplicate authoritative docs; no obsolete architecture docs (audited docs/, docs/adr/, README map; no competing authorities).
+  - [x] `AGENTS.md` contains current rules only (release/document-hygiene rules reviewed and consistent with release-management.md).
+  - [x] spike/prompt artifacts classified (none present; no scratch/prompt/temp files in tree or history).
+  - [x] release workflow documented and scripts validated (changelog/version/secret/doc-link/OpenAPI gates all PASS; dry-run READY).
 - Verification:
   - [x] `make changelog-check` → PASS
   - [x] `make version-check` → PASS
   - [x] `make release-dry-run` → READY
   - [x] `./scripts/validate-repo.sh .` → VALIDATION PASSED
-- Evidence: docs/release-management.md, docs/compatibility.md, scripts/{check-version,check-changelog,release-dry-run}.sh, Makefile, .github/workflows/{ci,release}.yml
+  - [x] `./scripts/check-secrets.sh .` → SECRET SCAN PASSED
+  - [x] `./scripts/check-doc-links.sh .` → PASSED (19 links)
+  - [x] `./scripts/check-openapi.sh .` → PASSED (71 paths)
+- Evidence: docs/release-management.md, docs/compatibility.md, docs/implementation-status.md, README.md, scripts/{check-version,check-changelog,release-dry-run}.sh, Makefile, .github/workflows/{ci,release}.yml
 - Release Impact: NONE (internal governance/tooling; no user-facing behavior change)
 
 ---

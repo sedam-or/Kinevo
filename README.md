@@ -7,8 +7,11 @@
 ## Status
 
 Early development. A proven repository skeleton, CI pipeline, Docker development
-environment, environment/secrets baseline, and an Identity/profile baseline are
-complete through **TASK-010**. See [`docs/implementation-status.md`](docs/implementation-status.md)
+environment, environment/secrets baseline, Identity/profile baseline, core
+domain aggregates (goals, milestones, programs, tasks), the deterministic
+scheduling engine, knowledge layer, canvas layer, offline shell, AI provider
+abstraction, production deployment profile, and schedule persistence are
+complete. See [`docs/implementation-status.md`](docs/implementation-status.md)
 and [`TASK.md`](TASK.md) for the current execution board.
 
 ## Releases
@@ -148,6 +151,9 @@ For an AI coding session or a new contributor, read in this order:
 - `docs/deployment.md` — deployment, operations, backup.
 - `docs/environment.md` — environment configuration and secret rules.
 - `docs/test-strategy.md` — quality gates and test pyramid.
+- `docs/release-management.md` — versioning, changelog, release process.
+- `docs/compatibility.md` — app ↔ SRS ↔ API ↔ migration matrix.
+- `docs/implementation-status.md` — high-level progress mirror of `TASK.md`.
 - `docs/api/openapi.yaml` — versioned API contract.
 - `docs/adr/` — architecture decision records (ADR-001..ADR-007).
 - `docs/third-party/` — license ledger and attributions.

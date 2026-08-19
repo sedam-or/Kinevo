@@ -22,7 +22,7 @@ Environment/config/secrets        ✅ DONE
 Identity/profile                  ✅ DONE
 Goal aggregate                    ✅ DONE (TASK-011)
 Milestone aggregate               ✅ DONE (TASK-012)
-PostgreSQL schema                 🟡 migrations baseline only
+PostgreSQL schema                 ✅ migrations complete
 Core domain (milestones)          ✅ DONE (TASK-012)
 Program aggregate                 ✅ DONE (TASK-013)
 Task/subtask lifecycle            ✅ DONE (TASK-014)
@@ -53,7 +53,7 @@ Last-write-wins policy               ✅ DONE (TASK-053)
 EOD reconciliation                   ✅ DONE (TASK-054)
 Morning Recovery                     ✅ DONE (TASK-055)
 Knowledge layer (search)          ✅ DONE (TASK-033)
-Canvas full integration            🟡 TASK-041+ (schema done; Excalidraw island live in spike)
+Canvas full integration            ✅ DONE (TASK-041–044)
 Adaptive context (check-in model)  ✅ DONE (TASK-060)
 Adaptive context (soft signals)    ✅ DONE (TASK-061)
 Focus block recommendation          ✅ DONE (TASK-062)
@@ -70,6 +70,15 @@ Backup / restore automation          ✅ DONE (TASK-082)
 Observability                        ✅ DONE (TASK-083)
 Schedule Assignment aggregate        ✅ DONE (TASK-090)
 Schedule Assignment persistence      ✅ DONE (TASK-091)
+Schedule draft apply (atomic)        ✅ DONE (TASK-092)
+Reschedule proposal apply (atomic)   ✅ DONE (TASK-093)
+Schedule query API                   ✅ DONE (TASK-094)
+Hard Landscape domain                ✅ DONE (TASK-095)
+Recurring schedule engine            ✅ DONE (TASK-096)
+Schedule overrides                   ✅ DONE (TASK-097)
+Quick Capture placement              ✅ DONE (TASK-098)
+Auto Swap                            ✅ DONE (TASK-099)
+Release & doc hygiene                🟡 IN PROGRESS (TASK-160)
 ```
 
 ### Evidence rule
