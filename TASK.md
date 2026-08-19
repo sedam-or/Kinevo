@@ -1536,6 +1536,28 @@ Schedule Later
 
 must be visibly actionable.
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-098/099 (quick-capture + auto-swap APIs), TASK-102 (API client), TASK-100 (shell)
+- SRS: FR-03 (quick capture strategies); design.md §Quick Capture.
+- Acceptance:
+  - [x] Global Quick Capture modal (`QuickCapture.vue`) reachable from a topbar button across all authenticated views.
+  - [x] Fields: title, priority, size (cepat/sedang/berat → default duration), duration, program, goal, milestone (dependent on goal), due date.
+  - [x] On `TASK_NO_CAPACITY`, shows the three primary strategies in SRS order — Manual Swap, Auto Swap, Schedule Later — each visibly actionable.
+  - [x] Auto Swap runs `POST /tasks/{id}/auto-swap` and reports success/explanation.
+  - [x] Schedule Later dismisses (task stays in backlog; never disappears).
+  - [x] Manual Swap dismisses and lets the user adjust the schedule themselves.
+  - [x] Goal/program/milestone dropdown context loaded from the Goal APIs.
+  - [x] Placed captures show a confirmation with the assigned slot.
+- Verification:
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (190 tests; 9 new QuickCapture tests: store, component)
+  - [x] `npm run build` → built OK
+  - [x] Backend regression: `composer test` → OK (616 tests, 1647 assertions)
+  - [x] Repo gates (secrets/doc-links/validate/changelog) all PASS
+- Evidence: server/resources/js/quickcapture/{store.ts,QuickCapture.vue}, server/resources/js/quickcapture/__tests__/*.test.ts, server/resources/js/auth/AuthHost.vue (global button + modal wiring)
+- Release Impact: MINOR (new frontend surface; no backend/API change)
+
 ---
 
 # TASK-108 — Schedule Draft / Rescheduler UI

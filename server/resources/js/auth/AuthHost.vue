@@ -13,10 +13,13 @@ import WeekView from '../week/WeekView.vue';
 import CalendarView from '../week/CalendarView.vue';
 import TaskView from '../task/TaskView.vue';
 import GoalView from '../goal/GoalView.vue';
+import QuickCapture from '../quickcapture/QuickCapture.vue';
+import { useQuickCaptureStore } from '../quickcapture/store';
 
 const auth = useAuthStore();
 const shell = useShellStore();
 const api = useApiStore();
+const qc = useQuickCaptureStore();
 
 const authMode = ref<'login' | 'register'>('login');
 
@@ -87,6 +90,9 @@ const viewTitle = computed(() => {
             <div class="flex items-center justify-between mb-4">
                 <h1 class="text-xl font-semibold" data-testid="view-title">{{ viewTitle }}</h1>
                 <div class="flex items-center gap-3 text-sm">
+                    <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="global-quick-capture" @click="qc.show()">
+                        Quick Capture
+                    </button>
                     <span data-testid="auth-user">{{ auth.displayName }}</span>
                     <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="logout" @click="auth.logout()">
                         Log out
@@ -111,5 +117,8 @@ const viewTitle = computed(() => {
                 </p>
             </div>
         </AppShell>
+
+        <!-- Global Quick Capture (authenticated only) -->
+        <QuickCapture v-if="auth.isAuthenticated" />
     </AppErrorBoundary>
 </template>

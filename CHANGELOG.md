@@ -14,6 +14,11 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the global Quick Capture UI (TASK-107): a modal reachable from any
+  authenticated view with title, priority, size/duration, program, goal,
+  milestone, and due-date fields; when the day has no free slot it presents the
+  SRS order Manual Swap / Auto Swap / Schedule Later as actionable strategies
+  (FR-03).
 - Added the Goals / Milestones / Programs UI (TASK-106): goal list and detail
   (outcome, deadline, progress, status actions), a sequence-ordered milestone
   timeline with status transitions, and a program list with creation, wired to
