@@ -1,5 +1,6 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import ShellApp from './shell/index.vue';
 import { registerServiceWorker } from './offline/register-sw';
 
 // Mount the Vue application only when a host element exists. The default
@@ -7,7 +8,7 @@ import { registerServiceWorker } from './offline/register-sw';
 const host = document.getElementById('app');
 
 if (host) {
-    const app = createApp({});
+    const app = createApp(ShellApp);
     app.use(createPinia());
     app.mount(host);
 }

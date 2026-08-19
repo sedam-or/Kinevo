@@ -78,7 +78,8 @@ Recurring schedule engine            ✅ DONE (TASK-096)
 Schedule overrides                   ✅ DONE (TASK-097)
 Quick Capture placement              ✅ DONE (TASK-098)
 Auto Swap                            ✅ DONE (TASK-099)
-Release & doc hygiene                🟡 IN PROGRESS (TASK-160)
+Release & doc hygiene                ✅ DONE (TASK-160)
+Vue application shell                ✅ DONE (TASK-100)
 ```
 
 ### Evidence rule

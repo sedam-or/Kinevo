@@ -1183,6 +1183,27 @@ Do not build a dashboard full of metrics.
 
 Today remains the primary execution surface.
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-031 (frontend scaffold / Pinia / Vite)
+- SRS: design.md §App shell, §Global UI states, §Responsive behavior; ADR-002 (Vue 3 + TS + Pinia).
+- Acceptance:
+  - [x] App shell component (`AppShell.vue`) with primary navigation, content surface, and error banner.
+  - [x] Navigation config (`navigation.ts`) includes Today, Week, Calendar, Goals/Roadmap, Knowledge, Analytics, Settings.
+  - [x] Responsive layout: persistent desktop side nav (`lg:flex`) and mobile bottom nav (`lg:hidden`), Today as primary entry.
+  - [x] Global error boundary (`AppErrorBoundary.vue`) via Vue `onErrorCaptured`.
+  - [x] Global loading state + sync indicator + notification indicator in the Pinia shell store and topbar.
+  - [x] Theme handling (`theme.ts`): light/dark/system, persisted, `dark` class applied; topbar toggle.
+  - [x] Shell mounted in `app.js` behind the existing `#app` host (welcome page unaffected).
+- Verification:
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (113 tests, 17 new shell tests: navigation, theme, store, AppShell)
+  - [x] `npm run build` → built OK
+  - [x] Backend regression: `composer test` → OK (616 tests, 1647 assertions)
+  - [x] `check-secrets.sh`, `check-doc-links.sh`, `validate-repo.sh`, `check-changelog.sh` all pass
+- Evidence: server/resources/js/shell/{navigation.ts,theme.ts,store.ts,AppShell.vue,AppErrorBoundary.vue,index.vue}, server/resources/js/app.js, server/resources/js/shell/__tests__/*.test.ts
+- Release Impact: MINOR (new frontend surface; no backend/API change)
+
 ---
 
 # TASK-101 — Authentication UI

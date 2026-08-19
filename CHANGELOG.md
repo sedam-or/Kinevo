@@ -14,6 +14,11 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Vue application shell (TASK-100): responsive layout with persistent
+  desktop side navigation and mobile bottom navigation (Today/Week/Calendar/
+  Goals/Roadmap/Knowledge/Analytics/Settings), global error boundary, global
+  loading state, sync and notification indicators, and light/dark/system theme
+  handling.
 - Added Auto Swap (`POST /tasks/{taskId}/auto-swap`): explicitly move the
   lowest-priority unlocked task on the target day (farthest deadline as
   tie-breaker) to a feasible slot on the following day, then place a task into
