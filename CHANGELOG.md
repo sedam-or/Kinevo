@@ -14,6 +14,10 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Schedule Query API (`GET /today`, `GET /schedule`, `GET /week`,
+  `GET /calendar`) exposing the canonical Today/range/week/month schedule with
+  task, program/goal/milestone context, lock and conflict state, capacity
+  indicators, and empty (fillable) slots (FR-01/FR-11/FR-15).
 - Added release-management lifecycle documentation and release validation tooling.
 
 ## [0.4.0] — 2026-08-17

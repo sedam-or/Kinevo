@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AdaptiveContextController;
 use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\CanvasController;
 use App\Http\Controllers\Api\FocusSessionController;
 use App\Http\Controllers\Api\GoalController;
@@ -17,7 +18,10 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ProgressEventController;
 use App\Http\Controllers\Api\RecoveryController;
+use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\TaskController;
+use App\Http\Controllers\Api\TodayController;
+use App\Http\Controllers\Api\WeekController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -119,4 +123,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/canvases/{canvasId}', [CanvasController::class, 'save']);
     Route::get('/canvases/{canvasId}/files', [CanvasController::class, 'files']);
     Route::post('/canvases/{canvasId}/files', [CanvasController::class, 'addFile']);
+
+    // Schedule queries (FR-01/FR-11/FR-15; SRS §8.2) — read-only.
+    Route::get('/today', [TodayController::class, 'index']);
+    Route::get('/schedule', [ScheduleController::class, 'index']);
+    Route::get('/week', [WeekController::class, 'index']);
+    Route::get('/calendar', [CalendarController::class, 'index']);
 });

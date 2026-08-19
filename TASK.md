@@ -1045,16 +1045,17 @@
 - Evidence: server/app/Application/Scheduling/ApplyRescheduleProposalUseCase.php, server/app/Application/Scheduling/RescheduleApplyResult.php, server/tests/{Unit,Feature}/Scheduling/ApplyRescheduleProposalUseCaseTest.php, server/tests/Support/FakeAssignmentStore.php
 
 #### TASK-094 — Schedule Query API
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Depends On: TASK-091
 - SRS: FR-01, FR-11, FR-15; SRS §8.2, §8.4.
 - Acceptance:
-  - [ ] `GET /schedule?date=`, `GET /schedule?from=&to=`, `GET /today?date=`, `GET /week?date=`, `GET /calendar?month=` implemented (reuse existing stubs).
-  - [ ] Response contains task, assignment, program/goal/milestone context, hard landscape, lock/conflict state, capacity indicators, scheduler explanation.
+  - [x] `GET /schedule?date=`, `GET /schedule?from=&to=`, `GET /today?date=`, `GET /week?date=`, `GET /calendar?month=` implemented (reuse existing stubs).
+  - [x] Response contains task, assignment, program/goal/milestone context, hard landscape, lock/conflict state, capacity indicators, scheduler explanation.
 - Verification:
-  - [ ] Feature/API tests; OpenAPI schemas synchronized.
-- Evidence: server/app/Http/Controllers/Api/{TodayController,ScheduleController}.php, server/routes/api.php, docs/api/openapi.yaml
+  - [x] Feature/API tests; OpenAPI schemas synchronized.
+- Evidence: server/app/Application/Scheduling/ScheduleQueryService.php, server/app/Http/Controllers/Api/{TodayController,ScheduleController,WeekController,CalendarController}.php, server/routes/api.php, docs/api/openapi.yaml, server/tests/Feature/Api/ScheduleApiTest.php (10 tests pass)
+- Release Impact: MINOR (new optional read-only query endpoints; no breaking change)
 
 #### TASK-095 — Hard Landscape Domain
 - Status: TODO

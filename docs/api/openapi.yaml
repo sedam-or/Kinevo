@@ -90,15 +90,86 @@ paths:
   /today:
     get:
       tags: [Today]
-      summary: Get canonical Today schedule
+      summary: Get canonical Today schedule (FR-01)
       parameters:
         - name: date
           in: query
           required: true
           schema: { type: string, format: date }
       responses:
-        '200': { description: OK }
+        '200':
+          description: Today schedule view
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TodayResponse'
         '401': { description: Unauthorized }
+        '422': { description: Validation error }
+
+  /schedule:
+    get:
+      tags: [Scheduling]
+      summary: Query schedule for a date or range (FR-01)
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema: { type: string, format: date }
+        - name: from
+          in: query
+          required: false
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          required: false
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Schedule events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
+
+  /week:
+    get:
+      tags: [Scheduling]
+      summary: Get 7-day week summary (FR-11)
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Week summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeekResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
+
+  /calendar:
+    get:
+      tags: [Scheduling]
+      summary: Get monthly calendar summary (FR-15)
+      parameters:
+        - name: month
+          in: query
+          required: false
+          schema: { type: string, pattern: '^\d{4}-\d{2}$' }
+      responses:
+        '200':
+          description: Monthly calendar summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
 
   /auth/register:
     post:
@@ -1906,6 +1977,103 @@ components:
       required: [task]
       properties:
         task: {$ref: '#/components/schemas/Task'}
+    ScheduleAssignment:
+      type: object
+      required: [id, user_id, task_id, date, start_at, end_at, duration_minutes, status, source, schedule_version, locked, version]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        task_id: {type: integer}
+        date: {type: string, format: date}
+        start_at: {type: string, format: date-time}
+        end_at: {type: string, format: date-time}
+        duration_minutes: {type: integer, minimum: 1}
+        status: {type: string, enum: [scheduled, completed, cancelled, missed]}
+        source: {type: string, enum: [draft, manual, reschedule, override, quick_capture, auto_swap, recurring]}
+        schedule_version: {type: integer}
+        locked: {type: boolean}
+        version: {type: integer}
+    ScheduleEvent:
+      type: object
+      properties:
+        assignment: {$ref: '#/components/schemas/ScheduleAssignment'}
+        locked: {type: boolean}
+        conflict: {type: boolean}
+        task: {$ref: '#/components/schemas/Task', nullable: true}
+        program: {type: object, nullable: true}
+        goal: {type: object, nullable: true}
+        milestone: {type: object, nullable: true}
+    EmptySlot:
+      type: object
+      properties:
+        start: {type: string, format: date-time}
+        end: {type: string, format: date-time}
+        duration_minutes: {type: integer}
+    CapacityIndicators:
+      type: object
+      properties:
+        scheduled_minutes: {type: integer}
+        available_minutes: {type: integer}
+        overload_minutes: {type: integer}
+        status: {type: string, enum: [ok, overload]}
+    TodayResponse:
+      type: object
+      required: [date, schedule_version, events, empty_slots, hard_landscape, capacity]
+      properties:
+        date: {type: string, format: date}
+        schedule_version: {type: integer}
+        events:
+          type: array
+          items: {$ref: '#/components/schemas/ScheduleEvent'}
+        empty_slots:
+          type: array
+          items: {$ref: '#/components/schemas/EmptySlot'}
+        hard_landscape:
+          type: array
+          items: {type: object}
+        capacity: {$ref: '#/components/schemas/CapacityIndicators'}
+    ScheduleResponse:
+      type: object
+      required: [from, to, schedule_version, events]
+      properties:
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+        schedule_version: {type: integer}
+        events:
+          type: array
+          items: {$ref: '#/components/schemas/ScheduleEvent'}
+    WeekResponse:
+      type: object
+      required: [start, end, schedule_version, days]
+      properties:
+        start: {type: string, format: date}
+        end: {type: string, format: date}
+        schedule_version: {type: integer}
+        days:
+          type: array
+          items:
+            type: object
+            properties:
+              date: {type: string, format: date}
+              weekday: {type: integer}
+              task_count: {type: integer}
+              scheduled_minutes: {type: integer}
+    CalendarResponse:
+      type: object
+      required: [year, month, schedule_version, days]
+      properties:
+        year: {type: integer}
+        month: {type: integer}
+        schedule_version: {type: integer}
+        days:
+          type: array
+          items:
+            type: object
+            properties:
+              date: {type: string, format: date}
+              day: {type: integer}
+              task_count: {type: integer}
+              scheduled_minutes: {type: integer}
     SubtaskCreateRequest:
       type: object
       required: [title]
