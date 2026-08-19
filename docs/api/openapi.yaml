@@ -566,6 +566,38 @@ paths:
         '404': { description: Task not found }
         '422': { description: Invalid transition }
 
+  /tasks/{taskId}/auto-swap:
+    post:
+      tags: [Tasks]
+      summary: Explicit Auto Swap — move the lowest-priority unlocked task to free a slot for a new task (FR-03/FR-23/FR-28)
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutoSwapRequest'
+      responses:
+        '200':
+          description: Swapped (new task placed, candidate moved to next day)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutoSwapResponse'
+        '202':
+          description: Accepted but no safe candidate — new task left unplaced
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutoSwapResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found }
+        '422': { description: Validation error }
+
   /tasks/{taskId}/partial-complete:
     post:
       tags: [Tasks]
@@ -2214,6 +2246,33 @@ components:
         strategies:
           type: array
           items: {type: string, enum: [manual_swap, auto_swap, schedule_later]}
+    AutoSwapRequest:
+      type: object
+      required: [date, duration_minutes]
+      properties:
+        date: {type: string, format: date}
+        duration_minutes: {type: integer, minimum: 1}
+    AutoSwapResponse:
+      type: object
+      required: [task, applied, explanation]
+      properties:
+        task: {$ref: '#/components/schemas/Task'}
+        applied: {type: boolean}
+        assignment: {$ref: '#/components/schemas/ScheduleAssignment', nullable: true}
+        swapped_task: {$ref: '#/components/schemas/Task', nullable: true}
+        moved_from:
+          type: object
+          nullable: true
+          properties:
+            start: {type: string, format: date-time}
+            end: {type: string, format: date-time}
+        moved_to:
+          type: object
+          nullable: true
+          properties:
+            start: {type: string, format: date-time}
+            end: {type: string, format: date-time}
+        explanation: {type: string}
     ScheduleAssignment:
       type: object
       required: [id, user_id, task_id, date, start_at, end_at, duration_minutes, status, source, schedule_version, locked, version]

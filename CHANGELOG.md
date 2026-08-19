@@ -14,6 +14,12 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added Auto Swap (`POST /tasks/{taskId}/auto-swap`): explicitly move the
+  lowest-priority unlocked task on the target day (farthest deadline as
+  tie-breaker) to a feasible slot on the following day, then place a task into
+  the vacated slot — locked tasks are never moved, Hard Landscape is never
+  violated, and the swap commits atomically with a user-visible explanation
+  (FR-03/FR-23/FR-28).
 - Added Quick Capture placement (`POST /quick-capture`): capture a task and
   attempt immediate placement into the first feasible empty slot today,
   returning a task + assignment on success, or `TASK_NO_CAPACITY` with the

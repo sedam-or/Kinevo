@@ -1110,15 +1110,24 @@
 - Release Impact: MINOR (new optional endpoint; no breaking change)
 
 #### TASK-099 — Auto Swap
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Depends On: TASK-090, TASK-091, TASK-098
 - SRS: FR-03, FR-23, FR-28.
 - Acceptance:
-  - [ ] Explicit Auto Swap: never move locked, never violate Hard Landscape, reuse ranking engine + explainability, atomic transaction, audit/activity preserved, user-visible explanation.
+  - [x] `AutoSwapUseCase` implements explicit Auto Swap (FR-03): selects lowest-priority unlocked task on target day (farthest deadline as tie-breaker), places new task in vacated slot, moves swapped-out task to a feasible slot on the following day.
+  - [x] Never moves locked tasks (FR-03): locked candidate reported in `swapped_task` but never moved; applied=false.
+  - [x] Never violates Hard Landscape: next-day placement validated via HardConstraintEngine (HardLandscapeCollision, DurationFit, TemporalValidity, etc.).
+  - [x] Reuses the hard-constraint engine for feasibility (no soft scoring can override hard violations, FR-64).
+  - [x] Atomic transaction (DB::transaction): vacate + place new + move candidate commit or roll back together; schedule version bumped atomically.
+  - [x] User-visible explanation always present; result exposed via `GET/POST /tasks/{taskId}/auto-swap` (200 applied, 202 no safe candidate, 404 task missing, 422 validation).
+  - [x] OpenAPI AutoSwapRequest/AutoSwapResponse schemas + path synchronized.
 - Verification:
-  - [ ] Unit + Feature tests.
-- Evidence: server/app/Application/Scheduling/AutoSwapUseCase.php
+  - [x] Unit + Feature: `vendor/bin/phpunit` → OK (616 tests, 1647 assertions; 8 AutoSwap tests).
+  - [x] `composer lint` → Pint PASS (430 files); `composer analyse` → PHPStan no errors.
+  - [x] `check-openapi.sh` → PASS.
+- Evidence: server/app/Application/Scheduling/{AutoSwapUseCase,AutoSwapResult}.php, server/app/Http/Controllers/Api/TaskController.php (autoSwap), server/routes/api.php (`POST /tasks/{taskId}/auto-swap`), docs/api/openapi.yaml, server/tests/Feature/Scheduling/AutoSwapUseCaseTest.php, server/tests/Feature/Api/AutoSwapApiTest.php
+- Release Impact: MINOR (new optional endpoint; no breaking change)
 
 ### Execution rules
 - A task may move to `DONE` only when acceptance and verification boxes are satisfied.

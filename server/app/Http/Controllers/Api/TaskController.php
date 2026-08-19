@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\Scheduling\AutoSwapUseCase;
 use App\Application\Scheduling\QuickCapturePlacementUseCase;
 use App\Application\Tasks\AddSubtaskUseCase;
 use App\Application\Tasks\CreateTaskUseCase;
@@ -36,6 +37,7 @@ final class TaskController extends Controller
         private readonly PromoteSubtaskUseCase $promoteSubtaskUseCase,
         private readonly PartialCompleteTaskUseCase $partialCompleteTaskUseCase,
         private readonly QuickCapturePlacementUseCase $quickCapturePlacementUseCase,
+        private readonly AutoSwapUseCase $autoSwapUseCase,
         private readonly SubtaskRepository $subtaskRepository,
     ) {}
 
@@ -85,6 +87,37 @@ final class TaskController extends Controller
         $status = $result->placed ? 201 : 200;
 
         return response()->json($result->toArray(), $status);
+    }
+
+    public function autoSwap(Request $request, int $taskId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'date' => ['required', 'date'],
+            'duration_minutes' => ['required', 'integer', 'min:1'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $data = $validator->validated();
+
+        try {
+            $result = $this->autoSwapUseCase->__invoke(
+                $request->user()->id,
+                $taskId,
+                CarbonImmutable::parse($data['date']),
+                (int) $data['duration_minutes'],
+            );
+        } catch (InvalidArgumentException $e) {
+            if ($e->getMessage() === 'Task not found.') {
+                return response()->json(['error' => $e->getMessage()], 404);
+            }
+
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        return response()->json($result->toArray(), $result->applied ? 200 : 202);
     }
 
     public function show(Request $request, int $taskId): JsonResponse

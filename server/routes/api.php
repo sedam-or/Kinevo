@@ -66,6 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/quick-capture', [TaskController::class, 'quickCapture']);
     Route::get('/tasks/{taskId}', [TaskController::class, 'show']);
     Route::put('/tasks/{taskId}', [TaskController::class, 'update']);
+    Route::post('/tasks/{taskId}/auto-swap', [TaskController::class, 'autoSwap']);
     Route::post('/tasks/{taskId}/status', [TaskController::class, 'status']);
     Route::post('/tasks/{taskId}/partial-complete', [TaskController::class, 'partialComplete']);
     Route::get('/tasks/{taskId}/subtasks', [TaskController::class, 'subtasks']);
