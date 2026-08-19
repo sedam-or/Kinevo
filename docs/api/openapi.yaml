@@ -17,6 +17,12 @@ tags:
   - name: Milestones
   - name: Programs
   - name: Activity
+  - name: Notifications
+  - name: Recovery
+  - name: Adaptive
+  - name: Focus
+  - name: Progress
+  - name: AI
   - name: Scheduling
   - name: Knowledge
   - name: Canvas
@@ -455,8 +461,39 @@ paths:
   /goals/{goalId}/breakdown-proposals:
     post:
       tags: [Goals]
-      summary: Generate milestone/work breakdown proposal
-      responses: {'202': {description: Proposal generation accepted}}
+      summary: Generate a goal breakdown proposal (FR-52, FR-62)
+      description: >-
+        Produces a schema-validated breakdown of the goal into Milestones with
+        target dates and estimated workloads, then stores it as a PENDING
+        proposal. No large hierarchy is silently committed — the user must
+        accept/edit/reject via the AI proposal endpoints. Invalid AI output is
+        rejected (FR-61); a pending proposal is returned.
+      parameters:
+        - name: goalId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instructions: {type: string, maxLength: 8000}
+      responses:
+        '200':
+          description: Pending proposal generated
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proposal]
+                properties:
+                  proposal: {$ref: '#/components/schemas/AiProposal'}
+        '401': { description: Unauthorized }
+        '404': { description: Goal not found }
+        '422': { description: AI_OUTPUT_INVALID or invalid payload }
+        '503': { description: AI_PROVIDER_UNAVAILABLE }
 
   /goals/{goalId}/milestones:
     get:
@@ -1112,6 +1149,595 @@ paths:
         '401': { description: Unauthorized }
         '422': { description: Invalid request body }
 
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List in-app notifications (FR-35/FR-47)
+      parameters:
+        - name: unread
+          in: query
+          schema: { type: boolean }
+          description: Only list unread notifications
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid query parameters }
+
+  /notifications/{notificationId}/read:
+    post:
+      tags: [Notifications]
+      summary: Mark a notification as read (owner-scoped)
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      responses:
+        '200':
+          description: Marked read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Notification not found or not owned }
+
+  /recovery:
+    get:
+      tags: [Recovery]
+      summary: Morning Recovery list — previous-day Terlewat tasks (FR-48)
+      description: >-
+        Terlewat (missed) tasks ordered by nearest deadline first. Tasks whose
+        program is Completed/Dropped are flagged via `invalid_reason` and
+        reschedule is withheld (FR-48 Exception Flow).
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryListResponse'
+        '401': { description: Unauthorized }
+
+  /recovery/{taskId}:
+    post:
+      tags: [Recovery]
+      summary: Resolve a recovered task (FR-48)
+      description: >-
+        Applies an explicit action to a Terlewat task: `reschedule` (to
+        scheduled, optionally with a new `due_at`), `complete`, or `backlog`.
+        Only missed tasks are recoverable; invalid actions are rejected (422).
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer, minimum: 1 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoveryResolveRequest'
+      responses:
+        '200':
+          description: Resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found or not owned }
+        '422': { description: Invalid action, not a missed task, or action not available }
+
+  /adaptive/context:
+    get:
+      tags: [Adaptive]
+      summary: List recent context check-ins (FR-58)
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextObservationListResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid query parameters }
+    post:
+      tags: [Adaptive]
+      summary: Record a context check-in (FR-58)
+      description: >-
+        Records user-entered adaptive signals (energy, stress, task difficulty,
+        skill familiarity, interruptions, context-switch cost, focus duration).
+        At least one signal is required. Signals are subjective and advisory —
+        never clinical or neurological measurements.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContextCheckInRequest'
+      responses:
+        '201':
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContextObservationResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found or not owned }
+        '422': { description: Invalid or missing signals }
+
+  /adaptive/burnout:
+    get:
+      tags: [Adaptive]
+      summary: Evaluate the burnout warning heuristic (FR-49 upstream, TASK-060)
+      description: >-
+        Sustained high stress with low energy over recent check-ins raises a
+        warning that suppresses aggressive capacity boosts. Advisory only.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BurnoutSignalResponse'
+        '401': { description: Unauthorized }
+
+  /focus-sessions:
+    get:
+      tags: [Focus]
+      summary: List actual focus sessions (SRS §7, §12.2)
+      parameters:
+        - name: task_id
+          in: query
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FocusSessionListResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid query parameters }
+    post:
+      tags: [Focus]
+      summary: Record a completed focus session (SRS §7)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FocusSessionCreateRequest'
+      responses:
+        '201':
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FocusSessionResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found or not owned }
+        '422': { description: Invalid interval }
+
+  /focus-sessions/recommendation:
+    get:
+      tags: [Focus]
+      summary: Recommend a focus block duration (SRS §12.4)
+      description: >-
+        Recommends a focus duration from recent completed focus sessions —
+        task history, then user history, then the configured baseline. Durations
+        are configuration, never clinical/biological claims.
+      parameters:
+        - name: task_id
+          in: query
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FocusBlockRecommendationResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid query parameters }
+
+  /progress:
+    get:
+      tags: [Progress]
+      summary: List meaningful progress events (SRS §6.8)
+      description: >-
+        Append-only informational feed of meaningful progress. Events are
+        generated from domain changes (task completed, milestone
+        advanced/completed) or recorded manually (evidence attached,
+        experiment recorded, goal progress). They never overwrite activity logs.
+      parameters:
+        - name: from
+          in: query
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          schema: { type: string, format: date }
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [task_completed, milestone_advanced, milestone_completed, evidence_attached, experiment_recorded, goal_progress]
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressEventListResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid query parameters }
+    post:
+      tags: [Progress]
+      summary: Record a manual progress event (SRS §6.8)
+      description: >-
+        Records evidence_attached / experiment_recorded / goal_progress events
+        that are not derived from a status change. Informational only;
+        entity references are advisory, not authoritative.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgressEventCreateRequest'
+      responses:
+        '201':
+          description: Recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressEventResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid payload }
+
+  /ai/status:
+    get:
+      tags: [AI]
+      summary: AI provider status (SRS §17.8 telemetry)
+      description: >-
+        Safe provider metadata snapshot (provider, model, availability,
+        latency, error). Never includes private content.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiStatusResponse'
+        '401': { description: Unauthorized }
+
+  /ai/generate:
+    post:
+      tags: [AI]
+      summary: Generate non-mutating AI text for an allowed role (SRS FR-60)
+      description: >-
+        Free-text generation through the configured provider (Ollama, an
+        external OpenAI-compatible provider, mock, or disabled). This endpoint
+        is non-mutating: AI output never reaches persistence without the
+        structured-output validation and approval flow (FR-61/62).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiGenerateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiGenerateResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid payload }
+        '503':
+          description: AI provider unavailable (AI_PROVIDER_UNAVAILABLE)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ai/proposals:
+    post:
+      tags: [AI]
+      summary: Generate a schema-validated structured proposal (SRS FR-61, §13.3)
+      description: >-
+        Runs the configured provider and validates the output against the
+        versioned schema for the proposal type. Malformed or invalid output is
+        rejected with 422 AI_OUTPUT_INVALID and never reaches persistence as a
+        domain mutation. Every run is audited in ai_runs (§7.7). The returned
+        proposal awaits the user's approval decision (FR-62); nothing is
+        applied here.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiProposalRequest'
+      responses:
+        '200':
+          description: Validated proposal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiProposalResponse'
+        '401': { description: Unauthorized }
+        '422':
+          description: Invalid payload or AI_OUTPUT_INVALID
+        '503':
+          description: AI provider unavailable (AI_PROVIDER_UNAVAILABLE)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags: [AI]
+      summary: List the owner's AI proposals (FR-62 inbox)
+      parameters:
+        - name: proposal_type
+          in: query
+          schema:
+            type: string
+            enum: [goal_breakdown, milestone, task_extraction, canvas, summary]
+        - name: decision
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, rejected, edited]
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proposals]
+                properties:
+                  proposals:
+                    type: array
+                    items: {$ref: '#/components/schemas/AiProposal'}
+        '401': { description: Unauthorized }
+        '422': { description: Invalid query parameters }
+
+  /ai/proposals/{proposalId}:
+    get:
+      tags: [AI]
+      summary: View one proposal (FR-62 preview)
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proposal]
+                properties:
+                  proposal: {$ref: '#/components/schemas/AiProposal'}
+        '401': { description: Unauthorized }
+        '404': { description: Proposal not found }
+
+  /ai/proposals/{proposalId}/accept:
+    post:
+      tags: [AI]
+      summary: Accept a pending proposal and apply it (FR-62)
+      description: >-
+        Applies the validated proposal as a domain mutation. Goal breakdown
+        proposals create the referenced Goal's Milestones; task extraction
+        proposals create Tasks; canvas proposals create a Canvas — each within
+        a transaction. Only schema-validated proposals exist in the table, so
+        accepting never persists malformed AI output (FR-61).
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Applied
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    required: [milestones]
+                    properties:
+                      milestones:
+                        type: array
+                        items: {$ref: '#/components/schemas/Milestone'}
+                  - type: object
+                    required: [tasks]
+                    properties:
+                      tasks:
+                        type: array
+                        items: {$ref: '#/components/schemas/Task'}
+                  - type: object
+                    required: [canvas]
+                    properties:
+                      canvas: {$ref: '#/components/schemas/Canvas'}
+        '401': { description: Unauthorized }
+        '404': { description: Proposal not found }
+        '422': { description: Not pending or unsupported type }
+
+  /ai/proposals/{proposalId}/reject:
+    post:
+      tags: [AI]
+      summary: Reject a pending proposal (FR-62)
+      description: Rejection creates no domain mutation (FR-62 acceptance criterion).
+      parameters:
+        - name: proposalId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proposal]
+                properties:
+                  proposal: {$ref: '#/components/schemas/AiProposal'}
+        '401': { description: Unauthorized }
+        '404': { description: Proposal not found }
+        '422': { description: Not pending }
+
+  /ai/summarize-note:
+    post:
+      tags: [AI]
+      summary: Generate a note summarization proposal (SRS §13.3)
+      description: >-
+        Sends only the owner's note plain-text content (context-budgeted,
+        SRS §13.4), validates the AI output against the summary schema (FR-61),
+        and stores it as a PENDING proposal. Informational; no mutation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [note_id]
+              properties:
+                note_id: {type: integer}
+                instructions: {type: string, maxLength: 2000}
+      responses:
+        '200':
+          description: Pending proposal
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proposal]
+                properties:
+                  proposal: {$ref: '#/components/schemas/AiProposal'}
+        '401': { description: Unauthorized }
+        '404': { description: Note not found }
+        '422': { description: AI_OUTPUT_INVALID }
+        '503': { description: AI_PROVIDER_UNAVAILABLE }
+
+  /ai/extract-tasks:
+    post:
+      tags: [AI]
+      summary: Generate a task extraction proposal from a note (SRS §13.3, §17.4 #5)
+      description: >-
+        Sends only the owner's note plain-text content (context-budgeted,
+        SRS §13.4), validates the AI output against the task extraction schema
+        (FR-61), and stores it as a PENDING proposal. Tasks are created only
+        after the user accepts (FR-62).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [note_id]
+              properties:
+                note_id: {type: integer}
+                instructions: {type: string, maxLength: 2000}
+      responses:
+        '200':
+          description: Pending proposal
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proposal]
+                properties:
+                  proposal: {$ref: '#/components/schemas/AiProposal'}
+        '401': { description: Unauthorized }
+        '404': { description: Note not found }
+        '422': { description: AI_OUTPUT_INVALID }
+        '503': { description: AI_PROVIDER_UNAVAILABLE }
+
+  /ai/suggest-canvas:
+    post:
+      tags: [AI]
+      summary: Generate a canvas generation proposal (SRS §13.3 CanvasProposal)
+      description: >-
+        Generates a proposed canvas title and sections from the user prompt,
+        validates the output against the canvas schema (FR-61), and stores it
+        as a PENDING proposal. The Canvas is created only after the user
+        accepts (FR-62); Excalidraw scene serialization stays an editor concern.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt]
+              properties:
+                prompt: {type: string, maxLength: 8000}
+                system_prompt: {type: string, maxLength: 2000}
+      responses:
+        '200':
+          description: Pending proposal
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [proposal]
+                properties:
+                  proposal: {$ref: '#/components/schemas/AiProposal'}
+        '401': { description: Unauthorized }
+        '422': { description: AI_OUTPUT_INVALID }
+        '503': { description: AI_PROVIDER_UNAVAILABLE }
+
+  /ai/runs:
+    get:
+      tags: [AI]
+      summary: List the owner's AI run audit records (SRS §7.7)
+      parameters:
+        - name: proposal_type
+          in: query
+          schema:
+            type: string
+            enum: [goal_breakdown, milestone, task_extraction, canvas, summary]
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiRunsResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid query parameters }
+
+
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1480,6 +2106,279 @@ components:
         format: {type: string, enum: [json, csv]}
         filename: {type: string}
         content: {type: string}
+    Notification:
+      type: object
+      required: [id, user_id, type]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        type: {type: string, enum: [reconciliation]}
+        scheduled_for: {type: string, format: date, nullable: true}
+        title: {type: string, nullable: true}
+        payload:
+          type: object
+          additionalProperties: true
+        read_at: {type: string, format: date-time, nullable: true}
+    NotificationResponse:
+      type: object
+      required: [notification]
+      properties:
+        notification: {$ref: '#/components/schemas/Notification'}
+    NotificationListResponse:
+      type: object
+      required: [notifications]
+      properties:
+        notifications:
+          type: array
+          items: {$ref: '#/components/schemas/Notification'}
+    RecoveryItem:
+      allOf:
+        - $ref: '#/components/schemas/Task'
+        - type: object
+          properties:
+            allowed_actions:
+              type: array
+              items:
+                type: string
+                enum: [reschedule, complete, backlog]
+            invalid_reason:
+              type: string
+              nullable: true
+              enum: [program_completed, program_dropped]
+    RecoveryListResponse:
+      type: object
+      required: [recovery]
+      properties:
+        recovery:
+          type: array
+          items: {$ref: '#/components/schemas/RecoveryItem'}
+    RecoveryResolveRequest:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [reschedule, complete, backlog]
+        due_at:
+          type: string
+          format: date
+          nullable: true
+    ContextCheckInRequest:
+      type: object
+      properties:
+        task_id: {type: integer, nullable: true, minimum: 1}
+        energy_level: {type: integer, nullable: true, minimum: 1, maximum: 10}
+        stress_level: {type: integer, nullable: true, minimum: 1, maximum: 10}
+        task_difficulty: {type: integer, nullable: true, minimum: 1, maximum: 10}
+        skill_familiarity: {type: integer, nullable: true, minimum: 1, maximum: 10}
+        interruption_count: {type: integer, nullable: true, minimum: 0}
+        context_switch_cost: {type: integer, nullable: true, minimum: 0}
+        focus_duration_minutes: {type: integer, nullable: true, minimum: 0}
+        checked_at: {type: string, format: date-time, nullable: true}
+    ContextObservation:
+      type: object
+      required: [id, user_id, checked_at]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        task_id: {type: integer, nullable: true}
+        energy_level: {type: integer, nullable: true, minimum: 1, maximum: 10}
+        stress_level: {type: integer, nullable: true, minimum: 1, maximum: 10}
+        task_difficulty: {type: integer, nullable: true, minimum: 1, maximum: 10}
+        skill_familiarity: {type: integer, nullable: true, minimum: 1, maximum: 10}
+        interruption_count: {type: integer, nullable: true, minimum: 0}
+        context_switch_cost: {type: integer, nullable: true, minimum: 0}
+        focus_duration_minutes: {type: integer, nullable: true, minimum: 0}
+        checked_at: {type: string, format: date-time}
+    ContextObservationResponse:
+      type: object
+      required: [observation]
+      properties:
+        observation: {$ref: '#/components/schemas/ContextObservation'}
+    ContextObservationListResponse:
+      type: object
+      required: [observations]
+      properties:
+        observations:
+          type: array
+          items: {$ref: '#/components/schemas/ContextObservation'}
+    BurnoutSignalResponse:
+      type: object
+      required: [active, reason, sample_count]
+      properties:
+        active: {type: boolean}
+        reason: {type: string}
+        sample_count: {type: integer, minimum: 0}
+    FocusSession:
+      type: object
+      required: [id, user_id, started_at, ended_at, duration_minutes]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        task_id: {type: integer, nullable: true}
+        started_at: {type: string, format: date-time}
+        ended_at: {type: string, format: date-time}
+        duration_minutes: {type: integer, minimum: 1}
+    FocusSessionCreateRequest:
+      type: object
+      required: [started_at, ended_at]
+      properties:
+        task_id: {type: integer, nullable: true, minimum: 1}
+        started_at: {type: string, format: date-time}
+        ended_at: {type: string, format: date-time}
+    FocusSessionResponse:
+      type: object
+      required: [session]
+      properties:
+        session: {$ref: '#/components/schemas/FocusSession'}
+    FocusSessionListResponse:
+      type: object
+      required: [sessions]
+      properties:
+        sessions:
+          type: array
+          items: {$ref: '#/components/schemas/FocusSession'}
+    FocusBlockRecommendationResponse:
+      type: object
+      required: [recommended_minutes, basis, sample_count, reason]
+      properties:
+        recommended_minutes: {type: integer, minimum: 1}
+        basis:
+          type: string
+          enum: [task_patterns, user_patterns, baseline]
+        sample_count: {type: integer, minimum: 0}
+        reason: {type: string}
+    ProgressEvent:
+      type: object
+      required: [id, user_id, event_type, entity_type, entity_id, occurred_at]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        event_type:
+          type: string
+          enum: [task_completed, milestone_advanced, milestone_completed, evidence_attached, experiment_recorded, goal_progress]
+        entity_type: {type: string}
+        entity_id: {type: integer}
+        title: {type: string, nullable: true}
+        occurred_at: {type: string, format: date-time}
+        operation_id: {type: string, nullable: true}
+        payload: {type: object, additionalProperties: true}
+    ProgressEventCreateRequest:
+      type: object
+      required: [event_type, title]
+      properties:
+        event_type:
+          type: string
+          enum: [evidence_attached, experiment_recorded, goal_progress]
+        title: {type: string, maxLength: 200}
+        entity_type: {type: string, maxLength: 20}
+        entity_id: {type: integer}
+        occurred_at: {type: string, format: date-time}
+    ProgressEventResponse:
+      type: object
+      required: [event]
+      properties:
+        event: {$ref: '#/components/schemas/ProgressEvent'}
+    ProgressEventListResponse:
+      type: object
+      required: [events]
+      properties:
+        events:
+          type: array
+          items: {$ref: '#/components/schemas/ProgressEvent'}
+    AiStatusResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: object
+          required: [provider, model, available]
+          properties:
+            provider: {type: string}
+            model: {type: string}
+            available: {type: boolean}
+            latency_ms: {type: integer, nullable: true, minimum: 0}
+            error: {type: string, nullable: true}
+    AiGenerateRequest:
+      type: object
+      required: [role, prompt]
+      properties:
+        role:
+          type: string
+          enum: [goal_decomposition, milestone_proposal, note_summarization, task_extraction, concept_extraction, knowledge_relation_suggestion, canvas_proposal, natural_language_explanation]
+        prompt: {type: string, maxLength: 8000}
+        system_prompt: {type: string, maxLength: 2000}
+        temperature: {type: number, minimum: 0, maximum: 2}
+        max_tokens: {type: integer, minimum: 1, maximum: 8192}
+    AiGenerateResponse:
+      type: object
+      required: [text, provider, model, latency_ms]
+      properties:
+        text: {type: string}
+        provider: {type: string}
+        model: {type: string}
+        latency_ms: {type: integer, minimum: 0}
+    AiProposalRequest:
+      type: object
+      required: [type, prompt]
+      properties:
+        type:
+          type: string
+          enum: [goal_breakdown, milestone, task_extraction, canvas, summary]
+        prompt: {type: string, maxLength: 8000}
+        system_prompt: {type: string, maxLength: 2000}
+    AiProposal:
+      type: object
+      required: [id, user_id, proposal_type, schema_version, payload, decision, created_at]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        proposal_type:
+          type: string
+          enum: [goal_breakdown, milestone, task_extraction, canvas, summary]
+        schema_version: {type: integer}
+        payload:
+          type: object
+          additionalProperties: true
+        decision: {type: string, enum: [pending, accepted, rejected, edited]}
+        operation_id: {type: string, nullable: true}
+        created_at: {type: string, format: date-time}
+    AiProposalResponse:
+      type: object
+      required: [proposal]
+      properties:
+        proposal: {$ref: '#/components/schemas/AiProposal'}
+    AiRun:
+      type: object
+      required: [id, user_id, provider, model, proposal_type, status, latency_ms, created_at]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        provider: {type: string}
+        model: {type: string}
+        proposal_type: {type: string}
+        schema_version: {type: integer, nullable: true}
+        prompt_template_version: {type: string, nullable: true}
+        context_hash: {type: string, nullable: true}
+        input_tokens: {type: integer, nullable: true}
+        output_tokens: {type: integer, nullable: true}
+        status: {type: string, enum: [success, failed]}
+        latency_ms: {type: integer, minimum: 0}
+        error_code: {type: string, nullable: true}
+        created_at: {type: string, format: date-time}
+    AiRunsResponse:
+      type: object
+      required: [runs]
+      properties:
+        runs:
+          type: array
+          items: {$ref: '#/components/schemas/AiRun'}
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error: {type: string}
+        code: {type: string}
     Note:
       type: object
       required: [id, user_id, title, version]

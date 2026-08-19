@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\Ai\CreateGoalBreakdownProposalUseCase;
 use App\Application\Goals\CreateGoalUseCase;
 use App\Application\Goals\GetGoalUseCase;
 use App\Application\Goals\ListGoalsUseCase;
 use App\Application\Goals\SetGoalStatusUseCase;
 use App\Application\Goals\UpdateGoalUseCase;
+use App\Domain\Ai\AiOutputException;
+use App\Domain\Ai\AiProviderException;
 use App\Domain\Goals\ValueObjects\GoalHorizon;
 use App\Domain\Goals\ValueObjects\GoalStatus;
 use App\Http\Controllers\Controller;
@@ -24,6 +27,7 @@ final class GoalController extends Controller
         private readonly GetGoalUseCase $getGoalUseCase,
         private readonly UpdateGoalUseCase $updateGoalUseCase,
         private readonly SetGoalStatusUseCase $setGoalStatusUseCase,
+        private readonly CreateGoalBreakdownProposalUseCase $createBreakdownProposalUseCase,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -149,5 +153,44 @@ final class GoalController extends Controller
         }
 
         return response()->json(['goal' => $goal->toArray()]);
+    }
+
+    public function breakdown(Request $request, int $goalId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'instructions' => ['nullable', 'string', 'max:'.config('ai.max_prompt_chars', 8000)],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $instructions = $validator->validated()['instructions'] ?? '';
+
+        try {
+            $proposal = $this->createBreakdownProposalUseCase->__invoke(
+                $request->user()->id,
+                $goalId,
+                $instructions,
+            );
+        } catch (InvalidArgumentException $e) {
+            if ($e->getMessage() === 'Goal not found.' || $e->getMessage() === 'AI proposal not found.') {
+                return response()->json(['error' => $e->getMessage()], 404);
+            }
+
+            return response()->json(['error' => $e->getMessage()], 422);
+        } catch (AiProviderException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'code' => AiProviderException::CODE_UNAVAILABLE,
+            ], 503);
+        } catch (AiOutputException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'code' => AiOutputException::CODE_INVALID,
+            ], 422);
+        }
+
+        return response()->json(['proposal' => $proposal->toArray()]);
     }
 }

@@ -50,12 +50,21 @@ Offline shell (Service Worker)       ✅ DONE (TASK-050)
 Today cache (IndexedDB)              ✅ DONE (TASK-051)
 Mutation queue (general)             ✅ DONE (TASK-052)
 Last-write-wins policy               ✅ DONE (TASK-053)
-Offline shell                     🔴 TASK-054+ (EOD reconciliation)
+EOD reconciliation                   ✅ DONE (TASK-054)
+Morning Recovery                     ✅ DONE (TASK-055)
 Knowledge layer (search)          ✅ DONE (TASK-033)
 Canvas full integration            🟡 TASK-041+ (schema done; Excalidraw island live in spike)
-Adaptive context                  🔴 TASK-060+
-AI provider abstraction           🔴 TASK-070+
-Production deployment             🔴 TASK-080+
+Adaptive context (check-in model)  ✅ DONE (TASK-060)
+Adaptive context (soft signals)    ✅ DONE (TASK-061)
+Focus block recommendation          ✅ DONE (TASK-062)
+Progress event model                 ✅ DONE (TASK-063)
+AI provider abstraction             ✅ DONE (TASK-070)
+Ollama development adapter           ✅ DONE (TASK-071)
+Structured output validation         ✅ DONE (TASK-072)
+Goal decomposition proposal          ✅ DONE (TASK-073)
+Note summarization/extraction        ✅ DONE (TASK-074)
+Canvas generation proposal           ✅ DONE (TASK-075)
+Production Docker profile            ✅ DONE (TASK-080)
 ```
 
 ### Evidence rule

@@ -35,4 +35,28 @@ final class ScheduleTask
             throw new InvalidArgumentException('Schedule task duration must be positive.');
         }
     }
+
+    /**
+     * Rebuild with an explicit context-fit soft signal (FR-59). Null clears
+     * the signal back to the engine-neutral default.
+     */
+    public function withContextFit(?float $contextFit): self
+    {
+        return new self(
+            $this->taskId,
+            $this->title,
+            $this->durationMinutes,
+            $this->priorityTier,
+            $this->goalDeadline,
+            $this->milestoneDeadline,
+            $this->taskDeadline,
+            $this->progress,
+            $contextFit,
+            $this->fragmentationPenalty,
+            $this->continuityPreference,
+            $this->isLocked,
+            $this->isSacredAnchor,
+            $this->existingSlot,
+        );
+    }
 }

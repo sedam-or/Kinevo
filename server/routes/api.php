@@ -1,15 +1,21 @@
 <?php
 
 use App\Http\Controllers\Api\ActivityLogController;
+use App\Http\Controllers\Api\AdaptiveContextController;
+use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CanvasController;
+use App\Http\Controllers\Api\FocusSessionController;
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\KnowledgeLinkController;
 use App\Http\Controllers\Api\KnowledgeSearchController;
 use App\Http\Controllers\Api\MilestoneController;
 use App\Http\Controllers\Api\NoteController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProgramController;
+use App\Http\Controllers\Api\ProgressEventController;
+use App\Http\Controllers\Api\RecoveryController;
 use App\Http\Controllers\Api\TaskController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/goals/{goalId}', [GoalController::class, 'show']);
     Route::put('/goals/{goalId}', [GoalController::class, 'update']);
     Route::post('/goals/{goalId}/status', [GoalController::class, 'status']);
+    Route::post('/goals/{goalId}/breakdown-proposals', [GoalController::class, 'breakdown']);
 
     Route::get('/goals/{goalId}/milestones', [MilestoneController::class, 'index']);
     Route::post('/goals/{goalId}/milestones', [MilestoneController::class, 'store']);
@@ -58,6 +65,35 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/logs', [ActivityLogController::class, 'index']);
     Route::post('/export', [ActivityLogController::class, 'export']);
+
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{notificationId}/read', [NotificationController::class, 'read']);
+
+    Route::get('/recovery', [RecoveryController::class, 'index']);
+    Route::post('/recovery/{taskId}', [RecoveryController::class, 'resolve']);
+
+    Route::get('/adaptive/context', [AdaptiveContextController::class, 'index']);
+    Route::post('/adaptive/context', [AdaptiveContextController::class, 'store']);
+    Route::get('/adaptive/burnout', [AdaptiveContextController::class, 'burnout']);
+
+    Route::get('/focus-sessions', [FocusSessionController::class, 'index']);
+    Route::post('/focus-sessions', [FocusSessionController::class, 'store']);
+    Route::get('/focus-sessions/recommendation', [FocusSessionController::class, 'recommendation']);
+
+    Route::get('/progress', [ProgressEventController::class, 'index']);
+    Route::post('/progress', [ProgressEventController::class, 'store']);
+
+    Route::get('/ai/status', [AiController::class, 'status']);
+    Route::post('/ai/generate', [AiController::class, 'generate']);
+    Route::post('/ai/proposals', [AiController::class, 'proposals']);
+    Route::get('/ai/proposals', [AiController::class, 'proposalsIndex']);
+    Route::get('/ai/proposals/{proposalId}', [AiController::class, 'proposalsShow']);
+    Route::post('/ai/proposals/{proposalId}/accept', [AiController::class, 'proposalsAccept']);
+    Route::post('/ai/proposals/{proposalId}/reject', [AiController::class, 'proposalsReject']);
+    Route::post('/ai/summarize-note', [AiController::class, 'summarizeNote']);
+    Route::post('/ai/extract-tasks', [AiController::class, 'extractTasks']);
+    Route::post('/ai/suggest-canvas', [AiController::class, 'suggestCanvas']);
+    Route::get('/ai/runs', [AiController::class, 'runs']);
 
     Route::get('/notes', [NoteController::class, 'index']);
     Route::post('/notes', [NoteController::class, 'store']);

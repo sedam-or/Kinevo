@@ -5,8 +5,9 @@ namespace App\Domain\Tasks\ValueObjects;
 use InvalidArgumentException;
 
 /**
- * Task lifecycle status (domain-model Task state machine, FR-09/FR-45).
- * Transitions are explicit and validated.
+ * Task lifecycle status (domain-model Task state machine, FR-09/FR-45/FR-48).
+ * Transitions are explicit and validated. FR-48 Morning Recovery adds
+ * missed → completed so a recovered task can be marked complete.
  */
 final class TaskStatus
 {
@@ -47,7 +48,7 @@ final class TaskStatus
         self::IN_PROGRESS => [self::COMPLETED, self::PARTIAL, self::CONFLICT, self::SKIPPED],
         self::PARTIAL => [self::CONTINUED, self::COMPLETED, self::SCHEDULED, self::SKIPPED],
         self::CONTINUED => [self::SCHEDULED, self::IN_PROGRESS, self::COMPLETED, self::SKIPPED],
-        self::MISSED => [self::BACKLOG, self::SCHEDULED],
+        self::MISSED => [self::BACKLOG, self::SCHEDULED, self::COMPLETED],
         self::CONFLICT => [self::SCHEDULED, self::IN_PROGRESS, self::BACKLOG],
         self::COMPLETED => [],
         self::SKIPPED => [],

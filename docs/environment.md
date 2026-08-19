@@ -38,6 +38,7 @@ Kinevo secrets:
 - `REDIS_PASSWORD`
 - `MAIL_PASSWORD`
 - `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`
+- `OPENAI_API_KEY` (external AI provider key; local Ollama needs no key)
 - any future provider API keys / tokens (AI provider, object storage, notification tokens)
 
 ### Secret rules (from SRS NFR-02)
@@ -77,6 +78,15 @@ in local development without modification:
 | `LOG_CHANNEL`      | `stack`           | standard stack channel                        |
 | `LOG_LEVEL`        | `debug`           | debug in local, warning in production         |
 | `SANCTUM_STATEFUL_DOMAINS` | `localhost:8000` | SPA-origin allowlist for stateful Sanctum auth; set to the frontend origin in production |
+| `AI_PROVIDER`      | `disabled`        | AI driver: `ollama` \| `openai` \| `mock` \| `disabled`; app stays operational when unavailable (FR-60) |
+| `AI_TIMEOUT_SECONDS` | `30`            | provider request timeout                      |
+| `OLLAMA_BASE_URL`  | `http://localhost:11434` | local Ollama endpoint; `http://ollama:11434` in compose |
+| `OLLAMA_MODEL`     | `llama3.1`        | default local model                           |
+| `OPENAI_BASE_URL`  | `https://api.openai.com/v1` | external provider endpoint (opt-in)    |
+| `OPENAI_MODEL`     | `gpt-4o-mini`     | default external model                       |
+| `AI_MOCK_MODEL`    | `mock-1`          | deterministic mock provider label            |
+| `AI_MAX_PROMPT_CHARS` | `8000`         | per-request prompt budget (SRS §13.4)         |
+| `AI_MAX_SYSTEM_PROMPT_CHARS` | `2000` | system-prompt budget (SRS §13.4)          |
 
 ## 4. `.env.example` rules
 

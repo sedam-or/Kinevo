@@ -39,5 +39,26 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # Optional local AI inference for development (docs/deployment.md,
+  # SRS §13.6, ADR-011). Opt-in via: docker compose --profile ai up -d
+  # Internal network only — no host port published; the app reaches it at
+  # http://ollama:11434. The app stays fully operational without it (FR-60).
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ai"]
+    volumes:
+      - kinevo_ollama:/root/.ollama
+    environment:
+      OLLAMA_HOST: 0.0.0.0
+      # Unload models after 30 min of inactivity (load-on-demand posture).
+      OLLAMA_KEEP_ALIVE: 30m
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
 volumes:
   kinevo_pgdata:
+  kinevo_ollama:

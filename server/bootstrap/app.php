@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -13,6 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withSchedule(function (Schedule $schedule): void {
+        // End-of-Day Reconciliation (FR-47): prompt at 21:00, deadline at 23:59
+        // local time. Idempotent via the Task state machine.
+        $schedule->command('eod:reconcile --phase=prompt')->dailyAt('21:00');
+        $schedule->command('eod:reconcile --phase=deadline')->dailyAt('23:59');
+    })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(function (Request $request): ?string {
             if ($request->is('api/*') || $request->expectsJson()) {

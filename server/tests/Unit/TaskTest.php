@@ -35,6 +35,10 @@ class TaskTest extends TestCase
         $this->assertTrue(TaskStatus::partial()->canTransitionTo(TaskStatus::continued()));
         $this->assertTrue(TaskStatus::continued()->canTransitionTo(TaskStatus::scheduled()));
         $this->assertTrue(TaskStatus::conflict()->canTransitionTo(TaskStatus::scheduled()));
+        $this->assertTrue(TaskStatus::missed()->canTransitionTo(TaskStatus::backlog()));
+        $this->assertTrue(TaskStatus::missed()->canTransitionTo(TaskStatus::scheduled()));
+        // FR-48 Morning Recovery: a recovered task may be marked complete.
+        $this->assertTrue(TaskStatus::missed()->canTransitionTo(TaskStatus::completed()));
         $this->assertFalse(TaskStatus::completed()->canTransitionTo(TaskStatus::conflict()));
         $this->assertFalse(TaskStatus::skipped()->canTransitionTo(TaskStatus::backlog()));
     }

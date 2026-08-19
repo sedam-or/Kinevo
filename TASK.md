@@ -661,66 +661,270 @@
 - Notes: This policy formalizes the decision already exercised by TASK-052's collapse logic; it is the single domain-owned source of truth for offline conflict resolution. The sync layer consults it when a queued mutation collides with server state.
 
 #### TASK-054 — EOD reconciliation
-- Status: TODO
+- Status: DONE
 - Priority: P0
-- SRS: FR-47.
+- SRS: FR-47, FR-35.
+- Acceptance:
+  - [x] `notifications` migration: user ownership, type, scheduled_for date, title, payload JSON, read_at, timestamps, `(user_id, type, scheduled_for)` unique + `(user_id, scheduled_for, read_at)` index (SRS §7, §7.8)
+  - [x] Domain: `Notification` immutable entity + `NotificationType` VO (reconciliation) + `NotificationRepository` contract; owner-scoped read (`markRead` returns null on cross-user, SRS §15.1)
+  - [x] FR-47 21:00 prompt: `RunEodPromptUseCase` creates exactly ONE reconciliation notification per user/local-day (idempotent — retry returns the existing notification); no untouched tasks → no notification (FR-35 Alternative Flow); payload snapshots eligible task id/title/status
+  - [x] FR-47 23:59 deadline: `RunEodDeadlineUseCase` transitions eligible tasks to `missed` (Terlewat) via the Task state machine (`scheduled → missed`); idempotent — retry yields no duplicate transitions (FR-47 Exception Flows)
+  - [x] Prompt eligibility (FR-35/FR-47): tasks neither completed nor partial — `scheduled` + `in_progress`; deadline eligibility = state-machine `canTransitionTo(missed)`
+  - [x] Timezone: local day computed in the owner profile timezone (FR-47 Business Rules), falling back to `config('app.timezone')`
+  - [x] Scheduler wired: `eod:reconcile --phase=prompt` @21:00, `--phase=deadline` @23:59 (`bootstrap/app.php` withSchedule)
+  - [x] HTTP: `GET /notifications` (owner list, unread filter, limit) + `POST /notifications/{notificationId}/read` (owner-scoped, 404 on cross-user/missing); OpenAPI Notifications tag/paths/schemas synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (315 tests, 832 assertions; +20: EOD prompt/deadline service, Notification entity, notifications API, eod:reconcile command incl. idempotency)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (243 files)
+  - [x] migration applies to PostgreSQL (`migrate:status` Ran; notifications table + unique constraint + index present)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (42 paths) all pass
+- Evidence: server/app/Domain/Reconciliation/EndOfDayReconciliationService.php, server/app/Application/Reconciliation/{RunEodPrompt,RunEodDeadline}UseCase.php, server/app/Domain/Notifications/{Notification,ValueObjects/NotificationType,Contracts/NotificationRepository}.php, server/app/Infrastructure/Notifications/EloquentNotificationRepository.php, server/app/Models/Notification.php, server/app/Application/Notifications/{ListNotifications,MarkNotificationRead}UseCase.php, server/app/Console/Commands/EodReconcileCommand.php, server/app/Http/Controllers/Api/NotificationController.php, server/routes/api.php, server/bootstrap/app.php, database/migrations/2026_08_18_120000_create_notifications_table.php, server/tests/{Unit/NotificationTest.php,Unit/EndOfDayReconciliationServiceTest.php,Feature/Api/NotificationsApiTest.php,Feature/Console/EodReconcileCommandTest.php}, docs/api/openapi.yaml (Notifications paths/schemas)
+- Notes: user response to the prompt (Selesai/Sebagian/Jadwal Ulang/Lewati) flows through the existing task endpoints (status/partial-complete), so no new response API was needed. "Scheduled today" is approximated by `status=scheduled` because `task_assignments` persistence (SRS §7 data model) is not yet built — when assignments land, eligibility should be refined to tasks assigned on the reconciliation day. Emergency-pause notification suppression (FR-47 Business Rules) is deferred with `pause_events` (TASK-060+ context). Morning Recovery (FR-48) is TASK-055.
 
 #### TASK-055 — Morning Recovery
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - SRS: FR-48.
+- Acceptance:
+  - [x] State machine correction (smallest safe change): `missed → completed` added so a recovered task can be marked complete (FR-48; design.md Recovery UI "Complete"); `missed → backlog/scheduled` retained — verified by TaskTest
+  - [x] Domain `MorningRecoveryService`: deadline-first ordering (nearest first, no-deadline last, deterministic id tiebreak — FR-48 Business Rule); program invalidation (`program_completed`/`program_dropped`, FR-48 Exception Flow); allowed-actions per task (reschedule withheld for terminal programs)
+  - [x] `GET /recovery`: owner-scoped list of previous-day Terlewat (missed) tasks with `allowed_actions` + `invalid_reason`, nearest deadline first (FR-48 Normal Flow, Business Rule)
+  - [x] `POST /recovery/{taskId}` with `action` = reschedule|complete|backlog (+ optional `due_at` for reschedule): only `missed` tasks are recoverable (422 otherwise); complete logs `task_completed` activity (FR-48 Normal Flow "update task and log"); owner-scoped 404 (SRS §15.1)
+  - [x] Exception flow: reschedule on a task whose program is Completed/Dropped → 422 with the reason surfaced in the list; complete/backlog remain available (manual disposition)
+  - [x] AC-06/FR-48 AC: missed task from yesterday appears next morning and can be rescheduled to today (`reschedule` → `scheduled`)
+  - [x] OpenAPI Recovery tag + `/recovery` GET + `/recovery/{taskId}` POST + RecoveryItem/RecoveryListResponse/RecoveryResolveRequest schemas synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (332 tests, 877 assertions; +17: MorningRecoveryService unit, RecoveryApi feature incl. ordering/scoping/actions/invalid-program)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (249 files)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (44 paths) all pass
+- Evidence: server/app/Domain/Reconciliation/MorningRecoveryService.php, server/app/Application/Recovery/{GetRecoveryList,ResolveRecoveredTask}UseCase.php, server/app/Domain/Tasks/ValueObjects/TaskStatus.php (MISSED transitions), server/app/Infrastructure/Tasks/EloquentTaskRepository.php (listMissedForUser), server/app/Http/Controllers/Api/RecoveryController.php, server/routes/api.php, server/tests/{Unit/MorningRecoveryServiceTest.php,Unit/TaskTest.php,Feature/Api/RecoveryApiTest.php}, docs/api/openapi.yaml (Recovery paths/schemas)
+- Notes: "Delete" action from the FR-48 description is deferred — the design.md Recovery UI (Reschedule/Complete/Keep in backlog) is the concrete UX contract, and destructive task deletion has no API contract yet (task ids are referenced by activity_logs/knowledge_links; deletion policy is a separate lifecycle decision). "Previous-day" is represented by all currently-`missed` tasks (produced by nightly EOD runs), since no `missed_at` column exists; a missed_at timestamp can refine this later. Morning Recovery is driven by the EOD job (TASK-054) + this query/resolve surface; the Today UI integration is frontend scope.
 
 ### Phase 6 — Adaptive Productivity
 #### TASK-060 — Context check-in model
-- Status: TODO
+- Status: DONE
 - Priority: P1
-- SRS: FR-58.
+- SRS: FR-58; SRS §7.6 (adaptive_context), §12.2; domain-model Context Observation.
+- Acceptance:
+  - [x] `adaptive_context` migration (SRS §7.6): user ownership, optional task_id (FK nullOnDelete), energy/stress/task_difficulty/skill_familiarity 1–10, interruption_count, context_switch_cost, focus_duration_minutes, checked_at, timestamps + (user_id, checked_at) & (user_id, task_id) indexes
+  - [x] Domain `SignalLevel` VO (bounded 1–10) + `ContextObservation` immutable entity (at least one signal required; negative counts rejected; advisory-only semantics — never clinical/neurological, FR-58 Business Rule)
+  - [x] Domain `BurnoutSignalDetector` (deterministic heuristic): sustained avg stress ≥7 with avg energy ≤4 over ≥3 samples raises a burnout warning; sparse data never triggers (FR-58/§12.3 fallback); result `BurnoutSignal`(active, reason, sampleCount) feeds the Capacity feedback loop (FR-49 upstream, TASK-025 note)
+  - [x] `ContextObservationRepository` contract (create/listForUser/listForTask/listSince) + Eloquent impl (deterministic `checked_at desc, id desc` ordering)
+  - [x] Application use cases: RecordContextCheckIn (task ownership validated via GetTaskUseCase, 404 on foreign/missing), ListContextCheckIns, GetBurnoutSignal (14-day window)
+  - [x] HTTP: `POST /adaptive/context` (record, 422 without ≥1 signal / out-of-range levels), `GET /adaptive/context` (owner list, limit), `GET /adaptive/burnout`; all owner-scoped (SRS §15.1)
+  - [x] OpenAPI Adaptive tag + paths + ContextCheckInRequest/ContextObservation(+Response/List)/BurnoutSignalResponse schemas synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (350 tests, 931 assertions; +18: SignalLevel/ContextObservation/BurnoutSignalDetector unit, AdaptiveContextApi feature incl. task ownership, scoping, burnout activation)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (263 files)
+  - [x] migration applies to PostgreSQL (`migrate:status` Ran; adaptive_context table + indexes + FKs present)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (46 paths) all pass
+- Evidence: database/migrations/2026_08_18_130000_create_adaptive_context_table.php, server/app/Domain/Adaptive/{ContextObservation,BurnoutSignal,BurnoutSignalDetector,Contracts/ContextObservationRepository}.php, server/app/Domain/Adaptive/ValueObjects/SignalLevel.php, server/app/Infrastructure/Adaptive/EloquentContextObservationRepository.php, server/app/Models/AdaptiveContext.php, server/app/Application/Adaptive/{RecordContextCheckIn,ListContextCheckIns,GetBurnoutSignal}UseCase.php, server/app/Http/Controllers/Api/AdaptiveContextController.php, server/routes/api.php, server/tests/{Unit/ContextObservationTest.php,Unit/BurnoutSignalDetectorTest.php,Feature/Api/AdaptiveContextApiTest.php}, docs/api/openapi.yaml (Adaptive paths/schemas)
+- Notes: domain-model.md's recommended `EnergyLevel`/`StressLevel` VOs are realized as `SignalLevel` instances per field (one bounded 1–10 VO) to avoid four identical VOs; documented here as a faithful simplification. Burnout thresholds (stress ≥7, energy ≤4, ≥3 samples) are a heuristic policy, deliberately conservative and deterministic, not a clinical claim (FR-58). Soft ranking consumption of these signals (context_fit → ranking component) is TASK-061 (FR-59).
 
 #### TASK-061 — Soft signal scoring
-- Status: TODO
+- Status: DONE
 - Priority: P1
-- SRS: FR-59.
+- SRS: FR-59; scheduling-engine §Soft ranking (#6 context fit); architecture.md §Soft optimization signals.
+- Acceptance:
+  - [x] Domain `ContextFitScorer` (deterministic, FR-59 AC): converts energy/stress/difficulty/familiarity (0..1) into a single context-fit score (0..1, higher = better fit); null inputs (sparse/anomalous) fall back to the neutral baseline 0.5 per component (FR-59 Business Rule — deterministic baseline policy)
+  - [x] Formula verified against FR-59 AC: high difficulty (0.9) + low energy (0.2) → low fit (~0.25); all-baseline inputs → exactly 0.5 (engine-neutral)
+  - [x] Domain `ContextFitService`: aggregates check-ins into a per-task fit map — user energy/stress require ≥2 samples (else neutral), task difficulty/familiarity use any task-scoped sample; deterministic; `applyToScheduleTasks()` injects `contextFit` into `ScheduleTask` (→ `RankingCandidate.contextFit` → `ContextFitComponent`, soft ranking #6)
+  - [x] `ScheduleTask::withContextFit()` — immutable rebuild with the soft signal; hard signals (locked, priority, deadlines) untouched — soft ordering can never override hard constraints (FR-59/FR-64)
+  - [x] Application `BuildContextFitMapUseCase` (14-day window via ContextObservationRepository::listSince) ready for the schedule assembly path
+  - [x] Integration test proves FR-59 AC end-to-end: equal-tier/deadline tasks re-order by context fit through `TaskRankingEngine::default()`, and the fit map never mutates locked/priority signals
+- Verification:
+  - [x] Unit: `vendor/bin/phpunit` → OK (363 tests, 951 assertions; +13: ContextFitScorer, ContextFitService, ContextFitRankingIntegration)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (269 files)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (46 paths) all pass — no API/schema change (scheduling engine component, matches TASK-020..026 precedent)
+- Evidence: server/app/Domain/Adaptive/{ContextFitScorer.php,ContextFitService.php}, server/app/Domain/Scheduling/ScheduleTask.php (withContextFit), server/app/Application/Adaptive/BuildContextFitMapUseCase.php, server/tests/Unit/{ContextFitScorerTest.php,ContextFitServiceTest.php}, server/tests/Unit/Scheduling/ContextFitRankingIntegrationTest.php
+- Notes: Feed path is complete — the schedule assembly step (building ScheduleTask from persisted tasks, currently part of the future schedule-persistence task) calls `BuildContextFitMapUseCase` then `ContextFitService::applyToScheduleTasks`. The burnout signal (TASK-060) suppresses capacity boosts upstream; the fit signal here only ranks which tasks fit the current context best.
 
 #### TASK-062 — Adaptive focus block recommendation
-- Status: TODO
-- Priority: P1.
+- Status: DONE
+- Priority: P1
+- SRS: §12.4 (Adaptive Focus Blocks), §12.2 (focus-session completion signal); SRS §7 `focus_sessions` table; design.md §Adaptive focus block UI.
+- Acceptance:
+  - [x] `focus_sessions` migration (SRS §7): user ownership, optional task_id (FK nullOnDelete), started_at, ended_at, duration_minutes, timestamps + (user_id, started_at) & (user_id, task_id) indexes
+  - [x] Domain `FocusSession` immutable entity: duration derived from the actual interval; end-after-start + ≥1-minute validation; toArray
+  - [x] Domain `FocusBlockRecommender` (deterministic, SRS §12.4): task-scoped patterns take precedence, then user-wide patterns, then the configured baseline; out-of-range durations excluded as anomalous; result rounded to a configurable step and clamped to configured bounds
+  - [x] Durations are configuration, never biological claims (design.md: recommendation, not "scientifically optimal"); sparse history → baseline fallback with an explicit `basis` (task_patterns|user_patterns|baseline) + `reason`
+  - [x] `FocusSessionRepository` contract (create/listForUser/listSince) + Eloquent impl (deterministic `started_at desc, id desc` ordering)
+  - [x] Application use cases: RecordFocusSession (task ownership → 404), ListFocusSessions (task filter + limit), RecommendFocusBlock (30-day window, task-scoped then user-wide)
+  - [x] HTTP: `POST /focus-sessions` (record completed session), `GET /focus-sessions` (list, task_id filter), `GET /focus-sessions/recommendation` (task_id optional); owner-scoped (SRS §15.1)
+  - [x] OpenAPI Focus tag + paths + FocusSession(+Create/Response/List) + FocusBlockRecommendationResponse schemas synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (381 tests, 1004 assertions; +18: FocusSession, FocusBlockRecommender, FocusSessionsApi incl. task ownership, scoping, pattern-based recommendation)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (282 files)
+  - [x] migration applies to PostgreSQL (`migrate:status` Ran; focus_sessions table + indexes + FK present)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (48 paths) all pass
+- Evidence: database/migrations/2026_08_18_140000_create_focus_sessions_table.php, server/app/Domain/Focus/{FocusSession.php,FocusBlockRecommender.php,FocusBlockRecommendation.php,Contracts/FocusSessionRepository.php}, server/app/Infrastructure/Focus/EloquentFocusSessionRepository.php, server/app/Models/FocusSession.php, server/app/Application/Focus/{RecordFocusSession,ListFocusSessions,RecommendFocusBlock}UseCase.php, server/app/Http/Controllers/Api/FocusSessionController.php, server/routes/api.php, server/tests/{Unit/FocusSessionTest.php,Unit/FocusBlockRecommenderTest.php,Feature/Api/FocusSessionsApiTest.php}, docs/api/openapi.yaml (Focus paths/schemas)
+- Notes: The in-progress timer lifecycle (start/pause/abandon, FR-05 Recharge pairing, persisted timer state) is the execution-timer UI concern and stays out of this slice — sessions are recorded on completion as actual intervals. Recharge accounting (Work-Life Ratio) remains a future FR-05 task. Recommendation config defaults: baseline 45 min, bounds 15–120 min, round-to 5 min, min 3 samples — all injectable via `FocusBlockRecommender` options.
 
 #### TASK-063 — Progress event model
-- Status: TODO
-- Priority: P1.
+- Status: DONE
+- Priority: P1
+- SRS: §6.8 (meaningful progress events), §12.5 (progress event references the domain change that created it), §7 (progress_events table), §7.8-style append-only semantics; design.md §Meaningful progress; domain-model.md ProgressEventService.
+- Acceptance:
+  - [x] `progress_events` migration: user ownership, event_type, entity_type/entity_id, optional title, occurred_at, optional operation_id, JSON payload; index (user_id, occurred_at); unique (user_id, operation_id) for idempotent append
+  - [x] `ProgressEventType` closed VO covering all §6.8 types (task_completed, milestone_advanced, milestone_completed, evidence_attached, experiment_recorded, goal_progress); only the three non-derived types are manually recordable
+  - [x] Immutable `ProgressEvent` entity + `ProgressEventService` domain factories mapping a mutation to its event and its operation reference (§12.5)
+  - [x] `ProgressEventRepository` contract + Eloquent impl (idempotent append by operation_id, deterministic ordering)
+  - [x] Application: `RecordProgressEventUseCase` (idempotent), `ListProgressEventsUseCase` (from/to/type/limit)
+  - [x] Auto-generation wired into `SetTaskStatusUseCase` (task_completed, same operation reference as FR-34 activity) and `SetMilestoneStatusUseCase` (milestone_advanced on planned→active; milestone_completed on completion; direct complete emits only the completed event)
+  - [x] HTTP: `GET /progress` (list + filters), `POST /progress` (manual record of evidence_attached/experiment_recorded/goal_progress); owner-scoped (SRS §15.1); entity reference on manual records is informational (SRS §6.8 analytics input), not FK-authoritative
+  - [x] OpenAPI Progress tag + paths + ProgressEvent(+Create/Response/List) schemas synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (397 tests, 1061 assertions; +16: ProgressEventType/entity, ProgressEventService, ProgressEventsApi incl. task/milestone auto-generation, milestone direct-complete single event, append idempotency, scoping, filters)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (294 files)
+  - [x] migration applies to PostgreSQL (`migrate:status` Ran; progress_events table + unique/index present)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (49 paths) all pass
+- Evidence: database/migrations/2026_08_18_150000_create_progress_events_table.php, server/app/Domain/Progress/{ProgressEvent.php,ProgressEventService.php,ValueObjects/ProgressEventType.php,Contracts/ProgressEventRepository.php}, server/app/Infrastructure/Progress/EloquentProgressEventRepository.php, server/app/Models/ProgressEvent.php, server/app/Application/Progress/{RecordProgressEvent,ListProgressEvents}UseCase.php, server/app/Application/Tasks/SetTaskStatusUseCase.php, server/app/Application/Milestones/SetMilestoneStatusUseCase.php, server/app/Http/Controllers/Api/ProgressEventController.php, server/routes/api.php, server/tests/{Unit/ProgressEventTest.php,Unit/ProgressEventServiceTest.php,Feature/Api/ProgressEventsApiTest.php}, docs/api/openapi.yaml (Progress paths/schemas)
+- Notes: Remaining §6.8 types (evidence_attached, experiment_recorded, goal_progress) are recorded manually until their generating features (note attachments, experiment tracking, goal material-progress detection) land — the model is already wired for them. Progress events remain informational inputs to analytics/adaptive recommendations and never overwrite activity logs (SRS §6.8).
 
 ### Phase 7 — AI
 #### TASK-070 — AI provider interface
-- Status: TODO
+- Status: DONE
 - Priority: P1
-- SRS: FR-60.
+- SRS: FR-60 (provider abstraction; app remains operational when provider unavailable), NFR-11 (§4.11 providers behind an interface), §8.7 AI_PROVIDER_UNAVAILABLE, §13.4 (minimal context), §13.6 (production local AI), §17.8 (AI provider status telemetry); docs/ai-architecture.md (provider tree, roles, failure behavior); ADR-011.
+- Acceptance:
+  - [x] `config/ai.php` driver selection: `ollama | openai | mock | disabled`; timeouts; per-provider base URLs/models/keys; prompt budget caps; `.env.example` AI block
+  - [x] `AiProvider` interface (name/model/isAvailable/generate/status) with four interchangeable providers: `OllamaProvider` (/api/generate), `OpenAiCompatibleProvider` (external, /chat/completions, opt-in), `MockProvider` (deterministic, dev/test), `DisabledProvider` (explicit no-AI)
+  - [x] Domain VOs: `AiRole` (allowed roles from ai-architecture), `AiRequest` (validated role/prompt/temperature), `AiResponse` (metadata only — never private content), `AiProviderStatus` (telemetry snapshot); `AiProviderException` (catchable, CODE_UNAVAILABLE)
+  - [x] `AiOrchestrator` domain seam (provider routing; future context building §13.4 and audit §7.7 plug in here) + `AiProviderFactory` driver resolution
+  - [x] Application: `GenerateAiTextUseCase` (non-mutating; AI never reaches persistence here — FR-61/62 flow handles mutations), `GetAiProviderStatusUseCase`
+  - [x] HTTP: `GET /ai/status` (provider status telemetry), `POST /ai/generate` (role-constrained text generation, prompt/size budget); unavailable provider → `503` + canonical code `AI_PROVIDER_UNAVAILABLE` (§8.7)
+  - [x] Core app and deterministic scheduling remain fully operational when the provider is unavailable (FR-60 AC; DisabledProvider/connection-failure tests)
+  - [x] OpenAPI AI tag + paths + AiStatusResponse/AiGenerateRequest/AiGenerateResponse/ErrorResponse schemas synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (415 tests, 1111 assertions; +18: VOs, factory driver resolution, all four providers incl. Http::fake success/500/connection-refused/empty-response, generate validation, 503 canonical code, status)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (313 files)
+  - [x] no migration required (interface slice only)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (51 paths) all pass
+- Evidence: server/config/ai.php, server/.env.example (AI block), server/app/Domain/Ai/{AiOrchestrator.php,AiProviderException.php,Contracts/AiProvider.php,ValueObjects/{AiRole,AiRequest,AiResponse,AiProviderStatus}.php}, server/app/Infrastructure/Ai/{AiProviderFactory.php,Providers/{OllamaProvider,OpenAiCompatibleProvider,MockProvider,DisabledProvider}.php}, server/app/Application/Ai/{GenerateAiText,GetAiProviderStatus}UseCase.php, server/app/Http/Controllers/Api/AiController.php, server/routes/api.php, server/tests/{Unit/AiValueObjectsTest.php,Unit/AiProviderTest.php,Feature/Api/AiApiTest.php}, docs/api/openapi.yaml (AI paths/schemas)
+- Notes: `ai_runs`/`ai_proposals` audit tables (SRS §7.7) and structured-output validation/approval are deferred to TASK-072 (FR-61) / TASK-073 (FR-62). TASK-071 (Ollama development adapter) is the explicit wiring/verification of the local Ollama transport already implemented here. AI context building (§13.4) lands with the proposal features.
 
 #### TASK-071 — Ollama development adapter
-- Status: TODO
-- Priority: P1.
+- Status: DONE
+- Priority: P1
+- SRS: §13.6 (Ollama MAY run as a separate optional service; app MUST remain functional when unavailable), FR-60, §16.4 (Ollama internal-network only), §17.8 (AI provider status telemetry), §4.11 NFR-11; docs/ai-architecture.md (local Ollama preferred for privacy; small quantized model profile), docs/deployment.md.
+- Acceptance:
+  - [x] Optional `ollama` compose service (profile `ai`): internal network only (no host port published; app reaches it at `http://ollama:11434`), persistent model volume, healthcheck, `OLLAMA_KEEP_ALIVE=30m` load-on-demand posture; excluded from default `docker compose up`
+  - [x] `make ollama-up` / `make ollama-down` profile targets; `make ai-status` / `make ai-smoke` adapter verification targets
+  - [x] Artisan wiring/verification: `ai:status` (provider snapshot table; exit 1 when unavailable) and `ai:smoke` (tiny deterministic generation; exit 0/1) — non-mutating
+  - [x] Provider resolution is lazy (call-time): Laravel resolves every command at console boot, which eagerly built the AiProvider singleton with boot-time config and broke runtime driver selection — replaced with a domain `AiProviderResolver` contract + `ConfigAiProviderResolver` (deferred to first use) so configured drivers resolve with current configuration in tests, local dev, and production
+  - [x] Dev docs: deployment.md "Ollama development adapter" section (start/configure/verify; small quantized model guidance; internal-only exposure; failure behavior) + environment.md AI variable baseline + `OPENAI_API_KEY` classified as a secret; `.env.example` AI block
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (419 tests, 1122 assertions; +4 AiCommandTest: ai:status/ai:smoke under mock and disabled, exit codes and output)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (318 files)
+  - [x] `docker compose config --quiet` valid; default services `postgres app`; `--profile ai` adds `ollama`
+  - [x] no migration required (dev adapter + verification tooling)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (51 paths) all pass
+- Evidence: infrastructure/docker-compose.yml (ollama service), Makefile (ollama-up/down, ai-status, ai-smoke), server/app/Console/Commands/{AiStatusCommand,AiSmokeCommand}.php, server/app/Domain/Ai/Contracts/AiProviderResolver.php, server/app/Infrastructure/Ai/ConfigAiProviderResolver.php, server/app/Domain/Ai/AiOrchestrator.php (lazy provider), server/app/Providers/AppServiceProvider.php (resolver binding), server/tests/Feature/AiCommandTest.php, docs/deployment.md, docs/environment.md, server/.env.example
+- Notes: The Ollama transport itself landed in TASK-070; this task wired and verified it for local development (compose service, artisan commands, Makefile, docs) and fixed the eager-resolver defect the command wiring exposed. Model choice stays a deployment tuning decision (SRS §13.6) — the compose service is model-agnostic and pulls on demand.
 
 #### TASK-072 — Structured output validation
-- Status: TODO
+- Status: DONE
 - Priority: P1
-- SRS: FR-61.
+- SRS: FR-61 (versioned schemas; malformed AI JSON never reaches persistence as a domain mutation), §13.3 (proposal categories), §7.7 (ai_runs/ai_proposals audit), §7.8 (ai_runs index), §8.7 (AI_OUTPUT_INVALID); docs/ai-architecture.md (structured output, schema-constrained proposals).
+- Acceptance:
+  - [x] Migrations `ai_runs` + `ai_proposals` per §7.7 (provider, model, proposal_type, schema_version, prompt template version, context hash, token metadata, status, latency, error code; proposal payload, validation_result, decision, operation_id); §7.8 indexes
+  - [x] `AiProposalType` closed VO for the §13.3 categories (goal_breakdown, milestone, task_extraction, canvas, summary) mapped to AI roles
+  - [x] Versioned schema registry (`AiSchemaRegistry`, all v1) + dependency-free rule engine (`AiSchemaRules`: required/type/enum/int-bounds/length/date-pattern/array items — objects or scalars)
+  - [x] `StructuredAiOutputParser`: JSON decode (tolerates ```json fences) → schema validation → `ValidatedAiProposal`; any failure throws `AiOutputException` (AI_OUTPUT_INVALID) BEFORE anything can be persisted
+  - [x] `GenerateValidatedProposalUseCase`: generate → parse/validate → audit `ai_runs` (success or failed + error code + latency + context hash); provider unavailable → 503 audited as failed run
+  - [x] HTTP: `POST /ai/proposals` (returns validated proposal or 422 AI_OUTPUT_INVALID / 503 AI_PROVIDER_UNAVAILABLE), `GET /ai/runs` (owner-scoped audit list + proposal_type filter); OpenAPI AI paths/schemas synchronized
+  - [x] ai_proposals table ready for the FR-62 approval lifecycle (TASK-073); nothing is recorded there yet
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (438 tests, 1163 assertions; +19: parser/rule engine valid+invalid across all 5 schemas, malformed JSON, fences, enum/date/range/array violations, proposals 200/422/503, ai_runs audit rows, scoping/filtering)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (333 files)
+  - [x] migrations applied to PostgreSQL (ai_runs/ai_proposals present with §7.8 indexes + FKs)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (53 paths) all pass
+- Evidence: database/migrations/2026_08_18_160000_create_ai_audit_tables.php, server/app/Domain/Ai/{AiSchemaRegistry.php,AiSchemaRules.php,StructuredAiOutputParser.php,AiOutputException.php,Contracts/AiRunRepository.php,Entities/AiRun.php,ValueObjects/{AiProposalType,ValidatedAiProposal}.php}, server/app/Infrastructure/Ai/EloquentAiRunRepository.php, server/app/Models/{AiRun,AiProposal}.php, server/app/Application/Ai/{GenerateValidatedProposal,ListAiRuns}UseCase.php, server/app/Http/Controllers/Api/AiController.php, server/routes/api.php, server/tests/{Unit/StructuredAiOutputTest.php,Feature/Api/AiProposalsApiTest.php}, docs/api/openapi.yaml (AI proposals/runs paths/schemas)
+- Notes: Schema v1 rules are intentionally minimal and dependency-free; bumping `schema_version` is a breaking contract change requiring a documented migration note. Prompt/template versioning (ai_architecture: "Kinevo owns prompts/templates") and the approval/decision flow (FR-62, ai_proposals rows, accept/reject endpoints per §8.6) are TASK-073.
 
 #### TASK-073 — Goal decomposition proposal
-- Status: TODO
+- Status: DONE
 - Priority: P1
-- SRS: FR-52.
+- SRS: FR-52 (draft breakdown → Milestones + workload; no large hierarchy silently committed), FR-62 (proposal before application; reject creates no mutation), FR-61 (schema-validated only), §8.6 (accept/reject endpoints), §15.1 (ownership), §13.3 (GoalBreakdownProposal), §7.7 (ai_proposals); docs/ai-architecture.md (Propose→Preview→Accept/Edit/Reject→Validate→Commit).
+- Acceptance:
+  - [x] `CreateGoalBreakdownProposalUseCase`: validates goal ownership, generates a schema-validated goal_breakdown proposal (audited in ai_runs), persists it as PENDING in ai_proposals — nothing is applied (FR-52 postcondition); rejects a payload whose goal_id does not match the requested goal (AI_OUTPUT_INVALID)
+  - [x] Proposal entity + `AiProposalRepository` (persist/findForUser/list/updateDecision); owner-scoped everywhere (SRS §15.1)
+  - [x] FR-62 decision flow: `POST /ai/proposals/{id}/accept` applies the Goal's Milestones within a DB transaction (SRS Transaction rule) and marks accepted + operation_id; `POST /ai/proposals/{id}/reject` marks rejected with no domain mutation; non-pending proposals cannot be re-decided
+  - [x] HTTP: `POST /goals/{goalId}/breakdown-proposals` (per §8.6 / existing contract; returns pending proposal), `GET /ai/proposals`, `GET /ai/proposals/{id}`, `POST /ai/proposals/{id}/accept`, `POST /ai/proposals/{id}/reject`; generic `POST /ai/proposals` now persists the validated proposal as pending (was ephemeral)
+  - [x] OpenAPI: breakdown-proposals + proposal list/show/accept/reject paths + AiProposal schema synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (450 tests, 1218 assertions; +12: AiProposal entity lifecycle, breakdown auth/ownership/pending, mismatched goal_id 422, accept applies milestones in transaction, reject no mutation, non-pending guard, owner scoping, list/filter, generic proposal persists+view)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (343 files)
+  - [x] no migration required (ai_proposals table from TASK-072)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (56 paths) all pass
+- Evidence: server/app/Application/Ai/{CreateGoalBreakdownProposal,GetAiProposal,ListAiProposals,AcceptAiProposal,RejectAiProposal}UseCase.php, server/app/Domain/Ai/{Entities/AiProposal.php,Contracts/AiProposalRepository.php}, server/app/Infrastructure/Ai/EloquentAiProposalRepository.php, server/app/Http/Controllers/Api/{GoalController,AiController}.php, server/routes/api.php, server/tests/{Unit/AiProposalTest.php,Feature/Api/GoalBreakdownProposalApiTest.php}, docs/api/openapi.yaml (breakdown-proposals, proposals/{id}, accept, reject)
+- Notes: Accept currently applies the Milestones only; the related workload/capacity allocation and task creation remain future work (FR-52 "workload allocation"). The `edited` decision (FR-62 allow edit) and AI audit `prompt_template_version` are deferred. Local dev uses the Ollama provider via TASK-071; tests use Http::fake.
 
 #### TASK-074 — Note summarization/extraction
-- Status: TODO
-- Priority: P1.
+- Status: DONE
+- Priority: P1
+- SRS: §13.3 (SummaryProposal, TaskExtractionProposal), §13.4 (minimal owner-scoped context, no full-database sends), FR-61 (schema validation), FR-62 (proposal before task mutation), §17.4 golden flow #5 (note → extract task proposal → review → create Task), §8.6 (/ai/summarize-note, /ai/extract-tasks), §15.1 (ownership).
+- Acceptance:
+  - [x] `GenerateNoteProposalUseCase` for summary + task_extraction: loads the owner's note (404 otherwise), builds a minimal context prompt from the note's plain-text content bounded by `AI_MAX_PROMPT_CHARS` (SRS §13.4 — only the requested note, never the whole DB), validates AI output (FR-61), persists as PENDING (FR-62)
+  - [x] `AcceptNoteTaskExtractionUseCase`: creates Tasks from an accepted task-extraction proposal within a DB transaction + marks accepted/operation_id; `reject` uses the shared RejectAiProposalUseCase → no task mutation
+  - [x] HTTP: `POST /ai/summarize-note`, `POST /ai/extract-tasks`; `POST /ai/proposals/{id}/accept` now dispatches by type — goal_breakdown → milestones, task_extraction → tasks; owner-scoped
+  - [x] OpenAPI: summarize-note + extract-tasks paths, accept oneOf (milestones | tasks) synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (460 tests, 1253 assertions; +10: role mapping, prompt budgeting, auth, summarize pending, extract pending (no task before accept), accept creates tasks in transaction, reject no mutation, ownership 404, invalid output 422, accept owner-scoped)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (347 files)
+  - [x] no migration required (ai_proposals table from TASK-072)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (58 paths) all pass
+- Evidence: server/app/Application/Ai/{GenerateNoteProposal,AcceptNoteTaskExtraction}UseCase.php, server/app/Http/Controllers/Api/AiController.php, server/routes/api.php, server/tests/{Unit/NoteAiContextTest.php,Feature/Api/NoteAiApiTest.php}, docs/api/openapi.yaml (summarize-note, extract-tasks, accept oneOf)
+- Notes: Summarization is informational (no mutation). Task extraction requires explicit acceptance before any Task is created (FR-62, §17.4 #5). `edited` decision and prompt-template versioning remain deferred.
 
 #### TASK-075 — Canvas generation proposal
-- Status: TODO
-- Priority: P2.
+- Status: DONE
+- Priority: P2
+- SRS: §13.3 (CanvasProposal), §8.6 (/ai/suggest-canvas), FR-61 (schema validation), FR-62 (proposal before canvas creation), §15.1 (ownership); docs/ai-architecture.md (canvas proposal role; Excalidraw owns drawing behavior — external engine boundary).
+- Acceptance:
+  - [x] `GenerateCanvasProposalUseCase`: generates a canvas proposal (title + sections) from the user prompt, validates against the canvas schema (FR-61), persists as PENDING (FR-62); audited in ai_runs
+  - [x] `AcceptCanvasProposalUseCase`: creates the Canvas (title) within a DB transaction + marks accepted/operation_id; reject uses the shared RejectAiProposalUseCase → no canvas created
+  - [x] HTTP: `POST /ai/suggest-canvas`; `POST /ai/proposals/{id}/accept` dispatch extended to canvas → returns created Canvas; owner-scoped
+  - [x] OpenAPI: suggest-canvas path + accept oneOf (milestones | tasks | canvas) synchronized
+- Verification:
+  - [x] Unit/Feature: `vendor/bin/phpunit` → OK (467 tests, 1278 assertions; +7: auth, suggest pending (no canvas before accept), accept creates canvas, reject no mutation, invalid output 422, payload validation, accept owner-scoped)
+  - [x] `composer analyse` → PHPStan no errors
+  - [x] `composer lint` → Pint PASS (350 files)
+  - [x] no migration required (ai_proposals table from TASK-072)
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (59 paths) all pass
+- Evidence: server/app/Application/Ai/{GenerateCanvasProposal,AcceptCanvasProposal}UseCase.php, server/app/Http/Controllers/Api/AiController.php, server/routes/api.php, server/tests/Feature/Api/CanvasAiApiTest.php, docs/api/openapi.yaml (suggest-canvas, accept oneOf)
+- Notes: Accept creates the Canvas (title); the proposal's sections are returned as starting content for the UI to render — the actual Excalidraw scene serialization stays an editor/UI concern (external engine boundary), never AI-owned scene JSON. `edited` decision and prompt-template versioning remain deferred.
 
 ### Phase 8 — Operations
 #### TASK-080 — Production Docker profile
-- Status: TODO
-- Priority: P0.
+- Status: DONE
+- Priority: P0
+- SRS: §16 (deployment/security posture), NFR-11 (Linux container, no Oracle dependency), §13.6 (optional Ollama); docs/architecture.md §Deployment shape (app/queue-worker/scheduler/postgres roles), docs/deployment.md (immutable image, explicit migration step, internal-only services, secrets never baked).
+- Acceptance:
+  - [x] `Dockerfile.prod`: multi-stage — Node stage builds frontend assets, slim php-fpm runtime has NO dev tooling; `--no-dev` composer deps + optimized autoload; opcache + JIT with `validate_timestamps=0`; `.dockerignore` keeps dev/build artifacts out of the build context
+  - [x] Production entrypoint: applies container env over baked `.env` (canonical set), fails fast without `APP_KEY` (verified exit 1), builds config/route/event caches at boot with the REAL runtime env (so secret-backed config is never frozen at image build time), and dispatches roles: app → php-fpm, queue-worker, scheduler, migrate, artisan
+  - [x] `docker-compose.prod.yml`: app (php-fpm :9000 internal), queue-worker, scheduler each as a container role; postgres with named volume + healthcheck; optional `ollama` behind `ai` profile (internal only); migrations as an explicit release step (`make prod-migrate`), not implicit on boot
+  - [x] `.env.production.example` shipped in the image as the non-secret template (real secrets always injected by the deployment environment)
+  - [x] Makefile production targets: `prod-build`, `prod-up`, `prod-down`, `prod-migrate`, `prod-logs`
+  - [x] docs/deployment.md "Production Docker profile" section documenting build/usage
+- Verification:
+  - [x] `docker build` of Dockerfile.prod succeeds (image `kinevo-app:prod`)
+  - [x] `docker compose -f docker-compose.prod.yml config` valid; `--profile ai` yields app/queue-worker/scheduler/postgres/ollama
+  - [x] Runtime checks: `artisan --version` works with APP_KEY; missing APP_KEY → FATAL + exit 1; queue-worker and scheduler role dispatch verified
+  - [x] `check-secrets.sh`, `validate-repo.sh`, `check-doc-links.sh`, `check-openapi.sh` (59 paths) all pass
+- Evidence: infrastructure/docker/Dockerfile.prod, infrastructure/docker/kinevo-prod-entrypoint.sh, infrastructure/docker/.env.production.example, infrastructure/docker-compose.prod.yml, .dockerignore, Makefile (prod-* targets), docs/deployment.md
+- Notes: Reverse proxy + TLS termination is TASK-081 (nginx routes to the app's internal :9000). Backup/restore is TASK-082, observability TASK-083. `config:cache` runs at container boot rather than image build to avoid freezing the build placeholder APP_KEY (a security/correctness concern identified during implementation).
 
 #### TASK-081 — Reverse proxy/TLS
 - Status: TODO

@@ -5,12 +5,15 @@ SRS ?= KINEVO_SRS_v2.0.0.md
 
 COMPOSE := docker compose -f infrastructure/docker-compose.yml
 APP := $(COMPOSE) exec -T app
+COMPOSE_PROD := docker compose -f infrastructure/docker-compose.prod.yml
 
 .PHONY: setup setup-force dry-run validate secrets status doctor \
 	up down logs migrate shell \
 	test lint format analyse ci \
 	frontend-install frontend-typecheck frontend-test frontend-build \
-	check-links check-openapi
+	check-links check-openapi \
+	ollama-up ollama-down ai-status ai-smoke \
+	prod-build prod-up prod-down prod-migrate prod-logs
 
 # --- Documentation bootstrap -------------------------------------------------
 setup:
@@ -55,6 +58,38 @@ migrate:
 
 shell:
 	$(APP) sh
+
+# --- Optional AI development adapter (Ollama) --------------------------------
+# The ollama service is opt-in (compose profile "ai") and internal-network
+# only. The app remains fully operational without it (SRS FR-60).
+ollama-up:
+	$(COMPOSE) --profile ai up -d
+
+ollama-down:
+	$(COMPOSE) --profile ai down
+
+ai-status:
+	$(APP) php artisan ai:status
+
+ai-smoke:
+	$(APP) php artisan ai:smoke
+
+# --- Production profile (TASK-080; deployment.md) ---------------------------
+# Secrets (APP_KEY, DB_PASSWORD, APP_URL) come from the deployment environment.
+prod-build:
+	$(COMPOSE_PROD) build
+
+prod-up:
+	$(COMPOSE_PROD) up -d
+
+prod-down:
+	$(COMPOSE_PROD) down
+
+prod-migrate:
+	$(COMPOSE_PROD) run --rm app migrate
+
+prod-logs:
+	$(COMPOSE_PROD) logs -f
 
 # --- Quality gates (run inside the app container) ---------------------------
 test:

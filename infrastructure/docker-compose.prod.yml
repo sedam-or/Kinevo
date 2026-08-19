@@ -1,0 +1,95 @@
+# Kinevo production compose (deployment.md "Production containers").
+# Roles: app (php-fpm), queue-worker, scheduler, postgres, optional ollama.
+# Reverse proxy/TLS is TASK-081 (nginx handled separately; the app binds :9000
+# internally). Migrations run explicitly as a release step (`make prod-migrate`),
+# not implicitly on boot.
+#
+# Secrets are injected via the environment (platform secret store), never baked
+# into the image. APP_KEY / DB_PASSWORD MUST be provided at deploy time.
+
+name: kinevo-prod
+
+services:
+  app:
+    image: kinevo-app:prod
+    build:
+      context: ../.
+      dockerfile: infrastructure/docker/Dockerfile.prod
+    environment: &app_env
+      APP_ENV: production
+      APP_DEBUG: "false"
+      # REQUIRED at deploy: APP_KEY, APP_URL, DB_PASSWORD, DB_HOST, etc.
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: kinevo
+      DB_USERNAME: kinevo
+      DB_SSLMODE: disable
+      SESSION_DRIVER: database
+      CACHE_STORE: database
+      QUEUE_CONNECTION: database
+      LOG_CHANNEL: stack
+      AI_PROVIDER: "${AI_PROVIDER:-disabled}"
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-llama3.1}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    # FPM listens on :9000; reverse proxy (TASK-081) routes to it. No public
+    # host port published here.
+
+  queue-worker:
+    image: kinevo-app:prod
+    command: queue-worker
+    environment:
+      <<: *app_env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  scheduler:
+    image: kinevo-app:prod
+    command: scheduler
+    environment:
+      <<: *app_env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: kinevo
+      POSTGRES_USER: kinevo
+      POSTGRES_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required}"
+    volumes:
+      - kinevo_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kinevo -d kinevo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # Optional local AI inference (opt-in). Internal network only.
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ai"]
+    volumes:
+      - kinevo_ollama:/root/.ollama
+    environment:
+      OLLAMA_HOST: 0.0.0.0
+      OLLAMA_KEEP_ALIVE: 30m
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  kinevo_pgdata:
+  kinevo_ollama:

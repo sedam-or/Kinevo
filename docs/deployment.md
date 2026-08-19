@@ -90,3 +90,86 @@ When resource pressure appears:
 
 ---
 
+### Ollama development adapter (SRS §13.6, ADR-011)
+
+Ollama is an optional local inference engine for development and small
+self-hosted deployments. The application MUST remain fully functional when it
+is unavailable (SRS FR-60); enabling it is purely additive.
+
+Start it (opt-in compose profile, internal network only — no host port):
+```bash
+docker compose --profile ai up -d
+```
+
+Configure the app in `server/.env`:
+```dotenv
+AI_PROVIDER=ollama
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=llama3.1
+```
+(`OLLAMA_BASE_URL` points at the compose service name; a local desktop install
+would use `http://localhost:11434`.)
+
+The adapter is wired and verified with:
+```bash
+make ai-status   # provider snapshot (SRS §17.8 telemetry)
+make ai-smoke    # tiny deterministic generation through the provider
+```
+
+Model guidance:
+- Prefer a small quantized model for the free-tier VPS profile; load on demand
+  where possible. The compose service unloads idle models after 30 minutes
+  (`OLLAMA_KEEP_ALIVE=30m`).
+- Large coding models belong on the development workstation, not the production
+  VPS.
+- Ollama SHALL stay on the internal network (SRS §16.4); never expose its port
+  publicly.
+
+Failure behavior: connection failures, HTTP errors, and empty responses
+surface as `AI_PROVIDER_UNAVAILABLE` (503 on the API); deterministic
+scheduling, manual workflows, and all other features keep working.
+
+---
+
+### Production Docker profile (TASK-080)
+
+A dedicated production image and compose overlay implement the deployment.md
+container roles (app, queue-worker, scheduler, postgres, optional ollama).
+
+**Image** (`infrastructure/docker/Dockerfile.prod`):
+- multi-stage: frontend assets built in a Node stage, runtime is a slim
+  php-fpm image with no dev tooling (composer is build-time only);
+- production composer dependencies (`--no-dev`), optimized autoload;
+- opcache + JIT enabled with `validate_timestamps=0`;
+- config/route/event caches baked in;
+- `.env.production.example` shipped as the non-secret template (real values
+  always injected by the deployment environment).
+
+**Entrypoint** (`kinevo-prod-entrypoint.sh`): applies container env over the
+baked `.env` (canonical set), fails fast without `APP_KEY`, and dispatches
+roles: `app` → `php-fpm`, `queue-worker` → `php artisan queue:work`,
+`scheduler` → `php artisan schedule:work`, plus `artisan`/`migrate` helpers.
+
+**Compose overlay** (`infrastructure/docker-compose.prod.yml`):
+- `app` (php-fpm on :9000, internal — reverse proxy routes to it),
+  `queue-worker`, `scheduler` each as a separate container role;
+- `postgres` with a named volume and healthcheck;
+- optional `ollama` behind the `ai` profile (internal network only);
+- migrations run explicitly as a release step, not implicitly on boot.
+
+**Usage**
+```bash
+export APP_KEY="$(openssl rand -base64 32)"   # per deploy
+export DB_PASSWORD="change-me-secret"
+export APP_URL="https://kinevo.example.com"
+
+make prod-build     # build the image + bake assets
+make prod-migrate   # explicit migration release step
+make prod-up        # start app, queue-worker, scheduler, postgres
+```
+
+Reverse proxy + TLS termination are handled in TASK-081; PostgreSQL/Ollama
+remain internal-network services (SRS §16.4).
+
+---
+

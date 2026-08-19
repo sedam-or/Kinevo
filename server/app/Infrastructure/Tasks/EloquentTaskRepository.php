@@ -27,6 +27,26 @@ final class EloquentTaskRepository implements TaskRepository
             ->all();
     }
 
+    public function listAll(): array
+    {
+        return TaskModel::query()
+            ->orderByDesc('created_at')
+            ->get()
+            ->map($this->toDomain(...))
+            ->all();
+    }
+
+    public function listMissedForUser(int $userId): array
+    {
+        return TaskModel::query()
+            ->where('user_id', $userId)
+            ->where('status', TaskStatus::MISSED)
+            ->orderBy('id')
+            ->get()
+            ->map($this->toDomain(...))
+            ->all();
+    }
+
     public function create(int $userId, Task $task): Task
     {
         $model = TaskModel::query()->create([

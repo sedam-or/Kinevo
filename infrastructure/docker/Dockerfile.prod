@@ -1,0 +1,98 @@
+# Kinevo production application image (SRS §16, deployment.md).
+# php-fpm serving the Laravel app; frontend assets are built at image build time.
+# Production posture: no dev tooling (node/npm/composer remain for build only),
+# opcache + JIT enabled, optimized config + route/event caching.
+#
+# Build: docker build -f infrastructure/docker/Dockerfile.prod -t kinevo-app:prod .
+
+FROM php:8.4-fpm-alpine AS base
+
+RUN apk add --no-cache \
+        postgresql-dev \
+        icu-dev \
+        libzip-dev \
+        zip \
+    && docker-php-ext-install \
+        pdo_pgsql \
+        pgsql \
+        intl \
+        pcntl \
+        bcmath \
+        opcache \
+    && docker-php-ext-enable opcache
+
+# --- Frontend build stage ---------------------------------------------------
+FROM node:20-alpine AS frontend
+
+WORKDIR /build
+
+COPY server/package.json server/package-lock.json ./
+RUN npm ci --ignore-scripts
+
+COPY server/ ./
+RUN npm run build
+
+# --- Runtime stage ----------------------------------------------------------
+FROM php:8.4-fpm-alpine AS runtime
+
+RUN apk add --no-cache \
+        postgresql-dev \
+        icu-dev \
+        libzip-dev \
+        zip \
+    && docker-php-ext-install \
+        pdo_pgsql \
+        pgsql \
+        intl \
+        pcntl \
+        bcmath \
+        opcache \
+    && docker-php-ext-enable opcache
+
+# Production opcache + JIT tuning.
+RUN { \
+        echo 'opcache.enable=1'; \
+        echo 'opcache.enable_cli=1'; \
+        echo 'opcache.memory_consumption=128'; \
+        echo 'opcache.max_accelerated_files=10000'; \
+        echo 'opcache.validate_timestamps=0'; \
+        echo 'opcache.jit=tracing'; \
+        echo 'opcache.jit_buffer_size=64M'; \
+    } > /usr/local/etc/php/conf.d/kinevo-opcache.ini
+
+# Production dependencies only (no dev tooling in the runtime image).
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www/html
+
+COPY server/composer.json server/composer.lock ./
+RUN composer install --no-interaction --no-progress --prefer-dist --no-dev --no-scripts
+
+COPY server/ .
+COPY database /var/www/database
+
+# Optimized autoload after the app source is present; scripts disabled so the
+# caches below run at their explicit step.
+RUN composer dump-autoload --optimize --no-dev --no-scripts
+
+# Copy the built frontend assets (public/build + any public assets).
+COPY --from=frontend /build/public/build public/build
+
+# The Laravel config/route/event caches are built at container boot by the
+# entrypoint (after the real environment is applied) so secret-backed values
+# such as APP_KEY are never frozen at image-build time.
+
+COPY infrastructure/docker/kinevo-prod-entrypoint.sh /usr/local/bin/kinevo-entrypoint
+COPY infrastructure/docker/.env.production.example /var/www/html/.env.production.example
+RUN chmod +x /usr/local/bin/kinevo-entrypoint
+
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    FILESYSTEM_DISK=local \
+    SESSION_DRIVER=database \
+    CACHE_STORE=database \
+    QUEUE_CONNECTION=database
+
+EXPOSE 9000
+
+ENTRYPOINT ["/usr/local/bin/kinevo-entrypoint"]
