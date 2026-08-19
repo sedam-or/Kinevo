@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useNoteStore } from './store';
+import EditorHost from '../editor/EditorHost.vue';
+import type { EditorAdapter, EditorChange, EditorDocument } from '../editor/types';
 import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
 import type { VisualStateValue } from '../visualstate/types';
 
-const props = defineProps<{
-    noteId: number;
-}>();
+const props = withDefaults(
+    defineProps<{
+        noteId: number;
+        adapterFactory?: (element: HTMLElement) => EditorAdapter;
+    }>(),
+    {
+        adapterFactory: undefined,
+    },
+);
 
 const emit = defineEmits<{
     (e: 'back'): void;
@@ -15,10 +23,13 @@ const emit = defineEmits<{
 const notes = useNoteStore();
 
 const title = ref('');
-const content = ref('');
+const editorDocument = ref<EditorDocument | null>(null);
 
+let adapter: EditorAdapter | null = null;
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let dirty = false;
+let pendingPlainText = '';
+let pendingMarkdown = '';
 
 const SAVE_DELAY_MS = 600;
 
@@ -26,21 +37,32 @@ onMounted(async () => {
     await notes.load(props.noteId);
     if (notes.current) {
         title.value = notes.current.title;
-        content.value = notes.current.plain_text_cache ?? '';
+        editorDocument.value = notes.current.document_json as EditorDocument | null;
     }
 });
 
-watch([title, content], () => {
+watch(title, () => {
     dirty = true;
     scheduleSave();
 });
+
+function onEditorReady(editor: EditorAdapter): void {
+    adapter = editor;
+}
+
+function onEditorChange(change: EditorChange): void {
+    pendingPlainText = change.derived.plainText;
+    pendingMarkdown = change.derived.markdown;
+    dirty = true;
+    scheduleSave();
+}
 
 onBeforeUnmount(() => {
     if (saveTimer !== null) {
         clearTimeout(saveTimer);
     }
-    if (dirty && notes.current) {
-        void notes.save({ title: title.value, plain_text_cache: content.value });
+    if (dirty && notes.current && adapter) {
+        void persist();
     }
 });
 
@@ -61,8 +83,32 @@ async function flush(): Promise<void> {
     if (!dirty || !notes.current) {
         return;
     }
+    await persist();
+}
+
+async function persist(): Promise<void> {
+    if (!notes.current) {
+        return;
+    }
     dirty = false;
-    await notes.save({ title: title.value, plain_text_cache: content.value });
+
+    let documentJson: Record<string, unknown> | null = null;
+    let plainText = pendingPlainText;
+    let markdown = pendingMarkdown;
+
+    if (adapter) {
+        const snapshot = adapter.save(notes.current.version);
+        documentJson = snapshot.document as unknown as Record<string, unknown>;
+        plainText = snapshot.derived.plainText;
+        markdown = snapshot.derived.markdown;
+    }
+
+    await notes.save({
+        title: title.value,
+        document_json: documentJson,
+        plain_text_cache: plainText,
+        markdown_cache: markdown,
+    });
 }
 
 const saveStateBadge = ref<VisualStateValue>('saved');
@@ -112,17 +158,15 @@ function linkLabel(link: { target_type: string; link_type: string }): string {
             <span v-if="notes.saveState === 'conflict'"> — this note was changed elsewhere; reload to reconcile.</span>
         </div>
 
-        <!-- Edit content -->
+        <!-- Edit content (Tiptap via the replaceable EditorAdapter) -->
         <section v-if="notes.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="note-editor">
-            <label class="flex flex-col gap-1 text-sm">
-                Content
-                <textarea
-                    v-model="content"
-                    rows="12"
-                    class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2"
-                    data-testid="note-content"
-                ></textarea>
-            </label>
+            <EditorHost
+                :document="editorDocument"
+                :read-only="false"
+                :adapter-factory="props.adapterFactory"
+                @ready="onEditorReady"
+                @change="onEditorChange"
+            />
             <button type="button" class="mt-2 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="note-save-now" @click="flush">
                 Save now
             </button>

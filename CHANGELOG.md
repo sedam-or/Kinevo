@@ -14,6 +14,10 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Tiptap Vue binding (TASK-111): an `EditorHost` component that
+  connects Vue → EditorAdapter → Tiptap behind the replaceable editor boundary
+  (canonical structured JSON, derived markdown/plain text, readOnly/theme), now
+  powering note editing with autosave (FR-53, SRS §10).
 - Added the Notes UI (TASK-110): note list and full-text search, create and
   edit with debounced autosave and Saved/Saving/Error/Offline/Conflict states
   (optimistic versioning, 409 conflict), and linked-entity display, wired into

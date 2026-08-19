@@ -21,6 +21,37 @@ import NotesListView from '../NotesListView.vue';
 import NoteEditView from '../NoteEditView.vue';
 import { noteApi } from '../api';
 import type { Note } from '../types';
+import type { EditorAdapter, EditorChange, EditorDocument, EditorTheme, Unsubscribe } from '../../editor/types';
+
+function fakeAdapter(): EditorAdapter {
+    const listeners = new Set<(change: EditorChange) => void>();
+    return {
+        load(): void {},
+        getDocument(): EditorDocument {
+            const doc: EditorDocument = { type: 'doc' };
+            return doc;
+        },
+        getDerived(): { markdown: string; plainText: string } {
+            return { markdown: '# hi', plainText: 'body text' };
+        },
+        save(baseVersion: number) {
+            const doc: EditorDocument = { type: 'doc' };
+            return { document: doc, derived: { markdown: '# hi', plainText: 'body text' }, baseVersion };
+        },
+        setReadOnly(): void {},
+        setTheme(_theme: EditorTheme): void {},
+        subscribe(listener: (change: EditorChange) => void): Unsubscribe {
+            listeners.add(listener);
+            return () => listeners.delete(listener);
+        },
+        flush(): void {},
+        destroy(): void {},
+    };
+}
+
+function adapterFactory(): (element: HTMLElement) => EditorAdapter {
+    return () => fakeAdapter();
+}
 
 const note: Note = {
     id: 1,
@@ -86,11 +117,14 @@ describe('NoteEditView', () => {
         const pinia = createPinia();
         setActivePinia(pinia);
 
-        const wrapper = mount(NoteEditView, { props: { noteId: 1 }, global: { plugins: [pinia] } });
+        const wrapper = mount(NoteEditView, {
+            props: { noteId: 1, adapterFactory: adapterFactory() },
+            global: { plugins: [pinia] },
+        });
         await flushPromises();
 
         expect(wrapper.find('[data-testid="note-editor"]').exists()).toBe(true);
-        expect((wrapper.find('[data-testid="note-content"]').element as HTMLTextAreaElement).value).toBe('body text');
+        expect(wrapper.find('[data-testid="editor-host"]').exists()).toBe(true);
         expect(wrapper.find('[data-testid="note-save-state"]').exists()).toBe(true);
     });
 
@@ -103,7 +137,10 @@ describe('NoteEditView', () => {
         const pinia = createPinia();
         setActivePinia(pinia);
 
-        const wrapper = mount(NoteEditView, { props: { noteId: 1 }, global: { plugins: [pinia] } });
+        const wrapper = mount(NoteEditView, {
+            props: { noteId: 1, adapterFactory: adapterFactory() },
+            global: { plugins: [pinia] },
+        });
         await flushPromises();
 
         expect(wrapper.find('[data-testid="note-link-item"]').text()).toContain('goal');

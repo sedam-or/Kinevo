@@ -90,6 +90,7 @@ Quick Capture UI                     ✅ DONE (TASK-107)
 Schedule Draft / Rescheduler UI      ✅ DONE (TASK-108)
 Conflict / Lock / Explainability UI  ✅ DONE (TASK-109)
 Notes UI                             ✅ DONE (TASK-110)
+Tiptap Vue binding                   ✅ DONE (TASK-111)
 ```
 
 ### Evidence rule

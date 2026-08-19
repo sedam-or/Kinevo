@@ -1721,6 +1721,26 @@ Do NOT bypass the adapter.
 
 The editor engine must remain replaceable.
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-031 (EditorAdapter + TiptapEditorAdapter), TASK-110 (Notes UI)
+- SRS: §10.1–10.3 Knowledge Layer (Tiptap behind the Kinevo boundary, canonical structured JSON); ADR-004 (headless editor); architecture.md "Knowledge boundary".
+- Acceptance:
+  - [x] `EditorHost.vue` Vue binding: Vue → EditorAdapter → (default) TiptapEditorAdapter.
+  - [x] Mounts the adapter into a host element; loads the canonical `document_json`; emits `ready` (adapter handle) and `change` (document + derived markdown/plain text).
+  - [x] Adapter factory injectable (`adapterFactory` prop) so the editor engine remains replaceable — the Vue layer only talks to the `EditorAdapter` contract, never Tiptap.
+  - [x] readOnly + theme reactive props forwarded to the adapter.
+  - [x] Integrated into NoteEditView (replaces the plain textarea): autosave persists `document_json` + derived markdown/plain text via the note store's optimistic `base_version`; the engine is never bypassed.
+  - [x] No business logic inside the editor engine (persistence/versioning stays in the note store).
+- Verification:
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (227 tests; 3 new EditorHost binding tests using a fake adapter)
+  - [x] `npm run build` → built OK
+  - [x] Backend regression: `composer test` → OK (628 tests, 1702 assertions)
+  - [x] Repo gates (secrets/doc-links/validate/changelog) all PASS
+- Evidence: server/resources/js/editor/EditorHost.vue, server/resources/js/editor/__tests__/EditorHost.test.ts, server/resources/js/note/NoteEditView.vue (editor integration + adapterFactory)
+- Release Impact: MINOR (new frontend surface; no backend/API change)
+
 ---
 
 # TASK-112 — Knowledge Linking UI
