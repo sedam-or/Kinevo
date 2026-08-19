@@ -1226,6 +1226,30 @@ Connect to existing Sanctum API.
 
 Do not implement a second authentication mechanism.
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-100 (app shell)
+- SRS: NFR-02 (auth/token), §15.1 ownership; FR-10/FR-13 (timezone/locale/week-start via ProfileSettings).
+- Acceptance:
+  - [x] Login form (`LoginView.vue`) posting to `POST /auth/login`, with 401/422 error handling.
+  - [x] First-owner registration (`RegisterView.vue`) posting to `POST /auth/register`, handling 409/422.
+  - [x] Session restoration on mount via `GET /auth/me` (valid token → shell; missing/stale → guest).
+  - [x] Logout via `POST /auth/logout` clearing the local token and returning to the guest gate.
+  - [x] Profile/settings (`ProfileView.vue`) for display name, timezone, locale, week start via `GET/PUT /profile`, using server-allowed values.
+  - [x] Typed API client (`auth/client.ts`) with Bearer token persistence + parsed `ApiError` (401/422 field errors).
+  - [x] Pinia auth store (`auth/store.ts`): login/register/logout/restoreSession/loadProfile/updateProfile.
+  - [x] Auth gate (`AuthHost.vue`) wraps the app shell: guest → login/register, authenticated → shell + logout + settings.
+  - [x] SPA host (`/app` route + `app.blade.php`) mounts the Vue app at `#app`.
+  - [x] No second auth mechanism; reuses the existing Sanctum bearer-token API.
+- Verification:
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (132 tests; 19 new auth tests: client, store, AuthHost)
+  - [x] `npm run build` → built OK
+  - [x] Backend regression: `composer test` → OK (616 tests, 1647 assertions)
+  - [x] `GET /app` → 200; repo gates (secrets/doc-links/validate/changelog) all PASS
+- Evidence: server/resources/js/auth/{types.ts,client.ts,store.ts,LoginView.vue,RegisterView.vue,ProfileView.vue,AuthHost.vue}, server/resources/js/auth/__tests__/*.test.ts, server/resources/views/app.blade.php, server/routes/web.php (`/app`)
+- Release Impact: MINOR (new frontend surface; no backend/API change)
+
 ---
 
 # TASK-102 — Global API / State Client

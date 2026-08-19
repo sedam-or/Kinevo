@@ -14,6 +14,10 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Authentication UI (TASK-101): login and first-owner registration
+  forms, session restoration on load, logout, and profile/settings (display
+  name, timezone, locale, week start) wired to the existing Sanctum bearer-token
+  API, behind a new `/app` SPA host.
 - Added the Vue application shell (TASK-100): responsive layout with persistent
   desktop side navigation and mobile bottom navigation (Today/Week/Calendar/
   Goals/Roadmap/Knowledge/Analytics/Settings), global error boundary, global

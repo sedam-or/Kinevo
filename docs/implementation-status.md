@@ -80,6 +80,7 @@ Quick Capture placement              ✅ DONE (TASK-098)
 Auto Swap                            ✅ DONE (TASK-099)
 Release & doc hygiene                ✅ DONE (TASK-160)
 Vue application shell                ✅ DONE (TASK-100)
+Authentication UI                    ✅ DONE (TASK-101)
 ```
 
 ### Evidence rule
