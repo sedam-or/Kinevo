@@ -14,6 +14,10 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added a deterministic, timezone-aware recurrence engine (RFC-5545 subset:
+  daily/weekly, BYDAY, INTERVAL, COUNT/UNTIL) with bounded occurrence
+  generation, duplicate prevention, and exception/cancelled-occurrence support
+  (FR-46/FR-25).
 - Added the Hard Landscape domain and CRUD API (`GET/POST /hard-landscape`,
   `GET/PATCH/DELETE /hard-landscape/{id}`) for defining non-negotiable schedule
   boundaries, with type (permanent/recurring/one-time), recurrence support, and

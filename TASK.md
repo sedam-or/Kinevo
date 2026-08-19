@@ -1072,15 +1072,16 @@
 - Release Impact: MINOR (new optional CRUD capability; no breaking change)
 
 #### TASK-096 — Recurring Schedule
-- Status: TODO
+- Status: DONE
 - Priority: P0
 - Depends On: TASK-095
 - SRS: FR-25; SRS §7.1 (task_templates, schedule_overrides).
 - Acceptance:
-  - [ ] Recurrence definition, bounded occurrence generation, timezone awareness, deterministic, no duplicates, exceptions/cancellation/override.
+  - [x] Recurrence definition, bounded occurrence generation, timezone awareness, deterministic, no duplicates, exceptions/cancellation/override.
 - Verification:
-  - [ ] Tests: daily, weekly, multiple weekdays, timezone boundary, exception day, deleted occurrence, duplicate prevention.
-- Evidence: server/app/Domain/Scheduling/Recurrence/*.php
+  - [x] Tests: daily, weekly, multiple weekdays, timezone boundary, exception day, deleted occurrence, duplicate prevention.
+- Evidence: server/app/Domain/Scheduling/Recurrence/{RecurrenceRule,RecurrenceOccurrenceGenerator}.php, server/tests/Unit/Scheduling/Recurrence/RecurrenceOccurrenceGeneratorTest.php
+- Release Impact: MINOR (reusable domain capability; no API/schema change)
 
 #### TASK-097 — Schedule Overrides
 - Status: TODO
