@@ -14,6 +14,10 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Goals / Milestones / Programs UI (TASK-106): goal list and detail
+  (outcome, deadline, progress, status actions), a sequence-ordered milestone
+  timeline with status transitions, and a program list with creation, wired to
+  the Goal/Milestone/Program APIs (FR-19/20/22/26/50/51).
 - Added the Task UI (TASK-105): task list, creation, detail and edit, backend-
   validated status transitions, subtasks (add/toggle/promote), and partial
   completion, wired to the Task APIs (FR-09/FR-45).

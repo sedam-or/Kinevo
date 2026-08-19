@@ -1491,6 +1491,25 @@ Next actions
 History
 ```
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-102 (API client), TASK-100 (shell), TASK-011/012/013 (Goal/Milestone/Program aggregates)
+- SRS: FR-19/20 (goal limits), FR-22/26 (program), FR-50/51 (milestone); design.md §Goal workspace, §Goal detail, §Milestone interaction, §Roadmap.
+- Acceptance:
+  - [x] Goal list (`GET /goals`) with horizon, deadline, progress, status; goal creation (`POST /goals`).
+  - [x] Goal detail (`GET /goals/{id}`): outcome, deadline, progress, status actions (`POST /goals/{id}/status`).
+  - [x] Milestone timeline (`GET /goals/{id}/milestones`): sequence-ordered list, add (`POST`), status transitions (`POST .../status`).
+  - [x] Program list (`GET /programs`) with workload type and weekly target; program creation (`POST /programs`).
+  - [x] Typed Goal/Milestone/Program API client + Pinia store; wired into the shell for the `goals` nav view.
+- Verification:
+  - [x] `npm run typecheck` → no errors
+  - [x] `npm run test` → OK (181 tests; 8 new Goal tests: store, GoalListView, GoalDetailView)
+  - [x] `npm run build` → built OK
+  - [x] Backend regression: `composer test` → OK (616 tests, 1647 assertions)
+  - [x] Repo gates (secrets/doc-links/validate/changelog) all PASS
+- Evidence: server/resources/js/goal/{types.ts,api.ts,store.ts,GoalView.vue,GoalListView.vue,GoalDetailView.vue}, server/resources/js/goal/__tests__/*.test.ts, server/resources/js/auth/AuthHost.vue (Goal wiring)
+- Release Impact: MINOR (new frontend surface; no backend/API change)
+
 ---
 
 # TASK-107 — Quick Capture UI
