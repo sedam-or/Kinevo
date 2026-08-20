@@ -133,6 +133,46 @@ class AnalyticsApiTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_work_life_includes_period_comparison_and_trend(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        // Previous period (2026-08-18..19): 50 focus + 15 recharge.
+        $this->addFocusSession($user->id, '2026-08-18 10:00:00', 50);
+        $this->addRecharge($user->id, '2026-08-19 10:25:00', 15);
+
+        // Current period (2026-08-20..21): 25 focus + 25 recharge.
+        $this->addFocusSession($user->id, '2026-08-20 10:00:00', 25);
+        $this->addRecharge($user->id, '2026-08-20 10:25:00', 25);
+
+        $this->withToken($token)->getJson('/api/v1/analytics/work-life?from=2026-08-20&to=2026-08-21')
+            ->assertOk()
+            ->assertJsonPath('previous.from', '2026-08-18')
+            ->assertJsonPath('previous.to', '2026-08-19')
+            ->assertJsonPath('previous.productive_minutes', 50)
+            ->assertJsonPath('previous.recharge_minutes', 15)
+            ->assertJsonPath('previous.work_ratio', fn ($v) => abs((float) $v - 50 / 65) < 0.0001)
+            ->assertJsonPath('trend.0.week_start', '2026-08-17')
+            ->assertJsonPath('trend.0.productive_minutes', 25)
+            ->assertJsonPath('trend.0.recharge_minutes', 25)
+            ->assertJsonPath('trend.0.work_ratio', fn ($v) => (float) $v === 0.5);
+    }
+
+    public function test_work_life_reports_descriptive_exceptions(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        $this->addFocusSession($user->id, '2026-08-20 10:00:00', 60);
+        $this->addRecharge($user->id, '2026-08-21 10:00:00', 20);
+
+        $this->withToken($token)->getJson('/api/v1/analytics/work-life?from=2026-08-20&to=2026-08-21')
+            ->assertOk()
+            ->assertJsonPath('exceptions.0.date', '2026-08-20')
+            ->assertJsonPath('exceptions.0.kind', 'work_only')
+            ->assertJsonPath('exceptions.1.date', '2026-08-21')
+            ->assertJsonPath('exceptions.1.kind', 'recharge_only');
+    }
+
     public function test_overview_returns_all_read_models_for_the_period(): void
     {
         [$user, $token] = $this->userWithToken();

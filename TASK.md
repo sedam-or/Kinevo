@@ -2456,17 +2456,25 @@ Committed: see git log (TASK-134 heatmap, backend + frontend + gates).
 
 # TASK-135 — Work-Life Analytics
 
-Implement:
+Status: DONE
+
+Requirements: FR-05 WorkRatio/RechargeRatio (normative formula, TASK-126) extended with period comparison, trend, and exceptions. The ratio is a time-balance indicator — never presented as a medical or biological optimum ("70:30" is not framed as a target).
+
+Implementation:
 
 ```text
-WorkRatio
-RechargeRatio
-period comparison
-trend
-exceptions
+WorkRatio/RechargeRatio .. normative formula (reused, TASK-126)
+period comparison ........ current period vs the immediately preceding equal-length period (productive/recharge minutes + both ratios)
+trend ................... weekly WorkRatio/RechargeRatio series over the current period
+exceptions .............. descriptive notable days: no_data, work_only (focus without recharge), recharge_only (recharge without focus)
+disclaimer .............. "Time-balance indicator. Not a health diagnosis." carried in the response and rendered — the ratio is never framed as a medical/biological optimum
 ```
 
-Do not present “70:30” as a medical or biological optimum.
+Verification evidence: `php artisan test` 772 passed (2319 assertions); PHPStan 0 errors; Pint clean; Vitest 338 passed (51 files); vue-tsc typecheck clean; `npm run build` OK; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 98 paths, changelog, version).
+
+Changes: `GetWorkLifeAnalyticsUseCase` extended with previous-period comparison, weekly trend, and descriptive exceptions; `WorkLifeAnalyticsResult` gained `previous` (always present), `trend`, `exceptions`; `docs/api/openapi.yaml` (WorkLifePrevious, WorkLifeTrendWeek, WorkLifeException + expanded WorkLifeAnalyticsResponse). Frontend: `analytics/types.ts`, `analytics/store.ts` (previous/trend/exceptions), `analytics/AnalyticsView.vue` work-life summary shows vs-previous-period comparison, weekly trend, and notable days, all under the disclaimer. Tests: AnalyticsApiTest period-comparison/trend + exceptions (2); AnalyticsView.test.ts additions.
+
+Committed: see git log (TASK-135 work-life comparison/trend/exceptions, backend + frontend + gates).
 
 ---
 

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { analyticsApi } from './api';
-import type { AnalyticsOverviewResponse, CapacityDay, DeadlineHealth, GoalSummary, HeatmapDay, HeatmapLegendItem, PillarKey, PillarRow, ProgramContribution, WorkLifeBand, WorkLifeDay } from './types';
+import type { AnalyticsOverviewResponse, CapacityDay, DeadlineHealth, GoalSummary, HeatmapDay, HeatmapLegendItem, PillarKey, PillarRow, ProgramContribution, WorkLifeBand, WorkLifeDay, WorkLifeException, WorkLifePrevious, WorkLifeTrendWeek } from './types';
 import type { ApiError } from '../api/types';
 
 export const useAnalyticsStore = defineStore('analytics', () => {
@@ -15,6 +15,9 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     const disclaimer = ref('');
     const from = ref('');
     const to = ref('');
+    const previous = ref<WorkLifePrevious | null>(null);
+    const workLifeTrend = ref<WorkLifeTrendWeek[]>([]);
+    const workLifeExceptions = ref<WorkLifeException[]>([]);
 
     const goals = ref<GoalSummary[]>([]);
     const goalCompletionRate = ref(0);
@@ -61,6 +64,9 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         rechargeRatio.value = workLife.recharge_ratio;
         band.value = workLife.band;
         disclaimer.value = workLife.disclaimer;
+        previous.value = workLife.previous;
+        workLifeTrend.value = workLife.trend;
+        workLifeExceptions.value = workLife.exceptions;
 
         goals.value = result.goal_progress.goals;
         goalCompletionRate.value = result.goal_progress.completion_rate;
@@ -120,6 +126,9 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         rechargeRatio.value = 0;
         band.value = 'no_data';
         disclaimer.value = '';
+        previous.value = null;
+        workLifeTrend.value = [];
+        workLifeExceptions.value = [];
         goals.value = [];
         goalCompletionRate.value = 0;
         goalTotalMilestones.value = 0;
@@ -154,6 +163,9 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         disclaimer,
         from,
         to,
+        previous,
+        workLifeTrend,
+        workLifeExceptions,
         goals,
         goalCompletionRate,
         goalTotalMilestones,

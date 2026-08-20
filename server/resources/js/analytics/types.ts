@@ -9,6 +9,29 @@ export interface WorkLifeDay {
     band: WorkLifeBand;
 }
 
+export interface WorkLifeTrendWeek {
+    week_start: string;
+    productive_minutes: number;
+    recharge_minutes: number;
+    work_ratio: number;
+    recharge_ratio: number;
+}
+
+export interface WorkLifePrevious {
+    from: string;
+    to: string;
+    productive_minutes: number;
+    recharge_minutes: number;
+    work_ratio: number;
+    recharge_ratio: number;
+}
+
+export interface WorkLifeException {
+    date: string;
+    kind: 'no_data' | 'work_only' | 'recharge_only';
+    description: string;
+}
+
 export interface WorkLifeAnalyticsResponse {
     from: string;
     to: string;
@@ -19,6 +42,9 @@ export interface WorkLifeAnalyticsResponse {
     recharge_ratio: number;
     band: WorkLifeBand;
     days: WorkLifeDay[];
+    previous: WorkLifePrevious | null;
+    trend: WorkLifeTrendWeek[];
+    exceptions: WorkLifeException[];
     disclaimer: string;
 }
 

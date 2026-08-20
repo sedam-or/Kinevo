@@ -3980,9 +3980,35 @@ components:
           type: string
           description: Descriptive time-distribution band (not a health assessment).
           enum: [no_data, work_leaning, balanced, recharge_leaning]
+    WorkLifeTrendWeek:
+      type: object
+      required: [week_start, productive_minutes, recharge_minutes, work_ratio, recharge_ratio]
+      properties:
+        week_start: {type: string, format: date}
+        productive_minutes: {type: integer, minimum: 0}
+        recharge_minutes: {type: integer, minimum: 0}
+        work_ratio: {type: number, format: float, minimum: 0, maximum: 1}
+        recharge_ratio: {type: number, format: float, minimum: 0, maximum: 1}
+    WorkLifePrevious:
+      type: object
+      required: [from, to, productive_minutes, recharge_minutes, work_ratio, recharge_ratio]
+      properties:
+        from: {type: string, format: date}
+        to: {type: string, format: date}
+        productive_minutes: {type: integer, minimum: 0}
+        recharge_minutes: {type: integer, minimum: 0}
+        work_ratio: {type: number, format: float, minimum: 0, maximum: 1}
+        recharge_ratio: {type: number, format: float, minimum: 0, maximum: 1}
+    WorkLifeException:
+      type: object
+      required: [date, kind, description]
+      properties:
+        date: {type: string, format: date}
+        kind: {type: string, enum: [no_data, work_only, recharge_only]}
+        description: {type: string}
     WorkLifeAnalyticsResponse:
       type: object
-      required: [from, to, productive_minutes, recharge_minutes, total_minutes, work_ratio, recharge_ratio, band, days, disclaimer]
+      required: [from, to, productive_minutes, recharge_minutes, total_minutes, work_ratio, recharge_ratio, band, days, previous, trend, exceptions, disclaimer]
       properties:
         from: {type: string, format: date}
         to: {type: string, format: date}
@@ -3997,6 +4023,13 @@ components:
         days:
           type: array
           items: {$ref: '#/components/schemas/WorkLifeDay'}
+        previous: {$ref: '#/components/schemas/WorkLifePrevious'}
+        trend:
+          type: array
+          items: {$ref: '#/components/schemas/WorkLifeTrendWeek'}
+        exceptions:
+          type: array
+          items: {$ref: '#/components/schemas/WorkLifeException'}
         disclaimer:
           type: string
           description: Time-balance indicator — never a health diagnosis.

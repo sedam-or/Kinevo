@@ -256,6 +256,31 @@ function run(fn: () => Promise<void>): void {
                     <div class="bg-[#F53003]" :style="{ width: `${workPercent}%` }" data-testid="analytics-work-segment" />
                     <div class="bg-green-600" :style="{ width: `${rechargePercent}%` }" data-testid="analytics-recharge-segment" />
                 </div>
+
+                <div v-if="analytics.previous" class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-period-comparison">
+                    vs previous period ({{ analytics.previous.from }} – {{ analytics.previous.to }}):
+                    Work {{ Math.round(analytics.previous.work_ratio * 100) }}% · Recharge {{ Math.round(analytics.previous.recharge_ratio * 100) }}%
+                </div>
+
+                <div v-if="analytics.workLifeTrend.length > 0" class="mt-2">
+                    <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Weekly trend</div>
+                    <ul class="space-y-1">
+                        <li v-for="week in analytics.workLifeTrend" :key="week.week_start" class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400" data-testid="analytics-worklife-trend">
+                            <span>Week of {{ week.week_start }}</span>
+                            <span>Work {{ Math.round(week.work_ratio * 100) }}% · Recharge {{ Math.round(week.recharge_ratio * 100) }}%</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div v-if="analytics.workLifeExceptions.length > 0" class="mt-2">
+                    <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Notable days</div>
+                    <ul class="space-y-1">
+                        <li v-for="exception in analytics.workLifeExceptions" :key="exception.date" class="text-xs text-gray-600 dark:text-gray-400" data-testid="analytics-worklife-exception">
+                            {{ exception.date }} — {{ exception.description }}
+                        </li>
+                    </ul>
+                </div>
+
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-disclaimer">
                     {{ analytics.disclaimer }}
                 </p>

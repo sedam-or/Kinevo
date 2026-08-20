@@ -49,6 +49,20 @@ function overview(overrides: Partial<AnalyticsOverviewResponse> = {}): Analytics
                 },
             ],
             disclaimer: 'Time-balance indicator. Not a health diagnosis.',
+            previous: {
+                from: '2026-08-10',
+                to: '2026-08-13',
+                productive_minutes: 100,
+                recharge_minutes: 0,
+                work_ratio: 1,
+                recharge_ratio: 0,
+            },
+            trend: [
+                { week_start: '2026-08-17', productive_minutes: 75, recharge_minutes: 15, work_ratio: 75 / 90, recharge_ratio: 15 / 90 },
+            ],
+            exceptions: [
+                { date: '2026-08-18', kind: 'work_only', description: 'Tracked focus time with no recharge time.' },
+            ],
         },
         task_completion: {
             from: '2026-08-17',
@@ -220,6 +234,9 @@ describe('AnalyticsView', () => {
             'Time-balance indicator. Not a health diagnosis.',
         );
         expect(wrapper.findAll('[data-testid="analytics-day"]')).toHaveLength(2);
+        expect(wrapper.get('[data-testid="analytics-period-comparison"]').text()).toContain('Work 100% · Recharge 0%');
+        expect(wrapper.findAll('[data-testid="analytics-worklife-trend"]')).toHaveLength(1);
+        expect(wrapper.findAll('[data-testid="analytics-worklife-exception"]')).toHaveLength(1);
     });
 
     it('renders the goal progress section', async () => {

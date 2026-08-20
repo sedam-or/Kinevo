@@ -107,6 +107,7 @@ Goal Progress analytics (UI + health)  ✅ DONE (TASK-131)
 Capacity analytics (UI + trend)        ✅ DONE (TASK-132)
 Pillar analytics (4-pillar UI)         ✅ DONE (TASK-133)
 Activity heatmap (FR-31)               ✅ DONE (TASK-134)
+Work-Life analytics (comparison/trend) ✅ DONE (TASK-135)
 ```
 
 ### Evidence rule

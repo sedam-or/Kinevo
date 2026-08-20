@@ -14,6 +14,11 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Extended Work-Life analytics (TASK-135): the Analytics view now compares the
+  current period's Work/Recharge ratio against the preceding equal-length
+  period, shows a weekly ratio trend, and lists notable days (no data, focus
+  without recharge, recharge without focus). All of it remains framed as a
+  time-balance indicator, never a medical or biological optimum.
 - Added the activity heatmap (TASK-134): the Analytics view now renders an
   annual activity heatmap (FR-31) with a per-day intensity grid derived from
   productive time, recharge, task completion, and progress events. It includes a
