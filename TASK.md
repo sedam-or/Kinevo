@@ -2323,20 +2323,28 @@ Do not duplicate business calculations inside controllers.
 
 # TASK-130 — Analytics Read Models
 
-Create optimized read models/services for:
+Status: DONE
+
+Requirements: Phase 13 (analytics consumes already-generated data; business calculations never duplicated in controllers; read-side services preferred over ad-hoc Vue calculations). Read models for task completion, goal progress/milestones, capacity, activity, focus, progress events, and the Work-Life Ratio.
+
+Implementation:
 
 ```text
-task completion
-goal progress
-milestones
-capacity
-activity
-focus
-progress events
-work-life ratio
+task completion .... snapshot of the board (total/completed/rate + by-status) + tasks completed within the period (activity `task_completed` events)
+goal progress ..... goal/milestone progression + program contribution from the current aggregates (read-side only)
+capacity .......... recent-week samples (planned/completed/realization/tag, week-keyed) + the Capacity feedback-loop estimate — reuses WeekCapacitySampleProvider + CapacityCalculator, never recreates the algorithm (TASK-132 reuses this further)
+activity .......... append-only activity log grouped by event type over the period + recency sample
+focus ............. completed focus sessions + minutes per day over the period
+progress events ... meaningful progress events grouped by type over the period + recency sample
+work-life ratio ... the normative WorkRatio/RechargeRatio (TASK-126)
+read surface ...... GET /analytics/overview?from=&to= composes every read model for the period (defaults: week of `to` / now)
 ```
 
-Prefer read-side services over repeated ad-hoc calculations in Vue.
+Verification evidence: `php artisan test` 764 passed (2249 assertions); PHPStan 0 errors; Pint clean; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 97 paths, changelog, version).
+
+Changes: `server/app/Application/Analytics/` — read-model use cases (GetTaskCompletionAnalyticsUseCase, GetGoalProgressAnalyticsUseCase, GetCapacityAnalyticsUseCase, GetActivityAnalyticsUseCase, GetFocusAnalyticsUseCase, GetProgressEventsAnalyticsUseCase) and `Results/` value objects; `WeekCapacitySampleProvider` gained a week-keyed `samplesByWeek()`; `AnalyticsController@overview` (GET /analytics/overview) with shared range parsing; `routes/api.php`; `docs/api/openapi.yaml` (/analytics/overview + TaskCompletion/GoalProgress/Capacity/Activity/Focus/ProgressEvents/AnalyticsOverview schemas). Frontend: none — read models are served for the analytics surfaces (TASK-131..135). Tests: AnalyticsApiTest overview cases (2) and authentication coverage.
+
+Committed: see git log (TASK-130 read-model layer, backend + gates).
 
 ---
 

@@ -196,6 +196,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Analytics (Phase 13): consume already-generated data.
     Route::get('/analytics/work-life', [AnalyticsController::class, 'workLife']);
+    Route::get('/analytics/overview', [AnalyticsController::class, 'overview']);
 
     // Schedule Overrides (FR-25; SRS §7.1).
     Route::get('/schedule-overrides', [ScheduleOverrideController::class, 'index']);

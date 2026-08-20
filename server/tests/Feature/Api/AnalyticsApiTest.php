@@ -2,8 +2,14 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\ActivityLog;
 use App\Models\FocusSession;
+use App\Models\Goal;
+use App\Models\Milestone;
+use App\Models\Program;
+use App\Models\ProgressEvent;
 use App\Models\RechargeSession;
+use App\Models\Task;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -52,6 +58,7 @@ class AnalyticsApiTest extends TestCase
     public function test_work_life_requires_authentication(): void
     {
         $this->getJson('/api/v1/analytics/work-life')->assertStatus(401);
+        $this->getJson('/api/v1/analytics/overview')->assertStatus(401);
     }
 
     public function test_work_life_aggregates_productive_and_recharge_minutes(): void
@@ -115,5 +122,102 @@ class AnalyticsApiTest extends TestCase
 
         $this->withToken($token)->getJson('/api/v1/analytics/work-life?from=2026-08-19&to=2026-08-18')
             ->assertStatus(422);
+    }
+
+    public function test_overview_returns_all_read_models_for_the_period(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        Task::query()->create([
+            'user_id' => $user->id, 'title' => 'Done task', 'status' => 'completed',
+            'priority_tier' => 1, 'progress_mode' => 'derived', 'progress' => 100, 'version' => 1,
+        ]);
+        Task::query()->create([
+            'user_id' => $user->id, 'title' => 'Scheduled task', 'status' => 'scheduled',
+            'priority_tier' => 2, 'progress_mode' => 'derived', 'progress' => 0, 'version' => 1,
+        ]);
+
+        $goal = Goal::query()->create([
+            'user_id' => $user->id, 'title' => 'Active goal', 'horizon' => 'custom',
+            'status' => 'active', 'priority_tier' => 1, 'progress_mode' => 'derived', 'progress' => 50,
+        ]);
+        Milestone::query()->create([
+            'user_id' => $user->id, 'goal_id' => $goal->id, 'title' => 'M1', 'sequence' => 1,
+            'status' => 'completed', 'progress_mode' => 'derived', 'progress' => 100,
+        ]);
+        Goal::query()->create([
+            'user_id' => $user->id, 'title' => 'Completed goal', 'horizon' => 'custom',
+            'status' => 'completed', 'priority_tier' => 2, 'progress_mode' => 'derived', 'progress' => 100,
+        ]);
+
+        $program = Program::query()->create([
+            'user_id' => $user->id, 'name' => 'KRS', 'workload_type' => 'flexible',
+            'status' => 'active', 'priority_tier' => 1,
+        ]);
+        Task::query()->create([
+            'user_id' => $user->id, 'program_id' => $program->id, 'title' => 'Program task',
+            'status' => 'completed', 'priority_tier' => 3, 'progress_mode' => 'derived', 'progress' => 100, 'version' => 1,
+        ]);
+
+        $this->addFocusSession($user->id, '2026-08-18 10:00:00', 50);
+        $this->addRecharge($user->id, '2026-08-19 10:25:00', 15);
+
+        ActivityLog::query()->create([
+            'user_id' => $user->id, 'event_type' => 'task_completed', 'entity_type' => 'task',
+            'entity_id' => 1, 'title' => 'Done task', 'event_at' => '2026-08-18 09:30:00',
+            'operation_id' => 'op-1', 'payload' => [],
+        ]);
+        ActivityLog::query()->create([
+            'user_id' => $user->id, 'event_type' => 'task_started', 'entity_type' => 'task',
+            'entity_id' => 1, 'title' => 'Done task', 'event_at' => '2026-08-18 10:05:00',
+            'operation_id' => 'op-2', 'payload' => [],
+        ]);
+
+        ProgressEvent::query()->create([
+            'user_id' => $user->id, 'event_type' => 'milestone_completed', 'entity_type' => 'milestone',
+            'entity_id' => 1, 'title' => 'M1', 'occurred_at' => '2026-08-18 11:00:00',
+            'operation_id' => 'op-3', 'payload' => [],
+        ]);
+
+        $this->withToken($token)->getJson('/api/v1/analytics/overview?from=2026-08-18&to=2026-08-19')
+            ->assertOk()
+            ->assertJsonPath('from', '2026-08-18')
+            ->assertJsonPath('to', '2026-08-19')
+            ->assertJsonPath('task_completion.total_tasks', 3)
+            ->assertJsonPath('task_completion.completed_tasks', 2)
+            ->assertJsonPath('task_completion.completed_in_period', 1)
+            ->assertJsonPath('task_completion.completion_rate', round(2 / 3, 4))
+            ->assertJsonPath('task_completion.by_status.completed', 2)
+            ->assertJsonPath('goal_progress.total_goals', 2)
+            ->assertJsonPath('goal_progress.completed_goals', 1)
+            ->assertJsonPath('goal_progress.total_milestones', 1)
+            ->assertJsonPath('goal_progress.completed_milestones', 1)
+            ->assertJsonPath('goal_progress.programs.0.tasks_completed', 1)
+            ->assertJsonPath('work_life.productive_minutes', 50)
+            ->assertJsonPath('work_life.recharge_minutes', 15)
+            ->assertJsonPath('activity.total_events', 2)
+            ->assertJsonPath('activity.by_type.task_completed', 1)
+            ->assertJsonPath('focus.total_sessions', 1)
+            ->assertJsonPath('focus.total_minutes', 50)
+            ->assertJsonPath('progress_events.total_events', 1)
+            ->assertJsonPath('progress_events.by_type.milestone_completed', 1)
+            ->assertJsonPath('capacity', fn ($capacity) => is_array($capacity) && isset($capacity['recommendation']));
+    }
+
+    public function test_overview_scopes_read_models_by_user(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $other = User::factory()->create();
+
+        Task::query()->create([
+            'user_id' => $other->id, 'title' => 'Not mine', 'status' => 'completed',
+            'priority_tier' => 1, 'progress_mode' => 'derived', 'progress' => 100, 'version' => 1,
+        ]);
+        $this->addFocusSession($other->id, '2026-08-18 10:00:00', 400);
+
+        $this->withToken($token)->getJson('/api/v1/analytics/overview?from=2026-08-18&to=2026-08-19')
+            ->assertOk()
+            ->assertJsonPath('task_completion.total_tasks', 0)
+            ->assertJsonPath('focus.total_minutes', 0);
     }
 }

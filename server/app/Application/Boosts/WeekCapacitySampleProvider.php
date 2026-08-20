@@ -31,6 +31,18 @@ final readonly class WeekCapacitySampleProvider
      */
     public function forUser(int $userId, CarbonImmutable $reference, int $windowWeeks = 4): array
     {
+        return array_values($this->samplesByWeek($userId, $reference, $windowWeeks));
+    }
+
+    /**
+     * Recent week capacity samples keyed by their week start (Y-m-d). Excludes
+     * weeks with no reliable realization data and weeks tagged by an Emergency
+     * Pause or an active Break are excluded by tag (FR-49 Exception Flows).
+     *
+     * @return array<string, WeekCapacitySample>
+     */
+    public function samplesByWeek(int $userId, CarbonImmutable $reference, int $windowWeeks = 4): array
+    {
         $samples = [];
 
         for ($i = $windowWeeks; $i >= 1; $i--) {
@@ -47,7 +59,7 @@ final readonly class WeekCapacitySampleProvider
                 continue;
             }
 
-            $samples[] = new WeekCapacitySample(
+            $samples[$weekStart->toDateString()] = new WeekCapacitySample(
                 new DurationMinutes($planned),
                 new DurationMinutes($completed),
                 $this->tag($userId, $weekStart),

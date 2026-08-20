@@ -14,6 +14,12 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Analytics read-model layer (TASK-130): a new `GET
+  /analytics/overview` endpoint composes every read model for a period — task
+  completion, goal progress and program contribution, capacity (reusing the
+  FR-49 feedback loop), activity, focus, progress events, and the Work-Life
+  Ratio — so analytics surfaces consume precomputed read-side services instead
+  of recomputing business numbers in the browser.
 - Added the Work-Life Ratio analytics (TASK-126): the Analytics view aggregates
   the user's already-recorded productive (focus) and Recharge minutes over a
   period and derives the normative WorkRatio/RechargeRatio (`GET
