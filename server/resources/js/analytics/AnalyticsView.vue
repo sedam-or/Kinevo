@@ -91,6 +91,17 @@ function deadlineLabel(health: DeadlineHealth, daysRemaining: number | null): st
     }
 }
 
+const recommendationLabel = computed(() => {
+    switch (analytics.capacityRecommendation) {
+        case 'BOOST_AVAILABLE':
+            return 'Boost / backlog available';
+        case 'REDUCE_LOAD':
+            return 'Reduce next load';
+        default:
+            return 'Maintain';
+    }
+});
+
 function minutesLabel(minutes: number): string {
     if (minutes < 60) {
         return `${minutes}m`;
@@ -205,6 +216,53 @@ function run(fn: () => Promise<void>): void {
                         </li>
                     </ul>
                 </div>
+            </div>
+
+            <div v-if="analytics.capacityDays.length > 0" class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-capacity">
+                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Capacity</div>
+
+                <div class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm" data-testid="analytics-capacity-summary">
+                    <span class="text-gray-600 dark:text-gray-400">
+                        {{ Math.round(analytics.capacityRealization * 100) }}% realized
+                    </span>
+                    <span class="text-gray-500 dark:text-gray-400">
+                        {{ analytics.capacityDays.filter((d) => d.status === 'overload').length }} overloaded days
+                    </span>
+                    <span class="text-gray-500 dark:text-gray-400">{{ recommendationLabel }} ({{ analytics.capacityConfidence }})</span>
+                </div>
+
+                <ul class="space-y-1">
+                    <li v-for="day in analytics.capacityDays" :key="day.date" class="flex items-center gap-2 text-sm" data-testid="analytics-capacity-day">
+                        <span class="w-24 shrink-0 text-gray-600 dark:text-gray-400">{{ day.date }}</span>
+                        <div class="flex h-2.5 flex-1 overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
+                            <div
+                                class="h-full"
+                                :class="day.status === 'overload' ? 'bg-red-500' : 'bg-[#F53003]'"
+                                :style="{ width: `${Math.min(100, (day.scheduled_minutes / Math.max(1, day.available_minutes + day.scheduled_minutes)) * 100)}%` }"
+                                data-testid="analytics-capacity-load"
+                            />
+                        </div>
+                        <span class="w-32 shrink-0 text-right text-xs" :class="day.status === 'overload' ? 'text-[#F53003]' : 'text-gray-500 dark:text-gray-400'">
+                            {{ minutesLabel(day.scheduled_minutes) }}{{ day.status === 'overload' ? ` / ${minutesLabel(day.overload_minutes)} overload` : '' }}
+                        </span>
+                    </li>
+                </ul>
+
+                <div v-if="analytics.capacityWeeks.length > 0" class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-2">
+                    <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Trend</div>
+                    <ul class="space-y-1">
+                        <li v-for="week in analytics.capacityWeeks" :key="week.week_start" class="flex items-center justify-between text-sm" data-testid="analytics-capacity-week">
+                            <span class="text-gray-600 dark:text-gray-400">Week of {{ week.week_start }}</span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ Math.round(week.realization * 100) }}% · {{ minutesLabel(week.completed_minutes) }} / {{ minutesLabel(week.planned_minutes) }}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+
+                <p v-if="analytics.capacityReason" class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-capacity-reason">
+                    {{ analytics.capacityReason }}
+                </p>
             </div>
 
             <div v-if="analytics.days.length > 0" class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-days">

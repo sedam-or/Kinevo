@@ -105,11 +105,38 @@ function overview(overrides: Partial<AnalyticsOverviewResponse> = {}): Analytics
             workload_completion: 4 / 6,
         },
         capacity: {
-            weeks: [],
-            average_realization: 0,
-            confidence: 'LOW',
-            recommendation: 'MAINTAIN',
-            reason: 'No eligible history; using baseline capacity with no aggressive adjustment.',
+            from: '2026-08-17',
+            to: '2026-08-20',
+            weeks: [
+                {
+                    week_start: '2026-08-03',
+                    planned_minutes: 500,
+                    completed_minutes: 400,
+                    realization: 0.8,
+                    tag: 'normal',
+                },
+            ],
+            days: [
+                {
+                    date: '2026-08-18',
+                    scheduled_minutes: 60,
+                    available_minutes: 240,
+                    overload_minutes: 0,
+                    status: 'ok',
+                },
+                {
+                    date: '2026-08-19',
+                    scheduled_minutes: 300,
+                    available_minutes: 120,
+                    overload_minutes: 180,
+                    status: 'overload',
+                },
+            ],
+            realization_ratio: 0.7,
+            average_realization: 0.8,
+            confidence: 'MEDIUM',
+            recommendation: 'BOOST_AVAILABLE',
+            reason: 'Average realization 80% exceeds 90% with no burnout signal; Boost/backlog fill available.',
             target_capacity_minutes: 1440,
         },
         activity: {
@@ -176,6 +203,20 @@ describe('AnalyticsView', () => {
         expect(wrapper.get('[data-testid="analytics-goal-health"]').text()).toBe('At risk 1 · Completed 1');
         expect(wrapper.get('[data-testid="analytics-program"]').text()).toContain('KRS');
         expect(wrapper.get('[data-testid="analytics-program"]').text()).toContain('75%');
+    });
+
+    it('renders the capacity section with overloaded days and trend', async () => {
+        const wrapper = mount(AnalyticsView);
+        await flushPromises();
+
+        const days = wrapper.findAll('[data-testid="analytics-capacity-day"]');
+        expect(days).toHaveLength(2);
+        expect(wrapper.get('[data-testid="analytics-capacity-summary"]').text()).toContain('70% realized');
+        expect(wrapper.get('[data-testid="analytics-capacity-summary"]').text()).toContain('1 overloaded days');
+        expect(wrapper.get('[data-testid="analytics-capacity-day"]').classes()).not.toContain('bg-red-500');
+        expect(days[1].find('[data-testid="analytics-capacity-load"]').classes()).toContain('bg-red-500');
+        expect(wrapper.findAll('[data-testid="analytics-capacity-week"]')).toHaveLength(1);
+        expect(wrapper.get('[data-testid="analytics-capacity-reason"]').text()).toContain('Boost');
     });
 
     it('switches period presets', async () => {

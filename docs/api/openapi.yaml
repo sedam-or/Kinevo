@@ -4005,13 +4005,28 @@ components:
         completed_minutes: {type: integer, minimum: 0}
         realization: {type: number, format: float, minimum: 0, maximum: 1}
         tag: {type: string, enum: [normal, emergency, break]}
+    CapacityDay:
+      type: object
+      required: [date, scheduled_minutes, available_minutes, overload_minutes, status]
+      properties:
+        date: {type: string, format: date}
+        scheduled_minutes: {type: integer, minimum: 0}
+        available_minutes: {type: integer, minimum: 0}
+        overload_minutes: {type: integer, minimum: 0}
+        status: {type: string, enum: [ok, overload]}
     CapacityAnalyticsResponse:
       type: object
-      required: [weeks, average_realization, confidence, recommendation, reason, target_capacity_minutes]
+      required: [from, to, weeks, days, realization_ratio, average_realization, confidence, recommendation, reason, target_capacity_minutes]
       properties:
+        from: {type: string, format: date}
+        to: {type: string, format: date}
         weeks:
           type: array
           items: {$ref: '#/components/schemas/CapacityWeek'}
+        days:
+          type: array
+          items: {$ref: '#/components/schemas/CapacityDay'}
+        realization_ratio: {type: number, format: float, minimum: 0, maximum: 1}
         average_realization: {type: number, format: float, minimum: 0, maximum: 1}
         confidence: {type: string, enum: [HIGH, MEDIUM, LOW]}
         recommendation: {type: string, enum: [MAINTAIN, REDUCE_LOAD, BOOST_AVAILABLE]}

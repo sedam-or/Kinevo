@@ -70,8 +70,20 @@ export interface TaskCompletionAnalyticsResponse {
     by_status: Record<string, number>;
 }
 
+export interface CapacityDay {
+    date: string;
+    scheduled_minutes: number;
+    available_minutes: number;
+    overload_minutes: number;
+    status: 'ok' | 'overload';
+}
+
 export interface CapacityAnalyticsResponse {
+    from: string;
+    to: string;
     weeks: { week_start: string; planned_minutes: number; completed_minutes: number; realization: number; tag: string }[];
+    days: CapacityDay[];
+    realization_ratio: number;
     average_realization: number;
     confidence: 'HIGH' | 'MEDIUM' | 'LOW';
     recommendation: 'MAINTAIN' | 'REDUCE_LOAD' | 'BOOST_AVAILABLE';

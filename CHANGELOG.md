@@ -14,6 +14,12 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added Capacity analytics (TASK-132): the Analytics view now renders a
+  capacity section — per-day scheduled load vs available capacity with overload
+  highlighting, the realization ratio, a weekly trend, and the effective-capacity
+  recommendation/reason from the Capacity feedback loop (reusing
+  `CapacityCalculator`). Per-day capacity uses the same primitives as the Today
+  view.
 - Added Goal Progress analytics (TASK-131): the Analytics view now renders a
   goal progress section from the overview read model — per-goal progress,
   milestone progression, program contribution, deadline health (on track / at

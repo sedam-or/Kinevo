@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { analyticsApi } from './api';
-import type { AnalyticsOverviewResponse, DeadlineHealth, GoalSummary, ProgramContribution, WorkLifeBand, WorkLifeDay } from './types';
+import type { AnalyticsOverviewResponse, CapacityDay, DeadlineHealth, GoalSummary, ProgramContribution, WorkLifeBand, WorkLifeDay } from './types';
 import type { ApiError } from '../api/types';
 
 export const useAnalyticsStore = defineStore('analytics', () => {
@@ -30,6 +30,13 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     });
     const programs = ref<ProgramContribution[]>([]);
 
+    const capacityDays = ref<CapacityDay[]>([]);
+    const capacityWeeks = ref<{ week_start: string; planned_minutes: number; completed_minutes: number; realization: number; tag: string }[]>([]);
+    const capacityRealization = ref(0);
+    const capacityRecommendation = ref('');
+    const capacityReason = ref('');
+    const capacityConfidence = ref('');
+
     const loading = ref(false);
     const error = ref<ApiError | null>(null);
 
@@ -54,6 +61,13 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         goalWorkloadCompletion.value = result.goal_progress.workload_completion;
         goalDeadlineHealth.value = result.goal_progress.deadline_health;
         programs.value = result.goal_progress.programs;
+
+        capacityDays.value = result.capacity.days;
+        capacityWeeks.value = result.capacity.weeks;
+        capacityRealization.value = result.capacity.realization_ratio;
+        capacityRecommendation.value = result.capacity.recommendation;
+        capacityReason.value = result.capacity.reason;
+        capacityConfidence.value = result.capacity.confidence;
 
         from.value = result.from;
         to.value = result.to;
@@ -88,6 +102,12 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         goalWorkloadCompletion.value = 0;
         goalDeadlineHealth.value = { completed: 0, on_track: 0, at_risk: 0, overdue: 0, no_deadline: 0 };
         programs.value = [];
+        capacityDays.value = [];
+        capacityWeeks.value = [];
+        capacityRealization.value = 0;
+        capacityRecommendation.value = '';
+        capacityReason.value = '';
+        capacityConfidence.value = '';
         from.value = '';
         to.value = '';
         error.value = null;
@@ -111,6 +131,12 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         goalWorkloadCompletion,
         goalDeadlineHealth,
         programs,
+        capacityDays,
+        capacityWeeks,
+        capacityRealization,
+        capacityRecommendation,
+        capacityReason,
+        capacityConfidence,
         loading,
         error,
         hasData,

@@ -2,6 +2,12 @@
 
 namespace Tests\Feature\Api;
 
+use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
+use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
+use App\Domain\Scheduling\HardLandscapeEvent;
+use App\Domain\Scheduling\ScheduleAssignment;
+use App\Domain\Scheduling\ValueObjects\HardLandscapeType;
+use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentSource;
 use App\Models\ActivityLog;
 use App\Models\FocusSession;
 use App\Models\Goal;
@@ -12,6 +18,7 @@ use App\Models\RechargeSession;
 use App\Models\Task;
 use App\Models\User;
 use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -207,7 +214,11 @@ class AnalyticsApiTest extends TestCase
             ->assertJsonPath('focus.total_minutes', 50)
             ->assertJsonPath('progress_events.total_events', 1)
             ->assertJsonPath('progress_events.by_type.milestone_completed', 1)
-            ->assertJsonPath('capacity', fn ($capacity) => is_array($capacity) && isset($capacity['recommendation']));
+            ->assertJsonPath('capacity.days.0.date', '2026-08-18')
+            ->assertJsonPath('capacity.days.0.scheduled_minutes', 0)
+            ->assertJsonPath('capacity.days.0.status', 'ok')
+            ->assertJsonPath('capacity.realization_ratio', fn ($v) => (float) $v === 0.0)
+            ->assertJsonPath('capacity.recommendation', fn ($v) => in_array($v, ['MAINTAIN', 'REDUCE_LOAD', 'BOOST_AVAILABLE'], true));
     }
 
     public function test_overview_classifies_goal_deadline_health(): void
@@ -231,6 +242,43 @@ class AnalyticsApiTest extends TestCase
             ->assertJsonPath('goal_progress.deadline_health.overdue', 1)
             ->assertJsonPath('goal_progress.goals.0.deadline_health', 'at_risk')
             ->assertJsonPath('goal_progress.goals.1.deadline_health', 'overdue');
+    }
+
+    public function test_overview_reports_scheduled_load_and_realization(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        $task = Task::query()->create([
+            'user_id' => $user->id, 'title' => 'Deep work', 'status' => 'scheduled',
+            'priority_tier' => 1, 'progress_mode' => 'derived', 'progress' => 0, 'version' => 1,
+        ]);
+        app(ScheduleAssignmentRepository::class)->create(ScheduleAssignment::create(
+            userId: $user->id,
+            taskId: $task->id,
+            date: CarbonImmutable::parse('2026-08-18'),
+            startAt: CarbonImmutable::parse('2026-08-18T09:00:00'),
+            endAt: CarbonImmutable::parse('2026-08-18T10:30:00'),
+            source: ScheduleAssignmentSource::draft(),
+            scheduleVersion: 1,
+        ));
+        app(HardLandscapeRepository::class)->create(
+            HardLandscapeEvent::create(
+                $user->id,
+                'All day blocked',
+                HardLandscapeType::oneTime(),
+                '2026-08-18T00:00:00',
+                '2026-08-19T00:00:00',
+            ),
+        );
+        $this->addFocusSession($user->id, '2026-08-18 10:30:00', 60);
+
+        $this->withToken($token)->getJson('/api/v1/analytics/overview?from=2026-08-18&to=2026-08-19')
+            ->assertOk()
+            ->assertJsonPath('capacity.days.0.scheduled_minutes', 90)
+            ->assertJsonPath('capacity.days.0.available_minutes', 0)
+            ->assertJsonPath('capacity.days.0.overload_minutes', 90)
+            ->assertJsonPath('capacity.days.0.status', 'overload')
+            ->assertJsonPath('capacity.realization_ratio', fn ($v) => abs((float) $v - 60 / 90) < 0.0001);
     }
 
     public function test_overview_scopes_read_models_by_user(): void

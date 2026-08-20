@@ -2375,24 +2375,27 @@ Committed: see git log (TASK-131 goal analytics surface, backend + frontend + ga
 
 # TASK-132 — Capacity Analytics
 
-Implement:
+Status: DONE
+
+Requirements: Phase 13 capacity analytics — available capacity, scheduled load, overload, effective capacity, realization ratio, and capacity trend, reusing `CapacityCalculator` rather than recreating the algorithm.
+
+Implementation:
 
 ```text
-available capacity
-scheduled load
-overload
-effective capacity
-realization ratio
-capacity trend
+scheduled load ...... per-day scheduled minutes from non-cancelled assignments (same primitives as the Today view)
+available capacity .. per-day empty-slot minutes via SlotCalculator (occupied events + Hard Landscape)
+overload ............ per-day overload = max(0, scheduled − available), flagged `overload`/`ok`
+effective capacity .. the Capacity feedback-loop estimate (CapacityCalculator reused, never recreated)
+realization ratio ... focus minutes ÷ scheduled minutes over the period
+capacity trend ...... weekly realization series (planned/completed per week, tag) from WeekCapacitySampleProvider
+UI ................... Analytics view renders a Capacity section (per-day load bars with overload highlighting, summary, weekly trend, and the feedback-loop recommendation/reason)
 ```
 
-Reuse:
+Verification evidence: `php artisan test` 766 passed (2270 assertions); PHPStan 0 errors; Pint clean; Vitest 335 passed (51 files); vue-tsc typecheck clean; `npm run build` OK; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 97 paths, changelog, version).
 
-```text
-CapacityCalculator
-```
+Changes: `GetCapacityAnalyticsUseCase` extended with per-day capacity (scheduled/available/overload via assignments + hard landscape + SlotCalculator), realization ratio, and the period range; `CapacityAnalytics` result gained `from`, `to`, `days`, `realization_ratio`; `docs/api/openapi.yaml` (CapacityDay + expanded CapacityAnalyticsResponse). Frontend: `analytics/types.ts` (CapacityDay), `analytics/store.ts` capacity fields, `analytics/AnalyticsView.vue` Capacity section. Tests: AnalyticsApiTest scheduled-load/overload case; AnalyticsView.test.ts capacity-section cases.
 
-rather than recreating the algorithm.
+Committed: see git log (TASK-132 capacity analytics surface, backend + frontend + gates).
 
 ---
 
