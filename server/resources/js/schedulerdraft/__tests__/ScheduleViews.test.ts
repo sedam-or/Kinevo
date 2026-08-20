@@ -15,10 +15,20 @@ vi.mock('../api', async (importOriginal) => {
     };
 });
 
+vi.mock('../../imports/api', () => ({
+    importApi: {
+        uploadKrs: vi.fn(),
+        get: vi.fn(),
+        confirm: vi.fn(),
+        discard: vi.fn(),
+    },
+}));
+
 import ScheduleDraftView from '../ScheduleDraftView.vue';
 import RescheduleView from '../RescheduleView.vue';
 import { useScheduleDraftStore } from '../store';
 import { scheduleDraftApi } from '../api';
+import { importApi } from '../../imports/api';
 
 beforeEach(() => {
     setActivePinia(createPinia());
@@ -125,5 +135,48 @@ describe('RescheduleView', () => {
         await flushPromises();
 
         expect(wrapper.find('[data-testid="reschedule-conflicts"]').exists()).toBe(true);
+    });
+});
+
+describe('KRS import', () => {
+    it('renders the upload and confirms a parsed preview', async () => {
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(ScheduleDraftView, { global: { plugins: [pinia] } });
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="krs-import"]').exists()).toBe(true);
+
+        vi.mocked(importApi.uploadKrs).mockResolvedValue({
+            import: {
+                id: 7,
+                filename: 'krs.pdf',
+                status: 'pending',
+                confidence: 0.5,
+                rows: [
+                    { day: 'senin', start_time: '07:30', end_time: '09:00', course: 'Matematika Ruang A', location: null },
+                ],
+                created_at: '2026-08-20T00:00:00+00:00',
+            },
+        });
+
+        const input = wrapper.find('[data-testid="krs-import-file"]');
+        Object.defineProperty(input.element, 'files', { value: [new File(['x'], 'krs.pdf')], configurable: true });
+        await input.trigger('change');
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="krs-import-preview"]').exists()).toBe(true);
+        expect(wrapper.findAll('[data-testid="krs-import-row"]')).toHaveLength(1);
+        expect(wrapper.get('[data-testid="krs-import-row"]').text()).toContain('Matematika Ruang A');
+
+        vi.mocked(importApi.confirm).mockResolvedValue({
+            import: { id: 7, filename: 'krs.pdf', status: 'confirmed', confidence: 0.5, rows: [], created_at: '2026-08-20T00:00:00+00:00' },
+        });
+        await wrapper.find('[data-testid="krs-import-confirm"]').trigger('click');
+        await flushPromises();
+
+        expect(importApi.confirm).toHaveBeenCalledWith(7);
+        expect(wrapper.get('[data-testid="krs-import-result"]').text()).toContain('confirmed');
     });
 });

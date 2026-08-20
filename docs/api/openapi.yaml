@@ -861,6 +861,111 @@ paths:
         '401': { description: Unauthorized }
         '404': { description: Attachment not found }
 
+  /imports/krs-pdf:
+    post:
+      tags: [Imports]
+      summary: Upload and stage a KRS PDF import (FR-24)
+      description: >
+        Accepts a KRS PDF (≤5 MB), parses the schedule into candidate rows, and
+        stores them in a pending staging state. Nothing is persisted to the
+        schedule until the user confirms the preview.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: Staged import (preview)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [import]
+                properties:
+                  import: {$ref: '#/components/schemas/KrsImport'}
+        '401': { description: Unauthorized }
+        '422': { description: Validation error (not PDF, oversized, unparseable) }
+  /imports/{importId}:
+    get:
+      tags: [Imports]
+      summary: Fetch a staged KRS import for preview (FR-24)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: importId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Staged import
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [import]
+                properties:
+                  import: {$ref: '#/components/schemas/KrsImport'}
+        '401': { description: Unauthorized }
+        '404': { description: Import not found }
+  /imports/{importId}/confirm:
+    post:
+      tags: [Imports]
+      summary: Confirm and persist a staged KRS import (FR-24)
+      description: >
+        Persists each parsed row as a weekly recurring Hard Landscape event in a
+        single transaction and marks the import confirmed. Never silently
+        overwrites an existing schedule.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: importId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Import confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [import]
+                properties:
+                  import: {$ref: '#/components/schemas/KrsImport'}
+        '401': { description: Unauthorized }
+        '422': { description: Not found or already resolved }
+  /imports/{importId}/discard:
+    post:
+      tags: [Imports]
+      summary: Discard a staged KRS import (FR-24)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: importId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Import discarded
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [import]
+                properties:
+                  import: {$ref: '#/components/schemas/KrsImport'}
+        '401': { description: Unauthorized }
+        '422': { description: Not found or already resolved }
+
   /goals:
     get:
       tags: [Goals]
@@ -3699,6 +3804,27 @@ components:
         allowed_mime:
           type: array
           items: {type: string}
+    KrsImportRow:
+      type: object
+      required: [day, start_time, end_time, course]
+      properties:
+        day: {type: string, example: senin}
+        start_time: {type: string, example: '07:30'}
+        end_time: {type: string, example: '09:00'}
+        course: {type: string}
+        location: {type: string, nullable: true}
+    KrsImport:
+      type: object
+      required: [id, filename, status, confidence, rows, created_at]
+      properties:
+        id: {type: integer}
+        filename: {type: string}
+        status: {type: string, enum: [pending, confirmed, discarded]}
+        confidence: {type: number, format: float, nullable: true}
+        rows:
+          type: array
+          items: {$ref: '#/components/schemas/KrsImportRow'}
+        created_at: {type: string, format: date-time}
     Goal:
       type: object
       required: [id, title, horizon, status, priority_tier]

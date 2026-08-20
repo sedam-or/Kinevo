@@ -16,6 +16,7 @@ Track every dependency or copied source component that creates redistribution ob
 | Laravel framework | `^13.17` (composer.lock) | MIT | https://github.com/laravel/framework | No | No | No | PHP backend framework |
 | Laravel Sanctum | `^4.3` (composer.lock) | MIT | https://github.com/laravel/sanctum | No | No | No | Bearer-token API auth |
 | Laravel Tinker | `^3.0` (composer.lock) | MIT | https://github.com/laravel/tinker | No | No | No | REPL for artisan |
+| smalot/pdfparser | `^2.12` (composer.lock) | MIT | https://github.com/smalot/pdfparser | No | No | No | Pure-PHP PDF text extraction for KRS import (TASK-141) |
 | Vue 3 + TypeScript | `vue@^3.5.41`, `typescript@^5.9.3` (package-lock) | MIT / Apache-2.0 | https://github.com/vuejs/core | No | No | No | Frontend framework (Vue MIT; TypeScript Apache-2.0) |
 | Inertia.js | pin at integration | MIT | https://github.com/inertiajs/inertia | No | No | No | Server-driven frontend bridge (not yet installed) |
 | Vite | `^8.0` (server/package.json) | MIT | https://github.com/vitejs/vite | No | No | No | Build tool |

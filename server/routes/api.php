@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\FocusSessionController;
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\HardLandscapeController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\ImportController;
 use App\Http\Controllers\Api\KnowledgeLinkController;
 use App\Http\Controllers\Api\KnowledgeSearchController;
 use App\Http\Controllers\Api\MilestoneController;
@@ -90,6 +91,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tasks/{taskId}/attachments', [AttachmentController::class, 'store']);
     Route::get('/tasks/{taskId}/attachments/{attachmentId}', [AttachmentController::class, 'show']);
     Route::delete('/tasks/{taskId}/attachments/{attachmentId}', [AttachmentController::class, 'destroy']);
+
+    // KRS PDF import (FR-24): stage → preview → confirm to persist Hard Landscape.
+    Route::post('/imports/krs-pdf', [ImportController::class, 'store']);
+    Route::get('/imports/{importId}', [ImportController::class, 'show']);
+    Route::post('/imports/{importId}/confirm', [ImportController::class, 'confirm']);
+    Route::post('/imports/{importId}/discard', [ImportController::class, 'discard']);
 
     Route::get('/logs', [ActivityLogController::class, 'index']);
     Route::post('/export', [ActivityLogController::class, 'export']);

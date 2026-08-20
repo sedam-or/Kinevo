@@ -109,6 +109,7 @@ Pillar analytics (4-pillar UI)         ✅ DONE (TASK-133)
 Activity heatmap (FR-31)               ✅ DONE (TASK-134)
 Work-Life analytics (comparison/trend) ✅ DONE (TASK-135)
 Task evidence attachments (FR-43)       ✅ DONE (TASK-140)
+KRS PDF import (FR-24)                  ✅ DONE (TASK-141)
 ```
 
 ### Evidence rule

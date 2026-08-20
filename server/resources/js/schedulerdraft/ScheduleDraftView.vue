@@ -3,6 +3,7 @@ import { onMounted, reactive, ref } from 'vue';
 import { useScheduleDraftStore } from './store';
 import { formatDate, formatTime } from './date';
 import SchedulerExplanation from '../visualstate/SchedulerExplanation.vue';
+import KrsImport from '../imports/KrsImport.vue';
 import { SCHEDULER_REASONS } from '../visualstate/explanation';
 
 const emit = defineEmits<{
@@ -128,6 +129,7 @@ function reasonLabel(reason: string): string {
             </section>
 
             <!-- Apply / Cancel -->
+            <!-- Apply / Cancel -->
             <div class="flex gap-2">
                 <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" :disabled="sd.busy" data-testid="draft-apply" @click="apply">
                     {{ sd.busy ? 'Applying…' : 'Apply Draft' }}
@@ -138,5 +140,8 @@ function reasonLabel(reason: string): string {
                 </button>
             </div>
         </template>
+
+        <!-- KRS PDF import (FR-24) -->
+        <KrsImport />
     </div>
 </template>

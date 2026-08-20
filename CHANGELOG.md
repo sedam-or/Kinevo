@@ -14,6 +14,12 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added KRS PDF import (TASK-141): the Schedule view can now upload a KRS PDF,
+  see a parsed preview (day/time/course with a confidence score), and confirm to
+  add each row as a weekly-recurring Hard Landscape event in one transaction —
+  never overwriting the existing schedule. Parsing failures fall back to manual
+  entry. Uses the `smalot/pdfparser` library for pure-PHP PDF text extraction
+  (recorded in the third-party license ledger).
 - Added task evidence attachments (TASK-140): completed tasks can now hold up
   to 3 evidence files (JPG/PNG/PDF, ≤5 MB each) with upload, list, download, and
   delete (`/tasks/{taskId}/attachments`, FR-43). Files are validated by detected

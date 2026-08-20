@@ -2517,23 +2517,27 @@ Committed: see git log (TASK-140 attachments, backend + frontend + gates).
 
 # TASK-141 — PDF KRS Import
 
-Implement:
+Status: DONE
+
+Requirements: FR-24 — accept a KRS PDF, parse the schedule, show a preview, and only create Hard Landscape after user confirmation; manual input is the mandatory fallback. Import must not silently overwrite an existing schedule; parse failure falls back to manual entry. New runtime dependency `smalot/pdfparser` (MIT) added for pure-PHP PDF text extraction (recorded in `docs/third-party/licenses.md`).
+
+Implementation:
 
 ```text
-upload
-validate
-parse
-preview
-confirm
-persist
-fallback manual entry
+upload ... POST /imports/krs-pdf (PDF, ≤5 MB); validate extension + size
+parse .... KrsPdfParser (smalot/pdfparser) extracts text; tolerant line parser maps day + HH:MM–HH:MM → day/time/course/location; confidence = fraction of understood lines
+staging .. rows stored in a pending `imports` record — nothing touches the schedule until confirmation
+preview .. GET /imports/{importId} returns the staged rows + confidence for the user to review
+confirm .. POST /imports/{importId}/confirm — in one transaction, each row becomes a weekly-recurring Hard Landscape event and the import is marked confirmed (never overwrites existing schedule)
+discard .. POST /imports/{importId}/discard resolves without persisting
+fallback . UI shows manual Hard Landscape entry is available when parsing fails (mandatory fallback)
 ```
 
-Important:
+Verification evidence: `php artisan test` 787 passed (2386 assertions); PHPStan 0 errors; Pint clean (559 files); Vitest 340 passed (51 files); vue-tsc typecheck clean; `npm run build` OK; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 106 paths, changelog, version).
 
-> PDF parser failure MUST NOT corrupt existing schedule/task data.
+Changes: composer dependency `smalot/pdfparser ^2.12` (added to `docs/third-party/licenses.md`); migration `2026_08_20_210000_create_imports_table.php`; `app/Domain/Imports/` (KrsImport entity with pending/confirmed/discarded, KrsImportRepository); `app/Models/Import.php`; `app/Infrastructure/Imports/EloquentKrsImportRepository.php`; `app/Application/Imports/` (KrsPdfParser, UploadKrsImportUseCase, GetKrsImportUseCase, ConfirmKrsImportUseCase with transactional Hard Landscape persistence, DiscardKrsImportUseCase); `ImportController` (store/show/confirm/discard); routes + AppServiceProvider binding; `docs/api/openapi.yaml` (/imports/krs-pdf, /imports/{id}, confirm, discard; KrsImportRow/KrsImport schemas). Frontend: `imports/types.ts`, `imports/api.ts`, `imports/KrsImport.vue` (upload, editable preview table, confirm/discard, manual-fallback note), embedded in `ScheduleDraftView`. Tests: `KrsImportApiTest` (6) + ScheduleViews.test.ts KRS import case.
 
-Use a staging transaction/state.
+Committed: see git log (TASK-141 PDF KRS import, backend + frontend + gates).
 
 ---
 
