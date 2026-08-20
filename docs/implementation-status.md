@@ -101,6 +101,7 @@ Mini Pause                            ✅ DONE (TASK-122)
 Emergency Pause                       ✅ DONE (TASK-123)
 Break Mode (incl. holiday-end notice)  ✅ DONE (TASK-124)
 Boost Mode (holiday target + 70% cap)  ✅ DONE (TASK-125)
+Work-Life Ratio analytics (analytics)  ✅ DONE (TASK-126)
 ```
 
 ### Evidence rule

@@ -14,6 +14,13 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Work-Life Ratio analytics (TASK-126): the Analytics view aggregates
+  the user's already-recorded productive (focus) and Recharge minutes over a
+  period and derives the normative WorkRatio/RechargeRatio (`GET
+  /analytics/work-life`, FR-05). The result is presented as a time-balance
+  indicator with a per-day series and a disclaimer — it is never framed as a
+  health diagnosis. The Recharge timer now derives its day ratio from the same
+  domain formula.
 - Added the Boost Mode (TASK-125): during a confirmed Break Mode period the
   Today view can set a holiday boost target as a percentage of daily capacity
   (`GET/POST /boost`), capped at the 70% safety limit with an explicit warning

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AdaptiveContextController;
 use App\Http\Controllers\Api\AiController;
+use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BoostController;
 use App\Http\Controllers\Api\BreakController;
@@ -192,6 +193,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/boost', [BoostController::class, 'index']);
     Route::post('/boost', [BoostController::class, 'store']);
     Route::post('/boost/end', [BoostController::class, 'end']);
+
+    // Analytics (Phase 13): consume already-generated data.
+    Route::get('/analytics/work-life', [AnalyticsController::class, 'workLife']);
 
     // Schedule Overrides (FR-25; SRS §7.1).
     Route::get('/schedule-overrides', [ScheduleOverrideController::class, 'index']);

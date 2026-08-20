@@ -2285,22 +2285,25 @@ Committed: see git log (TASK-125 full slice, backend + frontend + gates).
 
 # TASK-126 — Work-Life Ratio
 
-Implement the complete product pipeline:
+Status: DONE
+
+Requirements: FR-05 (postcondition: the Work-Life Ratio includes the recorded Recharge duration; Recharge is Recharge, never Productive Time) — the full pipeline from productive + recharge sessions through the normative WorkRatio/RechargeRatio to analytics. The ratio is presented as a time-balance indicator, never a health diagnosis.
+
+Implementation:
 
 ```text
-productive sessions
-+
-recharge sessions
-        ↓
-WorkRatio
-RechargeRatio
-        ↓
-analytics
+normative formula ... workRatio = productive / (productive + recharge); rechargeRatio = recharge / (productive + recharge) (single domain service reused by the Recharge status)
+aggregation ......... per-day productive (focus) + Recharge minutes over the requested range → totals + per-day series (analytics consumes already-generated data)
+read surface ........ GET /analytics/work-life?from=&to= (defaults: week of `to` / now); WorkLifeAnalyticsResponse with band + disclaimer
+reuse ............... GetRechargeStatusUseCase now derives its ratios from the same WorkLifeRatio service — no duplicated formula
+frontend surface .... Analytics view wired into the shell with 7d/30d/this-week/this-month presets, ratio summary + per-day bars + disclaimer
 ```
 
-Use the normative formula from the SRS.
+Verification evidence: `php artisan test` 762 passed (2223 assertions); Vitest 333 passed (51 files); PHPStan 0 errors; Pint clean; vue-tsc typecheck clean; `npm run build` OK; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 96 paths, changelog, version).
 
-Do not represent the ratio as a health diagnosis.
+Changes: `server/app/Domain/Analytics/WorkLifeRatio.php` (normative formula, descriptive band, disclaimer); `server/app/Application/Analytics/` (GetWorkLifeAnalyticsUseCase, WorkLifeAnalyticsResult); `AnalyticsController@workLife` (GET /analytics/work-life); `routes/api.php`; `GetRechargeStatusUseCase` refactored onto WorkLifeRatio; `docs/api/openapi.yaml` (/analytics/work-life, WorkLifeDay/WorkLifeAnalyticsResponse). Frontend: `analytics/types.ts`, `analytics/api.ts`, `analytics/store.ts`, `analytics/AnalyticsView.vue`, wired into `AuthHost`. Tests: `WorkLifeRatioTest` (5), `AnalyticsApiTest` (4), `AnalyticsView.test.ts` (5). Also fixed a latent UTC/local-date bug in `EmergencyPauseDialog.weekStart/addDays` (toISOString shifted the week range a day in UTC+ timezones).
+
+Committed: see git log (TASK-126 full slice, backend + frontend + gates).
 
 ---
 

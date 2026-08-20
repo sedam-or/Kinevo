@@ -79,19 +79,26 @@ const weekLabel = computed(() => {
     return `${start} – ${addDays(start, 6)}`;
 });
 
+function formatLocal(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
 function weekStart(date: string): string {
     const d = new Date(`${date}T00:00:00`);
     const day = d.getDay();
     const diff = day === 0 ? 6 : day - 1; // Monday start
     const monday = new Date(d);
     monday.setDate(d.getDate() - diff);
-    return monday.toISOString().slice(0, 10);
+    return formatLocal(monday);
 }
 
 function addDays(date: string, days: number): string {
     const d = new Date(`${date}T00:00:00`);
     d.setDate(d.getDate() + days);
-    return d.toISOString().slice(0, 10);
+    return formatLocal(d);
 }
 
 function toggleKeep(taskId: number): void {

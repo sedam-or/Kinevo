@@ -2,6 +2,7 @@
 
 namespace App\Application\Recharge;
 
+use App\Domain\Analytics\WorkLifeRatio;
 use App\Domain\Focus\Contracts\FocusSessionRepository;
 use App\Domain\Recharge\Contracts\RechargeSessionRepository;
 use Carbon\CarbonImmutable;
@@ -42,9 +43,7 @@ final readonly class GetRechargeStatusUseCase
         $rechargeMinutes = $this->recharges->sumCompletedMinutesBetween($userId, $start, $end);
         $productiveMinutes = $this->focusSessions->sumDurationMinutesBetween($userId, $start, $end);
 
-        $total = $productiveMinutes + $rechargeMinutes;
-        $workRatio = $total > 0 ? round($productiveMinutes / $total, 4) : 0.0;
-        $rechargeRatio = $total > 0 ? round($rechargeMinutes / $total, 4) : 0.0;
+        $ratio = WorkLifeRatio::fromMinutes($productiveMinutes, $rechargeMinutes);
 
         return [
             'recharge' => $active?->toArray($now),
@@ -54,8 +53,8 @@ final readonly class GetRechargeStatusUseCase
             'completed_recharges_today' => $completedRechargesToday,
             'recharge_minutes_today' => $rechargeMinutes,
             'productive_minutes_today' => $productiveMinutes,
-            'work_ratio' => $workRatio,
-            'recharge_ratio' => $rechargeRatio,
+            'work_ratio' => $ratio->workRatio,
+            'recharge_ratio' => $ratio->rechargeRatio,
         ];
     }
 }
