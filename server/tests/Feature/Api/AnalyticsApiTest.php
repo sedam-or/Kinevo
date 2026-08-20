@@ -155,7 +155,7 @@ class AnalyticsApiTest extends TestCase
             'status' => 'active', 'priority_tier' => 1,
         ]);
         Task::query()->create([
-            'user_id' => $user->id, 'program_id' => $program->id, 'title' => 'Program task',
+            'user_id' => $user->id, 'program_id' => $program->id, 'goal_id' => $goal->id, 'title' => 'Program task',
             'status' => 'completed', 'priority_tier' => 3, 'progress_mode' => 'derived', 'progress' => 100, 'version' => 1,
         ]);
 
@@ -193,6 +193,12 @@ class AnalyticsApiTest extends TestCase
             ->assertJsonPath('goal_progress.total_milestones', 1)
             ->assertJsonPath('goal_progress.completed_milestones', 1)
             ->assertJsonPath('goal_progress.programs.0.tasks_completed', 1)
+            ->assertJsonPath('goal_progress.programs.0.workload_completion', fn ($v) => (float) $v === 1.0)
+            ->assertJsonPath('goal_progress.goals.0.deadline_health', 'no_deadline')
+            ->assertJsonPath('goal_progress.deadline_health.completed', 1)
+            ->assertJsonPath('goal_progress.goal_tasks_total', 1)
+            ->assertJsonPath('goal_progress.goal_tasks_completed', 1)
+            ->assertJsonPath('goal_progress.workload_completion', fn ($v) => (float) $v === 1.0)
             ->assertJsonPath('work_life.productive_minutes', 50)
             ->assertJsonPath('work_life.recharge_minutes', 15)
             ->assertJsonPath('activity.total_events', 2)
@@ -202,6 +208,29 @@ class AnalyticsApiTest extends TestCase
             ->assertJsonPath('progress_events.total_events', 1)
             ->assertJsonPath('progress_events.by_type.milestone_completed', 1)
             ->assertJsonPath('capacity', fn ($capacity) => is_array($capacity) && isset($capacity['recommendation']));
+    }
+
+    public function test_overview_classifies_goal_deadline_health(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        Goal::query()->create([
+            'user_id' => $user->id, 'title' => 'At risk', 'horizon' => 'custom',
+            'start_date' => '2026-08-01', 'target_date' => '2026-08-30', 'status' => 'active',
+            'priority_tier' => 1, 'progress_mode' => 'derived', 'progress' => 10,
+        ]);
+        Goal::query()->create([
+            'user_id' => $user->id, 'title' => 'Overdue', 'horizon' => 'custom',
+            'start_date' => '2026-07-01', 'target_date' => '2026-08-10', 'status' => 'active',
+            'priority_tier' => 2, 'progress_mode' => 'derived', 'progress' => 50,
+        ]);
+
+        $this->withToken($token)->getJson('/api/v1/analytics/overview?from=2026-08-18&to=2026-08-19')
+            ->assertOk()
+            ->assertJsonPath('goal_progress.deadline_health.at_risk', 1)
+            ->assertJsonPath('goal_progress.deadline_health.overdue', 1)
+            ->assertJsonPath('goal_progress.goals.0.deadline_health', 'at_risk')
+            ->assertJsonPath('goal_progress.goals.1.deadline_health', 'overdue');
     }
 
     public function test_overview_scopes_read_models_by_user(): void

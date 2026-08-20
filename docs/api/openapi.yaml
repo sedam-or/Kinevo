@@ -3946,7 +3946,7 @@ components:
           additionalProperties: {type: integer, minimum: 0}
     GoalSummary:
       type: object
-      required: [id, title, status, progress, milestones_total, milestones_completed]
+      required: [id, title, status, progress, milestones_total, milestones_completed, tasks_total, tasks_completed, days_remaining, deadline_health]
       properties:
         id: {type: integer}
         title: {type: string}
@@ -3954,18 +3954,32 @@ components:
         progress: {type: integer, minimum: 0, maximum: 100}
         milestones_total: {type: integer, minimum: 0}
         milestones_completed: {type: integer, minimum: 0}
+        tasks_total: {type: integer, minimum: 0}
+        tasks_completed: {type: integer, minimum: 0}
+        days_remaining: {type: integer, nullable: true}
+        deadline_health: {type: string, enum: [completed, on_track, at_risk, overdue, no_deadline]}
     ProgramContribution:
       type: object
-      required: [id, name, status, tasks_total, tasks_completed]
+      required: [id, name, status, tasks_total, tasks_completed, workload_completion]
       properties:
         id: {type: integer}
         name: {type: string}
         status: {type: string}
         tasks_total: {type: integer, minimum: 0}
         tasks_completed: {type: integer, minimum: 0}
+        workload_completion: {type: number, format: float, minimum: 0, maximum: 1}
+    DeadlineHealthCounts:
+      type: object
+      required: [completed, on_track, at_risk, overdue, no_deadline]
+      properties:
+        completed: {type: integer, minimum: 0}
+        on_track: {type: integer, minimum: 0}
+        at_risk: {type: integer, minimum: 0}
+        overdue: {type: integer, minimum: 0}
+        no_deadline: {type: integer, minimum: 0}
     GoalProgressAnalyticsResponse:
       type: object
-      required: [total_goals, completed_goals, completion_rate, total_milestones, completed_milestones, goals, programs]
+      required: [total_goals, completed_goals, completion_rate, total_milestones, completed_milestones, goals, programs, deadline_health, goal_tasks_total, goal_tasks_completed, workload_completion]
       properties:
         total_goals: {type: integer, minimum: 0}
         completed_goals: {type: integer, minimum: 0}
@@ -3978,6 +3992,10 @@ components:
         programs:
           type: array
           items: {$ref: '#/components/schemas/ProgramContribution'}
+        deadline_health: {$ref: '#/components/schemas/DeadlineHealthCounts'}
+        goal_tasks_total: {type: integer, minimum: 0}
+        goal_tasks_completed: {type: integer, minimum: 0}
+        workload_completion: {type: number, format: float, minimum: 0, maximum: 1}
     CapacityWeek:
       type: object
       required: [week_start, planned_minutes, completed_minutes, realization, tag]

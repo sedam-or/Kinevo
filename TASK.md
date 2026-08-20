@@ -2350,15 +2350,26 @@ Committed: see git log (TASK-130 read-model layer, backend + gates).
 
 # TASK-131 — Goal Progress Analytics
 
-Implement:
+Status: DONE
+
+Requirements: Phase 13 goal analytics — goal completion, milestone progression, program contribution, deadline health, and workload completion, consumed from the TASK-130 read models (no business calculations in Vue).
+
+Implementation:
 
 ```text
-Goal completion
-Milestone progression
-Program contribution
-deadline health
-workload completion
+goal completion ...... total/completed/rate + per-goal progress bars (overview read model)
+milestone progression  milestones total/completed per goal and overall
+program contribution . per-program workload completion and task counts
+deadline health ...... per-goal timeline classification (completed/on_track/at_risk/overdue/no_deadline) with days remaining — a descriptive schedule indicator, not a health diagnosis
+workload completion . goal-linked and program task completion percentages
+UI ................... Analytics view now loads GET /analytics/overview and renders a Goal progress section (goals with progress bars, deadline labels, milestone/task counts, deadline-health summary, programs)
 ```
+
+Verification evidence: `php artisan test` 765 passed (2260 assertions); PHPStan 0 errors; Pint clean; Vitest 334 passed (51 files); vue-tsc typecheck clean; `npm run build` OK; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 97 paths, changelog, version).
+
+Changes: `GetGoalProgressAnalyticsUseCase` extended with deadline health (evaluated at the period end) + per-goal tasks + workload completion; `GoalProgressAnalytics` result gained `deadline_health`, `goal_tasks_*`, `workload_completion` and per-goal/program fields; `docs/api/openapi.yaml` schemas updated (GoalSummary, ProgramContribution, DeadlineHealthCounts, GoalProgressAnalyticsResponse). Frontend: `analytics/types.ts` overview types, `analytics/api.ts` `overview()`, `analytics/store.ts` goal fields, `analytics/AnalyticsView.vue` Goal progress section (consumes the read model). Tests: AnalyticsApiTest deadline-health classification case; AnalyticsView.test.ts goal-section cases.
+
+Committed: see git log (TASK-131 goal analytics surface, backend + frontend + gates).
 
 ---
 

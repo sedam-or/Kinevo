@@ -5,44 +5,134 @@ import { flushPromises, mount } from '@vue/test-utils';
 vi.mock('../api', () => ({
     analyticsApi: {
         workLife: vi.fn(),
+        overview: vi.fn(),
     },
 }));
 
 import AnalyticsView from '../AnalyticsView.vue';
 import { analyticsApi } from '../api';
-import type { WorkLifeAnalyticsResponse } from '../types';
+import type { AnalyticsOverviewResponse } from '../types';
 
-const mockedWorkLife = vi.mocked(analyticsApi.workLife);
+const mockedOverview = vi.mocked(analyticsApi.overview);
 
-function result(overrides: Partial<WorkLifeAnalyticsResponse> = {}): WorkLifeAnalyticsResponse {
+function overview(overrides: Partial<AnalyticsOverviewResponse> = {}): AnalyticsOverviewResponse {
     return {
         from: '2026-08-17',
         to: '2026-08-20',
-        productive_minutes: 75,
-        recharge_minutes: 15,
-        total_minutes: 90,
-        work_ratio: 75 / 90,
-        recharge_ratio: 15 / 90,
-        band: 'balanced',
-        days: [
-            {
-                date: '2026-08-18',
-                productive_minutes: 50,
-                recharge_minutes: 0,
-                work_ratio: 1,
-                recharge_ratio: 0,
-                band: 'work_leaning',
-            },
-            {
-                date: '2026-08-19',
-                productive_minutes: 25,
-                recharge_minutes: 15,
-                work_ratio: 25 / 40,
-                recharge_ratio: 15 / 40,
-                band: 'balanced',
-            },
-        ],
-        disclaimer: 'Time-balance indicator. Not a health diagnosis.',
+        work_life: {
+            from: '2026-08-17',
+            to: '2026-08-20',
+            productive_minutes: 75,
+            recharge_minutes: 15,
+            total_minutes: 90,
+            work_ratio: 75 / 90,
+            recharge_ratio: 15 / 90,
+            band: 'balanced',
+            days: [
+                {
+                    date: '2026-08-18',
+                    productive_minutes: 50,
+                    recharge_minutes: 0,
+                    work_ratio: 1,
+                    recharge_ratio: 0,
+                    band: 'work_leaning',
+                },
+                {
+                    date: '2026-08-19',
+                    productive_minutes: 25,
+                    recharge_minutes: 15,
+                    work_ratio: 25 / 40,
+                    recharge_ratio: 15 / 40,
+                    band: 'balanced',
+                },
+            ],
+            disclaimer: 'Time-balance indicator. Not a health diagnosis.',
+        },
+        task_completion: {
+            from: '2026-08-17',
+            to: '2026-08-20',
+            total_tasks: 3,
+            completed_tasks: 2,
+            completion_rate: 2 / 3,
+            completed_in_period: 1,
+            by_status: { completed: 2, scheduled: 1 },
+        },
+        goal_progress: {
+            total_goals: 2,
+            completed_goals: 1,
+            completion_rate: 0.5,
+            total_milestones: 1,
+            completed_milestones: 1,
+            goals: [
+                {
+                    id: 1,
+                    title: 'Skripsi',
+                    status: 'active',
+                    progress: 40,
+                    milestones_total: 2,
+                    milestones_completed: 1,
+                    tasks_total: 4,
+                    tasks_completed: 2,
+                    days_remaining: 12,
+                    deadline_health: 'at_risk',
+                },
+                {
+                    id: 2,
+                    title: 'Done goal',
+                    status: 'completed',
+                    progress: 100,
+                    milestones_total: 1,
+                    milestones_completed: 1,
+                    tasks_total: 2,
+                    tasks_completed: 2,
+                    days_remaining: null,
+                    deadline_health: 'completed',
+                },
+            ],
+            programs: [
+                {
+                    id: 1,
+                    name: 'KRS',
+                    status: 'active',
+                    tasks_total: 4,
+                    tasks_completed: 3,
+                    workload_completion: 0.75,
+                },
+            ],
+            deadline_health: { completed: 1, on_track: 0, at_risk: 1, overdue: 0, no_deadline: 0 },
+            goal_tasks_total: 6,
+            goal_tasks_completed: 4,
+            workload_completion: 4 / 6,
+        },
+        capacity: {
+            weeks: [],
+            average_realization: 0,
+            confidence: 'LOW',
+            recommendation: 'MAINTAIN',
+            reason: 'No eligible history; using baseline capacity with no aggressive adjustment.',
+            target_capacity_minutes: 1440,
+        },
+        activity: {
+            from: '2026-08-17',
+            to: '2026-08-20',
+            total_events: 2,
+            by_type: { task_completed: 1, task_started: 1 },
+            recent: [],
+        },
+        focus: {
+            from: '2026-08-17',
+            to: '2026-08-20',
+            total_sessions: 2,
+            total_minutes: 75,
+            days: [],
+        },
+        progress_events: {
+            from: '2026-08-17',
+            to: '2026-08-20',
+            total_events: 1,
+            by_type: { milestone_completed: 1 },
+            recent: [],
+        },
         ...overrides,
     };
 }
@@ -52,15 +142,15 @@ describe('AnalyticsView', () => {
         setActivePinia(createPinia());
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2026-08-20T12:00:00'));
-        mockedWorkLife.mockReset();
-        mockedWorkLife.mockResolvedValue(result());
+        mockedOverview.mockReset();
+        mockedOverview.mockResolvedValue(overview());
     });
 
     it('loads the default 7-day range on mount', async () => {
         mount(AnalyticsView);
         await flushPromises();
 
-        expect(mockedWorkLife).toHaveBeenCalledWith('2026-08-14', '2026-08-20');
+        expect(mockedOverview).toHaveBeenCalledWith('2026-08-14', '2026-08-20');
     });
 
     it('renders the ratio summary and disclaimer', async () => {
@@ -75,6 +165,19 @@ describe('AnalyticsView', () => {
         expect(wrapper.findAll('[data-testid="analytics-day"]')).toHaveLength(2);
     });
 
+    it('renders the goal progress section', async () => {
+        const wrapper = mount(AnalyticsView);
+        await flushPromises();
+
+        const goals = wrapper.findAll('[data-testid="analytics-goal"]');
+        expect(goals).toHaveLength(2);
+        expect(goals[0].text()).toContain('Skripsi');
+        expect(wrapper.get('[data-testid="analytics-goal-deadline"]').text()).toBe('At risk · 12d left');
+        expect(wrapper.get('[data-testid="analytics-goal-health"]').text()).toBe('At risk 1 · Completed 1');
+        expect(wrapper.get('[data-testid="analytics-program"]').text()).toContain('KRS');
+        expect(wrapper.get('[data-testid="analytics-program"]').text()).toContain('75%');
+    });
+
     it('switches period presets', async () => {
         const wrapper = mount(AnalyticsView);
         await flushPromises();
@@ -85,11 +188,13 @@ describe('AnalyticsView', () => {
         await buttons[3].trigger('click');
         await flushPromises();
 
-        expect(mockedWorkLife).toHaveBeenLastCalledWith('2026-08-01', '2026-08-20');
+        expect(mockedOverview).toHaveBeenLastCalledWith('2026-08-01', '2026-08-20');
     });
 
     it('shows an empty state without tracked time', async () => {
-        mockedWorkLife.mockResolvedValue(result({
+        const base = overview();
+        base.work_life = {
+            ...base.work_life,
             productive_minutes: 0,
             recharge_minutes: 0,
             total_minutes: 0,
@@ -97,7 +202,8 @@ describe('AnalyticsView', () => {
             recharge_ratio: 0,
             band: 'no_data',
             days: [],
-        }));
+        };
+        mockedOverview.mockResolvedValue(base);
 
         const wrapper = mount(AnalyticsView);
         await flushPromises();
@@ -107,7 +213,7 @@ describe('AnalyticsView', () => {
     });
 
     it('renders the error state on failure', async () => {
-        mockedWorkLife.mockRejectedValue({ message: 'Server error' });
+        mockedOverview.mockRejectedValue({ message: 'Server error' });
 
         const wrapper = mount(AnalyticsView);
         await flushPromises();

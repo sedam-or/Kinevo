@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useAnalyticsStore } from './store';
+import type { DeadlineHealth } from './types';
 import type { ApiError } from '../api/types';
 
 const analytics = useAnalyticsStore();
@@ -60,6 +61,35 @@ const bandLabel = computed(() => {
             return 'No data yet';
     }
 });
+
+const goalHealthLabel = computed(() => {
+    const h = analytics.goalDeadlineHealth;
+    const labelled: [DeadlineHealth, string][] = [
+        ['on_track', 'On track'],
+        ['at_risk', 'At risk'],
+        ['overdue', 'Overdue'],
+        ['completed', 'Completed'],
+    ];
+    return labelled
+        .filter(([key]) => h[key] > 0)
+        .map(([key, label]) => `${label} ${h[key]}`)
+        .join(' · ');
+});
+
+function deadlineLabel(health: DeadlineHealth, daysRemaining: number | null): string {
+    switch (health) {
+        case 'completed':
+            return 'Completed';
+        case 'overdue':
+            return `Overdue ${Math.abs(daysRemaining ?? 0)}d`;
+        case 'at_risk':
+            return `At risk · ${daysRemaining ?? 0}d left`;
+        case 'on_track':
+            return `On track · ${daysRemaining ?? 0}d left`;
+        default:
+            return 'No deadline';
+    }
+}
 
 function minutesLabel(minutes: number): string {
     if (minutes < 60) {
@@ -129,6 +159,52 @@ function run(fn: () => Promise<void>): void {
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-disclaimer">
                     {{ analytics.disclaimer }}
                 </p>
+            </div>
+
+            <div v-if="analytics.hasGoals" class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-goals">
+                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Goal progress</div>
+
+                <div class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm" data-testid="analytics-goal-summary">
+                    <span class="text-gray-600 dark:text-gray-400">
+                        {{ Math.round(analytics.goalCompletionRate * 100) }}% complete
+                    </span>
+                    <span v-if="goalHealthLabel" class="text-gray-500 dark:text-gray-400" data-testid="analytics-goal-health">{{ goalHealthLabel }}</span>
+                    <span class="text-gray-500 dark:text-gray-400">
+                        {{ analytics.goalCompletedMilestones }}/{{ analytics.goalTotalMilestones }} milestones
+                    </span>
+                    <span v-if="analytics.goalWorkloadCompletion > 0" class="text-gray-500 dark:text-gray-400">
+                        {{ Math.round(analytics.goalWorkloadCompletion * 100) }}% tasks completed
+                    </span>
+                </div>
+
+                <ul class="space-y-2">
+                    <li v-for="goal in analytics.goals" :key="goal.id" class="text-sm" data-testid="analytics-goal">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="truncate text-gray-700 dark:text-gray-300">{{ goal.title }}</span>
+                            <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-goal-deadline">
+                                {{ deadlineLabel(goal.deadline_health, goal.days_remaining) }}
+                            </span>
+                        </div>
+                        <div class="mt-1 flex h-2 w-full overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
+                            <div class="bg-[#F53003]" :style="{ width: `${goal.progress}%` }" data-testid="analytics-goal-bar" />
+                        </div>
+                        <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                            {{ goal.progress }}% · {{ goal.milestones_completed }}/{{ goal.milestones_total }} milestones · {{ goal.tasks_completed }}/{{ goal.tasks_total }} tasks
+                        </div>
+                    </li>
+                </ul>
+
+                <div v-if="analytics.programs.length > 0" class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-2">
+                    <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Programs</div>
+                    <ul class="space-y-1">
+                        <li v-for="program in analytics.programs" :key="program.id" class="flex items-center justify-between text-sm" data-testid="analytics-program">
+                            <span class="truncate text-gray-700 dark:text-gray-300">{{ program.name }}</span>
+                            <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                                {{ Math.round(program.workload_completion * 100) }}% · {{ program.tasks_completed }}/{{ program.tasks_total }}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
             </div>
 
             <div v-if="analytics.days.length > 0" class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-days">

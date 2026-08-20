@@ -65,7 +65,7 @@ final class AnalyticsController extends Controller
             'to' => $to->toDateString(),
             'work_life' => $this->workLife->__invoke($userId, $from, $to)->toArray(),
             'task_completion' => $this->taskCompletion->__invoke($userId, $from, $to)->toArray(),
-            'goal_progress' => $this->goalProgress->__invoke($userId)->toArray(),
+            'goal_progress' => $this->goalProgress->__invoke($userId, $to)->toArray(),
             'capacity' => $this->capacity->__invoke($userId, $to)->toArray(),
             'activity' => $this->activity->__invoke($userId, $from, $to)->toArray(),
             'focus' => $this->focus->__invoke($userId, $from, $to)->toArray(),

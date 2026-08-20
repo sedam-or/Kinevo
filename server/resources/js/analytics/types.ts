@@ -21,3 +21,96 @@ export interface WorkLifeAnalyticsResponse {
     days: WorkLifeDay[];
     disclaimer: string;
 }
+
+export type DeadlineHealth = 'completed' | 'on_track' | 'at_risk' | 'overdue' | 'no_deadline';
+
+export interface GoalSummary {
+    id: number;
+    title: string;
+    status: string;
+    progress: number;
+    milestones_total: number;
+    milestones_completed: number;
+    tasks_total: number;
+    tasks_completed: number;
+    days_remaining: number | null;
+    deadline_health: DeadlineHealth;
+}
+
+export interface ProgramContribution {
+    id: number;
+    name: string;
+    status: string;
+    tasks_total: number;
+    tasks_completed: number;
+    workload_completion: number;
+}
+
+export interface GoalProgressAnalyticsResponse {
+    total_goals: number;
+    completed_goals: number;
+    completion_rate: number;
+    total_milestones: number;
+    completed_milestones: number;
+    goals: GoalSummary[];
+    programs: ProgramContribution[];
+    deadline_health: Record<DeadlineHealth, number>;
+    goal_tasks_total: number;
+    goal_tasks_completed: number;
+    workload_completion: number;
+}
+
+export interface TaskCompletionAnalyticsResponse {
+    from: string;
+    to: string;
+    total_tasks: number;
+    completed_tasks: number;
+    completion_rate: number;
+    completed_in_period: number;
+    by_status: Record<string, number>;
+}
+
+export interface CapacityAnalyticsResponse {
+    weeks: { week_start: string; planned_minutes: number; completed_minutes: number; realization: number; tag: string }[];
+    average_realization: number;
+    confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+    recommendation: 'MAINTAIN' | 'REDUCE_LOAD' | 'BOOST_AVAILABLE';
+    reason: string;
+    target_capacity_minutes: number;
+}
+
+export interface ActivityAnalyticsResponse {
+    from: string;
+    to: string;
+    total_events: number;
+    by_type: Record<string, number>;
+    recent: { id: number | null; event_type: string; entity_type: string; entity_id: number; title: string | null; event_at: string }[];
+}
+
+export interface FocusAnalyticsResponse {
+    from: string;
+    to: string;
+    total_sessions: number;
+    total_minutes: number;
+    days: { date: string; sessions: number; minutes: number }[];
+}
+
+export interface ProgressEventsAnalyticsResponse {
+    from: string;
+    to: string;
+    total_events: number;
+    by_type: Record<string, number>;
+    recent: { id: number | null; event_type: string; entity_type: string; entity_id: number; title: string | null; occurred_at: string }[];
+}
+
+export interface AnalyticsOverviewResponse {
+    from: string;
+    to: string;
+    work_life: WorkLifeAnalyticsResponse;
+    task_completion: TaskCompletionAnalyticsResponse;
+    goal_progress: GoalProgressAnalyticsResponse;
+    capacity: CapacityAnalyticsResponse;
+    activity: ActivityAnalyticsResponse;
+    focus: FocusAnalyticsResponse;
+    progress_events: ProgressEventsAnalyticsResponse;
+}

@@ -14,6 +14,11 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added Goal Progress analytics (TASK-131): the Analytics view now renders a
+  goal progress section from the overview read model — per-goal progress,
+  milestone progression, program contribution, deadline health (on track / at
+  risk / overdue / completed, a descriptive schedule indicator), and workload
+  completion. The metrics are computed server-side; the view only renders them.
 - Added the Analytics read-model layer (TASK-130): a new `GET
   /analytics/overview` endpoint composes every read model for a period — task
   completion, goal progress and program contribution, capacity (reusing the
