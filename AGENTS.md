@@ -63,6 +63,19 @@ The agent MUST:
 - preserve migration safety;
 - report unresolved assumptions or failures honestly.
 
+### Pre-Commit Mandatory Verification Protocol
+Before executing `git commit`, the agent MUST run and ensure ALL of the
+following commands pass 100% without error:
+
+1. `npm audit` — dependency security check.
+2. `npm run typecheck` and `npm run build` — frontend typecheck and build.
+3. `./vendor/bin/phpstan analyse` and `composer test` (or `make test`) — PHP
+   static analysis and test suite.
+
+It is FORBIDDEN to commit if any of the steps above results in a failing
+status. If a step fails, fix the underlying issue first and re-run the full
+protocol until everything is green before committing.
+
 ### Agent modes
 #### Exploration mode
 Read, search, map dependencies, identify invariants. No broad edits.

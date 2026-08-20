@@ -38,5 +38,14 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-progress --prefer-dist
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
       - name: Composer security audit
         run: composer audit --format=plain --no-interaction
+
+      - name: NPM security audit
+        run: npm install --ignore-scripts && npm audit
