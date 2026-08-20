@@ -1,6 +1,6 @@
 <div align="center">
 
-![Kinevo](banner-kinevo.png)
+![Kinevo](./src/banner-kinevo.png)
 
 </div>
 
