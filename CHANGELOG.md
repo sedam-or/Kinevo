@@ -14,6 +14,11 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the activity heatmap (TASK-134): the Analytics view now renders an
+  annual activity heatmap (FR-31) with a per-day intensity grid derived from
+  productive time, recharge, task completion, and progress events. It includes a
+  color legend, optional pillar filtering (without mutating logs), and an
+  accessible list alternative with exact per-day values.
 - Added the four-pillar analytics (TASK-133): the Analytics view now renders a
   Life pillars section for exactly Karier, Kesehatan, Bahasa, Branding plus
   Uncategorized (FR-12). Each pillar shows completed task minutes in the period

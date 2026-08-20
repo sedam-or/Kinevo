@@ -67,6 +67,7 @@ class AnalyticsApiTest extends TestCase
         $this->getJson('/api/v1/analytics/work-life')->assertStatus(401);
         $this->getJson('/api/v1/analytics/overview')->assertStatus(401);
         $this->getJson('/api/v1/analytics/pillars')->assertStatus(401);
+        $this->getJson('/api/v1/analytics/heatmap')->assertStatus(401);
     }
 
     public function test_work_life_aggregates_productive_and_recharge_minutes(): void
@@ -350,5 +351,79 @@ class AnalyticsApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('pillars.pillars.0.key', 'karier')
             ->assertJsonCount(5, 'pillars.pillars');
+    }
+
+    public function test_heatmap_reports_daily_intensity_and_zero_days(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        $task = Task::query()->create([
+            'user_id' => $user->id, 'title' => 'Work', 'status' => 'completed',
+            'priority_tier' => 1, 'progress_mode' => 'derived', 'progress' => 100,
+            'estimated_minutes' => 50, 'version' => 1,
+        ]);
+        $this->addFocusSession($user->id, '2026-08-18 10:50:00', 50);
+        $this->addRecharge($user->id, '2026-08-18 11:20:00', 15);
+        ProgressEvent::query()->create([
+            'user_id' => $user->id, 'event_type' => 'task_completed', 'entity_type' => 'task',
+            'entity_id' => $task->id, 'title' => 'Work', 'occurred_at' => '2026-08-18 10:55:00',
+            'operation_id' => 'op-heat-1', 'payload' => [],
+        ]);
+
+        $this->withToken($token)->getJson('/api/v1/analytics/heatmap?from=2026-08-18&to=2026-08-19')
+            ->assertOk()
+            ->assertJsonPath('pillar', null)
+            ->assertJsonCount(5, 'legend')
+            ->assertJsonPath('days.0.date', '2026-08-18')
+            ->assertJsonPath('days.0.productive_minutes', 50)
+            ->assertJsonPath('days.0.recharge_minutes', 15)
+            ->assertJsonPath('days.0.completion_count', 1)
+            ->assertJsonPath('days.0.progress_events', 1)
+            ->assertJsonPath('days.0.intensity', 2)
+            ->assertJsonPath('days.1.date', '2026-08-19')
+            ->assertJsonPath('days.1.intensity', 0)
+            ->assertJsonPath('days.1.productive_minutes', 0);
+    }
+
+    public function test_heatmap_pillar_filter_changes_dataset_without_mutating_logs(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        $program = Program::query()->create([
+            'user_id' => $user->id, 'name' => 'Karier program', 'category' => 'karier',
+            'workload_type' => 'flexible', 'status' => 'active', 'priority_tier' => 1,
+        ]);
+        $karierTask = Task::query()->create([
+            'user_id' => $user->id, 'program_id' => $program->id, 'title' => 'Career',
+            'status' => 'completed', 'priority_tier' => 1, 'progress_mode' => 'derived',
+            'progress' => 100, 'estimated_minutes' => 60, 'version' => 1,
+        ]);
+        $otherTask = Task::query()->create([
+            'user_id' => $user->id, 'title' => 'Uncategorized', 'status' => 'completed',
+            'priority_tier' => 2, 'progress_mode' => 'derived', 'progress' => 100,
+            'estimated_minutes' => 60, 'version' => 1,
+        ]);
+
+        foreach (['op-hp-1' => $karierTask->id, 'op-hp-2' => $otherTask->id] as $op => $taskId) {
+            ProgressEvent::query()->create([
+                'user_id' => $user->id, 'event_type' => 'task_completed', 'entity_type' => 'task',
+                'entity_id' => $taskId, 'title' => 'T', 'occurred_at' => '2026-08-18 09:00:00',
+                'operation_id' => $op, 'payload' => [],
+            ]);
+        }
+
+        $this->withToken($token)->getJson('/api/v1/analytics/heatmap?from=2026-08-18&to=2026-08-18&pillar=karier')
+            ->assertOk()
+            ->assertJsonPath('pillar', 'karier')
+            ->assertJsonPath('days.0.completion_count', 1);
+
+        $this->withToken($token)->getJson('/api/v1/analytics/heatmap?from=2026-08-18&to=2026-08-18&pillar=uncategorized')
+            ->assertOk()
+            ->assertJsonPath('pillar', 'uncategorized')
+            ->assertJsonPath('days.0.completion_count', 1);
+
+        $this->withToken($token)->getJson('/api/v1/analytics/heatmap?from=2026-08-18&to=2026-08-18')
+            ->assertOk()
+            ->assertJsonPath('days.0.completion_count', 2);
     }
 }

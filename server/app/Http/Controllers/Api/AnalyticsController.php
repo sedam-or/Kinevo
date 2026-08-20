@@ -6,10 +6,12 @@ use App\Application\Analytics\GetActivityAnalyticsUseCase;
 use App\Application\Analytics\GetCapacityAnalyticsUseCase;
 use App\Application\Analytics\GetFocusAnalyticsUseCase;
 use App\Application\Analytics\GetGoalProgressAnalyticsUseCase;
+use App\Application\Analytics\GetHeatmapAnalyticsUseCase;
 use App\Application\Analytics\GetPillarAnalyticsUseCase;
 use App\Application\Analytics\GetProgressEventsAnalyticsUseCase;
 use App\Application\Analytics\GetTaskCompletionAnalyticsUseCase;
 use App\Application\Analytics\GetWorkLifeAnalyticsUseCase;
+use App\Domain\Analytics\Pillar;
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -32,6 +34,7 @@ final class AnalyticsController extends Controller
         private readonly GetFocusAnalyticsUseCase $focus,
         private readonly GetProgressEventsAnalyticsUseCase $progressEvents,
         private readonly GetPillarAnalyticsUseCase $pillars,
+        private readonly GetHeatmapAnalyticsUseCase $heatmap,
     ) {}
 
     /**
@@ -89,6 +92,44 @@ final class AnalyticsController extends Controller
         [$userId, $from, $to] = $parsed;
 
         return response()->json($this->pillars->__invoke($userId, $from, $to)->toArray(), 200);
+    }
+
+    /**
+     * Annual activity heatmap (FR-31, TASK-134): daily intensity from
+     * completion/recharge/productive/progress, optionally filtered to a pillar.
+     */
+    public function heatmap(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->query(), [
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+            'pillar' => ['nullable', 'string', 'in:karier,kesehatan,bahasa,branding,uncategorized'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $validated = $validator->validated();
+        $userId = $request->user()->id;
+
+        $to = isset($validated['to'])
+            ? CarbonImmutable::parse($validated['to'])
+            : CarbonImmutable::now();
+        $from = isset($validated['from'])
+            ? CarbonImmutable::parse($validated['from'])
+            : $to->subDays(364); // default: trailing year
+
+        if ($from->gt($to)) {
+            return response()->json(['error' => 'from cannot be after to.'], 422);
+        }
+
+        $pillar = isset($validated['pillar']) ? new Pillar($validated['pillar']) : null;
+
+        return response()->json(
+            $this->heatmap->__invoke($userId, $from, $to, $pillar)->toArray(),
+            200,
+        );
     }
 
     /**

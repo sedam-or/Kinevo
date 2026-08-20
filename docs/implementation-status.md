@@ -106,6 +106,7 @@ Analytics read models (overview API)   ✅ DONE (TASK-130)
 Goal Progress analytics (UI + health)  ✅ DONE (TASK-131)
 Capacity analytics (UI + trend)        ✅ DONE (TASK-132)
 Pillar analytics (4-pillar UI)         ✅ DONE (TASK-133)
+Activity heatmap (FR-31)               ✅ DONE (TASK-134)
 ```
 
 ### Evidence rule

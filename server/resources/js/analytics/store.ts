@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { analyticsApi } from './api';
-import type { AnalyticsOverviewResponse, CapacityDay, DeadlineHealth, GoalSummary, PillarRow, ProgramContribution, WorkLifeBand, WorkLifeDay } from './types';
+import type { AnalyticsOverviewResponse, CapacityDay, DeadlineHealth, GoalSummary, HeatmapDay, HeatmapLegendItem, PillarKey, PillarRow, ProgramContribution, WorkLifeBand, WorkLifeDay } from './types';
 import type { ApiError } from '../api/types';
 
 export const useAnalyticsStore = defineStore('analytics', () => {
@@ -38,6 +38,12 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     const capacityConfidence = ref('');
 
     const pillars = ref<PillarRow[]>([]);
+
+    const heatmapDays = ref<HeatmapDay[]>([]);
+    const heatmapLegend = ref<HeatmapLegendItem[]>([]);
+    const heatmapPillar = ref<PillarKey | null>(null);
+    const heatmapLoading = ref(false);
+    const heatmapError = ref<ApiError | null>(null);
 
     const loading = ref(false);
     const error = ref<ApiError | null>(null);
@@ -90,6 +96,21 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         }
     }
 
+    async function loadHeatmap(fromDate: string, toDate: string, pillar?: PillarKey): Promise<void> {
+        heatmapLoading.value = true;
+        heatmapError.value = null;
+        try {
+            const result = await analyticsApi.heatmap(fromDate, toDate, pillar ?? undefined);
+            heatmapDays.value = result.days;
+            heatmapLegend.value = result.legend;
+            heatmapPillar.value = result.pillar;
+        } catch (err) {
+            heatmapError.value = err as ApiError;
+        } finally {
+            heatmapLoading.value = false;
+        }
+    }
+
     function clear(): void {
         days.value = [];
         productiveMinutes.value = 0;
@@ -113,6 +134,10 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         capacityReason.value = '';
         capacityConfidence.value = '';
         pillars.value = [];
+        heatmapDays.value = [];
+        heatmapLegend.value = [];
+        heatmapPillar.value = null;
+        heatmapError.value = null;
         from.value = '';
         to.value = '';
         error.value = null;
@@ -143,11 +168,17 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         capacityReason,
         capacityConfidence,
         pillars,
+        heatmapDays,
+        heatmapLegend,
+        heatmapPillar,
+        heatmapLoading,
+        heatmapError,
         loading,
         error,
         hasData,
         hasGoals,
         load,
+        loadHeatmap,
         clear,
     };
 });

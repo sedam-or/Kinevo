@@ -131,6 +131,29 @@ export interface PillarAnalyticsResponse {
     pillars: PillarRow[];
 }
 
+export interface HeatmapDay {
+    date: string;
+    productive_minutes: number;
+    recharge_minutes: number;
+    completion_count: number;
+    progress_events: number;
+    intensity: number;
+}
+
+export interface HeatmapLegendItem {
+    level: number;
+    label: string;
+    description: string;
+}
+
+export interface HeatmapAnalyticsResponse {
+    from: string;
+    to: string;
+    pillar: PillarKey | null;
+    days: HeatmapDay[];
+    legend: HeatmapLegendItem[];
+}
+
 export interface AnalyticsOverviewResponse {
     from: string;
     to: string;

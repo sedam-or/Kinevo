@@ -2427,17 +2427,30 @@ Committed: see git log (TASK-133 pillar analytics, backend + frontend + gates).
 
 # TASK-134 — Heatmap
 
-Implement:
+Status: DONE
+
+Requirements: FR-31 (Annual Heatmap) — per-day activity intensity from completion and recharge (plus productive time and progress events), with pillar filtering, an understandable legend, and accessible alternatives. Metric definition is stable within a report version; missing dates report zero with an accessible label.
+
+Implementation:
 
 ```text
-date
-productive time
-recharge
-completion
-progress
+date ................ per-day series over the selected range
+productive time ..... focus minutes per day
+recharge ............ recharge minutes per day
+completion .......... task completions per day (task_completed progress events)
+progress ............ progress events per day
+intensity ........... fixed, documented metric: score = productive + recharge + completion*30 + progress*10 → 0..4 (stable within a report version, FR-31 Business Rules)
+pillar filter ....... optional pillar restricts the completion/progress dataset without mutating logs (FR-31 AC)
+legend .............. level labels (None/Low/Medium/High/Very high) rendered as a color scale
+accessible alt ...... per-cell aria-label/title with exact values + a collapsible text list of every day
+read surface ........ GET /analytics/heatmap?from=&to=&pillar= (default: trailing year of `to`)
 ```
 
-with understandable legends and accessible alternatives.
+Verification evidence: `php artisan test` 770 passed (2304 assertions); PHPStan 0 errors; Pint clean; Vitest 338 passed (51 files); vue-tsc typecheck clean; `npm run build` OK; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 98 paths, changelog, version).
+
+Changes: `GetHeatmapAnalyticsUseCase`; `HeatmapAnalytics` result; `AnalyticsController@heatmap` (GET /analytics/heatmap with optional pillar filter); `routes/api.php`; `docs/api/openapi.yaml` (HeatmapDay/HeatmapLegend/HeatmapAnalyticsResponse + /analytics/heatmap). Frontend: `analytics/types.ts` (HeatmapDay/PillarKey/HeatmapAnalyticsResponse), `analytics/api.ts` `heatmap()`, `analytics/store.ts` heatmap fields + `loadHeatmap`, `analytics/AnalyticsView.vue` Activity heatmap section (weekly grid, range presets, pillar filter, legend, accessible list). Tests: AnalyticsApiTest heatmap intensity/zero-days + pillar filter (2); AnalyticsView.test.ts heatmap section (2).
+
+Committed: see git log (TASK-134 heatmap, backend + frontend + gates).
 
 ---
 

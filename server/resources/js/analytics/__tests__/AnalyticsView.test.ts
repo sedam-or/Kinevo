@@ -6,6 +6,7 @@ vi.mock('../api', () => ({
     analyticsApi: {
         workLife: vi.fn(),
         overview: vi.fn(),
+        heatmap: vi.fn(),
     },
 }));
 
@@ -14,6 +15,7 @@ import { analyticsApi } from '../api';
 import type { AnalyticsOverviewResponse } from '../types';
 
 const mockedOverview = vi.mocked(analyticsApi.overview);
+const mockedHeatmap = vi.mocked(analyticsApi.heatmap);
 
 function overview(overrides: Partial<AnalyticsOverviewResponse> = {}): AnalyticsOverviewResponse {
     return {
@@ -182,6 +184,23 @@ describe('AnalyticsView', () => {
         vi.setSystemTime(new Date('2026-08-20T12:00:00'));
         mockedOverview.mockReset();
         mockedOverview.mockResolvedValue(overview());
+        mockedHeatmap.mockReset();
+        mockedHeatmap.mockResolvedValue({
+            from: '2026-02-20',
+            to: '2026-08-20',
+            pillar: null,
+            days: [
+                { date: '2026-08-18', productive_minutes: 50, recharge_minutes: 15, completion_count: 1, progress_events: 1, intensity: 2 },
+                { date: '2026-08-19', productive_minutes: 0, recharge_minutes: 0, completion_count: 0, progress_events: 0, intensity: 0 },
+            ],
+            legend: [
+                { level: 0, label: 'None', description: 'No tracked activity' },
+                { level: 1, label: 'Low', description: 'A little activity' },
+                { level: 2, label: 'Medium', description: 'Moderate activity' },
+                { level: 3, label: 'High', description: 'High activity' },
+                { level: 4, label: 'Very high', description: 'Very high activity' },
+            ],
+        });
     });
 
     it('loads the default 7-day range on mount', async () => {
@@ -285,5 +304,34 @@ describe('AnalyticsView', () => {
         await flushPromises();
 
         expect(wrapper.get('[data-testid="analytics-error"]').text()).toBe('Server error');
+    });
+
+    it('renders the activity heatmap with legend and accessible list', async () => {
+        const wrapper = mount(AnalyticsView);
+        await flushPromises();
+
+        expect(mockedHeatmap).toHaveBeenCalled();
+        expect(wrapper.find('[data-testid="analytics-heatmap-grid"]').exists()).toBe(true);
+        expect(wrapper.findAll('[data-testid="analytics-heatmap-cell"]').length).toBeGreaterThan(0);
+        expect(wrapper.findAll('[data-testid="analytics-heatmap-cell"]').some((c) => c.attributes('aria-label')?.includes('2026-08-18'))).toBe(true);
+        expect(wrapper.get('[data-testid="analytics-heatmap-legend"]').text()).toContain('Medium');
+
+        await wrapper.get('[data-testid="analytics-heatmap-list-toggle"]').trigger('click');
+        expect(wrapper.findAll('[data-testid="analytics-heatmap-list"] li').length).toBe(2);
+    });
+
+    it('filters the heatmap by pillar', async () => {
+        const wrapper = mount(AnalyticsView);
+        await flushPromises();
+
+        const select = wrapper.get('[data-testid="analytics-heatmap-pillar"]');
+        await select.setValue('karier');
+        await flushPromises();
+
+        expect(mockedHeatmap).toHaveBeenLastCalledWith(
+            expect.stringMatching(/^2026-/),
+            expect.stringMatching(/^2026-/),
+            'karier',
+        );
     });
 });

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useAnalyticsStore } from './store';
-import type { DeadlineHealth } from './types';
+import type { DeadlineHealth, PillarKey } from './types';
 import type { ApiError } from '../api/types';
 
 const analytics = useAnalyticsStore();
@@ -16,6 +16,33 @@ const presets: { key: RangePreset; label: string }[] = [
 ];
 
 const activePreset = ref<RangePreset>('7d');
+
+const heatmapRanges: { key: '3m' | '6m' | 'year'; label: string }[] = [
+    { key: '3m', label: '3 months' },
+    { key: '6m', label: '6 months' },
+    { key: 'year', label: 'This year' },
+];
+
+const activeHeatmapRange = ref<'3m' | '6m' | 'year'>('6m');
+const heatmapPillarFilter = ref<PillarKey | ''>('');
+
+const pillarOptions: { key: PillarKey; label: string }[] = [
+    { key: 'karier', label: 'Karier' },
+    { key: 'kesehatan', label: 'Kesehatan' },
+    { key: 'bahasa', label: 'Bahasa' },
+    { key: 'branding', label: 'Branding' },
+    { key: 'uncategorized', label: 'Uncategorized' },
+];
+
+const heatmapColor = computed(() => [
+    'bg-gray-200 dark:bg-gray-700',
+    'bg-orange-100 dark:bg-orange-900/40',
+    'bg-orange-300 dark:bg-orange-700',
+    'bg-[#F53003]/70',
+    'bg-[#F53003]',
+]);
+
+const showHeatmapList = ref(false);
 
 function formatDate(d: Date): string {
     const y = d.getFullYear();
@@ -118,8 +145,63 @@ function minutesLabel(minutes: number): string {
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
+function heatmapRangeFor(key: '3m' | '6m' | 'year'): { from: string; to: string } {
+    const to = new Date();
+    const from = new Date();
+    if (key === '3m') {
+        from.setMonth(to.getMonth() - 3);
+    } else if (key === '6m') {
+        from.setMonth(to.getMonth() - 6);
+    } else {
+        from.setMonth(0);
+        from.setDate(1);
+    }
+    return { from: formatDate(from), to: formatDate(to) };
+}
+
+async function loadHeatmap(): Promise<void> {
+    const { from, to } = heatmapRangeFor(activeHeatmapRange.value);
+    await analytics.loadHeatmap(from, to, heatmapPillarFilter.value || undefined);
+}
+
+function heatmapDayLabel(day: { date: string; productive_minutes: number; recharge_minutes: number; completion_count: number; progress_events: number; intensity: number }): string {
+    const p = minutesLabel(day.productive_minutes);
+    const r = minutesLabel(day.recharge_minutes);
+    return `${day.date}: ${p} focus, ${r} recharge, ${day.completion_count} completed, ${day.progress_events} progress events`;
+}
+
+function heatmapWeeks(): { weekStart: string; days: typeof analytics.heatmapDays }[] {
+    const weeks: { weekStart: string; days: typeof analytics.heatmapDays }[] = [];
+    const byDay = new Map<string, typeof analytics.heatmapDays[number]>();
+    for (const day of analytics.heatmapDays) {
+        byDay.set(day.date, day);
+    }
+    if (analytics.heatmapDays.length === 0) {
+        return weeks;
+    }
+    const from = new Date(`${analytics.heatmapDays[0].date}T00:00:00`);
+    const to = new Date(`${analytics.heatmapDays[analytics.heatmapDays.length - 1].date}T00:00:00`);
+    const cursor = new Date(from);
+    cursor.setDate(cursor.getDate() - ((cursor.getDay() + 6) % 7)); // align to Monday
+    while (cursor <= to) {
+        const days: typeof analytics.heatmapDays = [];
+        for (let i = 0; i < 7; i++) {
+            const d = formatDate(cursor);
+            days.push(byDay.get(d) ?? { date: d, productive_minutes: 0, recharge_minutes: 0, completion_count: 0, progress_events: 0, intensity: 0 });
+            cursor.setDate(cursor.getDate() + 1);
+        }
+        weeks.push({ weekStart: days[0].date, days });
+    }
+    return weeks;
+}
+
 onMounted(() => {
     void load(activePreset.value);
+    void loadHeatmap();
+});
+
+watch([activeHeatmapRange, heatmapPillarFilter], () => {
+    void loadHeatmap();
 });
 
 onUnmounted(() => {
@@ -296,6 +378,85 @@ function run(fn: () => Promise<void>): void {
                         </div>
                     </li>
                 </ul>
+            </div>
+
+            <div class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-heatmap">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Activity heatmap</div>
+                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                        <div class="flex gap-1">
+                            <button
+                                v-for="range in heatmapRanges"
+                                :key="range.key"
+                                type="button"
+                                class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-0.5 text-xs"
+                                :class="activeHeatmapRange === range.key ? 'bg-gray-200 dark:bg-gray-700' : ''"
+                                data-testid="analytics-heatmap-range"
+                                @click="activeHeatmapRange = range.key"
+                            >
+                                {{ range.label }}
+                            </button>
+                        </div>
+                        <label class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                            Pillar
+                            <select
+                                v-model="heatmapPillarFilter"
+                                class="border border-gray-300 dark:border-gray-600 rounded-sm px-1 py-0.5 text-xs bg-transparent"
+                                data-testid="analytics-heatmap-pillar"
+                            >
+                                <option value="">All</option>
+                                <option v-for="option in pillarOptions" :key="option.key" :value="option.key">{{ option.label }}</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+
+                <div v-if="analytics.heatmapLoading" class="text-sm text-gray-500 dark:text-gray-400" data-testid="analytics-heatmap-loading">
+                    Loading…
+                </div>
+                <div v-else-if="analytics.heatmapError" class="text-sm text-[#F53003]" role="alert" data-testid="analytics-heatmap-error">
+                    {{ (analytics.heatmapError as ApiError).message }}
+                </div>
+                <div v-else>
+                    <div class="overflow-x-auto">
+                        <div class="inline-flex flex-col gap-1" data-testid="analytics-heatmap-grid">
+                            <div v-for="week in heatmapWeeks()" :key="week.weekStart" class="flex gap-1" data-testid="analytics-heatmap-week">
+                                <span class="w-8 shrink-0 text-[10px] text-gray-400" />
+                                <button
+                                    v-for="day in week.days"
+                                    :key="day.date"
+                                    type="button"
+                                    class="h-3.5 w-3.5 rounded-sm"
+                                    :class="heatmapColor[day.intensity]"
+                                    :aria-label="heatmapDayLabel(day)"
+                                    :title="heatmapDayLabel(day)"
+                                    data-testid="analytics-heatmap-cell"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-2 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-heatmap-legend">
+                        <span>Less</span>
+                        <span v-for="item in analytics.heatmapLegend" :key="item.level" class="h-3 w-3 rounded-sm" :class="heatmapColor[item.level]" :title="item.label" />
+                        <span>More</span>
+                        <span class="ml-1 text-gray-400">{{ analytics.heatmapLegend.filter((i) => i.level > 0).map((i) => i.label).join(' · ') }}</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="mt-2 text-xs underline text-gray-500 dark:text-gray-400"
+                        data-testid="analytics-heatmap-list-toggle"
+                        @click="showHeatmapList = !showHeatmapList"
+                    >
+                        {{ showHeatmapList ? 'Hide' : 'Show' }} list view (accessible)
+                    </button>
+                    <ul v-if="showHeatmapList" class="mt-2 space-y-1" data-testid="analytics-heatmap-list">
+                        <li v-for="day in analytics.heatmapDays" :key="day.date" class="text-xs text-gray-600 dark:text-gray-400">
+                            {{ heatmapDayLabel(day) }}
+                        </li>
+                    </ul>
+                </div>
             </div>
 
             <div v-if="analytics.days.length > 0" class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-days">
