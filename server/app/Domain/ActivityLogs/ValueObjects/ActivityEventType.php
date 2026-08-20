@@ -23,6 +23,10 @@ final class ActivityEventType
 
     public const EMERGENCY_PAUSE = 'emergency_pause';
 
+    public const BREAK_START = 'break_start';
+
+    public const BREAK_END = 'break_end';
+
     private const TYPES = [
         self::TASK_COMPLETED,
         self::TASK_CONTINUED,
@@ -31,6 +35,8 @@ final class ActivityEventType
         self::TASK_ABANDONED,
         self::MINI_PAUSE,
         self::EMERGENCY_PAUSE,
+        self::BREAK_START,
+        self::BREAK_END,
     ];
 
     public function __construct(
@@ -74,6 +80,16 @@ final class ActivityEventType
     public static function emergencyPause(): self
     {
         return new self(self::EMERGENCY_PAUSE);
+    }
+
+    public static function breakStart(): self
+    {
+        return new self(self::BREAK_START);
+    }
+
+    public static function breakEnd(): self
+    {
+        return new self(self::BREAK_END);
     }
 
     public function equals(self $other): bool

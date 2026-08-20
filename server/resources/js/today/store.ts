@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { todayApi } from './api';
-import type { CapacityIndicators, EmptySlot, PauseInfo, TodayEvent, TodayResponse } from './types';
+import type { BreakPeriodInfo, CapacityIndicators, EmptySlot, PauseInfo, TodayEvent, TodayResponse } from './types';
 import type { ApiError } from '../api/types';
 
 export const useTodayStore = defineStore('today', () => {
     const date = ref<string | null>(null);
     const scheduleVersion = ref<number | null>(null);
     const pause = ref<PauseInfo | null>(null);
+    const breakPeriod = ref<BreakPeriodInfo | null>(null);
     const events = ref<TodayEvent[]>([]);
     const emptySlots = ref<EmptySlot[]>([]);
     const hardLandscape = ref<TodayResponse['hard_landscape']>([]);
@@ -21,6 +22,7 @@ export const useTodayStore = defineStore('today', () => {
         date.value = response.date;
         scheduleVersion.value = response.schedule_version;
         pause.value = response.pause ?? null;
+        breakPeriod.value = response.break ?? null;
         events.value = response.events;
         emptySlots.value = response.empty_slots;
         hardLandscape.value = response.hard_landscape;
@@ -44,6 +46,7 @@ export const useTodayStore = defineStore('today', () => {
         date.value = null;
         scheduleVersion.value = null;
         pause.value = null;
+        breakPeriod.value = null;
         events.value = [];
         emptySlots.value = [];
         hardLandscape.value = [];
@@ -55,6 +58,7 @@ export const useTodayStore = defineStore('today', () => {
         date,
         scheduleVersion,
         pause,
+        breakPeriod,
         events,
         emptySlots,
         hardLandscape,

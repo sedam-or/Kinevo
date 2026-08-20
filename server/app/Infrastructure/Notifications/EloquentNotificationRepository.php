@@ -21,6 +21,18 @@ final class EloquentNotificationRepository implements NotificationRepository
         return $model === null ? null : $this->toDomain($model);
     }
 
+    public function findBreakEndForPeriod(int $userId, int $breakPeriodId): ?Notification
+    {
+        $model = NotificationModel::query()
+            ->where('user_id', $userId)
+            ->where('type', NotificationType::BREAK_END)
+            ->whereJsonContains('payload', ['break_period_id' => (string) $breakPeriodId])
+            ->orderByDesc('id')
+            ->first();
+
+        return $model === null ? null : $this->toDomain($model);
+    }
+
     public function create(Notification $notification): Notification
     {
         $model = NotificationModel::query()->create([

@@ -23,7 +23,7 @@ final class ActivityLogController extends Controller
         $validator = Validator::make($request->query(), [
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date'],
-            'event_type' => ['nullable', 'string', 'in:task_completed,task_continued,subtask_completed,task_started,task_abandoned,mini_pause,emergency_pause'],
+            'event_type' => ['nullable', 'string', 'in:task_completed,task_continued,subtask_completed,task_started,task_abandoned,mini_pause,emergency_pause,break_start,break_end'],
             'limit' => ['nullable', 'integer', 'between:1,200'],
         ]);
 

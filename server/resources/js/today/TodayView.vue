@@ -7,8 +7,9 @@ import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
 import ExecutionTimer from '../execution/ExecutionTimer.vue';
 import RechargeTimer from '../recharge/RechargeTimer.vue';
 import EmergencyPauseDialog from './EmergencyPauseDialog.vue';
+import BreakModeDialog from './BreakModeDialog.vue';
 import { taskStates } from '../visualstate/derive';
-import type { EmptySlot, EmergencyPauseResponse, HardLandscapeEvent, TodayEvent } from './types';
+import type { EmptySlot, EmergencyPauseResponse, EndBreakResponse, HardLandscapeEvent, StartBreakResponse, TodayEvent } from './types';
 
 const props = defineProps<{
     date: string;
@@ -207,6 +208,40 @@ function onEmergencyCancelled(): void {
 function openEmergencyDialog(): void {
     emergencyDialogOpen.value = true;
 }
+
+const breakDialogOpen = ref(false);
+const breakMessage = ref<string | null>(null);
+const breakError = ref<string | null>(null);
+const endBreakBusy = ref(false);
+
+function onBreakConfirmed(result: StartBreakResponse): void {
+    breakDialogOpen.value = false;
+    breakMessage.value = result.explanation;
+    breakError.value = null;
+    void today.load(props.date);
+}
+
+function onBreakCancelled(): void {
+    breakDialogOpen.value = false;
+}
+
+function openBreakDialog(): void {
+    breakDialogOpen.value = true;
+}
+
+async function endBreak(): Promise<void> {
+    breakError.value = null;
+    endBreakBusy.value = true;
+    try {
+        const result: EndBreakResponse = await todayApi.endBreak();
+        breakMessage.value = result.explanation;
+        void today.load(props.date);
+    } catch (err) {
+        breakError.value = (err as { message?: string }).message ?? 'Break Mode could not be ended.';
+    } finally {
+        endBreakBusy.value = false;
+    }
+}
 </script>
 
 <template>
@@ -243,6 +278,31 @@ function openEmergencyDialog(): void {
                 ({{ today.pause.week_start }} to {{ today.pause.week_end }}). Notifications are suppressed and this
                 week is excluded from capacity estimates.
             </p>
+        </section>
+
+        <!-- Break Mode banner (FR-36/FR-49): an active break covers this week. -->
+        <section
+            v-if="today.breakPeriod"
+            class="border border-gray-300 dark:border-gray-600 rounded-sm p-4 bg-gray-100 dark:bg-gray-800"
+            data-testid="break-banner"
+        >
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Break Mode</div>
+            <p class="text-sm">
+                You are on break ({{ today.breakPeriod.start_date }} to {{ today.breakPeriod.end_date }}).
+                Notifications are suppressed and the covered weeks are excluded from capacity estimates.
+            </p>
+            <div class="mt-3 flex items-center justify-between gap-2">
+                <span class="text-sm text-gray-600 dark:text-gray-400">End the break to resume scheduling.</span>
+                <button
+                    type="button"
+                    class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                    :disabled="endBreakBusy"
+                    data-testid="end-break-button"
+                    @click="endBreak"
+                >
+                    {{ endBreakBusy ? 'Ending…' : 'End Break' }}
+                </button>
+            </div>
         </section>
 
         <!-- NOW card -->
@@ -297,6 +357,14 @@ function openEmergencyDialog(): void {
                     >
                         Emergency Pause
                     </button>
+                    <button
+                        type="button"
+                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                        data-testid="break-mode-button"
+                        @click="openBreakDialog"
+                    >
+                        Break Mode
+                    </button>
                 </div>
             </div>
             <div v-if="miniPauseError" class="text-sm text-[#F53003]" role="alert" data-testid="mini-pause-error">
@@ -307,6 +375,12 @@ function openEmergencyDialog(): void {
             </div>
             <div v-if="emergencyError" class="text-sm text-[#F53003]" role="alert" data-testid="emergency-pause-error">
                 {{ emergencyError }}
+            </div>
+            <div v-if="breakMessage" class="text-sm text-gray-600 dark:text-gray-400 mt-2" data-testid="break-message">
+                {{ breakMessage }}
+            </div>
+            <div v-if="breakError" class="text-sm text-[#F53003]" role="alert" data-testid="break-error">
+                {{ breakError }}
             </div>
         </section>
         <section v-else-if="today.hasData" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="no-now">
@@ -399,6 +473,13 @@ function openEmergencyDialog(): void {
             :current-task-id="currentEvent?.task?.id ?? null"
             @confirmed="onEmergencyConfirmed"
             @cancelled="onEmergencyCancelled"
+        />
+
+        <BreakModeDialog
+            v-if="breakDialogOpen"
+            :date="props.date"
+            @confirmed="onBreakConfirmed"
+            @cancelled="onBreakCancelled"
         />
     </div>
 </template>

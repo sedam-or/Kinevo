@@ -85,10 +85,21 @@ export interface PauseInfo {
     schedule_version: number;
 }
 
+export interface BreakPeriodInfo {
+    id: number;
+    user_id: number;
+    start_date: string;
+    end_date: string;
+    status: 'active' | 'ended';
+    duration_days: number;
+    created_at?: string | null;
+}
+
 export interface TodayResponse {
     date: string;
     schedule_version: number;
     pause: PauseInfo | null;
+    break: BreakPeriodInfo | null;
     events: TodayEvent[];
     empty_slots: EmptySlot[];
     hard_landscape: HardLandscapeEvent[];
@@ -152,5 +163,26 @@ export interface EmergencyPauseResponse {
     keep_task_ids: string[];
     moves: EmergencyPauseMove[];
     conflict_task_ids: string[];
+    explanation: string;
+}
+
+export interface StartBreakPayload {
+    start_date: string;
+    end_date: string;
+}
+
+export interface StartBreakResponse {
+    break_period_id: number;
+    start_date: string;
+    end_date: string;
+    explanation: string;
+}
+
+export interface EndBreakResponse {
+    applied: boolean;
+    break_period_id: number | null;
+    start_date: string | null;
+    end_date: string | null;
+    duration_days: number | null;
     explanation: string;
 }

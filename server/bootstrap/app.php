@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // local time. Idempotent via the Task state machine.
         $schedule->command('eod:reconcile --phase=prompt')->dailyAt('21:00');
         $schedule->command('eod:reconcile --phase=deadline')->dailyAt('23:59');
+
+        // Holiday-end notification (FR-39/FR-41): H-3 before an active break
+        // ends, exactly once per break period.
+        $schedule->command('break:notify-end')->dailyAt('20:30');
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(function (Request $request): ?string {

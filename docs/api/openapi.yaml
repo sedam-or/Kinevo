@@ -1270,6 +1270,56 @@ paths:
         '401': { description: Unauthorized }
         '422': { description: Validation error }
 
+  /break:
+    post:
+      tags: [Scheduling]
+      summary: Start Break Mode — confirm a manual break period (FR-36)
+      description: >
+        Confirms a Break Mode (holiday) period from `start_date` to `end_date`.
+        The covered weeks are tagged exceptional so the capacity feedback loop
+        excludes them (FR-49), EOD reconciliation prompts are suppressed while
+        the break is active (FR-47 Business Rules), and the start is recorded as
+        a `break_start` activity event. One active break at a time; an existing
+        active break must be ended first.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartBreakRequest'
+      responses:
+        '200':
+          description: Break Mode confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartBreakResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
+  /break/end:
+    post:
+      tags: [Scheduling]
+      summary: End Break Mode — end the active break and return its summary (FR-36/FR-39)
+      description: >
+        Ends the user's active Break Mode period and returns the break summary
+        (start/end dates and duration) for the in-app report. The covered weeks
+        are no longer tagged exceptional. Recorded as a `break_end` activity
+        event.
+      responses:
+        '200':
+          description: Break ended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndBreakResponse'
+        '202':
+          description: Accepted — no active break to end
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndBreakResponse'
+        '401': { description: Unauthorized }
+
   /notes:
     get:
       tags: [Knowledge]
@@ -1740,7 +1790,7 @@ paths:
           schema: { type: string, format: date }
         - name: event_type
           in: query
-          schema: { type: string, enum: [task_completed, task_continued, subtask_completed, task_started, task_abandoned, mini_pause, emergency_pause] }
+          schema: { type: string, enum: [task_completed, task_continued, subtask_completed, task_started, task_abandoned, mini_pause, emergency_pause, break_start, break_end] }
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 200 }
@@ -2827,6 +2877,7 @@ components:
         date: {type: string, format: date}
         schedule_version: {type: integer}
         pause: {$ref: '#/components/schemas/PauseEvent', nullable: true}
+        break: {$ref: '#/components/schemas/BreakPeriod', nullable: true}
         events:
           type: array
           items: {$ref: '#/components/schemas/ScheduleEvent'}
@@ -3010,6 +3061,41 @@ components:
           items: {$ref: '#/components/schemas/EmergencyPauseMove'}
         conflict_task_ids: {type: array, items: {type: string}}
         explanation: {type: string}
+    StartBreakRequest:
+      type: object
+      required: [start_date, end_date]
+      properties:
+        start_date: {type: string, format: date}
+        end_date: {type: string, format: date}
+    StartBreakResponse:
+      type: object
+      required: [break_period_id, start_date, end_date, explanation]
+      properties:
+        break_period_id: {type: integer}
+        start_date: {type: string, format: date}
+        end_date: {type: string, format: date}
+        explanation: {type: string}
+    EndBreakResponse:
+      type: object
+      required: [applied, explanation]
+      properties:
+        applied: {type: boolean}
+        break_period_id: {type: integer, nullable: true}
+        start_date: {type: string, format: date, nullable: true}
+        end_date: {type: string, format: date, nullable: true}
+        duration_days: {type: integer, nullable: true}
+        explanation: {type: string}
+    BreakPeriod:
+      type: object
+      required: [id, user_id, start_date, end_date, status]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        start_date: {type: string, format: date}
+        end_date: {type: string, format: date}
+        status: {type: string, enum: [active, ended]}
+        duration_days: {type: integer}
+        created_at: {type: string, format: date-time, nullable: true}
     PauseEvent:
       type: object
       required: [type, week_start, week_end, keep_task_ids, moved_task_ids, conflict_task_ids, schedule_version]
@@ -3029,6 +3115,7 @@ components:
         end: {type: string, format: date}
         schedule_version: {type: integer}
         pause: {$ref: '#/components/schemas/PauseEvent', nullable: true}
+        break: {$ref: '#/components/schemas/BreakPeriod', nullable: true}
         days:
           type: array
           items:
@@ -3371,7 +3458,7 @@ components:
       properties:
         id: {type: integer}
         user_id: {type: integer}
-        event_type: {type: string, enum: [task_completed, task_continued, subtask_completed, task_started, task_abandoned, mini_pause, emergency_pause]}
+        event_type: {type: string, enum: [task_completed, task_continued, subtask_completed, task_started, task_abandoned, mini_pause, emergency_pause, break_start, break_end]}
         entity_type: {type: string}
         entity_id: {type: integer}
         title: {type: string, nullable: true}
@@ -3407,7 +3494,7 @@ components:
       properties:
         id: {type: integer}
         user_id: {type: integer}
-        type: {type: string, enum: [reconciliation]}
+        type: {type: string, enum: [reconciliation, break_end]}
         scheduled_for: {type: string, format: date, nullable: true}
         title: {type: string, nullable: true}
         payload:

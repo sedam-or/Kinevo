@@ -2235,18 +2235,26 @@ Behavior:
 
 # TASK-124 — Break Mode
 
-Implement:
+Status: DONE
+
+Requirements: FR-36 (holiday detection with manual confirmation; one active break at a time), FR-39 (H-3 holiday-end notification, exactly once per break period, summary report), FR-41 (in-app notification), FR-49 (break weeks tagged exceptional for capacity feedback). Respects the SRS safe capacity rules.
+
+Implementation:
 
 ```text
-start break
-end break
-capacity handling
-notification behavior
-schedule effects
-summary
+start break ............ POST /break (StartBreakUseCase, one active break; end >= start)
+end break ............. POST /break/end (EndBreakUseCase; no-op 202 when none active)
+capacity handling ..... break weeks tagged exceptional (FR-49), excluded from capacity estimates
+notification behavior . break:notify-end command (20:30 local, H-3 before end), single break_end notification per period; EOD prompt suppressed during active break
+schedule effects ...... ScheduleQueryService exposes nullable `break` recovery state in day/week views
+summary ............... StartBreakResponse / EndBreakResponse with duration + explanation
 ```
 
-Respect the SRS safe capacity rules.
+Verification evidence: `php artisan test` 733 passed (2105 assertions); Vitest 326 passed (50 files); PHPStan 0 errors; Pint clean (497 files); vue-tsc typecheck clean; `npm run build` OK; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 93 paths, changelog, version).
+
+Changes: `database/migrations/2026_08_20_180000_create_break_periods_table.php`; `server/app/Domain/Breaks/` (BreakPeriodStatus, BreakPeriod, BreakPeriodRepository contract); `server/app/Infrastructure/Breaks/EloquentBreakPeriodRepository.php`; `server/app/Models/BreakPeriod.php`; `server/app/Application/Breaks/` (StartBreakUseCase, EndBreakUseCase, RunBreakEndNotificationUseCase, results); `server/app/Console/Commands/BreakEndNotificationCommand.php` (scheduled 20:30 in `bootstrap/app.php`); `server/app/Http/Controllers/Api/BreakController.php` + routes; `ScheduleQueryService` + `RunEodPromptUseCase`; NotificationType/ActivityEventType VOs; `docs/api/openapi.yaml` (/break, /break/end, BreakPeriod schemas, enums, `break` in Today/Week responses). Frontend: `today/types.ts`, `today/api.ts`, `today/store.ts`, `BreakModeDialog.vue`, TodayView banner + Start/End Break actions. Tests: `BreakPeriodUseCaseTest` (7), `BreakApiTest` (8), `BreakEndNotificationCommandTest` (4), EOD suppression test.
+
+Committed: see git log (TASK-124 full slice, backend + frontend + gates).
 
 ---
 

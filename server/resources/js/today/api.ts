@@ -1,5 +1,5 @@
 import { apiClient } from '../api/client';
-import type { EmergencyPausePayload, EmergencyPauseResponse, MiniPausePayload, MiniPauseResponse, QuickCapturePayload, QuickCaptureResponse, TodayResponse } from './types';
+import type { EmergencyPausePayload, EmergencyPauseResponse, EndBreakResponse, MiniPausePayload, MiniPauseResponse, QuickCapturePayload, QuickCaptureResponse, StartBreakPayload, StartBreakResponse, TodayResponse } from './types';
 import type { ScheduleRangeResponse } from '../week/types';
 
 export const todayApi = {
@@ -33,6 +33,21 @@ export const todayApi = {
         return apiClient.request<EmergencyPauseResponse>('/schedule/emergency-pause', {
             method: 'POST',
             body: JSON.stringify(payload),
+            noRetry: true,
+        });
+    },
+
+    startBreak(payload: StartBreakPayload): Promise<StartBreakResponse> {
+        return apiClient.request<StartBreakResponse>('/break', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            noRetry: true,
+        });
+    },
+
+    endBreak(): Promise<EndBreakResponse> {
+        return apiClient.request<EndBreakResponse>('/break/end', {
+            method: 'POST',
             noRetry: true,
         });
     },

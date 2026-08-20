@@ -10,6 +10,8 @@ vi.mock('../api', async (importOriginal) => {
             quickCapture: vi.fn(),
             miniPause: vi.fn(),
             emergencyPause: vi.fn(),
+            startBreak: vi.fn(),
+            endBreak: vi.fn(),
         },
     };
 });
@@ -22,6 +24,7 @@ const response: TodayResponse = {
     date: '2026-08-19',
     schedule_version: 5,
     pause: null,
+    break: null,
     events: [
         {
             assignment: {

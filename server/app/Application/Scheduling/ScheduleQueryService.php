@@ -2,6 +2,7 @@
 
 namespace App\Application\Scheduling;
 
+use App\Domain\Breaks\Contracts\BreakPeriodRepository;
 use App\Domain\Goals\Contracts\GoalRepository;
 use App\Domain\Milestones\Contracts\MilestoneRepository;
 use App\Domain\Pauses\Contracts\PauseEventRepository;
@@ -32,6 +33,7 @@ final readonly class ScheduleQueryService
         private ScheduleAssignmentRepository $assignments,
         private HardLandscapeRepository $hardLandscape,
         private PauseEventRepository $pauseEvents,
+        private BreakPeriodRepository $breaks,
         private TaskRepository $tasks,
         private GoalRepository $goals,
         private MilestoneRepository $milestones,
@@ -85,6 +87,7 @@ final readonly class ScheduleQueryService
             'date' => $date->toDateString(),
             'schedule_version' => $version->value,
             'pause' => $this->pauseInfo($userId, $date),
+            'break' => $this->breakInfo($userId, $date),
             'events' => $events,
             'empty_slots' => array_map(
                 static fn (TimeRange $slot) => [
@@ -163,6 +166,7 @@ final readonly class ScheduleQueryService
             'end' => $start->addDays(6)->toDateString(),
             'schedule_version' => $this->assignments->currentScheduleVersion($userId)->value,
             'pause' => $this->pauseInfo($userId, $start),
+            'break' => $this->breakInfo($userId, $start),
             'days' => $days,
         ];
     }
@@ -268,6 +272,24 @@ final readonly class ScheduleQueryService
             'conflict_task_ids' => array_map('strval', $pause->conflictTaskIds),
             'schedule_version' => $pause->scheduleVersion,
         ];
+    }
+
+    /**
+     * Active Break Mode period (FR-36/FR-49): the confirmed break covering the
+     * week containing the date, or null. Drives recovery-state visualization and
+     * capacity exclusion for break weeks.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function breakInfo(int $userId, CarbonImmutable $date): ?array
+    {
+        if (! $this->breaks->coversWeek($userId, $date)) {
+            return null;
+        }
+
+        $period = $this->breaks->findActiveForUser($userId);
+
+        return $period === null ? null : $period->toArray();
     }
 
     private function programContext(int $userId, ?Task $task): ?array

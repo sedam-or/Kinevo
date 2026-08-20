@@ -13,6 +13,12 @@ interface NotificationRepository
      */
     public function findReconciliationForDay(int $userId, CarbonImmutable $day): ?Notification;
 
+    /**
+     * The break-end notification already created for a given break period, or
+     * null. FR-39: exactly one H-3 notification per break period.
+     */
+    public function findBreakEndForPeriod(int $userId, int $breakPeriodId): ?Notification;
+
     public function create(Notification $notification): Notification;
 
     /**

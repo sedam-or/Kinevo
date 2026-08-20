@@ -2,6 +2,7 @@
 
 namespace App\Application\Reconciliation;
 
+use App\Domain\Breaks\Contracts\BreakPeriodRepository;
 use App\Domain\Notifications\Contracts\NotificationRepository;
 use App\Domain\Notifications\Notification;
 use App\Domain\Notifications\ValueObjects\NotificationType;
@@ -17,8 +18,9 @@ use Carbon\CarbonImmutable;
  * existing notification and never creates a duplicate. No untouched tasks →
  * no notification (FR-35 Alternative Flow).
  *
- * During an Emergency Pause week the notification is suppressed while the
- * pause event preserves audit data (FR-47 Business Rules).
+ * During an Emergency Pause week or an active Break Mode period the
+ * notification is suppressed while the pause event / break period preserves
+ * audit data (FR-47 Business Rules; FR-36/FR-49).
  */
 final readonly class RunEodPromptUseCase
 {
@@ -26,12 +28,17 @@ final readonly class RunEodPromptUseCase
         private TaskRepository $tasks,
         private NotificationRepository $notifications,
         private PauseEventRepository $pauseEvents,
+        private BreakPeriodRepository $breaks,
         private EndOfDayReconciliationService $service,
     ) {}
 
     public function __invoke(int $userId, CarbonImmutable $localDate): ?Notification
     {
         if ($this->pauseEvents->isWeekExceptional($userId, $localDate)) {
+            return null;
+        }
+
+        if ($this->breaks->coversWeek($userId, $localDate)) {
             return null;
         }
 

@@ -14,6 +14,15 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Break Mode (TASK-124): the Today view can now start a break/holiday
+  over a date range (`POST /break`) and end it early (`POST /break/end`). The
+  covered weeks are tagged exceptional for capacity feedback (FR-49), EOD
+  notifications are suppressed during an active break, and a scheduled
+  `break:notify-end` job (daily 20:30 local) creates exactly one holiday-end
+  notification per break period three days before it ends (FR-39, FR-41). The
+  day/week schedule queries expose the recovery state (`break`), and the Today
+  view shows a Break Mode banner with an End Break action and a start/end summary
+  (FR-36).
 - Added the Emergency Pause (TASK-123): the Today view can now tag the current
   week as an exceptional recovery period, keep user-selected tasks in place, and
   shift every other eligible task +1 week to the same weekday

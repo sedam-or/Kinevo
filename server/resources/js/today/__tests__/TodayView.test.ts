@@ -12,6 +12,8 @@ vi.mock('../api', async (importOriginal) => {
             miniPause: vi.fn(),
             emergencyPause: vi.fn(),
             weekRange: vi.fn(),
+            startBreak: vi.fn(),
+            endBreak: vi.fn(),
         },
     };
 });
@@ -57,6 +59,7 @@ const response: TodayResponse = {
     date: '2026-08-19',
     schedule_version: 5,
     pause: null,
+    break: null,
     events: [
         {
             assignment: {
@@ -298,5 +301,81 @@ describe('TodayView', () => {
 
         expect(wrapper.find('[data-testid="recovery-banner"]').exists()).toBe(true);
         expect(wrapper.find('[data-testid="recovery-banner"]').text()).toContain('exceptional');
+    });
+
+    it('opens the Break Mode dialog, confirms, and shows the result', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-08-19T09:30:00'));
+        vi.mocked(todayApi.today).mockResolvedValue(response);
+        vi.mocked(todayApi.startBreak).mockResolvedValue({
+            break_period_id: 7,
+            start_date: '2026-08-17',
+            end_date: '2026-08-21',
+            explanation: 'Break Mode confirmed for 2026-08-17 to 2026-08-21 (5 days). Notifications are suppressed and the covered weeks are excluded from capacity estimates.',
+        });
+
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(TodayView, {
+            props: { date: '2026-08-19' },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        await wrapper.find('[data-testid="break-mode-button"]').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="break-mode-dialog"]').exists()).toBe(true);
+
+        await wrapper.find('[data-testid="bk-confirm"]').trigger('click');
+        await flushPromises();
+
+        expect(todayApi.startBreak).toHaveBeenCalledWith({
+            start_date: '2026-08-19',
+            end_date: '2026-08-19',
+        });
+        expect(todayApi.today).toHaveBeenCalledTimes(2);
+        expect(wrapper.find('[data-testid="break-message"]').text()).toContain('Break Mode confirmed');
+        vi.useRealTimers();
+    });
+
+    it('shows a break banner when an active break covers the week', async () => {
+        const breaking: TodayResponse = {
+            ...response,
+            break: {
+                id: 7,
+                user_id: 1,
+                start_date: '2026-08-17',
+                end_date: '2026-08-21',
+                status: 'active',
+                duration_days: 5,
+            },
+        };
+        vi.mocked(todayApi.today).mockResolvedValue(breaking);
+        vi.mocked(todayApi.endBreak).mockResolvedValue({
+            applied: true,
+            break_period_id: 7,
+            start_date: '2026-08-17',
+            end_date: '2026-08-21',
+            duration_days: 5,
+            explanation: 'Break Mode ended. The break covered 2026-08-17 to 2026-08-21 (5 days); the covered weeks are no longer tagged exceptional.',
+        });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(TodayView, {
+            props: { date: '2026-08-19' },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="break-banner"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="break-banner"]').text()).toContain('on break');
+
+        await wrapper.find('[data-testid="end-break-button"]').trigger('click');
+        await flushPromises();
+
+        expect(todayApi.endBreak).toHaveBeenCalledTimes(1);
+        expect(todayApi.today).toHaveBeenCalledTimes(2);
     });
 });

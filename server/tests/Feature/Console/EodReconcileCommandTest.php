@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Console;
 
+use App\Models\BreakPeriod;
 use App\Models\PauseEvent;
 use App\Models\Task;
 use App\Models\User;
@@ -83,6 +84,27 @@ class EodReconcileCommandTest extends TestCase
 
         // FR-47: emergency pause suppression preserves audit data but creates
         // no reconciliation notification during the exceptional week.
+        $this->assertDatabaseCount('notifications', 0);
+    }
+
+    public function test_prompt_phase_is_suppressed_during_active_break(): void
+    {
+        $user = User::factory()->create();
+        $this->createTask($user->id, ['status' => 'scheduled', 'title' => 'Ship feature']);
+
+        // Confirm a Break Mode period covering the current week (FR-36).
+        $now = CarbonImmutable::now();
+        BreakPeriod::query()->create([
+            'user_id' => $user->id,
+            'start_date' => $now->startOfWeek()->toDateString(),
+            'end_date' => $now->startOfWeek()->addDays(6)->toDateString(),
+            'status' => 'active',
+        ]);
+
+        $this->artisan('eod:reconcile', ['--phase' => 'prompt'])->assertSuccessful();
+
+        // FR-36/FR-49: break weeks are tagged exceptional; EOD prompts are
+        // suppressed while audit data is preserved (FR-47 Business Rules).
         $this->assertDatabaseCount('notifications', 0);
     }
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AdaptiveContextController;
 use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BreakController;
 use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\CanvasController;
 use App\Http\Controllers\Api\EmergencyPauseController;
@@ -181,6 +182,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Emergency Pause (FR-07): tag the week exceptional, keep selected tasks,
     // shift all other eligible tasks +1 week.
     Route::post('/schedule/emergency-pause', [EmergencyPauseController::class, 'store']);
+
+    // Break Mode (FR-36/FR-39): confirm a manual break period and end it.
+    Route::post('/break', [BreakController::class, 'store']);
+    Route::post('/break/end', [BreakController::class, 'end']);
 
     // Schedule Overrides (FR-25; SRS §7.1).
     Route::get('/schedule-overrides', [ScheduleOverrideController::class, 'index']);

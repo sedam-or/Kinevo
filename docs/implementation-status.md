@@ -99,6 +99,7 @@ Execution Timer                       ✅ DONE (TASK-120)
 Recharge Timer                        ✅ DONE (TASK-121)
 Mini Pause                            ✅ DONE (TASK-122)
 Emergency Pause                       ✅ DONE (TASK-123)
+Break Mode (incl. holiday-end notice)  ✅ DONE (TASK-124)
 ```
 
 ### Evidence rule

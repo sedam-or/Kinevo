@@ -11,8 +11,11 @@ final class NotificationType
 {
     public const RECONCILIATION = 'reconciliation';
 
+    public const BREAK_END = 'break_end';
+
     private const TYPES = [
         self::RECONCILIATION,
+        self::BREAK_END,
     ];
 
     public function __construct(
@@ -26,6 +29,11 @@ final class NotificationType
     public static function reconciliation(): self
     {
         return new self(self::RECONCILIATION);
+    }
+
+    public static function breakEnd(): self
+    {
+        return new self(self::BREAK_END);
     }
 
     public function equals(self $other): bool
