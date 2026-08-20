@@ -8,8 +8,9 @@ import ExecutionTimer from '../execution/ExecutionTimer.vue';
 import RechargeTimer from '../recharge/RechargeTimer.vue';
 import EmergencyPauseDialog from './EmergencyPauseDialog.vue';
 import BreakModeDialog from './BreakModeDialog.vue';
+import BoostDialog from './BoostDialog.vue';
 import { taskStates } from '../visualstate/derive';
-import type { EmptySlot, EmergencyPauseResponse, EndBreakResponse, HardLandscapeEvent, StartBreakResponse, TodayEvent } from './types';
+import type { EmptySlot, EmergencyPauseResponse, EndBreakResponse, EndBoostTargetResponse, HardLandscapeEvent, SetBoostTargetResponse, StartBreakResponse, TodayEvent } from './types';
 
 const props = defineProps<{
     date: string;
@@ -242,6 +243,36 @@ async function endBreak(): Promise<void> {
         endBreakBusy.value = false;
     }
 }
+
+const boostDialogOpen = ref(false);
+const boostMessage = ref<string | null>(null);
+const boostError = ref<string | null>(null);
+
+function onBoostSaved(result: SetBoostTargetResponse): void {
+    boostDialogOpen.value = false;
+    boostMessage.value = result.explanation;
+    boostError.value = null;
+    void today.load(props.date);
+}
+
+function onBoostCancelled(): void {
+    boostDialogOpen.value = false;
+}
+
+function openBoostDialog(): void {
+    boostDialogOpen.value = true;
+}
+
+async function endBoostTarget(): Promise<void> {
+    boostError.value = null;
+    try {
+        const result: EndBoostTargetResponse = await todayApi.endBoostTarget();
+        boostMessage.value = result.explanation;
+        void today.load(props.date);
+    } catch (err) {
+        boostError.value = (err as { message?: string }).message ?? 'Boost target could not be ended.';
+    }
+}
 </script>
 
 <template>
@@ -302,6 +333,29 @@ async function endBreak(): Promise<void> {
                 >
                     {{ endBreakBusy ? 'Ending…' : 'End Break' }}
                 </button>
+            </div>
+            <div class="mt-3 border-t border-gray-300 dark:border-gray-600 pt-3">
+                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Boost Mode (FR-37/FR-38)</div>
+                <p v-if="boostMessage" class="text-sm" data-testid="boost-message">{{ boostMessage }}</p>
+                <p v-else-if="boostError" class="text-sm text-[#F53003]" role="alert" data-testid="boost-error">{{ boostError }}</p>
+                <div class="flex justify-end gap-2 mt-2">
+                    <button
+                        type="button"
+                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                        data-testid="boost-mode-button"
+                        @click="openBoostDialog"
+                    >
+                        Boost Mode
+                    </button>
+                    <button
+                        type="button"
+                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                        data-testid="end-boost-button"
+                        @click="endBoostTarget"
+                    >
+                        End Boost
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -480,6 +534,15 @@ async function endBreak(): Promise<void> {
             :date="props.date"
             @confirmed="onBreakConfirmed"
             @cancelled="onBreakCancelled"
+        />
+
+        <BoostDialog
+            v-if="boostDialogOpen && today.breakPeriod"
+            :break-period-id="today.breakPeriod.id"
+            :start-date="today.breakPeriod.start_date"
+            :end-date="today.breakPeriod.end_date"
+            @saved="onBoostSaved"
+            @cancelled="onBoostCancelled"
         />
     </div>
 </template>

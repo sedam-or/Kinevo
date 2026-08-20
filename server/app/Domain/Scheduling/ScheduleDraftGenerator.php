@@ -34,6 +34,7 @@ final class ScheduleDraftGenerator
         $unassigned = [];
         $occupied = $input->existingAssignments;
         $placedIds = [];
+        $capReasons = [];
         $ranked = $this->rankTasks($input->tasks);
 
         foreach ($ranked as $task) {
@@ -46,10 +47,12 @@ final class ScheduleDraftGenerator
         foreach ($days as $day) {
             $dayOccupied = array_merge($input->hardLandscape, $occupied);
             $slots = $this->slotCalculator->calculate($day, $dayOccupied);
+            $dayScheduled = 0;
+            $ceiling = $this->dailyCeiling($slots, $input->dailyCapacityPercent);
 
             if ($input->sacredAnchor !== null && ! isset($placedIds[$input->sacredAnchor->taskId])) {
                 $anchorSlot = $this->findAnchorSlot($slots);
-                if ($anchorSlot !== null) {
+                if ($anchorSlot !== null && $this->fitsCap($ceiling, $dayScheduled, $input->sacredAnchor->durationMinutes)) {
                     $assignment = new DraftAssignment(
                         $input->sacredAnchor->taskId,
                         $input->sacredAnchor->title,
@@ -58,11 +61,18 @@ final class ScheduleDraftGenerator
                     $assigned[] = $assignment;
                     $occupied[] = $anchorSlot;
                     $placedIds[$input->sacredAnchor->taskId] = true;
+                    $dayScheduled += $anchorSlot->durationMinutes()->value();
                 }
             }
 
             foreach ($ranked as $task) {
                 if (isset($placedIds[$task->taskId])) {
+                    continue;
+                }
+
+                if (! $this->fitsCap($ceiling, $dayScheduled, $task->durationMinutes)) {
+                    $capReasons[$task->taskId] = 'CAPACITY_CAP';
+
                     continue;
                 }
 
@@ -74,6 +84,7 @@ final class ScheduleDraftGenerator
                 $assigned[] = new DraftAssignment($task->taskId, $task->title, $slot);
                 $occupied[] = $slot;
                 $placedIds[$task->taskId] = true;
+                $dayScheduled += $slot->durationMinutes()->value();
             }
 
             if (count($placedIds) === count($input->tasks) + ($input->sacredAnchor === null ? 0 : 1)) {
@@ -86,7 +97,7 @@ final class ScheduleDraftGenerator
                 $unassigned[] = new UnassignedTask(
                     $task->taskId,
                     $task->title,
-                    'NO_AVAILABLE_SLOT',
+                    $capReasons[$task->taskId] ?? 'NO_AVAILABLE_SLOT',
                 );
             }
         }
@@ -100,6 +111,32 @@ final class ScheduleDraftGenerator
         }
 
         return new ScheduleDraft($assigned, $unassigned);
+    }
+
+    /**
+     * Daily capacity ceiling in minutes when a boost target is active
+     * (SRS FR-38: constrain to the configured percentage of daily capacity).
+     * Reuses the day's Dynamic Empty Slots as the capacity baseline.
+     *
+     * @param  array<int, TimeRange>  $slots
+     */
+    private function dailyCeiling(array $slots, ?int $percent): ?int
+    {
+        if ($percent === null) {
+            return null;
+        }
+
+        $available = array_sum(array_map(
+            static fn (TimeRange $slot) => $slot->durationMinutes()->value(),
+            $slots,
+        ));
+
+        return (int) floor($available * $percent / 100);
+    }
+
+    private function fitsCap(?int $ceiling, int $dayScheduled, int $durationMinutes): bool
+    {
+        return $ceiling === null || ($dayScheduled + $durationMinutes) <= $ceiling;
     }
 
     /**

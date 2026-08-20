@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\Boosts\GetEffectiveTargetUseCase;
 use App\Application\Scheduling\ApplyRescheduleProposalUseCase;
 use App\Application\Scheduling\ApplyScheduleDraftUseCase;
 use App\Domain\Goals\Contracts\GoalRepository;
@@ -56,6 +57,7 @@ final class ScheduleDraftController extends Controller
         private readonly TaskRepository $tasks,
         private readonly GoalRepository $goals,
         private readonly MilestoneRepository $milestones,
+        private readonly GetEffectiveTargetUseCase $effectiveBoostTarget,
     ) {
         $this->generator = new ScheduleDraftGenerator(
             new SlotCalculator,
@@ -343,10 +345,22 @@ final class ScheduleDraftController extends Controller
                 hardLandscape: $hardLandscape,
                 existingAssignments: array_values($slotsByTask),
                 tasks: $tasks,
+                dailyCapacityPercent: $this->effectiveBoostPercent($userId, $from),
             ),
             'base_version' => $baseVersion,
             'slots_by_task' => $slotsByTask,
         ];
+    }
+
+    /**
+     * Effective boost capacity percent for the horizon start (SRS FR-38). When a
+     * confirmed Break Mode period has an active boost target covering the date,
+     * the draft is constrained to that percentage of daily capacity; otherwise
+     * the normal target applies (null ceiling).
+     */
+    private function effectiveBoostPercent(int $userId, CarbonImmutable $from): ?int
+    {
+        return $this->effectiveBoostTarget->__invoke($userId, $from)?->targetPercent;
     }
 
     private function goalDeadline(int $userId, ?int $goalId): ?CarbonImmutable

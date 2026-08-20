@@ -265,4 +265,74 @@ class ScheduleDraftGeneratorTest extends TestCase
 
         $this->assertEquals($first->assignedTaskIds(), $second->assignedTaskIds());
     }
+
+    #[Test]
+    public function boost_capacity_percent_limits_scheduled_minutes_per_day(): void
+    {
+        // A full empty day has 1440 available minutes; at 10% boost the daily
+        // ceiling is 144 minutes, so only one 90-minute task fits per day.
+        $input = new DraftInput(
+            $this->week,
+            tasks: [
+                $this->task('a', 90),
+                $this->task('b', 90),
+                $this->task('c', 90),
+                $this->task('d', 90),
+            ],
+            dailyCapacityPercent: 10,
+        );
+
+        $draft = $this->generator->generate($input);
+
+        $this->assertCount(4, $draft->assignments);
+        $this->assertCount(0, $draft->unassigned);
+        foreach ($draft->assignments as $i => $assignment) {
+            $this->assertSame(17 + $i, $assignment->slot->start->day, 'one task per day under a 10% ceiling');
+        }
+    }
+
+    #[Test]
+    public function boost_capacity_percent_unassigns_tasks_beyond_the_cap(): void
+    {
+        // A 50% ceiling on a single 1440-minute day is 720 minutes. A single
+        // 800-minute task is beyond the cap and must be capped rather than
+        // placed; a 400-minute task fits.
+        $singleDay = TimeRange::from('2026-08-17T00:00:00', '2026-08-18T00:00:00');
+        $input = new DraftInput(
+            $singleDay,
+            tasks: [
+                $this->task('a', 800),
+                $this->task('b', 400),
+                $this->task('c', 800),
+                $this->task('d', 400),
+            ],
+            dailyCapacityPercent: 50,
+        );
+
+        $draft = $this->generator->generate($input);
+
+        $this->assertCount(1, $draft->assignments);
+        $this->assertSame(['b'], $draft->assignedTaskIds());
+        $this->assertCount(3, $draft->unassigned);
+        foreach ($draft->unassigned as $unassigned) {
+            $this->assertSame('CAPACITY_CAP', $unassigned->reason);
+        }
+    }
+
+    #[Test]
+    public function null_boost_percent_applies_no_capacity_cap(): void
+    {
+        // Without a boost target the normal target applies: an 800-minute task
+        // that would be blocked by a 50% cap is placed normally.
+        $singleDay = TimeRange::from('2026-08-17T00:00:00', '2026-08-18T00:00:00');
+        $input = new DraftInput(
+            $singleDay,
+            tasks: [$this->task('a', 800)],
+        );
+
+        $draft = $this->generator->generate($input);
+
+        $this->assertCount(1, $draft->assignments);
+        $this->assertCount(0, $draft->unassigned);
+    }
 }

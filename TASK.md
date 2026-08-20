@@ -2260,20 +2260,26 @@ Committed: see git log (TASK-124 full slice, backend + frontend + gates).
 
 # TASK-125 — Boost Mode
 
-Implement:
+Status: DONE
+
+Requirements: FR-37 (holiday boost target setup with recommendations and 70% safety cap), FR-38 (use boost targets during confirmed Break Mode when generating schedules, temporary target without mutating baseline), FR-49 (offer Boost when >90% realization and no burnout signal; break weeks tagged). Existing capacity feedback reused — no capacity calculations duplicated.
+
+Implementation:
 
 ```text
-boost eligibility
-capacity ceiling
-burnout suppression
-user confirmation
-temporary target behavior
-summary
+boost eligibility ...... active Break Mode required; Capacity feedback >90% & no burnout signal offers Boost (FR-49)
+capacity ceiling ...... boost target saved as % of daily capacity, capped at 70% (FR-37 exception: capped with explicit warning)
+burnout suppression ... recommendation suppressed while a burnout signal is active (FR-49)
+user confirmation ..... setup dialog shows recommendation, user adjusts slider, confirms save (FR-37 normal flow)
+temporary target ....... boost scoped by start/end datetime within the active break; draft constrained per day; returns to baseline when ended (FR-38)
+summary ............... BoostSetupResponse (target + recommendation) and SetBoostTarget/EndBoostTarget summaries
 ```
 
-Existing capacity feedback should be reused.
+Verification evidence: `php artisan test` 752 passed (2182 assertions); Vitest 328 passed (50 files); PHPStan 0 errors; Pint clean (514 files); vue-tsc typecheck clean; `npm run build` OK; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 95 paths, changelog, version).
 
-Do not duplicate capacity calculations.
+Changes: `database/migrations/2026_08_20_190000_create_boost_targets_table.php`; `server/app/Domain/Boosts/` (BoostTargetStatus, BoostTarget with 70% safety cap, BoostTargetRepository); `server/app/Models/BoostTarget.php`; `server/app/Infrastructure/Boosts/EloquentBoostTargetRepository.php`; `server/app/Application/Boosts/` (GetBoostSetupUseCase, SetBoostTargetUseCase, EndBoostTargetUseCase, GetEffectiveTargetUseCase, WeekCapacitySampleProvider, results); ActivityEventType boost_start/boost_end; `ScheduleDraftController` resolves the effective boost target and `DraftInput.dailyCapacityPercent` enforces the per-day ceiling in `ScheduleDraftGenerator` (unassigned reason `CAPACITY_CAP`); `BoostController` (GET/POST /boost, POST /boost/end); `docs/api/openapi.yaml` (/boost paths, BoostTarget/BoostRecommendation/BoostSetupResponse schemas, enums). Frontend: `today/types.ts`, `today/api.ts`, `BoostDialog.vue` (slider + recommendation + cap warning), TodayView boost actions in the Break banner. Tests: `BoostApiTest` (12), `BoostTargetTest` (5), `ScheduleDraftGeneratorTest` boost cap cases (3).
+
+Committed: see git log (TASK-125 full slice, backend + frontend + gates).
 
 ---
 

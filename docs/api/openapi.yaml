@@ -1320,6 +1320,78 @@ paths:
                 $ref: '#/components/schemas/EndBreakResponse'
         '401': { description: Unauthorized }
 
+  /boost:
+    get:
+      tags: [Scheduling]
+      summary: Boost Mode setup — current target and recommendation (FR-37)
+      description: >
+        Shows the Boost Mode setup: whether it is eligible (Break Mode must be
+        confirmed), the currently active boost target, and a recommendation
+        computed by reusing the Capacity feedback loop (FR-49). A recent average
+        realization above 90% with no burnout signal offers Boost Mode; the
+        suggested target is capped at the 70% safety limit. With an active
+        burnout signal the recommendation is suppressed.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Boost setup
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BoostSetupResponse'
+        '401': { description: Unauthorized }
+    post:
+      tags: [Scheduling]
+      summary: Save a boost target for the active break (FR-37/FR-38)
+      description: >
+        Confirms and saves a holiday boost target with a validity period scoped
+        by start/end datetime (defaulting to the active break period). The target
+        is the percentage of daily capacity the schedule may use during Break
+        Mode. A proposed target above the 70% safety cap is capped with an
+        explicit warning. Saving ends any previous active boost target. Recorded
+        as a `boost_start` activity event.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetBoostTargetRequest'
+      responses:
+        '200':
+          description: Boost target saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetBoostTargetResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
+  /boost/end:
+    post:
+      tags: [Scheduling]
+      summary: End the active boost target (FR-38 Alternative Flow)
+      description: >
+        Ends the active boost target early; the scheduler returns to the baseline
+        target. Recorded as a `boost_end` activity event.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Boost target ended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndBoostTargetResponse'
+        '202':
+          description: Accepted — no active boost target
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndBoostTargetResponse'
+        '401': { description: Unauthorized }
+
   /notes:
     get:
       tags: [Knowledge]
@@ -1790,7 +1862,7 @@ paths:
           schema: { type: string, format: date }
         - name: event_type
           in: query
-          schema: { type: string, enum: [task_completed, task_continued, subtask_completed, task_started, task_abandoned, mini_pause, emergency_pause, break_start, break_end] }
+          schema: { type: string, enum: [task_completed, task_continued, subtask_completed, task_started, task_abandoned, mini_pause, emergency_pause, break_start, break_end, boost_start, boost_end] }
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 200 }
@@ -3096,6 +3168,64 @@ components:
         status: {type: string, enum: [active, ended]}
         duration_days: {type: integer}
         created_at: {type: string, format: date-time, nullable: true}
+    BoostTarget:
+      type: object
+      required: [id, user_id, start_date, end_date, target_percent, status]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        break_period_id: {type: integer, nullable: true}
+        start_date: {type: string, format: date}
+        end_date: {type: string, format: date}
+        target_percent: {type: integer, minimum: 1, maximum: 70}
+        status: {type: string, enum: [active, ended]}
+        created_at: {type: string, format: date-time, nullable: true}
+    BoostRecommendation:
+      type: object
+      required: [eligible, recommendation, reason, average_realization, recommended_target_percent]
+      properties:
+        eligible: {type: boolean}
+        recommendation: {type: string, enum: [NOT_ELIGIBLE, SUPPRESSED, BOOST_AVAILABLE, MAINTAIN, REDUCE_LOAD]}
+        reason: {type: string}
+        average_realization: {type: number, format: float}
+        recommended_target_percent: {type: integer}
+    BoostSetupResponse:
+      type: object
+      required: [eligible, recommendation, safety_cap_percent]
+      properties:
+        eligible: {type: boolean}
+        active_target: {$ref: '#/components/schemas/BoostTarget', nullable: true}
+        recommendation: {$ref: '#/components/schemas/BoostRecommendation'}
+        safety_cap_percent: {type: integer, enum: [70]}
+        break_period_id: {type: integer, nullable: true}
+        break_start_date: {type: string, format: date, nullable: true}
+        break_end_date: {type: string, format: date, nullable: true}
+    SetBoostTargetRequest:
+      type: object
+      required: [target_percent]
+      properties:
+        target_percent: {type: integer, minimum: 1, maximum: 100}
+        break_period_id: {type: integer, nullable: true}
+        start_date: {type: string, format: date, nullable: true}
+        end_date: {type: string, format: date, nullable: true}
+    SetBoostTargetResponse:
+      type: object
+      required: [target, capped, warning, explanation]
+      properties:
+        target: {$ref: '#/components/schemas/BoostTarget'}
+        capped: {type: boolean}
+        warning: {type: string, nullable: true}
+        explanation: {type: string}
+    EndBoostTargetResponse:
+      type: object
+      required: [applied, explanation]
+      properties:
+        applied: {type: boolean}
+        target_id: {type: integer, nullable: true}
+        target_percent: {type: integer, nullable: true}
+        start_date: {type: string, format: date, nullable: true}
+        end_date: {type: string, format: date, nullable: true}
+        explanation: {type: string}
     PauseEvent:
       type: object
       required: [type, week_start, week_end, keep_task_ids, moved_task_ids, conflict_task_ids, schedule_version]
@@ -3458,7 +3588,7 @@ components:
       properties:
         id: {type: integer}
         user_id: {type: integer}
-        event_type: {type: string, enum: [task_completed, task_continued, subtask_completed, task_started, task_abandoned, mini_pause, emergency_pause, break_start, break_end]}
+        event_type: {type: string, enum: [task_completed, task_continued, subtask_completed, task_started, task_abandoned, mini_pause, emergency_pause, break_start, break_end, boost_start, boost_end]}
         entity_type: {type: string}
         entity_id: {type: integer}
         title: {type: string, nullable: true}

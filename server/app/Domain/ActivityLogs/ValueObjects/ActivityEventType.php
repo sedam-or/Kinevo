@@ -27,6 +27,10 @@ final class ActivityEventType
 
     public const BREAK_END = 'break_end';
 
+    public const BOOST_START = 'boost_start';
+
+    public const BOOST_END = 'boost_end';
+
     private const TYPES = [
         self::TASK_COMPLETED,
         self::TASK_CONTINUED,
@@ -37,6 +41,8 @@ final class ActivityEventType
         self::EMERGENCY_PAUSE,
         self::BREAK_START,
         self::BREAK_END,
+        self::BOOST_START,
+        self::BOOST_END,
     ];
 
     public function __construct(
@@ -90,6 +96,16 @@ final class ActivityEventType
     public static function breakEnd(): self
     {
         return new self(self::BREAK_END);
+    }
+
+    public static function boostStart(): self
+    {
+        return new self(self::BOOST_START);
+    }
+
+    public static function boostEnd(): self
+    {
+        return new self(self::BOOST_END);
     }
 
     public function equals(self $other): bool

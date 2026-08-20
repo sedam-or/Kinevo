@@ -14,6 +14,15 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Boost Mode (TASK-125): during a confirmed Break Mode period the
+  Today view can set a holiday boost target as a percentage of daily capacity
+  (`GET/POST /boost`), capped at the 70% safety limit with an explicit warning
+  (FR-37). The recommendation reuses the Capacity feedback loop — Boost Mode is
+  offered when recent realization exceeds 90% with no burnout signal, and the
+  suggestion is suppressed while a burnout signal is active (FR-49). The target
+  is scoped by start/end datetime within the active break and used as a
+  temporary capacity ceiling when generating schedule drafts; ending it returns
+  the scheduler to the baseline target (FR-38).
 - Added the Break Mode (TASK-124): the Today view can now start a break/holiday
   over a date range (`POST /break`) and end it early (`POST /break/end`). The
   covered weeks are tagged exceptional for capacity feedback (FR-49), EOD

@@ -14,6 +14,9 @@ vi.mock('../api', async (importOriginal) => {
             weekRange: vi.fn(),
             startBreak: vi.fn(),
             endBreak: vi.fn(),
+            getBoostSetup: vi.fn(),
+            setBoostTarget: vi.fn(),
+            endBoostTarget: vi.fn(),
         },
     };
 });
@@ -377,5 +380,113 @@ describe('TodayView', () => {
 
         expect(todayApi.endBreak).toHaveBeenCalledTimes(1);
         expect(todayApi.today).toHaveBeenCalledTimes(2);
+    });
+
+    it('opens the Boost dialog, saves a target, and shows the result', async () => {
+        const breaking: TodayResponse = {
+            ...response,
+            break: {
+                id: 7,
+                user_id: 1,
+                start_date: '2026-08-17',
+                end_date: '2026-08-21',
+                status: 'active',
+                duration_days: 5,
+            },
+        };
+        vi.mocked(todayApi.today).mockResolvedValue(breaking);
+        vi.mocked(todayApi.getBoostSetup).mockResolvedValue({
+            eligible: true,
+            active_target: null,
+            recommendation: {
+                eligible: true,
+                recommendation: 'BOOST_AVAILABLE',
+                reason: 'Average realization exceeds 90% with no burnout signal; Boost available.',
+                average_realization: 0.95,
+                recommended_target_percent: 70,
+            },
+            safety_cap_percent: 70,
+            break_period_id: 7,
+            break_start_date: '2026-08-17',
+            break_end_date: '2026-08-21',
+        });
+        vi.mocked(todayApi.setBoostTarget).mockResolvedValue({
+            target: {
+                id: 11,
+                user_id: 1,
+                break_period_id: 7,
+                start_date: '2026-08-17',
+                end_date: '2026-08-21',
+                target_percent: 70,
+                status: 'active',
+            },
+            capped: false,
+            warning: null,
+            explanation: 'Boost target set to 70% of capacity for 2026-08-17 to 2026-08-21.',
+        });
+
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(TodayView, {
+            props: { date: '2026-08-19' },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        await wrapper.find('[data-testid="boost-mode-button"]').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="boost-dialog"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="boost-recommended"]').text()).toBe('70%');
+
+        await wrapper.find('[data-testid="boost-save"]').trigger('click');
+        await flushPromises();
+
+        expect(todayApi.setBoostTarget).toHaveBeenCalledWith({
+            target_percent: 70,
+            break_period_id: 7,
+            start_date: '2026-08-17',
+            end_date: '2026-08-21',
+        });
+        expect(todayApi.today).toHaveBeenCalledTimes(2);
+        expect(wrapper.find('[data-testid="boost-message"]').text()).toContain('Boost target set');
+    });
+
+    it('ends the active boost target from the break banner', async () => {
+        const breaking: TodayResponse = {
+            ...response,
+            break: {
+                id: 7,
+                user_id: 1,
+                start_date: '2026-08-17',
+                end_date: '2026-08-21',
+                status: 'active',
+                duration_days: 5,
+            },
+        };
+        vi.mocked(todayApi.today).mockResolvedValue(breaking);
+        vi.mocked(todayApi.endBoostTarget).mockResolvedValue({
+            applied: true,
+            target_id: 11,
+            target_percent: 70,
+            start_date: '2026-08-17',
+            end_date: '2026-08-21',
+            explanation: 'Boost target ended; scheduling returns to the baseline target.',
+        });
+
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(TodayView, {
+            props: { date: '2026-08-19' },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        await wrapper.find('[data-testid="end-boost-button"]').trigger('click');
+        await flushPromises();
+
+        expect(todayApi.endBoostTarget).toHaveBeenCalledTimes(1);
+        expect(todayApi.today).toHaveBeenCalledTimes(2);
+        expect(wrapper.find('[data-testid="boost-message"]').text()).toContain('Boost target ended');
     });
 });

@@ -186,3 +186,55 @@ export interface EndBreakResponse {
     duration_days: number | null;
     explanation: string;
 }
+
+export interface BoostTarget {
+    id: number;
+    user_id: number;
+    break_period_id: number | null;
+    start_date: string;
+    end_date: string;
+    target_percent: number;
+    status: 'active' | 'ended';
+    created_at?: string | null;
+}
+
+export interface BoostRecommendation {
+    eligible: boolean;
+    recommendation: 'NOT_ELIGIBLE' | 'SUPPRESSED' | 'BOOST_AVAILABLE' | 'MAINTAIN' | 'REDUCE_LOAD';
+    reason: string;
+    average_realization: number;
+    recommended_target_percent: number;
+}
+
+export interface BoostSetupResponse {
+    eligible: boolean;
+    active_target: BoostTarget | null;
+    recommendation: BoostRecommendation;
+    safety_cap_percent: number;
+    break_period_id: number | null;
+    break_start_date: string | null;
+    break_end_date: string | null;
+}
+
+export interface SetBoostTargetPayload {
+    target_percent: number;
+    break_period_id?: number;
+    start_date?: string;
+    end_date?: string;
+}
+
+export interface SetBoostTargetResponse {
+    target: BoostTarget;
+    capped: boolean;
+    warning: string | null;
+    explanation: string;
+}
+
+export interface EndBoostTargetResponse {
+    applied: boolean;
+    target_id: number | null;
+    target_percent: number | null;
+    start_date: string | null;
+    end_date: string | null;
+    explanation: string;
+}

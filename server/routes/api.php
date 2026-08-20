@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AdaptiveContextController;
 use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BoostController;
 use App\Http\Controllers\Api\BreakController;
 use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\CanvasController;
@@ -186,6 +187,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Break Mode (FR-36/FR-39): confirm a manual break period and end it.
     Route::post('/break', [BreakController::class, 'store']);
     Route::post('/break/end', [BreakController::class, 'end']);
+
+    // Boost Mode (FR-37/FR-38): show setup + recommendation, save/end a target.
+    Route::get('/boost', [BoostController::class, 'index']);
+    Route::post('/boost', [BoostController::class, 'store']);
+    Route::post('/boost/end', [BoostController::class, 'end']);
 
     // Schedule Overrides (FR-25; SRS §7.1).
     Route::get('/schedule-overrides', [ScheduleOverrideController::class, 'index']);
