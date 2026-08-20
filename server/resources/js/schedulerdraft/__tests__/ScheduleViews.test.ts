@@ -21,6 +21,10 @@ vi.mock('../../imports/api', () => ({
         get: vi.fn(),
         confirm: vi.fn(),
         discard: vi.fn(),
+        uploadIcs: vi.fn(),
+        getIcs: vi.fn(),
+        confirmIcs: vi.fn(),
+        discardIcs: vi.fn(),
     },
 }));
 
@@ -178,5 +182,76 @@ describe('KRS import', () => {
 
         expect(importApi.confirm).toHaveBeenCalledWith(7);
         expect(wrapper.get('[data-testid="krs-import-result"]').text()).toContain('confirmed');
+    });
+});
+
+describe('ICS import', () => {
+    it('renders the upload and previews parsed events with conflicts', async () => {
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(ScheduleDraftView, { global: { plugins: [pinia] } });
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="ics-import"]').exists()).toBe(true);
+
+        vi.mocked(importApi.uploadIcs).mockResolvedValue({
+            import: {
+                id: 21,
+                filename: 'holidays.ics',
+                status: 'pending',
+                confidence: 0.5,
+                rows: [
+                    {
+                        uid: 'h1',
+                        summary: 'National Holiday',
+                        location: null,
+                        start_at: '2026-08-19T00:00:00+07:00',
+                        end_at: '2026-08-19T23:59:00+07:00',
+                        type: 'one_time',
+                        recurrence: null,
+                        tzid: 'Asia/Jakarta',
+                        conflict: false,
+                        conflict_with: null,
+                    },
+                    {
+                        uid: 'h2',
+                        summary: 'Team Standup',
+                        location: 'Room 1',
+                        start_at: '2026-08-19T09:00:00+07:00',
+                        end_at: '2026-08-19T09:30:00+07:00',
+                        type: 'recurring',
+                        recurrence: 'FREQ=WEEKLY',
+                        tzid: 'Asia/Jakarta',
+                        conflict: true,
+                        conflict_with: 'Existing Class',
+                    },
+                ],
+                errors: [{ index: 2, summary: 'Broken', error: 'Malformed date-time value.' }],
+                warnings: [{ index: 3, summary: 'Holiday', warning: 'All-day events are not imported.' }],
+                created_at: '2026-08-20T00:00:00+00:00',
+            },
+        });
+
+        const input = wrapper.find('[data-testid="ics-import-file"]');
+        Object.defineProperty(input.element, 'files', { value: [new File(['x'], 'holidays.ics')], configurable: true });
+        await input.trigger('change');
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="ics-import-preview"]').exists()).toBe(true);
+        expect(wrapper.findAll('[data-testid="ics-import-row"]')).toHaveLength(2);
+        expect(wrapper.get('[data-testid="ics-import-row"]').text()).toContain('National Holiday');
+        expect(wrapper.findAll('[data-testid="ics-import-row-conflict"]')[1].text()).toContain('Conflicts with');
+        expect(wrapper.get('[data-testid="ics-import-error-item"]').text()).toContain('Malformed date-time');
+        expect(wrapper.get('[data-testid="ics-import-warning-item"]').text()).toContain('All-day events are not imported.');
+
+        vi.mocked(importApi.confirmIcs).mockResolvedValue({
+            import: { id: 21, filename: 'holidays.ics', status: 'confirmed', confidence: 0.5, rows: [], errors: [], warnings: [], created_at: '2026-08-20T00:00:00+00:00' },
+        });
+        await wrapper.find('[data-testid="ics-import-confirm"]').trigger('click');
+        await flushPromises();
+
+        expect(importApi.confirmIcs).toHaveBeenCalledWith(21);
+        expect(wrapper.get('[data-testid="ics-import-result"]').text()).toContain('confirmed');
     });
 });

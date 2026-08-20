@@ -4,6 +4,7 @@ import { useScheduleDraftStore } from './store';
 import { formatDate, formatTime } from './date';
 import SchedulerExplanation from '../visualstate/SchedulerExplanation.vue';
 import KrsImport from '../imports/KrsImport.vue';
+import IcsImport from '../imports/IcsImport.vue';
 import { SCHEDULER_REASONS } from '../visualstate/explanation';
 
 const emit = defineEmits<{
@@ -143,5 +144,8 @@ function reasonLabel(reason: string): string {
 
         <!-- KRS PDF import (FR-24) -->
         <KrsImport />
+
+        <!-- iCalendar import (FR-30) -->
+        <IcsImport />
     </div>
 </template>

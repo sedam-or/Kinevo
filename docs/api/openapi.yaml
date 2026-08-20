@@ -965,6 +965,113 @@ paths:
                   import: {$ref: '#/components/schemas/KrsImport'}
         '401': { description: Unauthorized }
         '422': { description: Not found or already resolved }
+  /imports/ics:
+    post:
+      tags: [Imports]
+      summary: Upload and stage an iCalendar (.ics) import (FR-30)
+      description: >
+        Accepts an .ics/.ical calendar (≤5 MB), parses VEVENTs into candidate
+        Hard Landscape rows in the owner's profile timezone, flags conflicts
+        against the existing schedule, and stores the result in a pending
+        staging state. Malformed events are reported per-event (never silently
+        dropped) and nothing is persisted until the user confirms the preview.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: Staged import (preview)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [import]
+                properties:
+                  import: {$ref: '#/components/schemas/IcsImport'}
+        '401': { description: Unauthorized }
+        '422': { description: Validation error (not .ics, oversized, unparseable) }
+  /imports/ics/{importId}:
+    get:
+      tags: [Imports]
+      summary: Fetch a staged iCalendar import for preview (FR-30)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: importId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Staged import
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [import]
+                properties:
+                  import: {$ref: '#/components/schemas/IcsImport'}
+        '401': { description: Unauthorized }
+        '404': { description: Import not found }
+  /imports/ics/{importId}/confirm:
+    post:
+      tags: [Imports]
+      summary: Confirm and persist a staged iCalendar import (FR-30)
+      description: >
+        Persists the non-conflicting rows as Hard Landscape events in a single
+        transaction and marks the import confirmed. Recurring events become
+        weekly recurring Hard Landscape; conflicting, unreadable, and
+        all-day rows are skipped — the existing schedule is never overwritten.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: importId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Import confirmed
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [import]
+                properties:
+                  import: {$ref: '#/components/schemas/IcsImport'}
+        '401': { description: Unauthorized }
+        '422': { description: Not found or already resolved }
+  /imports/ics/{importId}/discard:
+    post:
+      tags: [Imports]
+      summary: Discard a staged iCalendar import (FR-30)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: importId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Import discarded
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [import]
+                properties:
+                  import: {$ref: '#/components/schemas/IcsImport'}
+        '401': { description: Unauthorized }
+        '422': { description: Not found or already resolved }
 
   /goals:
     get:
@@ -3824,6 +3931,48 @@ components:
         rows:
           type: array
           items: {$ref: '#/components/schemas/KrsImportRow'}
+        created_at: {type: string, format: date-time}
+    IcsImportRow:
+      type: object
+      required: [uid, summary, start_at, end_at, type, tzid, conflict]
+      properties:
+        uid: {type: string, nullable: true}
+        summary: {type: string, maxLength: 200}
+        location: {type: string, nullable: true}
+        start_at: {type: string, format: date-time, example: '2026-08-19T09:00:00+07:00'}
+        end_at: {type: string, format: date-time}
+        type: {type: string, enum: [one_time, recurring]}
+        recurrence: {type: string, nullable: true, example: 'FREQ=WEEKLY;BYDAY=WE;COUNT=12'}
+        tzid: {type: string, example: 'Asia/Jakarta'}
+        conflict: {type: boolean}
+        conflict_with: {type: string, nullable: true}
+    IcsImportReportItem:
+      type: object
+      required: [index, summary]
+      properties:
+        index: {type: integer}
+        summary: {type: string, nullable: true}
+        error: {type: string}
+        warning: {type: string}
+    IcsImport:
+      type: object
+      required: [id, filename, status, confidence, rows, errors, warnings, created_at]
+      properties:
+        id: {type: integer}
+        filename: {type: string}
+        status: {type: string, enum: [pending, confirmed, discarded]}
+        confidence: {type: number, format: float, nullable: true}
+        rows:
+          type: array
+          items: {$ref: '#/components/schemas/IcsImportRow'}
+        errors:
+          type: array
+          description: Per-event parse errors (FR-30 Exception Flow)
+          items: {$ref: '#/components/schemas/IcsImportReportItem'}
+        warnings:
+          type: array
+          description: Per-event warnings (all-day, recurrence exceptions, unsupported rules)
+          items: {$ref: '#/components/schemas/IcsImportReportItem'}
         created_at: {type: string, format: date-time}
     Goal:
       type: object

@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\FocusSessionController;
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\HardLandscapeController;
 use App\Http\Controllers\Api\HealthController;
+use App\Http\Controllers\Api\IcalImportController;
 use App\Http\Controllers\Api\ImportController;
 use App\Http\Controllers\Api\KnowledgeLinkController;
 use App\Http\Controllers\Api\KnowledgeSearchController;
@@ -97,6 +98,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/imports/{importId}', [ImportController::class, 'show']);
     Route::post('/imports/{importId}/confirm', [ImportController::class, 'confirm']);
     Route::post('/imports/{importId}/discard', [ImportController::class, 'discard']);
+
+    // iCalendar import (FR-30): stage → preview → confirm; conflicts never overwrite.
+    Route::post('/imports/ics', [IcalImportController::class, 'store']);
+    Route::get('/imports/ics/{importId}', [IcalImportController::class, 'show']);
+    Route::post('/imports/ics/{importId}/confirm', [IcalImportController::class, 'confirm']);
+    Route::post('/imports/ics/{importId}/discard', [IcalImportController::class, 'discard']);
 
     Route::get('/logs', [ActivityLogController::class, 'index']);
     Route::post('/export', [ActivityLogController::class, 'export']);

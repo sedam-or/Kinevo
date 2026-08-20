@@ -2543,17 +2543,28 @@ Committed: see git log (TASK-141 PDF KRS import, backend + frontend + gates).
 
 # TASK-142 — iCal Import
 
-Implement:
+Status: DONE
+
+Requirements: FR-30 — import an iCalendar (.ics/.ical) calendar (e.g. public holiday calendar), parse VEVENTs, handle timezones, show a conflict-aware preview, and only persist Hard Landscape after user confirmation. Import must not automatically overwrite existing Hard Landscape (FR-30 Exception Flow: malformed .ics rejected with a per-event error report; all-day/RECURRENCE-ID/EXDATE/unsupported-RRULE events surface as warnings; TASK-144 preview/validation/warnings/accept/cancel principles). No new runtime dependency (bounded RFC-5545 subset parser).
+
+Implementation:
 
 ```text
-upload/import calendar
-parse VEVENT
-timezone handling
-conflict preview
-confirmation
+upload ... POST /imports/ics (.ics/.ical, ≤5 MB); validate extension + size
+parse .... IcsParser (hand-written RFC-5545 subset) — line unfolding + escaping, VEVENT extraction, DTSTART/DTEND/DURATION, TZID/UTC/floating → owner profile timezone, per-event errors/warnings, confidence = staged events / total
+tz ....... explicit TZID (validated), UTC (Z), or floating → profile timezone (allowlist: UTC, Asia/Jakarta, Asia/Makassar, Asia/Jayapura, Asia/Singapore, America/New_York, Europe/London)
+staging .. rows + per-event errors/warnings stored in a pending `imports` record (type `ical`) — nothing touches the schedule until confirmation
+preview .. GET /imports/ics/{importId} returns staged rows with conflict flags (conflict_with title) for review
+confirm .. POST /imports/ics/{importId}/confirm — in one transaction, non-conflicting rows become Hard Landscape (recurring → weekly-recurring with RRULE; else one-time); conflicting/unreadable/all-day rows are skipped, never overwritten; re-confirm → 422
+discard .. POST /imports/ics/{importId}/discard resolves without persisting
+conflict . IcalConflictResolver flags overlap vs existing Hard Landscape AND intra-import (deterministic order, first non-conflicting wins)
 ```
 
-Do not automatically overwrite existing Hard Landscape.
+Verification evidence: `php artisan test` 815 passed (2507 assertions); PHPStan 0 errors; Pint clean (571 files); Vitest 341 passed (51 files); vue-tsc typecheck clean; `npm run build` OK; repo gates PASS (validate-repo, secrets, doc-links, openapi 110 paths, changelog, version).
+
+Changes: `app/Domain/Imports/` (IcalImport entity with pending/confirmed/discarded + rows/errors/warnings, IcalImportRepository); `app/Models/Import.php` (type `ical`, rows JSON payload); `app/Infrastructure/Imports/EloquentIcalImportRepository.php`; `app/Application/Imports/` (IcsParser, IcalConflictResolver, UploadIcalImportUseCase, GetIcalImportUseCase, ConfirmIcalImportUseCase with transactional Hard Landscape persistence, DiscardIcalImportUseCase); `IcalImportController` (store/show/confirm/discard); routes + AppServiceProvider binding; `docs/api/openapi.yaml` (/imports/ics, /imports/ics/{id}, confirm, discard; IcsImportRow/IcsImportReportItem/IcsImport schemas). Frontend: `imports/types.ts` + `imports/api.ts` (uploadIcs/getIcs/confirmIcs/discardIcs), `imports/IcsImport.vue` (upload, preview table with conflict/recurring labels, per-event error + warning reports, confirm/discard), embedded in `ScheduleDraftView`. Tests: `IcsParserTest` (17) + `IcalImportApiTest` (11) + ScheduleViews.test.ts ICS import case.
+
+Committed: see git log (TASK-142 iCal import, backend + frontend + gates).
 
 ---
 

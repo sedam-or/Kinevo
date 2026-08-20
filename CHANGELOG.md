@@ -14,6 +14,12 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added iCalendar import (TASK-142): the Schedule view can now upload an .ics
+  calendar (e.g. public holiday calendar), see a parsed preview with per-event
+  errors and warnings and conflict flags, and confirm to add the non-conflicting
+  events as Hard Landscape in one transaction — recurring events become weekly
+  recurring, and the existing schedule is never overwritten. Timezones are
+  resolved to the owner's profile timezone (TZID, UTC, or floating local time).
 - Added KRS PDF import (TASK-141): the Schedule view can now upload a KRS PDF,
   see a parsed preview (day/time/course with a confidence score), and confirm to
   add each row as a weekly-recurring Hard Landscape event in one transaction —
