@@ -14,6 +14,12 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added iCalendar export (TASK-143): the Schedule view can now download the
+  selected date range as a valid .ics file (`/schedule/export/ics`). Scheduled
+  tasks and one-time / permanent Hard Landscape events become calendar events;
+  recurring Hard Landscape is expanded within the selected window. The feed is
+  RFC-5545-compliant, uses content-derived UIDs (no internal database
+  identifiers), and exposes only exportable fields (FR-30, NFR-03).
 - Added iCalendar import (TASK-142): the Schedule view can now upload an .ics
   calendar (e.g. public holiday calendar), see a parsed preview with per-event
   errors and warnings and conflict flags, and confirm to add the non-conflicting

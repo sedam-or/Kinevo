@@ -1571,6 +1571,39 @@ paths:
         '401': { description: Unauthorized }
         '422': { description: Validation error }
 
+  /schedule/export/ics:
+    get:
+      tags: [Scheduling]
+      summary: Export selected schedule range as iCalendar (.ics) (FR-30 / TASK-143)
+      description: >
+        Downloads the owner's schedule for the selected `from`/`to` date range
+        as a valid RFC-5545 iCalendar (.ics) document. Schedule assignments and
+        one-time / permanent Hard Landscape events become VEVENTs; recurring
+        Hard Landscape events are expanded within the selected window. Internal
+        database identifiers are not exposed (content-derived UIDs), and only
+        exportable fields are written (NFR-03).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string, format: date }
+          description: Inclusive start date (YYYY-MM-DD).
+        - name: to
+          in: query
+          required: true
+          schema: { type: string, format: date }
+          description: Inclusive end date (YYYY-MM-DD), on or after `from`.
+      responses:
+        '200':
+          description: Valid iCalendar document
+          content:
+            text/calendar:
+              schema: { type: string }
+        '401': { description: Unauthorized }
+        '422': { description: Validation error (missing/invalid from/to) }
+
   /schedule/emergency-pause:
     post:
       tags: [Scheduling]

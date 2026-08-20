@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\RechargeController;
 use App\Http\Controllers\Api\RecoveryController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\ScheduleDraftController;
+use App\Http\Controllers\Api\ScheduleExportController;
 use App\Http\Controllers\Api\ScheduleOverrideController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TodayController;
@@ -186,6 +187,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/schedule', [ScheduleController::class, 'index']);
     Route::get('/week', [WeekController::class, 'index']);
     Route::get('/calendar', [CalendarController::class, 'index']);
+
+    // iCalendar export (FR-30 / TASK-143): download selected schedule range.
+    Route::get('/schedule/export/ics', [ScheduleExportController::class, 'ical']);
 
     // Hard Landscape (SRS §7.1; FR-27/FR-28).
     Route::get('/hard-landscape', [HardLandscapeController::class, 'index']);

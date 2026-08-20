@@ -5,6 +5,7 @@ import { formatDate, formatTime } from './date';
 import SchedulerExplanation from '../visualstate/SchedulerExplanation.vue';
 import KrsImport from '../imports/KrsImport.vue';
 import IcsImport from '../imports/IcsImport.vue';
+import IcsExport from '../exports/IcsExport.vue';
 import { SCHEDULER_REASONS } from '../visualstate/explanation';
 
 const emit = defineEmits<{
@@ -147,5 +148,8 @@ function reasonLabel(reason: string): string {
 
         <!-- iCalendar import (FR-30) -->
         <IcsImport />
+
+        <!-- iCalendar export (FR-30 / TASK-143) -->
+        <IcsExport />
     </div>
 </template>

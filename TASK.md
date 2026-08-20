@@ -2570,9 +2570,32 @@ Committed: see git log (TASK-142 iCal import, backend + frontend + gates).
 
 # TASK-143 — iCal Export
 
-Export selected schedules in valid iCalendar format.
+Status: DONE
 
-Do not expose internal database identifiers unnecessarily.
+Requirements: FR-30 — export selected schedules in valid iCalendar format; do not expose internal database identifiers unnecessarily. NFR-03 — export SHALL require authenticated user context; the iCal feed SHALL expose only fields explicitly designated as exportable. FR-30 Business Rules — export feed must not expose unrelated private metadata. FR-30 Acceptance Criteria — generated feed can be parsed by a standards-compatible client.
+
+Implementation:
+
+```text
+endpoint .. GET /schedule/export/ics?from=YYYY-MM-DD&to=YYYY-MM-DD (auth:sanctum)
+output .... text/calendar; charset=utf-8, Content-Disposition attachment "kinevo-schedule.ics"
+domain .... IcsCalendar — deterministic RFC-5545 serializer (UTC YYYYMMDDTHHMMSSZ, RFC-5545
+            §3.1 folding at 75 octets, §3.3.11 text escaping, RRULE passthrough)
+use case .. ExportScheduleIcsUseCase — assignments (non-cancelled) → VEVENT with task title;
+            one_time/permanent Hard Landscape → single VEVENT; recurring Hard Landscape
+            expanded in-window via RecurrenceOccurrenceGenerator (unparseable RRULE degrades
+            to the base event, never silently dropped)
+privacy ... VEVENT UIDs are content-derived hashes (kinevo-<sha256:20>@kinevo) — no internal
+            database ids, user_id, task_id, or raw ids are written; only SUMMARY/DTSTART/DTEND
+            (+RRULE for recurring) are emitted
+validation. from/to required, to after_or_equal from → 422 on invalid range
+```
+
+Verification evidence: `php artisan test` 829 passed (2569 assertions) on both PostgreSQL and SQLite (CI config); PHPStan 0 errors; Pint clean (576 files); Vitest 343 passed (51 files); vue-tsc typecheck clean; `npm run build` OK; npm audit 0 vulnerabilities; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 111 paths, changelog, version).
+
+Changes: `app/Domain/Exports/IcsCalendar.php`; `app/Application/Exports/ExportScheduleIcsUseCase.php`; `app/Http/Controllers/Api/ScheduleExportController.php`; route `GET /schedule/export/ics`; `docs/api/openapi.yaml` (/schedule/export/ics path, text/calendar response). Frontend: `exports/api.ts` (downloadScheduleIcs raw-fetch + blob download), `exports/IcsExport.vue` (from/to range, Download .ics, error/success), embedded in `ScheduleDraftView`. Tests: `IcsCalendarTest` (7 unit) + `ScheduleExportApiTest` (7 feature) + ScheduleViews.test.ts ICS export cases (2).
+
+Committed: see git log (TASK-143 iCal export, backend + frontend + gates).
 
 ---
 

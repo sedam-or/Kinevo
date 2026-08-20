@@ -111,6 +111,7 @@ Work-Life analytics (comparison/trend) ✅ DONE (TASK-135)
 Task evidence attachments (FR-43)       ✅ DONE (TASK-140)
 KRS PDF import (FR-24)                  ✅ DONE (TASK-141)
 iCal import (FR-30)                     ✅ DONE (TASK-142)
+iCal export (FR-30)                     ✅ DONE (TASK-143)
 ```
 
 ### Evidence rule

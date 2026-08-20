@@ -28,11 +28,16 @@ vi.mock('../../imports/api', () => ({
     },
 }));
 
+vi.mock('../../exports/api', () => ({
+    downloadScheduleIcs: vi.fn(),
+}));
+
 import ScheduleDraftView from '../ScheduleDraftView.vue';
 import RescheduleView from '../RescheduleView.vue';
 import { useScheduleDraftStore } from '../store';
 import { scheduleDraftApi } from '../api';
 import { importApi } from '../../imports/api';
+import { downloadScheduleIcs } from '../../exports/api';
 
 beforeEach(() => {
     setActivePinia(createPinia());
@@ -253,5 +258,37 @@ describe('ICS import', () => {
 
         expect(importApi.confirmIcs).toHaveBeenCalledWith(21);
         expect(wrapper.get('[data-testid="ics-import-result"]').text()).toContain('confirmed');
+    });
+});
+
+describe('ICS export', () => {
+    it('renders the export panel and triggers a download', async () => {
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(ScheduleDraftView, { global: { plugins: [pinia] } });
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="ics-export"]').exists()).toBe(true);
+
+        await wrapper.find('[data-testid="ics-export-download"]').trigger('click');
+        await flushPromises();
+
+        expect(downloadScheduleIcs).toHaveBeenCalledTimes(1);
+        expect(wrapper.get('[data-testid="ics-export-success"]').text()).toContain('exported');
+    });
+
+    it('shows an error when the export fails', async () => {
+        vi.mocked(downloadScheduleIcs).mockRejectedValue(new Error('Calendar export failed.'));
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(ScheduleDraftView, { global: { plugins: [pinia] } });
+        await flushPromises();
+
+        await wrapper.find('[data-testid="ics-export-download"]').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.get('[data-testid="ics-export-error"]').text()).toContain('Calendar export failed.');
     });
 });
