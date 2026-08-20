@@ -14,6 +14,12 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added task evidence attachments (TASK-140): completed tasks can now hold up
+  to 3 evidence files (JPG/PNG/PDF, ≤5 MB each) with upload, list, download, and
+  delete (`/tasks/{taskId}/attachments`, FR-43). Files are validated by detected
+  content type (never the browser MIME alone), stored privately (not
+  world-readable), and SHA-256 checksummed. The Task detail view renders the
+  attachment list with download/delete and a completed-task upload gate.
 - Extended Work-Life analytics (TASK-135): the Analytics view now compares the
   current period's Work/Recharge ratio against the preceding equal-length
   period, shows a weekly ratio trend, and lists notable days (no data, focus

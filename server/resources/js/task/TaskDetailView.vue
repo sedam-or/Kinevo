@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref, watch } from 'vue';
 import { useTaskStore } from './store';
 import { TASK_TRANSITIONS, type Task, type TaskStatusValue } from './types';
+import AttachmentList from '../attachments/AttachmentList.vue';
 
 const props = defineProps<{
     taskId: number;
@@ -190,5 +191,12 @@ async function promote(subtaskId: number): Promise<void> {
                 <li v-if="tasks.subtasks.length === 0" class="text-sm text-gray-500 dark:text-gray-400">No subtasks.</li>
             </ul>
         </section>
+
+        <!-- Evidence attachments (FR-43) -->
+        <AttachmentList
+            v-if="tasks.current"
+            :task-id="tasks.current.id"
+            :completed="tasks.current.status === 'completed'"
+        />
     </div>
 </template>

@@ -2490,28 +2490,28 @@ TASK-140 … TASK-144
 
 # TASK-140 — Task Attachments / Evidence
 
-Implement:
+Status: DONE
+
+Requirements: FR-43 — up to 3 evidence files per completed task, each JPG/PNG/PDF and ≤5 MB; fourth file and 5.1 MB file rejected. SRS line 1641 (allowlist extension + detected content type + size) and line 1653 (attachments are not world-readable); the browser-provided MIME is never trusted on its own.
+
+Implementation:
 
 ```text
-upload
-download
-list
-delete
-ownership
-size validation
-MIME allowlist
-hash/checksum
+upload ......... POST /tasks/{taskId}/attachments (multipart `file`); task must be completed; count < 3; size ≤ 5 MB; detected content type in allowlist (finfo on contents, not browser MIME); extension allowlist
+list ........... GET /tasks/{taskId}/attachments (owner-scoped)
+download ....... GET /tasks/{taskId}/attachments/{id} — streams the private file after authorization (not world-readable)
+delete ......... DELETE /tasks/{taskId}/attachments/{id} — removes the file + metadata
+ownership ...... every operation resolves through findForUser (owner-scoped); 404 for other users
+hash/checksum .. SHA-256 stored on every attachment
+atomicity ...... storage failure never leaves a dangling DB record (FR-43 Exception Flows)
+rules .......... GET /attachments/rules exposes the limits for client pre-validation
 ```
 
-Enforce SRS:
+Verification evidence: `php artisan test` 781 passed (2360 assertions); PHPStan 0 errors; Pint clean (548 files); Vitest 339 passed (51 files); vue-tsc typecheck clean; `npm run build` OK; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 102 paths, changelog, version).
 
-```text
-max 3 per task
-max 5 MB
-JPG/PNG/PDF
-```
+Changes: migration `2026_08_20_200000_create_attachments_table.php`; `app/Domain/Attachments/` (Attachment entity, AttachmentRule constants, AttachmentRepository contract); `app/Models/Attachment.php`; `app/Infrastructure/Attachments/EloquentAttachmentRepository.php`; `app/Application/Attachments/` (UploadTaskAttachmentUseCase, ListTaskAttachmentsUseCase, GetTaskAttachmentUseCase, DeleteTaskAttachmentUseCase); `AttachmentController` (store/index/show/destroy/rules); routes + AppServiceProvider binding; `docs/api/openapi.yaml` (/tasks/{taskId}/attachments, /attachments/rules, Attachment, AttachmentRulesResponse). Frontend: `attachments/types.ts`, `attachments/api.ts` (upload/list/remove/blob download with auth), `attachments/AttachmentList.vue` (list, upload with limits, download, delete, completed-task gate), embedded in `TaskDetailView`. Tests: `AttachmentApiTest` (9) + TaskViews.test.ts attachment cases.
 
-Do not trust MIME type from the browser alone.
+Committed: see git log (TASK-140 attachments, backend + frontend + gates).
 
 ---
 

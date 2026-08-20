@@ -735,6 +735,132 @@ paths:
         '401': { description: Unauthorized }
         '404': { description: Subtask not found }
 
+  /attachments/rules:
+    get:
+      tags: [Tasks]
+      summary: Attachment limits (FR-43)
+      description: Exposes the evidence-attachment limits so the client can pre-validate (max 3 per completed task, ≤5 MB, JPG/PNG/PDF).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Attachment limits
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttachmentRulesResponse'
+        '401': { description: Unauthorized }
+  /tasks/{taskId}/attachments:
+    get:
+      tags: [Tasks]
+      summary: List a task's evidence attachments (FR-43)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Attachment list
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [attachments]
+                properties:
+                  attachments:
+                    type: array
+                    items: {$ref: '#/components/schemas/Attachment'}
+        '401': { description: Unauthorized }
+        '404': { description: Task not found }
+    post:
+      tags: [Tasks]
+      summary: Upload an evidence attachment to a completed task (FR-43)
+      description: >
+        Attaches a file (JPG/PNG/PDF, ≤5 MB) to a completed task, max 3 per
+        task. The content type is detected from the file contents, never trusted
+        from the browser alone (SRS line 1641). Files are stored privately and
+        are not world-readable.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: Attachment created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [attachment]
+                properties:
+                  attachment: {$ref: '#/components/schemas/Attachment'}
+        '401': { description: Unauthorized }
+        '422': { description: Validation error (not completed, limit reached, type/size) }
+  /tasks/{taskId}/attachments/{attachmentId}:
+    get:
+      tags: [Tasks]
+      summary: Download an evidence attachment (FR-43)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: File content
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        '401': { description: Unauthorized }
+        '404': { description: Attachment not found }
+    delete:
+      tags: [Tasks]
+      summary: Delete an evidence attachment (FR-43)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: attachmentId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Attachment deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted: { type: boolean }
+        '401': { description: Unauthorized }
+        '404': { description: Attachment not found }
+
   /goals:
     get:
       tags: [Goals]
@@ -3550,6 +3676,29 @@ components:
       properties:
         task: {$ref: '#/components/schemas/Task'}
         source_task: {$ref: '#/components/schemas/Task'}
+    Attachment:
+      type: object
+      required: [id, task_id, filename, mime_type, size_bytes, sha256, created_at]
+      properties:
+        id: {type: integer}
+        task_id: {type: integer}
+        filename: {type: string}
+        mime_type: {type: string}
+        size_bytes: {type: integer, minimum: 0}
+        sha256: {type: string, pattern: '^[a-f0-9]{64}$'}
+        created_at: {type: string, format: date-time}
+    AttachmentRulesResponse:
+      type: object
+      required: [max_per_task, max_bytes, allowed_extensions, allowed_mime]
+      properties:
+        max_per_task: {type: integer, example: 3}
+        max_bytes: {type: integer, example: 5242880}
+        allowed_extensions:
+          type: array
+          items: {type: string}
+        allowed_mime:
+          type: array
+          items: {type: string}
     Goal:
       type: object
       required: [id, title, horizon, status, priority_tier]

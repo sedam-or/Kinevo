@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AdaptiveContextController;
 use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BoostController;
 use App\Http\Controllers\Api\BreakController;
@@ -82,6 +83,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tasks/{taskId}/subtasks/{subtaskId}/toggle', [TaskController::class, 'toggleSubtask']);
     Route::put('/tasks/{taskId}/subtasks/{subtaskId}', [TaskController::class, 'updateSubtask']);
     Route::post('/subtasks/{subtaskId}/promote', [TaskController::class, 'promoteSubtask']);
+
+    // Evidence attachments (FR-43): max 3 JPG/PNG/PDF per completed task, ≤5 MB.
+    Route::get('/attachments/rules', [AttachmentController::class, 'rules']);
+    Route::get('/tasks/{taskId}/attachments', [AttachmentController::class, 'index']);
+    Route::post('/tasks/{taskId}/attachments', [AttachmentController::class, 'store']);
+    Route::get('/tasks/{taskId}/attachments/{attachmentId}', [AttachmentController::class, 'show']);
+    Route::delete('/tasks/{taskId}/attachments/{attachmentId}', [AttachmentController::class, 'destroy']);
 
     Route::get('/logs', [ActivityLogController::class, 'index']);
     Route::post('/export', [ActivityLogController::class, 'export']);
