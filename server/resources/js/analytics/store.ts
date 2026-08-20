@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { analyticsApi } from './api';
-import type { AnalyticsOverviewResponse, CapacityDay, DeadlineHealth, GoalSummary, ProgramContribution, WorkLifeBand, WorkLifeDay } from './types';
+import type { AnalyticsOverviewResponse, CapacityDay, DeadlineHealth, GoalSummary, PillarRow, ProgramContribution, WorkLifeBand, WorkLifeDay } from './types';
 import type { ApiError } from '../api/types';
 
 export const useAnalyticsStore = defineStore('analytics', () => {
@@ -37,6 +37,8 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     const capacityReason = ref('');
     const capacityConfidence = ref('');
 
+    const pillars = ref<PillarRow[]>([]);
+
     const loading = ref(false);
     const error = ref<ApiError | null>(null);
 
@@ -68,6 +70,8 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         capacityRecommendation.value = result.capacity.recommendation;
         capacityReason.value = result.capacity.reason;
         capacityConfidence.value = result.capacity.confidence;
+
+        pillars.value = result.pillars.pillars;
 
         from.value = result.from;
         to.value = result.to;
@@ -108,6 +112,7 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         capacityRecommendation.value = '';
         capacityReason.value = '';
         capacityConfidence.value = '';
+        pillars.value = [];
         from.value = '';
         to.value = '';
         error.value = null;
@@ -137,6 +142,7 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         capacityRecommendation,
         capacityReason,
         capacityConfidence,
+        pillars,
         loading,
         error,
         hasData,

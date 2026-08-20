@@ -66,6 +66,7 @@ class AnalyticsApiTest extends TestCase
     {
         $this->getJson('/api/v1/analytics/work-life')->assertStatus(401);
         $this->getJson('/api/v1/analytics/overview')->assertStatus(401);
+        $this->getJson('/api/v1/analytics/pillars')->assertStatus(401);
     }
 
     public function test_work_life_aggregates_productive_and_recharge_minutes(): void
@@ -296,5 +297,58 @@ class AnalyticsApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('task_completion.total_tasks', 0)
             ->assertJsonPath('focus.total_minutes', 0);
+    }
+
+    public function test_pillars_aggregate_realization_vs_target(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        $program = Program::query()->create([
+            'user_id' => $user->id, 'name' => 'Karier program', 'category' => 'karier',
+            'workload_type' => 'structured', 'weekly_target_minutes' => 60,
+            'status' => 'active', 'priority_tier' => 1,
+        ]);
+        $task = Task::query()->create([
+            'user_id' => $user->id, 'program_id' => $program->id, 'title' => 'Career work',
+            'status' => 'completed', 'priority_tier' => 1, 'progress_mode' => 'derived',
+            'progress' => 100, 'estimated_minutes' => 120, 'version' => 1,
+        ]);
+        $uncategorized = Task::query()->create([
+            'user_id' => $user->id, 'title' => 'No mapping', 'status' => 'completed',
+            'priority_tier' => 2, 'progress_mode' => 'derived', 'progress' => 100,
+            'estimated_minutes' => 45, 'version' => 1,
+        ]);
+
+        ProgressEvent::query()->create([
+            'user_id' => $user->id, 'event_type' => 'task_completed', 'entity_type' => 'task',
+            'entity_id' => $task->id, 'title' => 'Career work', 'occurred_at' => '2026-08-18 11:00:00',
+            'operation_id' => 'op-pillar-1', 'payload' => [],
+        ]);
+        ProgressEvent::query()->create([
+            'user_id' => $user->id, 'event_type' => 'task_completed', 'entity_type' => 'task',
+            'entity_id' => $uncategorized->id, 'title' => 'No mapping', 'occurred_at' => '2026-08-18 12:00:00',
+            'operation_id' => 'op-pillar-2', 'payload' => [],
+        ]);
+
+        $this->withToken($token)->getJson('/api/v1/analytics/pillars?from=2026-08-18&to=2026-08-19')
+            ->assertOk()
+            ->assertJsonPath('pillars.0.key', 'karier')
+            ->assertJsonPath('pillars.0.realization_minutes', 120)
+            ->assertJsonPath('pillars.0.target_minutes', 60)
+            ->assertJsonPath('pillars.0.percent', fn ($v) => abs((float) $v - 2.0) < 0.0001)
+            ->assertJsonPath('pillars.4.key', 'uncategorized')
+            ->assertJsonPath('pillars.4.realization_minutes', 45)
+            ->assertJsonPath('pillars.4.target_minutes', 0)
+            ->assertJsonPath('pillars.4.percent', null);
+    }
+
+    public function test_overview_includes_pillars(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        $this->withToken($token)->getJson('/api/v1/analytics/overview?from=2026-08-18&to=2026-08-19')
+            ->assertOk()
+            ->assertJsonPath('pillars.pillars.0.key', 'karier')
+            ->assertJsonCount(5, 'pillars.pillars');
     }
 }

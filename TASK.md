@@ -2401,9 +2401,27 @@ Committed: see git log (TASK-132 capacity analytics surface, backend + frontend 
 
 # TASK-133 — Pillar Analytics
 
-Implement the four-pillar representation from the SRS.
+Status: DONE
 
-Do not invent additional pillars.
+Requirements: FR-12 (Grafik 4 Pilar Kehidupan) — compute and display realization vs target for exactly Karier, Kesehatan, Bahasa, Branding, plus Uncategorized. Do not invent additional pillars. Pillars are determined via program/goal mapping; Uncategorized is only for tasks without a mapping; division by zero target yields N/A (not NaN).
+
+Implementation:
+
+```text
+pillars ............ fixed set (karier, kesehatan, bahasa, branding) + uncategorized; nothing else is invented (FR-12)
+mapping ............ program category matched to a canonical pillar (case-insensitive); unknown marker → Uncategorized (FR-12 Business Rules / Exception Flows)
+realization ........ completed task minutes in the period per pillar (from `task_completed` progress events → task estimated minutes)
+target ............. mapped program weekly_target_minutes × weeks in the period
+percent ............ realization ÷ target; null (N/A) when target is 0 — never NaN (FR-12 Exception Flows)
+read surface ....... GET /analytics/pillars?from=&to= + included in /analytics/overview
+UI ................. Analytics view renders a Life pillars section (realization vs target bars, % or N/A, completed vs target minutes)
+```
+
+Verification evidence: `php artisan test` 768 passed (2283 assertions); PHPStan 0 errors; Pint clean; Vitest 336 passed (51 files); vue-tsc typecheck clean; `npm run build` OK; repo gates PASS (validate-repo, secrets, doc-links 20, openapi 98 paths, changelog, version).
+
+Changes: `server/app/Domain/Analytics/Pillar.php` (value object, category→pillar mapping); `GetPillarAnalyticsUseCase`; `PillarAnalytics` result; `AnalyticsController@pillars` (GET /analytics/pillars) + included in overview; `routes/api.php`; `docs/api/openapi.yaml` (PillarRow, PillarAnalyticsResponse, /analytics/pillars). Frontend: `analytics/types.ts` (PillarKey/PillarRow/PillarAnalyticsResponse), `analytics/store.ts` pillars, `analytics/AnalyticsView.vue` Life pillars section. Tests: AnalyticsApiTest pillar realization vs target + overview inclusion; AnalyticsView.test.ts pillars section.
+
+Committed: see git log (TASK-133 pillar analytics, backend + frontend + gates).
 
 ---
 

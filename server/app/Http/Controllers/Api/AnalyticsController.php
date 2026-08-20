@@ -6,6 +6,7 @@ use App\Application\Analytics\GetActivityAnalyticsUseCase;
 use App\Application\Analytics\GetCapacityAnalyticsUseCase;
 use App\Application\Analytics\GetFocusAnalyticsUseCase;
 use App\Application\Analytics\GetGoalProgressAnalyticsUseCase;
+use App\Application\Analytics\GetPillarAnalyticsUseCase;
 use App\Application\Analytics\GetProgressEventsAnalyticsUseCase;
 use App\Application\Analytics\GetTaskCompletionAnalyticsUseCase;
 use App\Application\Analytics\GetWorkLifeAnalyticsUseCase;
@@ -30,6 +31,7 @@ final class AnalyticsController extends Controller
         private readonly GetActivityAnalyticsUseCase $activity,
         private readonly GetFocusAnalyticsUseCase $focus,
         private readonly GetProgressEventsAnalyticsUseCase $progressEvents,
+        private readonly GetPillarAnalyticsUseCase $pillars,
     ) {}
 
     /**
@@ -70,7 +72,23 @@ final class AnalyticsController extends Controller
             'activity' => $this->activity->__invoke($userId, $from, $to)->toArray(),
             'focus' => $this->focus->__invoke($userId, $from, $to)->toArray(),
             'progress_events' => $this->progressEvents->__invoke($userId, $from, $to)->toArray(),
+            'pillars' => $this->pillars->__invoke($userId, $from, $to)->toArray(),
         ], 200);
+    }
+
+    /**
+     * Four-pillar realization (FR-12, TASK-133): completed task minutes per
+     * pillar vs the mapped program weekly targets.
+     */
+    public function pillars(Request $request): JsonResponse
+    {
+        $parsed = $this->parseRange($request);
+        if ($parsed instanceof JsonResponse) {
+            return $parsed;
+        }
+        [$userId, $from, $to] = $parsed;
+
+        return response()->json($this->pillars->__invoke($userId, $from, $to)->toArray(), 200);
     }
 
     /**

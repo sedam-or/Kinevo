@@ -14,6 +14,12 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the four-pillar analytics (TASK-133): the Analytics view now renders a
+  Life pillars section for exactly Karier, Kesehatan, Bahasa, Branding plus
+  Uncategorized (FR-12). Each pillar shows completed task minutes in the period
+  versus the mapped program weekly target as a percentage (N/A when there is no
+  target). Pillars are derived from program category mapping; tasks without a
+  mapping fall back to Uncategorized.
 - Added Capacity analytics (TASK-132): the Analytics view now renders a
   capacity section — per-day scheduled load vs available capacity with overload
   highlighting, the realization ratio, a weekly trend, and the effective-capacity

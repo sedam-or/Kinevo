@@ -105,6 +105,7 @@ Work-Life Ratio analytics (analytics)  ✅ DONE (TASK-126)
 Analytics read models (overview API)   ✅ DONE (TASK-130)
 Goal Progress analytics (UI + health)  ✅ DONE (TASK-131)
 Capacity analytics (UI + trend)        ✅ DONE (TASK-132)
+Pillar analytics (4-pillar UI)         ✅ DONE (TASK-133)
 ```
 
 ### Evidence rule

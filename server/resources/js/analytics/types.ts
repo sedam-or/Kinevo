@@ -115,6 +115,22 @@ export interface ProgressEventsAnalyticsResponse {
     recent: { id: number | null; event_type: string; entity_type: string; entity_id: number; title: string | null; occurred_at: string }[];
 }
 
+export type PillarKey = 'karier' | 'kesehatan' | 'bahasa' | 'branding' | 'uncategorized';
+
+export interface PillarRow {
+    key: PillarKey;
+    label: string;
+    realization_minutes: number;
+    target_minutes: number;
+    percent: number | null;
+}
+
+export interface PillarAnalyticsResponse {
+    from: string;
+    to: string;
+    pillars: PillarRow[];
+}
+
 export interface AnalyticsOverviewResponse {
     from: string;
     to: string;
@@ -125,4 +141,5 @@ export interface AnalyticsOverviewResponse {
     activity: ActivityAnalyticsResponse;
     focus: FocusAnalyticsResponse;
     progress_events: ProgressEventsAnalyticsResponse;
+    pillars: PillarAnalyticsResponse;
 }

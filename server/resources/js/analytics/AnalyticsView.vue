@@ -102,6 +102,13 @@ const recommendationLabel = computed(() => {
     }
 });
 
+function percentLabel(percent: number | null): string {
+    if (percent === null) {
+        return 'N/A';
+    }
+    return `${Math.round(percent * 100)}%`;
+}
+
 function minutesLabel(minutes: number): string {
     if (minutes < 60) {
         return `${minutes}m`;
@@ -263,6 +270,32 @@ function run(fn: () => Promise<void>): void {
                 <p v-if="analytics.capacityReason" class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-capacity-reason">
                     {{ analytics.capacityReason }}
                 </p>
+            </div>
+
+            <div v-if="analytics.pillars.length > 0" class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-pillars">
+                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Life pillars</div>
+
+                <ul class="space-y-2">
+                    <li v-for="pillar in analytics.pillars" :key="pillar.key" class="text-sm" data-testid="analytics-pillar">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-gray-700 dark:text-gray-300">{{ pillar.label }}</span>
+                            <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-pillar-percent">
+                                {{ percentLabel(pillar.percent) }}
+                            </span>
+                        </div>
+                        <div class="mt-1 flex h-2 w-full overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
+                            <div
+                                v-if="pillar.percent !== null"
+                                class="h-full bg-[#F53003]"
+                                :style="{ width: `${Math.min(100, pillar.percent * 100)}%` }"
+                                data-testid="analytics-pillar-bar"
+                            />
+                        </div>
+                        <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                            {{ minutesLabel(pillar.realization_minutes) }} completed{{ pillar.target_minutes > 0 ? ` vs ${minutesLabel(pillar.target_minutes)} target` : ' · no target' }}
+                        </div>
+                    </li>
+                </ul>
             </div>
 
             <div v-if="analytics.days.length > 0" class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-days">

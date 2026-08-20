@@ -160,6 +160,17 @@ function overview(overrides: Partial<AnalyticsOverviewResponse> = {}): Analytics
             by_type: { milestone_completed: 1 },
             recent: [],
         },
+        pillars: {
+            from: '2026-08-17',
+            to: '2026-08-20',
+            pillars: [
+                { key: 'karier', label: 'Karier', realization_minutes: 300, target_minutes: 600, percent: 0.5 },
+                { key: 'kesehatan', label: 'Kesehatan', realization_minutes: 60, target_minutes: 0, percent: null },
+                { key: 'bahasa', label: 'Bahasa', realization_minutes: 0, target_minutes: 240, percent: 0 },
+                { key: 'branding', label: 'Branding', realization_minutes: 0, target_minutes: 0, percent: null },
+                { key: 'uncategorized', label: 'Uncategorized', realization_minutes: 30, target_minutes: 0, percent: null },
+            ],
+        },
         ...overrides,
     };
 }
@@ -217,6 +228,20 @@ describe('AnalyticsView', () => {
         expect(days[1].find('[data-testid="analytics-capacity-load"]').classes()).toContain('bg-red-500');
         expect(wrapper.findAll('[data-testid="analytics-capacity-week"]')).toHaveLength(1);
         expect(wrapper.get('[data-testid="analytics-capacity-reason"]').text()).toContain('Boost');
+    });
+
+    it('renders the four-pillar realization section', async () => {
+        const wrapper = mount(AnalyticsView);
+        await flushPromises();
+
+        const pillars = wrapper.findAll('[data-testid="analytics-pillar"]');
+        expect(pillars).toHaveLength(5);
+        expect(pillars[0].text()).toContain('Karier');
+        expect(pillars[0].get('[data-testid="analytics-pillar-percent"]').text()).toBe('50%');
+        expect(pillars[0].text()).toContain('5h completed');
+        expect(pillars[0].text()).toContain('10h target');
+        expect(pillars[1].get('[data-testid="analytics-pillar-percent"]').text()).toBe('N/A');
+        expect(pillars[1].text()).toContain('no target');
     });
 
     it('switches period presets', async () => {
