@@ -46,6 +46,35 @@ final class FocusSession
         );
     }
 
+    /**
+     * Build a focus session from a tracked duration in seconds (TASK-120).
+     * FR-05: the recorded duration is the tracked duration, not the nominal or
+     * wall-clock interval (pauses/resumes are excluded). Rounds to at least
+     * one minute.
+     */
+    public static function fromTracked(
+        int $userId,
+        CarbonImmutable $startedAt,
+        CarbonImmutable $endedAt,
+        int $trackedSeconds,
+        ?int $taskId = null,
+    ): self {
+        if (! $endedAt->greaterThan($startedAt)) {
+            throw new InvalidArgumentException('A focus session must end after it starts.');
+        }
+
+        $minutes = max(1, (int) round($trackedSeconds / 60));
+
+        return new self(
+            null,
+            $userId,
+            $taskId,
+            $startedAt,
+            $endedAt,
+            $minutes,
+        );
+    }
+
     public function withId(int $id): self
     {
         return new self(

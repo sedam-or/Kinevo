@@ -16,6 +16,8 @@ interface CanvasRepository
 
     public function create(int $userId, Canvas $canvas): Canvas;
 
+    public function update(Canvas $canvas): Canvas;
+
     public function createDocument(CanvasDocument $document): CanvasDocument;
 
     public function updateDocument(CanvasDocument $document, int $baseVersion): CanvasDocument;

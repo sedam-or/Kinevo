@@ -58,7 +58,8 @@ target_type
 target_id
 link_type
 ```
-All relations are ownership-scoped.
+All relations are ownership-scoped. Sources may be Notes or Canvases; targets may
+be Goals, Milestones, Programs, Tasks, Canvases, or Notes.
 
 ### Search
 MVP search SHOULD support:

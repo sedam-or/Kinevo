@@ -8,6 +8,8 @@ vi.mock('../api', async (importOriginal) => {
         todayApi: {
             today: vi.fn(),
             quickCapture: vi.fn(),
+            miniPause: vi.fn(),
+            emergencyPause: vi.fn(),
         },
     };
 });
@@ -19,6 +21,7 @@ import type { TodayResponse } from '../types';
 const response: TodayResponse = {
     date: '2026-08-19',
     schedule_version: 5,
+    pause: null,
     events: [
         {
             assignment: {

@@ -10,6 +10,7 @@ use App\Domain\Canvas\Contracts\CanvasRepository;
 use App\Models\Canvas as CanvasModel;
 use App\Models\CanvasDocument as CanvasDocumentModel;
 use App\Models\CanvasFile as CanvasFileModel;
+use DateTimeImmutable;
 
 final class EloquentCanvasRepository implements CanvasRepository
 {
@@ -31,6 +32,7 @@ final class EloquentCanvasRepository implements CanvasRepository
     {
         return CanvasModel::query()
             ->where('user_id', $userId)
+            ->whereNull('archived_at')
             ->orderByDesc('updated_at')
             ->get()
             ->map($this->toDomain(...))
@@ -48,6 +50,15 @@ final class EloquentCanvasRepository implements CanvasRepository
             'task_id' => $canvas->taskId,
             'version' => 1,
         ]);
+
+        return $this->toDomain($model);
+    }
+
+    public function update(Canvas $canvas): Canvas
+    {
+        $model = CanvasModel::query()->findOrFail($canvas->id);
+        $model->update(array_diff_key($canvas->toArray(), array_flip(['id', 'user_id'])));
+        $model->refresh();
 
         return $this->toDomain($model);
     }
@@ -120,6 +131,7 @@ final class EloquentCanvasRepository implements CanvasRepository
             $model->program_id,
             $model->task_id,
             $model->version,
+            $model->archived_at !== null ? new DateTimeImmutable($model->archived_at) : null,
         );
     }
 

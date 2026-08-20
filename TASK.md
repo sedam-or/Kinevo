@@ -1757,54 +1757,63 @@ Note ↔ Canvas
 
 Show linked entities in context.
 
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-102 (API client), TASK-110 (Notes UI), TASK-032 (knowledge links API)
+- SRS: FR-54 (links to Goals/Milestones/Programs/Tasks/Canvases), SRS §10.5; knowledge-layer.md §Link model.
+- Acceptance:
+  - [x] Backend: `KnowledgeTargetType` + CreateNoteLink/ListTargetLinks use cases + OpenAPI extended to support `canvas` as a link target (SRS §10.5, FR-54), owner-scoped via CanvasRepository; duplicate → 409; foreign/unknown → 404; invalid → 422.
+  - [x] Typed link module (`knowledge/`): types, api (linksForNote/createForNote/removeFromNote/reverseLinks + goal/program/task/canvas/milestone context list), Pinia store (`useKnowledgeLinkStore`) with loadLinks/loadContext/loadMilestones/createLink/removeLink/clear.
+  - [x] `LinkManager.vue` in the Note edit view: lists linked entities with label + link type, creates Note→Goal/Milestone/Program/Task/Canvas links (type → entity dropdown, milestone depends on a selected Goal), removes links.
+  - [x] Conflict (duplicate, 409) and validation errors surfaced to the user.
+  - [x] Milestone context resolved by goal (dependent dropdown).
+- Verification:
+  - [x] Backend: `php artisan test` → OK (631 tests, 1709 assertions; +3 KnowledgeLink canvas tests); Pint PASS (432 files); PHPStan no errors
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → OK (240 tests, 13 new: 7 link store + 6 LinkManager); `npm run build` → built OK
+  - [x] `check-secrets.sh`, `check-doc-links.sh` (19 links), `validate-repo.sh`, `check-openapi.sh` (72 paths), `check-changelog.sh` all PASS
+- Evidence: server/resources/js/knowledge/{types.ts,api.ts,store.ts,LinkManager.vue,__tests__/*.test.ts}, server/resources/js/note/NoteEditView.vue, server/app/Domain/Knowledge/ValueObjects/KnowledgeTargetType.php, server/app/Application/Knowledge/{CreateNoteLink,ListTargetLinks}UseCase.php, server/tests/{Unit/KnowledgeLinkTest.php,Feature/Api/KnowledgeLinkApiTest.php}, docs/api/openapi.yaml (CreateKnowledgeLinkRequest/KnowledgeLink target_type enum)
+- Release Impact: MINOR (new frontend surface + additive canvas link target; no breaking API change)
+
 ---
 
 # TASK-113 — Canvas Workspace UI
 
-Implement:
-
-```text
-Canvas list
-Create canvas
-Open canvas
-Rename
-Save state
-Read-only mode
-Theme
-Delete/archive if approved
-```
-
-Canvas must use:
-
-```text
-Vue
- ↓
-CanvasHost
- ↓
-CanvasAdapter
- ↓
-React Island
- ↓
-Excalidraw
-```
-
-Do not bypass the adapter.
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-040 (canvas domain), TASK-043 (Excalidraw adapter + React island), TASK-044 (canvas persistence)
+- SRS: FR-55 (canvas lifecycle), FR-56 (optimistic versioning / 409), FR-57 (offline canvas mutations); SRS §7.5, §8.5.
+- Acceptance:
+  - [x] Backend: `canvases.archived_at` migration (nullable, after version); `Canvas` domain gains `archivedAt` + `archive()`/`restore()`/`isArchived()`; `CanvasRepository.update()` + `listForUser()` excludes archived; `RenameCanvasUseCase` + `ArchiveCanvasUseCase`; `PATCH /canvases/{canvasId}` (rename) + `POST /canvases/{canvasId}/archive`; owner-scoped 404s, rename validation (title 1–200) → 422.
+  - [x] Frontend canvas module: `canvas/` types, api client (list/show/create/save/rename/archive), `HttpCanvasPersistence` (409 → `CANVAS_VERSION_CONFLICT`, OFFLINE/NETWORK → `OFFLINE`), Pinia store (loadList/open/create/rename/archive/saveState/recordSaved/reconcile).
+  - [x] `CanvasListView` (list + create), `CanvasWorkspaceView` (open, rename on save, read-only toggle, theme cycle light/dark/auto, archive with confirmation, version-conflict reload/reconcile, VisualStateBadge save state), `CanvasView` orchestrator; `CanvasHost` watchers for scene/readOnly/theme + `adapterFactory` DI seam.
+  - [x] Layering preserved per ADR-005: Vue → CanvasHost → CanvasAdapter → React Island → Excalidraw; no adapter bypass.
+  - [x] Shell: `canvas` nav item (`shell/navigation.ts`) + `AuthHost` dispatch.
+- Verification:
+  - [x] Backend: `php artisan test` → OK (638 tests, 1730 assertions; +7 Canvas rename/archive tests); PHPStan no errors; Pint PASS (434 files)
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → OK (258 tests, +18 new: 7 store + 5 list + 6 workspace); `npm run build` → built OK (vite oxc JSX enabled for React island)
+  - [x] `check-secrets.sh`, `check-doc-links.sh` (19 links), `validate-repo.sh`, `check-openapi.sh` (73 paths), `check-changelog.sh`, `check-version.sh` all PASS
+- Evidence: database/migrations/2026_08_19_140000_add_archived_at_to_canvases_table.php, server/app/Domain/Canvas/Canvas.php, server/app/Application/Canvas/{RenameCanvasUseCase,ArchiveCanvasUseCase}.php, server/app/Http/Controllers/Api/CanvasController.php, server/routes/api.php, server/resources/js/canvas/{api-types.ts,api.ts,store.ts,http-persistence.ts,CanvasListView.vue,CanvasWorkspaceView.vue,CanvasView.vue,__tests__/*.test.ts}, server/resources/js/auth/AuthHost.vue, server/resources/js/shell/navigation.ts, docs/api/openapi.yaml (CanvasRenameRequest, Canvas.archived_at, PATCH /canvases/{canvasId}, POST /canvases/{canvasId}/archive), server/tests/{Unit/CanvasTest.php,Feature/Api/CanvasApiTest.php}
+- Release Impact: MINOR (new canvas workspace surface + additive rename/archive endpoints; no breaking API change)
 
 ---
 
 # TASK-114 — Canvas Context / Linking
 
-Canvas must be attachable to:
-
-```text
-Goal
-Milestone
-Program
-Task
-Note
-```
-
-Use `knowledge_links` where the approved domain model defines relational linking rather than adding duplicate foreign keys.
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-113 (canvas workspace), TASK-112 (knowledge links), TASK-032 (knowledge links API)
+- SRS: FR-54 (knowledge links), FR-55 (canvas lifecycle attachment), SRS §10.5, knowledge-layer.md §Link model.
+- Acceptance:
+  - [x] Canvas is a first-class `knowledge_links` source (`source_type='canvas'`), attachable to Goal/Milestone/Program/Task/Note targets using the shared `knowledge_links` relation — no duplicate canvas foreign keys (TASK-114 directive).
+  - [x] Backend: `KnowledgeLink::SOURCE_CANVAS` + `KnowledgeTargetType::NOTE`; `CreateCanvasLinkUseCase`/`ListCanvasLinksUseCase`/`RemoveCanvasLinkUseCase`; canvas link endpoints `GET/POST /canvases/{canvasId}/links` + `DELETE /canvases/{canvasId}/links/{linkId}`; `byTarget` reverse navigation supports `note` targets; owner-scoped 404s, duplicate → 409, invalid → 422.
+  - [x] Frontend: `CanvasContextPanel.vue` in the canvas workspace lists linked Goal/Milestone/Program/Task/Note entities (label + link type) and creates/removes links; note is a target option; knowledge link store gains canvas-scoped load/create/remove + note context; milestones resolve dependent on selected goal.
+  - [x] Note link surface (LinkManager) unchanged; target type set extended with `note` consistently.
+- Verification:
+  - [x] Backend: `php artisan test` → OK (650 tests, 1770 assertions; +12 KnowledgeLink canvas tests); Pint PASS (437 files); PHPStan no errors
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → OK (268 tests, +10 new: 4 store + 6 CanvasContextPanel); `npm run build` → built OK
+  - [x] `check-secrets.sh`, `check-doc-links.sh`, `validate-repo.sh`, `check-openapi.sh`, `check-changelog.sh`, `check-version.sh` all PASS
+- Evidence: server/app/Application/Knowledge/{CreateCanvasLink,ListCanvasLinks,RemoveCanvasLink}UseCase.php, server/app/Domain/Knowledge/{KnowledgeLink.php,ValueObjects/KnowledgeTargetType.php}, server/app/Http/Controllers/Api/KnowledgeLinkController.php, server/routes/api.php, server/resources/js/canvas/{CanvasContextPanel.vue,__tests__/CanvasContextPanel.test.ts}, server/resources/js/knowledge/{api.ts,store.ts,types.ts,__tests__/*.test.ts}, server/tests/{Unit/KnowledgeLinkTest.php,Feature/Api/KnowledgeLinkApiTest.php}, docs/api/openapi.yaml (/canvases/{canvasId}/links, KnowledgeLink source/target enums)
+- Release Impact: MINOR (additive canvas link endpoints + note target type; no breaking API change)
 
 ---
 
@@ -1831,6 +1840,47 @@ stored locally
 waiting for synchronization
 in conflict
 ```
+
+### TASK-115 — DONE
+
+- Status: DONE
+- Scope: Frontend-only (Vue/TS). No backend, migration, or API change required —
+  the visible sync layer maps the existing general MutationQueue (TASK-052) and
+  network state into the eight user-visible states.
+- Requirements: FR-44 (Offline Support), FR-57 (Offline Knowledge/Canvas
+  Mutations), NFR-15 (Offline Integrity), SRS §9.1–§9.4, offline-sync.md
+  §Sync state machine / §Failure safety.
+- Changes:
+  - `VisualStateValue` + `VISUAL_STATES` gain a `retrying` state (dashed,
+    non-color glyph, warning tone) so every visible sync state has a
+    color-independent signal (design.md §Visible states).
+  - Shell store `SyncState` extended to all eight states (`online`, `offline`,
+    `queued`, `syncing`, `saved`, `conflict`, `retrying`, `failed`) with
+    `SYNC_STATES` export, plus `syncQueuedCount`/`setSyncQueuedCount`,
+    `syncError`/`setSyncError`, and `retrySync`/`registerRetrySync`.
+  - New framework-agnostic `offline/sync-status.ts`: `SyncStatusController`
+    bridges a `MutationQueue` into a `SyncStatus` sink (`state`, `queuedCount`,
+    `explanation`, `retryable`, `error`); `mapQueueStateToSyncState` maps
+    queue/network state to the visible state; `SYNC_STATE_EXPLANATIONS` answers
+    "persisted server-side / stored locally / waiting for sync / in conflict".
+  - New `offline/http-applier.ts`: `HttpMutationApplier` implements the general
+    queue's `OfflineOperationApplier` against the existing `apiClient`
+    (task/note/quick-capture/canvas routes), translating outcomes to
+    applied/conflict/retryable/permanent (409 → conflict, offline/5xx/429 →
+    retryable, other 4xx → permanent; unsupported operations are a permanent
+    failure that preserves local data — never silent discard).
+  - New visible `shell/SyncStatusPanel.vue`: badge + human-readable explanation
+    + queued count + "Retry sync" button for retrying/failed states; wired into
+    `AppShell`'s header sync slot.
+  - `AuthHost` boots the queue (`IndexedDbQueueStore` + `HttpMutationApplier`) +
+    `SyncStatusController` when IndexedDB exists, publishes status into the
+    shell store, syncs on reconnect, and disposes on unmount.
+- Verification:
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → OK (295 tests, 46 files; +27 new: 9 sync-status + 11 http-applier + 3 SyncStatusPanel + 3 shell store + 1 visualstate retrying); `npm run build` → built OK
+  - [x] Backend: `php artisan test` → OK (650 tests, 1770 assertions; unchanged — no backend change)
+  - [x] `check-secrets.sh`, `check-doc-links.sh`, `validate-repo.sh`, `check-openapi.sh`, `check-changelog.sh`, `check-version.sh` all PASS
+- Evidence: server/resources/js/{visualstate/types.ts,shell/{store.ts,AppShell.vue,SyncStatusPanel.vue},offline/{sync-status.ts,http-applier.ts},auth/AuthHost.vue} and their `__tests__`
+- Release Impact: PATCH (frontend-only UX additions; no API/schema change)
 
 ---
 
@@ -1867,6 +1917,75 @@ Progress Events
 
 Do not create a timer state model disconnected from persistence.
 
+- Status: DONE
+- Scope: Backend + frontend. New persisted `execution_sessions` table, Execution
+  domain (state machine), application use cases, REST endpoints, timer UI in the
+  Today NOW card.
+- Requirements: FR-05 (Execution Timer — timer state derived from persisted
+  timestamps; recorded = tracked, not nominal), FR-06 (Task Status), FR-18
+  (Activity Log), FR-25 (Progress Events), NFR-12 (Concurrency/optimistic
+  versioning — task transitions reuse existing optimistic flows).
+- Changes:
+  - Migration `2026_08_19_150000_create_execution_sessions_table`: `user_id`
+    FK, `task_id` FK (cascade), `status` (`running|paused|completed|abandoned`),
+    `started_at`, `last_resumed_at` (nullable), `accumulated_seconds` (default
+    0), `ended_at` (nullable); indexes on `[user_id, status]` and
+    `[user_id, task_id]`. Elapsed time is never a client-only model — it is
+    derived from persisted timestamps + accumulated seconds (FR-05).
+  - Domain: `ExecutionStatus` value object (transition rules:
+    running→paused/completed/abandoned, paused→running/completed/abandoned,
+    terminal states), immutable `ExecutionSession` entity (`start`, `pause`,
+    `resume`, `complete`, `abandon`, `elapsedSeconds`, `toArray`, `withId`),
+    `ExecutionSessionRepository` contract.
+  - `FocusSession::fromTracked()` factory — records tracked (not nominal)
+    duration, rounded to ≥ 1 minute (FR-05).
+  - Application use cases: `StartExecutionUseCase` (rejects an already-running
+    timer → `'An execution timer is already running.'`, moves task →
+    `in_progress`, logs `task_started` activity with deterministic operationId
+    `execution:started:{taskId}:{ts}`), `PauseExecutionUseCase`,
+    `ResumeExecutionUseCase`, `CompleteExecutionUseCase` (records a
+    `FocusSession` via `FocusSession::fromTracked`; if the task has no remaining
+    subtasks → `SetTaskStatusUseCase(completed)` → `task_completed` activity +
+    progress event; otherwise → `PartialCompleteTaskUseCase` → `continued` +
+    scheduled continuation + `task_continued` activity; returns execution,
+    focus_session, task, continuation), `AbandonExecutionUseCase` (logs
+    `task_abandoned`, operationId `execution:abandoned:{sessionId}:{ts}`), plus
+    `GetActiveExecutionUseCase` and `ListExecutionSessionsUseCase`.
+  - `ActivityEventType` extended with `task_started` and `task_abandoned`.
+  - REST: `ExecutionController` + routes — `GET /execution`, `GET
+    /execution/active`, `POST /execution/start`, `POST
+    /execution/{sessionId}/pause|resume|complete|abandon`. Error mapping:
+    `Task not found.` → 404, `An execution timer is already running.` → 409,
+    `Execution session not found.` → 404, other `InvalidArgumentException` →
+    422. `ActivityLogController` event_type validation extended with the two new
+    types.
+  - OpenAPI: `/execution*` paths + `ExecutionSession`, `ExecutionStartRequest`,
+    `ExecutionSessionResponse`, `ExecutionActiveResponse`,
+    `ExecutionSessionListResponse`, `ExecutionCompleteResponse` schemas;
+    `ActivityLog.event_type` enum extended.
+  - Frontend: `execution/{types.ts,api.ts,store.ts,ExecutionTimer.vue}` —
+    Pinia store derives `elapsedSeconds` from persisted timestamps (FR-05),
+    ticks locally while running, reloads active session on mount; `ExecutionTimer`
+    renders Start/Pause/Resume/Complete/Abandon controls in the Today NOW card
+    (replaces inert Complete button); `TodayView` reloads the day on completion
+    so task status/progress reflect the result.
+- Verification:
+  - [x] Backend: `php artisan test` → OK (668 tests, 1832 assertions; +18 new:
+    9 ExecutionSession unit + 2 FocusSession.fromTracked + 7 Execution API
+    feature)
+  - [x] Backend: `vendor/bin/pint --test` clean (auto-fixed); `vendor/bin/phpstan analyse` → No errors
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → OK (307
+    tests, 48 files; +12 new: 7 execution store + 5 ExecutionTimer component);
+    `npm run build` → built OK
+  - [x] `check-secrets.sh`, `check-doc-links.sh`, `validate-repo.sh`,
+    `check-openapi.sh`, `check-changelog.sh`, `check-version.sh` all PASS
+- Evidence: server/app/Domain/Execution/, server/app/Application/Execution/,
+  server/app/Infrastructure/Execution/, server/app/Models/ExecutionSession.php,
+  server/app/Http/Controllers/Api/ExecutionController.php,
+  database/migrations/2026_08_19_150000_create_execution_sessions_table.php,
+  server/resources/js/execution/, docs/api/openapi.yaml, and their `__tests__`
+- Release Impact: MINOR (new REST API + schema + frontend feature)
+
 ---
 
 # TASK-121 — Recharge Timer
@@ -1886,6 +2005,70 @@ WorkRatio
 RechargeRatio
 ```
 
+- Status: DONE
+- Scope: Backend + frontend. New persisted `recharge_sessions` table, Recharge
+  domain (timer state machine), application use cases, REST endpoints, and the
+  Today recharge CTA/timer UI with the day's Work-Life Ratio.
+- Requirements: FR-05 (Recharge Timer — 15-min Recharge after every two
+  completed focus sessions; recorded duration is the tracked duration, never
+  the nominal 15 minutes; Recharge counts as Recharge, never Productive Time;
+  timer state derived from persisted timestamps so refresh/browser close must
+  not lose a started timer), SRS §7.1 (recharge in the 24h timeline).
+- Changes:
+  - Migration `2026_08_20_150000_create_recharge_sessions_table`: `user_id` FK,
+    `status` (`running|paused|completed|abandoned`), `started_at`,
+    `last_resumed_at` (nullable), `accumulated_seconds` (default 0),
+    `duration_minutes` (nullable, set on completion), `ended_at` (nullable);
+    indexes on `[user_id, status]` and `[user_id, started_at]`.
+  - Domain: `RechargeStatus` value object (explicit transition rules mirroring
+    the execution timer), immutable `RechargeSession` entity (`start`, `pause`,
+    `resume`, `complete` — records `duration_minutes = max(1, round(tracked/60))`
+    — `abandon` — no duration recorded — `elapsedSeconds`, `toArray`,
+    `withId`), `RechargeSessionRepository` contract.
+  - `FocusSessionRepository` extended with `countCompletedBetween` and
+    `sumDurationMinutesBetween` so the recharge cadence and Work-Life Ratio are
+    computed from persisted productive time.
+  - Application use cases: `GetRechargeStatusUseCase` (active session + CTA
+    `cue_available` when `intdiv(focusToday, 2) > rechargesToday` and none
+    active; RechargeMinutes + ProductiveMinutes + `work_ratio`/`recharge_ratio`
+    for the day), `StartRechargeUseCase` (409 when a recharge timer is already
+    running), `PauseRechargeUseCase`, `ResumeRechargeUseCase`,
+    `CompleteRechargeUseCase` (persists the tracked duration),
+    `AbandonRechargeUseCase`, `ListRechargeSessionsUseCase`.
+  - REST: `RechargeController` + routes — `GET /recharge/status?date=`,
+    `GET /recharge`, `POST /recharge/start`, `POST
+    /recharge/{sessionId}/pause|resume|complete|abandon`. Error mapping:
+    `Recharge session not found.` → 404, `A recharge timer is already
+    running.` → 409, other `InvalidArgumentException` → 422.
+  - OpenAPI: `/recharge*` paths + `RechargeSession`, `RechargeSessionResponse`,
+    `RechargeSessionListResponse`, `RechargeStatusResponse` schemas; new
+    `Recharge` tag. Removed a stray trailing `---` that split the YAML into a
+    second document (now parsed cleanly by the deep OpenAPI gate).
+  - Frontend: `recharge/{types.ts,api.ts,store.ts,RechargeTimer.vue}` — Pinia
+    store loads `GET /recharge/status` on mount, derives elapsed from persisted
+    timestamps (FR-05), and refreshes after start/complete/abandon;
+    `RechargeTimer` renders the Start CTA after the second completed focus
+    session, running controls while active, and the day's Work/Recharge split.
+    Wired into the Today NOW card; completion reloads Today so the schedule and
+    ratio reflect the change.
+- Verification:
+  - [x] Backend: `php artisan test` → OK (687 tests, 1912 assertions; +19 new:
+    10 RechargeSession unit + 9 Recharge API feature)
+  - [x] Backend: `vendor/bin/pint --test` clean (auto-fixed); `vendor/bin/phpstan analyse` → No errors
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → OK (321
+    tests, 50 files; +14 new: 8 recharge store + 6 RechargeTimer component);
+    `npm run build` → built OK
+  - [x] `check-secrets.sh`, `check-doc-links.sh`, `validate-repo.sh`,
+    `check-openapi.sh` (deep YAML parse), `check-changelog.sh`,
+    `check-version.sh` all PASS
+- Evidence: server/app/Domain/Recharge/,
+  server/app/Application/Recharge/, server/app/Infrastructure/Recharge/,
+  server/app/Models/RechargeSession.php,
+  server/app/Http/Controllers/Api/RechargeController.php,
+  database/migrations/2026_08_20_150000_create_recharge_sessions_table.php,
+  server/resources/js/recharge/, docs/api/openapi.yaml, and their `__tests__`
+- Release Impact: MINOR (new REST API + schema + frontend feature)
+
 ---
 
 # TASK-122 — Mini Pause
@@ -1898,6 +2081,56 @@ Implement:
 * update assignment transactionally;
 * log action;
 * explain resulting change.
+
+- Status: DONE
+- Scope: Backend + frontend. `MiniPauseUseCase` moves every eligible task
+  scheduled on the given date to the first feasible slot on the following day,
+  preserving hard constraints, persisting atomically at the next schedule
+  version, logging the action (FR-34), and explaining the resulting change.
+- Requirements: FR-07 (Mini Pause — move all eligible tasks to the next day's
+  eligible slots and recalculate the schedule; locked tasks are never
+  auto-moved; on conflict a task is flagged and stays visible; the action
+  counts as Recharge at the analytics layer), FR-04/FR-08 (locked assignments
+  never moved by automation), FR-64 (hard-constraint engine drives feasibility).
+- Changes:
+  - Domain: `ScheduleAssignmentSource` gains `mini_pause`; `ActivityEventType`
+    gains `mini_pause`.
+  - `MiniPauseUseCase` (`server/app/Application/Scheduling/`): selects today's
+    unlocked non-cancelled assignments, skips terminal tasks, finds the first
+    next-day slot that fits each assignment's duration using `SlotCalculator` +
+    `HardConstraintEngine` (Hard Landscape, deadline, duration fit, overlap,
+    safety reserve), returns `MiniPauseResult` (`version`, `applied`, `moves`,
+    `conflict_task_ids`, `explanation`). Tasks that cannot be placed stay in
+    place and are reported as conflicts. Persists all moves in one DB
+    transaction at the next schedule version with source `mini_pause`; logs one
+    `mini_pause` activity entry (entity `schedule`, entity id = new version)
+    with moved/conflict task ids; composes a human-readable explanation.
+  - REST: `MiniPauseController::store` + `POST /schedule/mini-pause`
+    (`date` required). 200 when tasks moved, 202 when nothing eligible.
+  - `ActivityLogController` event_type filter now accepts `mini_pause`.
+  - OpenAPI: `/schedule/mini-pause` path + `MiniPauseRequest`, `MiniPauseMove`,
+    `MiniPauseResponse` schemas; `mini_pause` added to the `source` enum, the
+    `ActivityLog.event_type` enum, and the activity filter enum.
+  - Frontend: `todayApi.miniPause()` + `MiniPause*` types; a "Mini Pause"
+    button on the Today NOW card that posts the current date, shows the returned
+    explanation, and reloads the day.
+- Verification:
+  - [x] Backend: `php artisan test` → OK (698 tests, 1963 assertions; +11 new:
+    7 MiniPause use case + 4 Mini Pause API)
+  - [x] Backend: `vendor/bin/pint --test` clean (auto-fixed); `vendor/bin/phpstan analyse --memory-limit=1G` → No errors
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → OK (322
+    tests, 50 files; +1 new TodayView Mini Pause test); `npm run build` → built OK
+  - [x] `check-secrets.sh`, `check-doc-links.sh`, `validate-repo.sh`,
+    `check-openapi.sh` (deep YAML parse; 90 paths), `check-changelog.sh`,
+    `check-version.sh` all PASS
+- Evidence: server/app/Application/Scheduling/MiniPauseUseCase.php,
+  server/app/Application/Scheduling/MiniPauseResult.php,
+  server/app/Http/Controllers/Api/MiniPauseController.php,
+  server/routes/api.php, server/tests/Feature/Scheduling/MiniPauseUseCaseTest.php,
+  server/tests/Feature/Api/MiniPauseApiTest.php,
+  server/resources/js/today/{api.ts,types.ts,TodayView.vue},
+  docs/api/openapi.yaml, README.md
+- Release Impact: MINOR (new REST API + frontend feature)
 
 ---
 
@@ -1918,6 +2151,85 @@ Behavior:
 * visually identify recovery state;
 * preserve task ownership;
 * do not delete tasks.
+
+- Status: DONE
+- Scope: Backend + frontend. `EmergencyPauseUseCase` tags the given week as an
+  exceptional recovery period, keeps the user-selected tasks in place, moves
+  every other eligible task +1 week to the same weekday, and suppresses
+  notifications for the week. Tasks are never deleted and ownership is
+  preserved. The week is exposed as a `pause` recovery state in the day/week
+  schedule queries.
+- Requirements: FR-07 (Emergency Pause — user selects which tasks to keep;
+  unchecked tasks shift +1 week; locked tasks are never auto-moved; conflicts
+  are flagged and stay visible; the week is marked as recovery state with grey
+  analytics; both Mini and Emergency Pause count as Recharge and Emergency
+  Pause never deletes historical activity), FR-47 (emergency pause suppresses
+  notifications while preserving audit data), FR-49 (emergency/break weeks are
+  tagged so the engine excludes them from capacity), FR-04/FR-08 (locked
+  assignments never moved by automation), FR-64 (hard-constraint engine drives
+  feasibility).
+- Changes:
+  - Data: migration `2026_08_20_170000_create_pause_events_table` →
+    `pause_events` (`user_id`, `type`, `week_start`, `week_end`,
+    `keep_task_ids`/`moved_task_ids`/`conflict_task_ids` JSON, `schedule_version`;
+    unique `[user_id,type,week_start]`, index `[user_id,week_start]`).
+  - Domain: `PauseEventType` (`emergency`, `mini`), `PauseEvent` entity,
+    `PauseEventRepository` contract + `EloquentPauseEventRepository`,
+    `App\Models\PauseEvent`. `ScheduleAssignmentSource` gains `emergency_pause`;
+    `ActivityEventType` gains `emergency_pause`.
+  - `EmergencyPauseUseCase` (`server/app/Application/Scheduling/`): computes the
+    week range, selects unlocked + non-cancelled + non-terminal + non-kept
+    assignments, finds the same-weekday slot next week for each via
+    `SlotCalculator` + `HardConstraintEngine` (Hard Landscape + occupancy of the
+    following week), returns `EmergencyPauseResult` (`version`, `applied`,
+    `week_start`, `week_end`, `kept_task_ids`, `moved_task_ids`,
+    `conflict_task_ids`, `explanation`). Tasks that cannot be placed stay in
+    place and are reported as conflicts. Persists all moves in one DB
+    transaction at the next schedule version with source `emergency_pause`,
+    records the `pause_events` row, logs one `emergency_pause` activity entry,
+    and composes a human-readable explanation. No eligible tasks → true no-op
+    (week not tagged).
+  - REST: `EmergencyPauseController` + `POST /schedule/emergency-pause`
+    (`date` required, `keep_task_ids` array of task ids, empty array allowed).
+    200 when applied, 202 when nothing eligible.
+  - Notifications: `RunEodPromptUseCase` now injects `PauseEventRepository` and
+    returns null (suppressed) when the week is tagged exceptional — suppression
+    while preserving audit data (FR-47).
+  - Query: `ScheduleQueryService` injects `PauseEventRepository`; `dayView` and
+    `weekView` include a nullable `pause` object for recovery-state UI.
+  - `ActivityLogController` event_type filter now accepts `emergency_pause`.
+  - OpenAPI: `/schedule/emergency-pause` path + `EmergencyPauseRequest`,
+    `EmergencyPauseMove`, `EmergencyPauseResponse`, `PauseEvent` schemas;
+    `emergency_pause` added to the `source` and `ActivityLog.event_type` enums;
+    `pause` added to `TodayResponse` and `WeekResponse`.
+  - Frontend: `todayApi.weekRange()` + `todayApi.emergencyPause()`;
+    `EmergencyPause*` types; `EmergencyPauseDialog.vue` lists the week's tasks
+    with keep checkboxes (defaults to the current task) and confirms the pause;
+    an "Emergency Pause" button on the Today NOW card opens it; a recovery
+    banner (`recovery-banner`) renders when the week is tagged exceptional; the
+    result explanation is shown after confirmation.
+- Verification:
+  - [x] Backend: `php artisan test` → OK (712 tests, 2040 assertions; +14 new:
+    9 EmergencyPause use case + 5 Emergency Pause API, +1 EOD prompt suppression)
+  - [x] Backend: `vendor/bin/pint --test` clean (auto-fixed); `vendor/bin/phpstan analyse --memory-limit=1G` → No errors
+  - [x] Frontend: `npm run typecheck` → no errors; `npm run test` → OK (324
+    tests, 50 files; +2 new TodayView Emergency Pause tests); `npm run build` → built OK
+  - [x] `check-secrets.sh`, `check-doc-links.sh`, `validate-repo.sh`,
+    `check-openapi.sh` (deep YAML parse; 91 paths), all PASS
+- Evidence: server/app/Application/Scheduling/EmergencyPauseUseCase.php,
+  server/app/Application/Scheduling/EmergencyPauseResult.php,
+  server/app/Domain/Pauses/{PauseEvent.php,Contracts/PauseEventRepository.php,ValueObjects/PauseEventType.php},
+  server/app/Infrastructure/Pauses/EloquentPauseEventRepository.php,
+  database/migrations/2026_08_20_170000_create_pause_events_table.php,
+  server/app/Http/Controllers/Api/EmergencyPauseController.php,
+  server/app/Application/Reconciliation/RunEodPromptUseCase.php,
+  server/app/Application/Scheduling/ScheduleQueryService.php,
+  server/routes/api.php, server/tests/Feature/Scheduling/EmergencyPauseUseCaseTest.php,
+  server/tests/Feature/Api/EmergencyPauseApiTest.php,
+  server/tests/Feature/Console/EodReconcileCommandTest.php,
+  server/resources/js/today/{EmergencyPauseDialog.vue,TodayView.vue,api.ts,types.ts,store.ts},
+  docs/api/openapi.yaml
+- Release Impact: MINOR (new REST API + database migration + frontend feature)
 
 ---
 

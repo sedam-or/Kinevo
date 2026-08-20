@@ -27,18 +27,19 @@ describe('taskStates (derive)', () => {
 
 describe('visual state definitions', () => {
     it('covers all required states with a non-color glyph', () => {
-        const required: VisualStateValue[] = ['locked', 'conflict', 'overdue', 'draft', 'proposed', 'offline', 'syncing', 'queued', 'failed'];
+        const required: VisualStateValue[] = ['locked', 'conflict', 'overdue', 'draft', 'proposed', 'offline', 'syncing', 'queued', 'retrying', 'failed'];
         for (const state of required) {
             expect(VISUAL_STATES[state]).toBeDefined();
             expect(VISUAL_STATES[state].glyph).toBeTruthy();
         }
     });
 
-    it('uses a dashed pattern for conflict/overdue/offline/queued (non-color signal)', () => {
+    it('uses a dashed pattern for conflict/overdue/offline/queued/retrying (non-color signal)', () => {
         expect(visualState('conflict').dashed).toBe(true);
         expect(visualState('overdue').dashed).toBe(true);
         expect(visualState('offline').dashed).toBe(true);
         expect(visualState('queued').dashed).toBe(true);
+        expect(visualState('retrying').dashed).toBe(true);
     });
 });
 

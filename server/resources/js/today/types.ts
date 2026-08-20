@@ -75,9 +75,20 @@ export interface CapacityIndicators {
     status: 'ok' | 'overload';
 }
 
+export interface PauseInfo {
+    type: 'emergency' | 'mini';
+    week_start: string;
+    week_end: string;
+    keep_task_ids: string[];
+    moved_task_ids: string[];
+    conflict_task_ids: string[];
+    schedule_version: number;
+}
+
 export interface TodayResponse {
     date: string;
     schedule_version: number;
+    pause: PauseInfo | null;
     events: TodayEvent[];
     empty_slots: EmptySlot[];
     hard_landscape: HardLandscapeEvent[];
@@ -100,4 +111,46 @@ export interface QuickCaptureResponse {
     assignment: ScheduleAssignment | null;
     code: 'PLACED' | 'TASK_NO_CAPACITY';
     strategies: ('manual_swap' | 'auto_swap' | 'schedule_later')[];
+}
+
+export interface MiniPausePayload {
+    date: string;
+}
+
+export interface MiniPauseMove {
+    task_id: string;
+    title: string;
+    from: { start: string; end: string } | null;
+    to: { start: string; end: string };
+}
+
+export interface MiniPauseResponse {
+    version: number;
+    applied: boolean;
+    moves: MiniPauseMove[];
+    conflict_task_ids: string[];
+    explanation: string;
+}
+
+export interface EmergencyPausePayload {
+    date: string;
+    keep_task_ids: number[];
+}
+
+export interface EmergencyPauseMove {
+    task_id: string;
+    title: string;
+    from: { start: string; end: string } | null;
+    to: { start: string; end: string };
+}
+
+export interface EmergencyPauseResponse {
+    version: number;
+    applied: boolean;
+    week_start: string;
+    week_end: string;
+    keep_task_ids: string[];
+    moves: EmergencyPauseMove[];
+    conflict_task_ids: string[];
+    explanation: string;
 }

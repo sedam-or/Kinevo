@@ -14,6 +14,8 @@ final class KnowledgeLink
 {
     public const SOURCE_NOTE = 'note';
 
+    public const SOURCE_CANVAS = 'canvas';
+
     public function __construct(
         public readonly int $id,
         public readonly int $userId,

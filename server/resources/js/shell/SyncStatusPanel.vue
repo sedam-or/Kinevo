@@ -1,0 +1,46 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useShellStore, type SyncState } from './store';
+import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
+import { SYNC_STATE_EXPLANATIONS } from '../offline/sync-status';
+
+const shell = useShellStore();
+
+const state = computed<SyncState>(() => shell.syncState);
+const queuedCount = computed(() => shell.syncQueuedCount);
+const error = computed(() => shell.syncError);
+
+const explanation = computed(() => SYNC_STATE_EXPLANATIONS[state.value] ?? '');
+
+const showRetry = computed(() => state.value === 'retrying' || state.value === 'failed');
+
+function retry(): void {
+    shell.retrySync?.();
+}
+</script>
+
+<template>
+    <div class="flex items-center gap-2" data-testid="sync-status-panel">
+        <span data-testid="sync-status-badge">
+            <VisualStateBadge :state="state" />
+        </span>
+        <span v-if="queuedCount > 0" class="text-xs text-gray-500 dark:text-gray-400" data-testid="sync-queued-count">
+            {{ queuedCount }} queued
+        </span>
+        <span class="text-xs text-gray-500 dark:text-gray-400" data-testid="sync-explanation">
+            {{ explanation }}
+        </span>
+        <button
+            v-if="showRetry"
+            type="button"
+            class="text-xs border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-0.5"
+            data-testid="sync-retry"
+            @click="retry"
+        >
+            Retry sync
+        </button>
+        <span v-if="error && showRetry" class="text-xs text-[#F53003]" data-testid="sync-error">
+            {{ error }}
+        </span>
+    </div>
+</template>

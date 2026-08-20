@@ -5,7 +5,7 @@ namespace App\Domain\ActivityLogs\ValueObjects;
 use InvalidArgumentException;
 
 /**
- * Activity event type (FR-34). Completion events for tasks/subtasks.
+ * Activity event type (FR-34). Completion + execution lifecycle events.
  */
 final class ActivityEventType
 {
@@ -15,10 +15,22 @@ final class ActivityEventType
 
     public const SUBTASK_COMPLETED = 'subtask_completed';
 
+    public const TASK_STARTED = 'task_started';
+
+    public const TASK_ABANDONED = 'task_abandoned';
+
+    public const MINI_PAUSE = 'mini_pause';
+
+    public const EMERGENCY_PAUSE = 'emergency_pause';
+
     private const TYPES = [
         self::TASK_COMPLETED,
         self::TASK_CONTINUED,
         self::SUBTASK_COMPLETED,
+        self::TASK_STARTED,
+        self::TASK_ABANDONED,
+        self::MINI_PAUSE,
+        self::EMERGENCY_PAUSE,
     ];
 
     public function __construct(
@@ -42,6 +54,26 @@ final class ActivityEventType
     public static function subtaskCompleted(): self
     {
         return new self(self::SUBTASK_COMPLETED);
+    }
+
+    public static function taskStarted(): self
+    {
+        return new self(self::TASK_STARTED);
+    }
+
+    public static function taskAbandoned(): self
+    {
+        return new self(self::TASK_ABANDONED);
+    }
+
+    public static function miniPause(): self
+    {
+        return new self(self::MINI_PAUSE);
+    }
+
+    public static function emergencyPause(): self
+    {
+        return new self(self::EMERGENCY_PAUSE);
     }
 
     public function equals(self $other): bool

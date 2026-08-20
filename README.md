@@ -1,3 +1,9 @@
+<div align="center">
+
+![Kinevo](banner-kinevo.png)
+
+</div>
+
 # Kinevo
 
 > A personal operating system for planning, scheduling, execution, knowledge

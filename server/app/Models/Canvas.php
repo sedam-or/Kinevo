@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property int|null $program_id
  * @property int|null $task_id
  * @property int $version
+ * @property string|null $archived_at
  */
 #[Fillable([
     'user_id',
@@ -27,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'program_id',
     'task_id',
     'version',
+    'archived_at',
 ])]
 class Canvas extends Model
 {
@@ -40,6 +42,7 @@ class Canvas extends Model
         'milestone_id' => 'integer',
         'program_id' => 'integer',
         'task_id' => 'integer',
+        'archived_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

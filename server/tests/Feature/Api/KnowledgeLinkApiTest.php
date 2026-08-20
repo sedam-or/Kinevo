@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\Canvas;
 use App\Models\Goal;
 use App\Models\Milestone;
 use App\Models\Note;
@@ -132,6 +133,30 @@ class KnowledgeLinkApiTest extends TestCase
         ])->assertStatus(201)->assertJsonPath('link.target_type', 'task');
     }
 
+    public function test_link_can_target_canvas(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $note = $this->createNote($user->id);
+        $canvas = Canvas::factory()->create(['user_id' => $user->id]);
+
+        $this->withToken($token)->postJson("/api/v1/notes/{$note->id}/links", [
+            'target_type' => 'canvas',
+            'target_id' => $canvas->id,
+            'link_type' => 'related_to',
+        ])->assertStatus(201)
+            ->assertJsonPath('link.target_type', 'canvas')
+            ->assertJsonPath('link.target_id', $canvas->id);
+
+        $this->assertDatabaseHas('knowledge_links', [
+            'user_id' => $user->id,
+            'source_type' => 'note',
+            'source_id' => $note->id,
+            'target_type' => 'canvas',
+            'target_id' => $canvas->id,
+            'link_type' => 'related_to',
+        ]);
+    }
+
     public function test_link_creation_requires_owned_note(): void
     {
         [$user, $token] = $this->userWithToken();
@@ -179,7 +204,7 @@ class KnowledgeLinkApiTest extends TestCase
         $goal = $this->createGoal($user->id);
 
         $this->withToken($token)->postJson("/api/v1/notes/{$note->id}/links", [
-            'target_type' => 'canvas',
+            'target_type' => 'contact',
             'target_id' => $goal->id,
             'link_type' => 'supports',
         ])->assertStatus(422);
@@ -194,6 +219,20 @@ class KnowledgeLinkApiTest extends TestCase
             'target_type' => 'goal',
             'link_type' => 'supports',
         ])->assertStatus(422);
+    }
+
+    public function test_link_creation_requires_owned_canvas_target(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $note = $this->createNote($user->id);
+        $other = User::factory()->create();
+        $canvas = Canvas::factory()->create(['user_id' => $other->id]);
+
+        $this->withToken($token)->postJson("/api/v1/notes/{$note->id}/links", [
+            'target_type' => 'canvas',
+            'target_id' => $canvas->id,
+            'link_type' => 'related_to',
+        ])->assertStatus(404);
     }
 
     public function test_duplicate_link_is_conflict(): void
@@ -318,6 +357,207 @@ class KnowledgeLinkApiTest extends TestCase
             ->assertStatus(404);
 
         $this->withToken($token)->deleteJson("/api/v1/notes/{$note->id}/links/999999")
+            ->assertStatus(404);
+
+        $this->assertDatabaseHas('knowledge_links', ['id' => $link['id']]);
+    }
+
+    public function test_canvas_link_requires_authentication(): void
+    {
+        $this->getJson('/api/v1/canvases/1/links')->assertStatus(401);
+        $this->postJson('/api/v1/canvases/1/links', [])->assertStatus(401);
+        $this->deleteJson('/api/v1/canvases/1/links/1')->assertStatus(401);
+    }
+
+    public function test_canvas_link_can_be_created_to_goal(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $canvas = Canvas::factory()->create(['user_id' => $user->id]);
+        $goal = $this->createGoal($user->id);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", [
+            'target_type' => 'goal',
+            'target_id' => $goal->id,
+            'link_type' => 'supports',
+        ])->assertStatus(201)
+            ->assertJsonPath('link.source_type', 'canvas')
+            ->assertJsonPath('link.source_id', $canvas->id)
+            ->assertJsonPath('link.target_type', 'goal')
+            ->assertJsonPath('link.target_id', $goal->id)
+            ->assertJsonPath('link.link_type', 'supports');
+
+        $this->assertDatabaseHas('knowledge_links', [
+            'user_id' => $user->id,
+            'source_type' => 'canvas',
+            'source_id' => $canvas->id,
+            'target_type' => 'goal',
+            'target_id' => $goal->id,
+            'link_type' => 'supports',
+        ]);
+    }
+
+    public function test_canvas_link_can_target_note(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $canvas = Canvas::factory()->create(['user_id' => $user->id]);
+        $note = $this->createNote($user->id);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", [
+            'target_type' => 'note',
+            'target_id' => $note->id,
+            'link_type' => 'related_to',
+        ])->assertStatus(201)
+            ->assertJsonPath('link.source_type', 'canvas')
+            ->assertJsonPath('link.target_type', 'note')
+            ->assertJsonPath('link.target_id', $note->id);
+    }
+
+    public function test_canvas_link_creation_requires_owned_canvas(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $other = User::factory()->create();
+        $canvas = Canvas::factory()->create(['user_id' => $other->id]);
+        $goal = $this->createGoal($user->id);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", [
+            'target_type' => 'goal',
+            'target_id' => $goal->id,
+            'link_type' => 'supports',
+        ])->assertStatus(404);
+    }
+
+    public function test_canvas_link_creation_requires_owned_target(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $canvas = Canvas::factory()->create(['user_id' => $user->id]);
+        $other = User::factory()->create();
+        $note = $this->createNote($other->id);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", [
+            'target_type' => 'note',
+            'target_id' => $note->id,
+            'link_type' => 'related_to',
+        ])->assertStatus(404);
+    }
+
+    public function test_canvas_link_creation_validates_payload(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $canvas = Canvas::factory()->create(['user_id' => $user->id]);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", [
+            'target_type' => 'contact',
+            'target_id' => 1,
+            'link_type' => 'supports',
+        ])->assertStatus(422);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", [
+            'target_type' => 'goal',
+            'target_id' => 1,
+            'link_type' => 'arbitrary',
+        ])->assertStatus(422);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", [
+            'target_type' => 'goal',
+            'link_type' => 'supports',
+        ])->assertStatus(422);
+    }
+
+    public function test_duplicate_canvas_link_is_conflict(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $canvas = Canvas::factory()->create(['user_id' => $user->id]);
+        $goal = $this->createGoal($user->id);
+
+        $payload = [
+            'target_type' => 'goal',
+            'target_id' => $goal->id,
+            'link_type' => 'supports',
+        ];
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", $payload)
+            ->assertStatus(201);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", $payload)
+            ->assertStatus(409);
+    }
+
+    public function test_canvas_links_can_be_listed(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $canvas = Canvas::factory()->create(['user_id' => $user->id]);
+        $goal = $this->createGoal($user->id);
+        $task = Task::query()->create([
+            'user_id' => $user->id,
+            'title' => 'Draw a diagram',
+        ]);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", [
+            'target_type' => 'goal',
+            'target_id' => $goal->id,
+            'link_type' => 'supports',
+        ])->assertStatus(201);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", [
+            'target_type' => 'task',
+            'target_id' => $task->id,
+            'link_type' => 'related_to',
+        ])->assertStatus(201);
+
+        $this->withToken($token)->getJson("/api/v1/canvases/{$canvas->id}/links")
+            ->assertStatus(200)
+            ->assertJsonCount(2, 'links')
+            ->assertJsonPath('links.0.source_type', 'canvas')
+            ->assertJsonPath('links.0.target_type', 'goal')
+            ->assertJsonPath('links.1.target_type', 'task');
+    }
+
+    public function test_canvas_links_list_requires_owned_canvas(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $other = User::factory()->create();
+        $canvas = Canvas::factory()->create(['user_id' => $other->id]);
+
+        $this->withToken($token)->getJson("/api/v1/canvases/{$canvas->id}/links")
+            ->assertStatus(404);
+    }
+
+    public function test_canvas_link_can_be_deleted(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $canvas = Canvas::factory()->create(['user_id' => $user->id]);
+        $goal = $this->createGoal($user->id);
+
+        $link = $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", [
+            'target_type' => 'goal',
+            'target_id' => $goal->id,
+            'link_type' => 'supports',
+        ])->assertStatus(201)->json('link');
+
+        $this->withToken($token)->deleteJson("/api/v1/canvases/{$canvas->id}/links/{$link['id']}")
+            ->assertStatus(204);
+
+        $this->assertDatabaseMissing('knowledge_links', ['id' => $link['id']]);
+    }
+
+    public function test_canvas_delete_requires_owned_canvas_and_link(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $other = User::factory()->create();
+
+        $canvas = Canvas::factory()->create(['user_id' => $user->id]);
+        $goal = $this->createGoal($user->id);
+        $link = $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/links", [
+            'target_type' => 'goal',
+            'target_id' => $goal->id,
+            'link_type' => 'supports',
+        ])->assertStatus(201)->json('link');
+
+        $foreignCanvas = Canvas::factory()->create(['user_id' => $other->id]);
+        $this->withToken($token)->deleteJson("/api/v1/canvases/{$foreignCanvas->id}/links/{$link['id']}")
+            ->assertStatus(404);
+
+        $this->withToken($token)->deleteJson("/api/v1/canvases/{$canvas->id}/links/999999")
             ->assertStatus(404);
 
         $this->assertDatabaseHas('knowledge_links', ['id' => $link['id']]);

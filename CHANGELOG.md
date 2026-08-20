@@ -14,6 +14,69 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the Emergency Pause (TASK-123): the Today view can now tag the current
+  week as an exceptional recovery period, keep user-selected tasks in place, and
+  shift every other eligible task +1 week to the same weekday
+  (`POST /schedule/emergency-pause`). Locked tasks are never auto-moved; tasks
+  with no feasible slot next week stay in place and are reported as conflicts;
+  tasks are never deleted and ownership is preserved. The week is tagged in a new
+  `pause_events` table, EOD notifications are suppressed while audit data is
+  preserved, the day/week schedule queries expose the recovery state (`pause`),
+  and the Today view shows a recovery banner during the exceptional week (FR-07,
+  FR-47, FR-49).
+- Added the Mini Pause (TASK-122): the Today view can now move every eligible
+  task scheduled today to the first feasible slot on the next day in one action
+  (`POST /schedule/mini-pause`). Locked tasks are never auto-moved; tasks with
+  no feasible next-day slot stay in place and are reported as conflicts. The
+  change is persisted atomically at the next schedule version, logged as a
+  `mini_pause` activity event, and explained to the user (FR-07).
+- Added the Recharge Timer (TASK-121): after every two completed focus
+  sessions, the Today view offers a 15-minute Recharge timer (Start/Pause/
+  Resume/Complete/Abandon). Recharge is persisted server-side in a new
+  `recharge_sessions` table and counts as Recharge, never Productive Time; the
+  recorded duration is the tracked duration, and the day's RechargeMinutes feed
+  the WorkRatio/RechargeRatio shown alongside the timer (FR-05). New REST
+  endpoints under `/recharge` with a 409 conflict when a timer is already
+  running.
+- Added the Execution Timer (TASK-120): tasks can now be worked with a persisted
+  execution timer (`start`, `pause`, `resume`, `complete`, `abandon`) shown in
+  the Today NOW card. Timer state lives server-side in a new `execution_sessions`
+  table and elapsed time is always derived from persisted timestamps, never a
+  client-only model; completing a timer records a `FocusSession` from the tracked
+  duration, advances the task (completed when no subtasks remain, otherwise
+  `continued` with a scheduled continuation), and logs `task_started` /
+  `task_abandoned` / `task_completed` / `task_continued` activity (FR-05/FR-06/
+  FR-18/FR-25). New REST endpoints under `/execution` with a 409 conflict when a
+  timer is already running.
+- Added the Offline Synchronization UX (TASK-115): the shell now presents eight
+  visible sync states (Online, Offline, Queued, Syncing, Saved, Conflict,
+  Retrying, Failed) with plain-language explanations of whether a mutation is
+  persisted server-side, stored locally, waiting for synchronization, or in
+  conflict. A `SyncStatusController` bridges the general offline mutation queue
+  into the shell store, a new `HttpMutationApplier` replays queued task/note/
+  quick-capture/canvas mutations through the existing API client, and a visible
+  `SyncStatusPanel` shows badge + queued count + a "Retry sync" action for
+  retrying/failed states; `retrying` joined the color-independent visual states
+  (FR-44/FR-57, SRS §9).
+- Added the Canvas Context / Linking (TASK-114): canvases can now be attached to
+  Goals, Milestones, Programs, Tasks, and Notes through the shared
+  `knowledge_links` relation (canvas as link source), surfaced in a Context
+  panel in the canvas workspace with create/remove and milestone-aware target
+  selection; the backend gains `GET/POST /canvases/{id}/links` and
+  `DELETE /canvases/{id}/links/{linkId}`, and `note` is now a valid link target
+  (FR-54/FR-55, SRS §10.5).
+- Added the Canvas Workspace UI (TASK-113): a `canvas` shell view with canvas
+  list and create, an Excalidraw workspace opened through the Vue → CanvasHost →
+  CanvasAdapter → React Island boundary (ADR-005) with autosave, Saved/Saving/
+  Error/Offline/Conflict save states, read-only mode, light/dark/auto theme, and
+  archive-with-confirmation; the backend gains rename (`PATCH /canvases/{id}`)
+  and archive (`POST /canvases/{id}/archive`) endpoints and `canvases.archived_at`
+  (FR-55/FR-56/FR-57, SRS §7.5, §8.5).
+- Added the Knowledge Linking UI (TASK-112): create and remove Note → Goal /
+  Milestone / Program / Task / Canvas links from the note editor, with a typed
+  link store and a LinkManager that resolves the target context (milestones
+  dependent on the selected goal) and surfaces duplicate/validation errors;
+  the backend link target set now also supports Canvas (FR-54, SRS §10.5).
 - Added the Tiptap Vue binding (TASK-111): an `EditorHost` component that
   connects Vue → EditorAdapter → Tiptap behind the replaceable editor boundary
   (canonical structured JSON, derived markdown/plain text, readOnly/theme), now

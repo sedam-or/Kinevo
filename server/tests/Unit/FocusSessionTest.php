@@ -52,4 +52,32 @@ class FocusSessionTest extends TestCase
         $this->assertSame(25, $array['duration_minutes']);
         $this->assertSame('2026-08-18T09:00:00.000000Z', $array['started_at']);
     }
+
+    #[Test]
+    public function tracked_duration_is_rounded_to_minutes(): void
+    {
+        $session = FocusSession::fromTracked(
+            1,
+            CarbonImmutable::parse('2026-08-18 09:00:00'),
+            CarbonImmutable::parse('2026-08-18 09:50:00'),
+            2700,
+            42,
+        );
+
+        $this->assertSame(42, $session->taskId);
+        $this->assertSame(45, $session->durationMinutes);
+    }
+
+    #[Test]
+    public function tracked_duration_is_at_least_one_minute(): void
+    {
+        $session = FocusSession::fromTracked(
+            1,
+            CarbonImmutable::parse('2026-08-18 09:00:00'),
+            CarbonImmutable::parse('2026-08-18 09:00:30'),
+            30,
+        );
+
+        $this->assertSame(1, $session->durationMinutes);
+    }
 }

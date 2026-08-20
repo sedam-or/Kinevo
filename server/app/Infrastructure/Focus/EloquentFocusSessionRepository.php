@@ -53,6 +53,22 @@ final class EloquentFocusSessionRepository implements FocusSessionRepository
             ->all();
     }
 
+    public function countCompletedBetween(int $userId, CarbonImmutable $start, CarbonImmutable $end): int
+    {
+        return FocusSessionModel::query()
+            ->where('user_id', $userId)
+            ->whereBetween('ended_at', [$start, $end])
+            ->count();
+    }
+
+    public function sumDurationMinutesBetween(int $userId, CarbonImmutable $start, CarbonImmutable $end): int
+    {
+        return (int) FocusSessionModel::query()
+            ->where('user_id', $userId)
+            ->whereBetween('ended_at', [$start, $end])
+            ->sum('duration_minutes');
+    }
+
     private function toDomain(FocusSessionModel $model): FocusSession
     {
         return new FocusSession(

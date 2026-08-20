@@ -2,6 +2,7 @@
 
 namespace App\Application\Knowledge;
 
+use App\Domain\Canvas\Contracts\CanvasRepository;
 use App\Domain\Goals\Contracts\GoalRepository;
 use App\Domain\Knowledge\Contracts\KnowledgeLinkRepository;
 use App\Domain\Knowledge\Contracts\NoteRepository;
@@ -22,6 +23,7 @@ final class CreateNoteLinkUseCase
         private readonly MilestoneRepository $milestones,
         private readonly ProgramRepository $programs,
         private readonly TaskRepository $tasks,
+        private readonly CanvasRepository $canvases,
     ) {}
 
     public function __invoke(
@@ -57,6 +59,8 @@ final class CreateNoteLinkUseCase
             KnowledgeTargetType::MILESTONE => $this->milestones->findForUser($userId, $targetId) !== null,
             KnowledgeTargetType::PROGRAM => $this->programs->findForUser($userId, $targetId) !== null,
             KnowledgeTargetType::TASK => $this->tasks->findForUser($userId, $targetId) !== null,
+            KnowledgeTargetType::CANVAS => $this->canvases->findForUser($userId, $targetId) !== null,
+            KnowledgeTargetType::NOTE => $this->notes->findForUser($userId, $targetId) !== null,
             default => false,
         };
 

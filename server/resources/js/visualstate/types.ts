@@ -7,6 +7,7 @@ export type VisualStateValue =
     | 'offline'
     | 'syncing'
     | 'queued'
+    | 'retrying'
     | 'failed'
     | 'saved'
     | 'online';
@@ -31,6 +32,7 @@ export const VISUAL_STATES: Record<VisualStateValue, VisualStateDefinition> = {
     offline: { value: 'offline', label: 'Offline', glyph: '✕', dashed: true, tone: 'neutral' },
     syncing: { value: 'syncing', label: 'Syncing', glyph: '↻', dashed: false, tone: 'info' },
     queued: { value: 'queued', label: 'Queued', glyph: '⇢', dashed: true, tone: 'warning' },
+    retrying: { value: 'retrying', label: 'Retrying', glyph: '⟳', dashed: true, tone: 'warning' },
     failed: { value: 'failed', label: 'Failed', glyph: '×', dashed: true, tone: 'danger' },
     saved: { value: 'saved', label: 'Saved', glyph: '✓', dashed: false, tone: 'success' },
     online: { value: 'online', label: 'Online', glyph: '●', dashed: false, tone: 'success' },

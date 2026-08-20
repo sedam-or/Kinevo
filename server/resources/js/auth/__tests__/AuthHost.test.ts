@@ -17,6 +17,12 @@ vi.mock('../client', async (importOriginal) => {
     };
 });
 
+// The canvas React island is never loaded/transformed in the test environment
+// (Excalidraw needs WebGL/canvas; jsx:preserve is a build-time concern).
+vi.mock('../../canvas/react/ExcalidrawIsland', () => ({
+    ExcalidrawIsland: {},
+}));
+
 import AuthHost from '../AuthHost.vue';
 import { useShellStore } from '../../shell/store';
 import { authApi } from '../client';

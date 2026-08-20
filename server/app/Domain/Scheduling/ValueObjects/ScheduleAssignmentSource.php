@@ -23,6 +23,10 @@ final class ScheduleAssignmentSource
 
     public const RECURRING = 'recurring';
 
+    public const MINI_PAUSE = 'mini_pause';
+
+    public const EMERGENCY_PAUSE = 'emergency_pause';
+
     private const VALUES = [
         self::DRAFT,
         self::MANUAL,
@@ -31,6 +35,8 @@ final class ScheduleAssignmentSource
         self::QUICK_CAPTURE,
         self::AUTO_SWAP,
         self::RECURRING,
+        self::MINI_PAUSE,
+        self::EMERGENCY_PAUSE,
     ];
 
     public function __construct(
@@ -74,6 +80,16 @@ final class ScheduleAssignmentSource
     public static function recurring(): self
     {
         return new self(self::RECURRING);
+    }
+
+    public static function miniPause(): self
+    {
+        return new self(self::MINI_PAUSE);
+    }
+
+    public static function emergencyPause(): self
+    {
+        return new self(self::EMERGENCY_PAUSE);
     }
 
     public function equals(self $other): bool

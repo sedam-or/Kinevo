@@ -119,7 +119,15 @@ describe('NoteEditView', () => {
 
         const wrapper = mount(NoteEditView, {
             props: { noteId: 1, adapterFactory: adapterFactory() },
-            global: { plugins: [pinia] },
+            global: {
+                plugins: [pinia],
+                stubs: {
+                    LinkManager: {
+                        props: ['noteId'],
+                        template: '<div data-testid="link-manager-stub">LinkManager</div>',
+                    },
+                },
+            },
         });
         await flushPromises();
 
@@ -139,11 +147,19 @@ describe('NoteEditView', () => {
 
         const wrapper = mount(NoteEditView, {
             props: { noteId: 1, adapterFactory: adapterFactory() },
-            global: { plugins: [pinia] },
+            global: {
+                plugins: [pinia],
+                stubs: {
+                    LinkManager: {
+                        props: ['noteId'],
+                        template: '<div data-testid="link-manager-stub">LinkManager</div>',
+                    },
+                },
+            },
         });
         await flushPromises();
 
-        expect(wrapper.find('[data-testid="note-link-item"]').text()).toContain('goal');
+        expect(wrapper.find('[data-testid="link-manager-stub"]').exists()).toBe(true);
         await wrapper.find('[data-testid="note-title-input"]').setValue('Updated');
         await wrapper.find('[data-testid="note-save-now"]').trigger('click');
         await flushPromises();

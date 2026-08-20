@@ -204,6 +204,93 @@ class CanvasApiTest extends TestCase
         ])->assertStatus(404);
     }
 
+    public function test_canvas_can_be_renamed(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('owner')->plainTextToken;
+
+        $canvas = Canvas::factory()->create(['user_id' => $user->id, 'title' => 'Old title']);
+
+        $this->withToken($token)->patchJson("/api/v1/canvases/{$canvas->id}", [
+            'title' => 'New title',
+        ])
+            ->assertStatus(200)
+            ->assertJsonPath('canvas.title', 'New title');
+
+        $this->assertDatabaseHas('canvases', [
+            'id' => $canvas->id,
+            'title' => 'New title',
+        ]);
+    }
+
+    public function test_canvas_rename_validates_title(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('owner')->plainTextToken;
+
+        $canvas = Canvas::factory()->create(['user_id' => $user->id]);
+
+        $this->withToken($token)->patchJson("/api/v1/canvases/{$canvas->id}", [
+            'title' => '',
+        ])->assertStatus(422);
+    }
+
+    public function test_canvas_rename_is_scoped_to_owner(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $canvas = Canvas::factory()->create(['user_id' => $owner->id]);
+
+        $token = $other->createToken('other')->plainTextToken;
+
+        $this->withToken($token)->patchJson("/api/v1/canvases/{$canvas->id}", [
+            'title' => 'Nope',
+        ])->assertStatus(404);
+    }
+
+    public function test_canvas_can_be_archived(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('owner')->plainTextToken;
+
+        $canvas = Canvas::factory()->create(['user_id' => $user->id]);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/archive")
+            ->assertStatus(200)
+            ->assertJsonPath('canvas.id', $canvas->id);
+
+        $this->assertNotNull($canvas->fresh()->archived_at);
+    }
+
+    public function test_archived_canvas_is_hidden_from_list(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('owner')->plainTextToken;
+
+        Canvas::factory()->create(['user_id' => $user->id, 'title' => 'Active board']);
+        $archived = Canvas::factory()->create(['user_id' => $user->id, 'title' => 'Old board']);
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$archived->id}/archive")
+            ->assertStatus(200);
+
+        $this->withToken($token)->getJson('/api/v1/canvases')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'canvases')
+            ->assertJsonPath('canvases.0.title', 'Active board');
+    }
+
+    public function test_canvas_archive_is_scoped_to_owner(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $canvas = Canvas::factory()->create(['user_id' => $owner->id]);
+
+        $token = $other->createToken('other')->plainTextToken;
+
+        $this->withToken($token)->postJson("/api/v1/canvases/{$canvas->id}/archive")
+            ->assertStatus(404);
+    }
+
     public function test_canvas_file_can_be_added(): void
     {
         $user = User::factory()->create();

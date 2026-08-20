@@ -4,6 +4,7 @@ namespace App\Application\Scheduling;
 
 use App\Domain\Goals\Contracts\GoalRepository;
 use App\Domain\Milestones\Contracts\MilestoneRepository;
+use App\Domain\Pauses\Contracts\PauseEventRepository;
 use App\Domain\Programs\Contracts\ProgramRepository;
 use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
@@ -30,6 +31,7 @@ final readonly class ScheduleQueryService
     public function __construct(
         private ScheduleAssignmentRepository $assignments,
         private HardLandscapeRepository $hardLandscape,
+        private PauseEventRepository $pauseEvents,
         private TaskRepository $tasks,
         private GoalRepository $goals,
         private MilestoneRepository $milestones,
@@ -82,6 +84,7 @@ final readonly class ScheduleQueryService
         return [
             'date' => $date->toDateString(),
             'schedule_version' => $version->value,
+            'pause' => $this->pauseInfo($userId, $date),
             'events' => $events,
             'empty_slots' => array_map(
                 static fn (TimeRange $slot) => [
@@ -159,6 +162,7 @@ final readonly class ScheduleQueryService
             'start' => $start->toDateString(),
             'end' => $start->addDays(6)->toDateString(),
             'schedule_version' => $this->assignments->currentScheduleVersion($userId)->value,
+            'pause' => $this->pauseInfo($userId, $start),
             'days' => $days,
         ];
     }
@@ -238,6 +242,32 @@ final readonly class ScheduleQueryService
             $date->startOfDay(),
             $date->endOfDay(),
         );
+    }
+
+    /**
+     * Exceptional-period state (FR-07): the active emergency pause tagging the
+     * week containing the date, or null. Drives recovery-state visualization
+     * and analytics "grey" for exceptional weeks.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function pauseInfo(int $userId, CarbonImmutable $date): ?array
+    {
+        $pause = $this->pauseEvents->findEmergencyForWeek($userId, $date);
+
+        if ($pause === null) {
+            return null;
+        }
+
+        return [
+            'type' => $pause->type->value,
+            'week_start' => $pause->weekStart->toDateString(),
+            'week_end' => $pause->weekEnd->toDateString(),
+            'keep_task_ids' => array_map('strval', $pause->keepTaskIds),
+            'moved_task_ids' => array_map('strval', $pause->movedTaskIds),
+            'conflict_task_ids' => array_map('strval', $pause->conflictTaskIds),
+            'schedule_version' => $pause->scheduleVersion,
+        ];
     }
 
     private function programContext(int $userId, ?Task $task): ?array

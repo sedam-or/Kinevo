@@ -21,6 +21,8 @@ tags:
   - name: Recovery
   - name: Adaptive
   - name: Focus
+  - name: Execution
+  - name: Recharge
   - name: Progress
   - name: AI
   - name: Observability
@@ -1199,6 +1201,75 @@ paths:
         '409': { description: Version conflict }
         '422': { description: Validation error }
 
+  /schedule/mini-pause:
+    post:
+      tags: [Scheduling]
+      summary: Mini Pause — move all eligible today tasks to the next day (FR-07)
+      description: >
+        Moves every unlocked, non-terminal task scheduled on `date` to the
+        first feasible slot on the following day, preserving hard constraints.
+        Locked assignments are never auto-moved; tasks with no feasible next-day
+        slot stay in place and are reported as visible conflicts. The change is
+        persisted atomically at the next schedule version, logged, and explained.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MiniPauseRequest'
+      responses:
+        '200':
+          description: Tasks moved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MiniPauseResponse'
+        '202':
+          description: Accepted — nothing eligible to move
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MiniPauseResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
+
+  /schedule/emergency-pause:
+    post:
+      tags: [Scheduling]
+      summary: Emergency Pause — tag the week exceptional and shift eligible tasks +1 week (FR-07)
+      description: >
+        Marks the week containing `date` as an exceptional recovery period,
+        keeps the `keep_task_ids` tasks in place, and moves every other
+        unlocked, non-terminal task scheduled this week to the first feasible
+        slot on the same weekday next week, preserving hard constraints. Locked
+        assignments are never auto-moved; tasks with no feasible next-week slot
+        stay in place and are reported as visible conflicts. Task ownership is
+        preserved and no task is deleted. The week is tagged via a pause event
+        (drives recovery-state UI and notification suppression) and the change
+        is persisted atomically at the next schedule version, logged, and
+        explained.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmergencyPauseRequest'
+      responses:
+        '200':
+          description: Week tagged; tasks moved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmergencyPauseResponse'
+        '202':
+          description: Accepted — no eligible tasks to move (week not tagged)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmergencyPauseResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
+
   /notes:
     get:
       tags: [Knowledge]
@@ -1362,7 +1433,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [goal, milestone, program, task]
+            enum: [goal, milestone, program, task, canvas, note]
         - name: target_id
           in: query
           required: true
@@ -1485,6 +1556,121 @@ paths:
         '404': { description: Not found }
         '409': { description: Canvas version conflict }
         '422': { description: Validation error }
+    patch:
+      tags: [Canvas]
+      summary: Rename canvas
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: canvasId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CanvasRenameRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanvasResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Not found }
+        '422': { description: Validation error }
+
+  /canvases/{canvasId}/archive:
+    post:
+      tags: [Canvas]
+      summary: Archive canvas (soft delete; hidden from the active list)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: canvasId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Archived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CanvasResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Not found }
+
+  /canvases/{canvasId}/links:
+    get:
+      tags: [Canvas]
+      summary: List knowledge links from a canvas (FR-55)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: canvasId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeLinkListResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Canvas not found }
+    post:
+      tags: [Canvas]
+      summary: Link a canvas to a Goal/Milestone/Program/Task/Note (FR-55)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: canvasId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKnowledgeLinkRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeLinkResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Canvas or target not found }
+        '409': { description: Duplicate link }
+        '422': { description: Validation error }
+
+  /canvases/{canvasId}/links/{linkId}:
+    delete:
+      tags: [Canvas]
+      summary: Remove a knowledge link from a canvas (FR-55)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: canvasId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: linkId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204': { description: Removed }
+        '401': { description: Unauthorized }
+        '404': { description: Canvas or link not found }
 
   /canvases/{canvasId}/files:
     get:
@@ -1554,7 +1740,7 @@ paths:
           schema: { type: string, format: date }
         - name: event_type
           in: query
-          schema: { type: string, enum: [task_completed, task_continued, subtask_completed] }
+          schema: { type: string, enum: [task_completed, task_continued, subtask_completed, task_started, task_abandoned, mini_pause, emergency_pause] }
         - name: limit
           in: query
           schema: { type: integer, minimum: 1, maximum: 200 }
@@ -1795,6 +1981,264 @@ paths:
                 $ref: '#/components/schemas/FocusBlockRecommendationResponse'
         '401': { description: Unauthorized }
         '422': { description: Invalid query parameters }
+
+  /execution:
+    get:
+      tags: [Execution]
+      summary: List execution timer sessions (FR-05, TASK-120)
+      parameters:
+        - name: task_id
+          in: query
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionSessionListResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid query parameters }
+
+  /execution/active:
+    get:
+      tags: [Execution]
+      summary: The user's active execution timer (FR-05)
+      description: >-
+        Returns the most recent running or paused execution session, or null.
+        Used to restore the timer after refresh/browser close — the timer state
+        is derived from persisted timestamps, never a client-only model.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionActiveResponse'
+        '401': { description: Unauthorized }
+
+  /execution/start:
+    post:
+      tags: [Execution]
+      summary: Start an execution timer for a task (TASK-120)
+      description: >-
+        Creates a persisted running timer and moves the task to in_progress,
+        appending a task_started activity event. Rejects with 409 when a timer
+        is already active.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionStartRequest'
+      responses:
+        '201':
+          description: Started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionSessionResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Task not found or not owned }
+        '409': { description: An execution timer is already running }
+        '422': { description: Invalid payload or task cannot move to in_progress }
+
+  /execution/{sessionId}/pause:
+    post:
+      tags: [Execution]
+      summary: Pause a running execution timer (TASK-120)
+      responses:
+        '200':
+          description: Paused
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionSessionResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Execution session not found }
+        '422': { description: Session is not running }
+
+  /execution/{sessionId}/resume:
+    post:
+      tags: [Execution]
+      summary: Resume a paused execution timer (TASK-120)
+      responses:
+        '200':
+          description: Resumed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionSessionResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Execution session not found }
+        '422': { description: Session is not paused }
+
+  /execution/{sessionId}/complete:
+    post:
+      tags: [Execution]
+      summary: Complete an execution timer (TASK-120)
+      description: >-
+        Records a focus session from the tracked duration (FR-05: recorded is
+        the tracked duration), then transitions the task: completed when no
+        subtasks remain, otherwise partial-completed with a scheduled
+        continuation. Appends the corresponding activity and progress events.
+      responses:
+        '200':
+          description: Completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionCompleteResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Execution session not found }
+        '422': { description: Session is not running or paused }
+
+  /execution/{sessionId}/abandon:
+    post:
+      tags: [Execution]
+      summary: Abandon an active execution timer (TASK-120)
+      description: >-
+        Ends the timer without recording a focus session. Appends a
+        task_abandoned activity event; the task stays in its current state.
+      responses:
+        '200':
+          description: Abandoned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionSessionResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Execution session not found }
+        '422': { description: Session is not running or paused }
+
+  /recharge/status:
+    get:
+      tags: [Recharge]
+      summary: Recharge timer status and Work-Life Ratio (FR-05)
+      description: >-
+        Returns the active recharge session (if any), whether the 15-minute
+        Recharge timer CTA is due (the second completed focus session of each
+        pair in the relevant day context), and the day's RechargeMinutes plus
+        WorkRatio/RechargeRatio (recharge counts as Recharge, never Productive
+        Time). Timer state is derived from persisted timestamps, never a
+        client-only model.
+      parameters:
+        - name: date
+          in: query
+          description: Day for cadence and ratio (defaults to today)
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RechargeStatusResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid date }
+
+  /recharge:
+    get:
+      tags: [Recharge]
+      summary: List the user's recharge sessions (FR-05)
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RechargeSessionListResponse'
+        '401': { description: Unauthorized }
+
+  /recharge/start:
+    post:
+      tags: [Recharge]
+      summary: Start a recharge timer (FR-05)
+      description: >-
+        Creates a persisted running recharge timer. Rejects with 409 when a
+        recharge timer is already active.
+      responses:
+        '201':
+          description: Started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RechargeSessionResponse'
+        '401': { description: Unauthorized }
+        '409': { description: A recharge timer is already running }
+
+  /recharge/{sessionId}/pause:
+    post:
+      tags: [Recharge]
+      summary: Pause a running recharge timer (FR-05)
+      responses:
+        '200':
+          description: Paused
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RechargeSessionResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Recharge session not found }
+        '422': { description: Session is not running }
+
+  /recharge/{sessionId}/resume:
+    post:
+      tags: [Recharge]
+      summary: Resume a paused recharge timer (FR-05)
+      responses:
+        '200':
+          description: Resumed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RechargeSessionResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Recharge session not found }
+        '422': { description: Session is not paused }
+
+  /recharge/{sessionId}/complete:
+    post:
+      tags: [Recharge]
+      summary: Complete a recharge timer (FR-05)
+      description: >-
+        Records the tracked duration as the recharge duration (never the nominal
+        15 minutes). The duration contributes to RechargeMinutes and the
+        Work-Life Ratio.
+      responses:
+        '200':
+          description: Completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RechargeSessionResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Recharge session not found }
+        '422': { description: Session is not running or paused }
+
+  /recharge/{sessionId}/abandon:
+    post:
+      tags: [Recharge]
+      summary: Abandon an active recharge timer (FR-05)
+      description: >-
+        Ends the timer without recording any recharge duration.
+      responses:
+        '200':
+          description: Abandoned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RechargeSessionResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Recharge session not found }
+        '422': { description: Session is not running or paused }
 
   /progress:
     get:
@@ -2349,7 +2793,7 @@ components:
         end_at: {type: string, format: date-time}
         duration_minutes: {type: integer, minimum: 1}
         status: {type: string, enum: [scheduled, completed, cancelled, missed]}
-        source: {type: string, enum: [draft, manual, reschedule, override, quick_capture, auto_swap, recurring]}
+        source: {type: string, enum: [draft, manual, reschedule, override, quick_capture, auto_swap, recurring, mini_pause, emergency_pause]}
         schedule_version: {type: integer}
         locked: {type: boolean}
         version: {type: integer}
@@ -2382,6 +2826,7 @@ components:
       properties:
         date: {type: string, format: date}
         schedule_version: {type: integer}
+        pause: {$ref: '#/components/schemas/PauseEvent', nullable: true}
         events:
           type: array
           items: {$ref: '#/components/schemas/ScheduleEvent'}
@@ -2511,6 +2956,71 @@ components:
         version: {type: integer}
         applied: {type: boolean}
         conflict_task_ids: {type: array, items: {type: string}}
+    MiniPauseRequest:
+      type: object
+      required: [date]
+      properties:
+        date: {type: string, format: date}
+    MiniPauseMove:
+      type: object
+      required: [task_id, title, from, to]
+      properties:
+        task_id: {type: string}
+        title: {type: string}
+        from: {$ref: '#/components/schemas/TimeSlot', nullable: true}
+        to: {$ref: '#/components/schemas/TimeSlot'}
+    MiniPauseResponse:
+      type: object
+      required: [version, applied, moves, conflict_task_ids, explanation]
+      properties:
+        version: {type: integer}
+        applied: {type: boolean}
+        moves:
+          type: array
+          items: {$ref: '#/components/schemas/MiniPauseMove'}
+        conflict_task_ids: {type: array, items: {type: string}}
+        explanation: {type: string}
+    EmergencyPauseRequest:
+      type: object
+      required: [date, keep_task_ids]
+      properties:
+        date: {type: string, format: date}
+        keep_task_ids:
+          type: array
+          items: {type: integer}
+    EmergencyPauseMove:
+      type: object
+      required: [task_id, title, from, to]
+      properties:
+        task_id: {type: string}
+        title: {type: string}
+        from: {$ref: '#/components/schemas/TimeSlot', nullable: true}
+        to: {$ref: '#/components/schemas/TimeSlot'}
+    EmergencyPauseResponse:
+      type: object
+      required: [version, applied, week_start, week_end, keep_task_ids, moves, conflict_task_ids, explanation]
+      properties:
+        version: {type: integer}
+        applied: {type: boolean}
+        week_start: {type: string, format: date}
+        week_end: {type: string, format: date}
+        keep_task_ids: {type: array, items: {type: string}}
+        moves:
+          type: array
+          items: {$ref: '#/components/schemas/EmergencyPauseMove'}
+        conflict_task_ids: {type: array, items: {type: string}}
+        explanation: {type: string}
+    PauseEvent:
+      type: object
+      required: [type, week_start, week_end, keep_task_ids, moved_task_ids, conflict_task_ids, schedule_version]
+      properties:
+        type: {type: string, enum: [emergency, mini]}
+        week_start: {type: string, format: date}
+        week_end: {type: string, format: date}
+        keep_task_ids: {type: array, items: {type: string}}
+        moved_task_ids: {type: array, items: {type: string}}
+        conflict_task_ids: {type: array, items: {type: string}}
+        schedule_version: {type: integer}
     WeekResponse:
       type: object
       required: [start, end, schedule_version, days]
@@ -2518,6 +3028,7 @@ components:
         start: {type: string, format: date}
         end: {type: string, format: date}
         schedule_version: {type: integer}
+        pause: {$ref: '#/components/schemas/PauseEvent', nullable: true}
         days:
           type: array
           items:
@@ -2860,7 +3371,7 @@ components:
       properties:
         id: {type: integer}
         user_id: {type: integer}
-        event_type: {type: string, enum: [task_completed, task_continued, subtask_completed]}
+        event_type: {type: string, enum: [task_completed, task_continued, subtask_completed, task_started, task_abandoned, mini_pause, emergency_pause]}
         entity_type: {type: string}
         entity_id: {type: integer}
         title: {type: string, nullable: true}
@@ -3003,6 +3514,109 @@ components:
         started_at: {type: string, format: date-time}
         ended_at: {type: string, format: date-time}
         duration_minutes: {type: integer, minimum: 1}
+    ExecutionSession:
+      type: object
+      required: [id, user_id, task_id, status, started_at, accumulated_seconds, elapsed_seconds]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        task_id: {type: integer}
+        status:
+          type: string
+          enum: [running, paused, completed, abandoned]
+        started_at: {type: string, format: date-time}
+        last_resumed_at: {type: string, format: date-time, nullable: true}
+        accumulated_seconds: {type: integer, minimum: 0}
+        elapsed_seconds: {type: integer, minimum: 0}
+        ended_at: {type: string, format: date-time, nullable: true}
+    ExecutionStartRequest:
+      type: object
+      required: [task_id]
+      properties:
+        task_id: {type: integer, minimum: 1}
+    ExecutionSessionResponse:
+      type: object
+      required: [execution]
+      properties:
+        execution: {$ref: '#/components/schemas/ExecutionSession'}
+    ExecutionActiveResponse:
+      type: object
+      required: [execution]
+      properties:
+        execution:
+          anyOf:
+            - $ref: '#/components/schemas/ExecutionSession'
+            - {type: 'null'}
+    ExecutionSessionListResponse:
+      type: object
+      required: [executions]
+      properties:
+        executions:
+          type: array
+          items: {$ref: '#/components/schemas/ExecutionSession'}
+    ExecutionCompleteResponse:
+      type: object
+      required: [execution, focus_session, task]
+      properties:
+        execution: {$ref: '#/components/schemas/ExecutionSession'}
+        focus_session: {$ref: '#/components/schemas/FocusSession'}
+        task: {$ref: '#/components/schemas/Task'}
+        continuation:
+          anyOf:
+            - $ref: '#/components/schemas/Task'
+            - {type: 'null'}
+    RechargeSession:
+      type: object
+      required: [id, user_id, status, started_at, accumulated_seconds, elapsed_seconds]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        status:
+          type: string
+          enum: [running, paused, completed, abandoned]
+        started_at: {type: string, format: date-time}
+        last_resumed_at: {type: string, format: date-time, nullable: true}
+        accumulated_seconds: {type: integer, minimum: 0}
+        elapsed_seconds: {type: integer, minimum: 0}
+        duration_minutes: {type: integer, minimum: 1, nullable: true}
+        ended_at: {type: string, format: date-time, nullable: true}
+    RechargeSessionResponse:
+      type: object
+      required: [recharge]
+      properties:
+        recharge: {$ref: '#/components/schemas/RechargeSession'}
+    RechargeSessionListResponse:
+      type: object
+      required: [recharges]
+      properties:
+        recharges:
+          type: array
+          items: {$ref: '#/components/schemas/RechargeSession'}
+    RechargeStatusResponse:
+      type: object
+      required:
+        - recharge
+        - cue_available
+        - completed_focus_today
+        - due_recharges
+        - completed_recharges_today
+        - recharge_minutes_today
+        - productive_minutes_today
+        - work_ratio
+        - recharge_ratio
+      properties:
+        recharge:
+          anyOf:
+            - $ref: '#/components/schemas/RechargeSession'
+            - {type: 'null'}
+        cue_available: {type: boolean}
+        completed_focus_today: {type: integer, minimum: 0}
+        due_recharges: {type: integer, minimum: 0}
+        completed_recharges_today: {type: integer, minimum: 0}
+        recharge_minutes_today: {type: integer, minimum: 0}
+        productive_minutes_today: {type: integer, minimum: 0}
+        work_ratio: {type: number, format: float, minimum: 0, maximum: 1}
+        recharge_ratio: {type: number, format: float, minimum: 0, maximum: 1}
     FocusSessionCreateRequest:
       type: object
       required: [started_at, ended_at]
@@ -3270,7 +3884,7 @@ components:
       properties:
         target_type:
           type: string
-          enum: [goal, milestone, program, task]
+          enum: [goal, milestone, program, task, canvas, note]
         target_id: {type: integer, minimum: 1}
         link_type:
           type: string
@@ -3281,11 +3895,11 @@ components:
       properties:
         id: {type: integer}
         user_id: {type: integer}
-        source_type: {type: string, enum: [note]}
+        source_type: {type: string, enum: [note, canvas]}
         source_id: {type: integer}
         target_type:
           type: string
-          enum: [goal, milestone, program, task]
+          enum: [goal, milestone, program, task, canvas, note]
         target_id: {type: integer}
         link_type:
           type: string
@@ -3324,6 +3938,12 @@ components:
         program_id: {type: integer, nullable: true}
         task_id: {type: integer, nullable: true}
         version: {type: integer, minimum: 1}
+        archived_at: {type: string, nullable: true, format: date-time}
+    CanvasRenameRequest:
+      type: object
+      required: [title]
+      properties:
+        title: {type: string, minLength: 1, maxLength: 200}
     CanvasCreateRequest:
       type: object
       required: [title]
@@ -3401,6 +4021,4 @@ components:
         files:
           type: array
           items: {$ref: '#/components/schemas/CanvasFile'}
-
----
 

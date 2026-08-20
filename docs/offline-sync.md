@@ -56,6 +56,28 @@ Idle
  → FailedPermanent
 ```
 
+### Visible states (TASK-115)
+The UI presents these user-visible states and their meaning:
+- **Online** — connected; mutations reach the server directly.
+- **Offline** — no connection; changes are stored locally and sync on reconnect.
+- **Queued** — changes are saved locally and waiting to sync.
+- **Syncing** — queued changes are being sent to the server.
+- **Saved** — a sync pass drained the queue successfully (persisted server-side).
+- **Conflict** — a queued change conflicts with server state; local data is
+  preserved and must be reviewed (never silently overwritten, SRS §9.4).
+- **Retrying** — a transient sync failure; the queue will retry.
+- **Failed** — a change could not sync; the local copy is preserved.
+
+Mapping from the queue state machine (offline-sync.md §Sync state machine) and
+the network status into these visible states is owned by
+`offline/sync-status.ts` (`SyncStatusController`,
+`mapQueueStateToSyncState`), which bridges the general MutationQueue into the
+shell store. `offline/http-applier.ts` translates a queued envelope into the
+matching API mutation and maps the outcome (applied / 409 conflict /
+offline-5xx-429 retryable / other-4xx permanent). Unsupported operations are a
+permanent failure that preserves the local copy — a failed sync MUST NOT
+silently discard local data (§Failure safety).
+
 ### Service Worker
 Responsibilities:
 - cache app shell;

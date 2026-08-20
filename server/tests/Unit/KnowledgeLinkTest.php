@@ -32,6 +32,40 @@ class KnowledgeLinkTest extends TestCase
     }
 
     #[Test]
+    public function link_can_target_canvas(): void
+    {
+        $link = KnowledgeLink::create(
+            1,
+            KnowledgeLink::SOURCE_NOTE,
+            10,
+            KnowledgeTargetType::canvas(),
+            5,
+            KnowledgeLinkType::evidenceFor(),
+        );
+
+        $this->assertSame('canvas', $link->targetType->value);
+        $this->assertSame(5, $link->targetId);
+    }
+
+    #[Test]
+    public function canvas_can_be_a_link_source(): void
+    {
+        $link = KnowledgeLink::create(
+            1,
+            KnowledgeLink::SOURCE_CANVAS,
+            12,
+            KnowledgeTargetType::note(),
+            30,
+            KnowledgeLinkType::relatedTo(),
+        );
+
+        $this->assertSame('canvas', $link->sourceType);
+        $this->assertSame(12, $link->sourceId);
+        $this->assertSame('note', $link->targetType->value);
+        $this->assertSame(30, $link->targetId);
+    }
+
+    #[Test]
     public function source_id_must_be_positive(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -98,7 +132,7 @@ class KnowledgeLinkTest extends TestCase
     public function target_type_rejects_unknown_values(): void
     {
         $this->expectException(InvalidArgumentException::class);
-        new KnowledgeTargetType('canvas');
+        new KnowledgeTargetType('contact');
     }
 
     #[Test]
@@ -114,7 +148,7 @@ class KnowledgeLinkTest extends TestCase
     public function target_type_all_exposes_supported_set(): void
     {
         $this->assertSame(
-            ['goal', 'milestone', 'program', 'task'],
+            ['goal', 'milestone', 'program', 'task', 'canvas', 'note'],
             KnowledgeTargetType::all(),
         );
     }

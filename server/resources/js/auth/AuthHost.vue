@@ -3,6 +3,10 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useAuthStore } from './store';
 import { useShellStore } from '../shell/store';
 import { useApiStore } from '../api/store';
+import { MutationQueue } from '../offline/queue';
+import { IndexedDbQueueStore } from '../offline/queue-store';
+import { HttpMutationApplier } from '../offline/http-applier';
+import { SyncStatusController } from '../offline/sync-status';
 import AppShell from '../shell/AppShell.vue';
 import AppErrorBoundary from '../shell/AppErrorBoundary.vue';
 import LoginView from './LoginView.vue';
@@ -15,6 +19,7 @@ import TaskView from '../task/TaskView.vue';
 import GoalView from '../goal/GoalView.vue';
 import ScheduleView from '../schedulerdraft/ScheduleView.vue';
 import NoteView from '../note/NoteView.vue';
+import CanvasView from '../canvas/CanvasView.vue';
 import QuickCapture from '../quickcapture/QuickCapture.vue';
 import { useQuickCaptureStore } from '../quickcapture/store';
 
@@ -27,6 +32,8 @@ const authMode = ref<'login' | 'register'>('login');
 
 const ready = ref(false);
 
+let syncController: SyncStatusController | null = null;
+
 const todayDate = computed(() => {
     const local = new Date();
     const y = local.getFullYear();
@@ -35,14 +42,50 @@ const todayDate = computed(() => {
     return `${y}-${m}-${d}`;
 });
 
+function isOnline(): boolean {
+    return typeof navigator === 'undefined' || navigator.onLine !== false;
+}
+
 function handleOnline(): void {
     api.setOnline(true);
     shell.setSyncState('online');
+    if (syncController !== null) {
+        syncController.refresh();
+        void syncController.sync();
+    }
 }
 
 function handleOffline(): void {
     api.setOnline(false);
     shell.setSyncState('offline');
+    if (syncController !== null) {
+        syncController.refresh();
+    }
+}
+
+function bootSyncController(): void {
+    // Guard: IndexedDB is not available in test/SSR environments.
+    if (typeof indexedDB === 'undefined') {
+        return;
+    }
+    const queue = new MutationQueue(new IndexedDbQueueStore(), new HttpMutationApplier());
+    syncController = new SyncStatusController(queue, (status) => {
+        shell.setSyncState(status.state);
+        shell.setSyncQueuedCount(status.queuedCount);
+        shell.setSyncError(status.error ?? null);
+    }, isOnline);
+    shell.registerRetrySync(() => {
+        void syncController?.retry();
+    });
+    syncController.refresh();
+}
+
+function shutdownSyncController(): void {
+    if (syncController !== null) {
+        syncController.dispose();
+        syncController = null;
+    }
+    shell.registerRetrySync(null);
 }
 
 onMounted(async () => {
@@ -51,6 +94,7 @@ onMounted(async () => {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) {
         handleOffline();
     }
+    bootSyncController();
     await auth.restoreSession();
     ready.value = true;
 });
@@ -58,6 +102,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
     window.removeEventListener('online', handleOnline);
     window.removeEventListener('offline', handleOffline);
+    shutdownSyncController();
 });
 
 function goToRegister(): void {
@@ -114,6 +159,7 @@ const viewTitle = computed(() => {
             <GoalView v-else-if="shell.activeView === 'goals'" />
             <ScheduleView v-else-if="shell.activeView === 'schedule'" />
             <NoteView v-else-if="shell.activeView === 'knowledge'" />
+            <CanvasView v-else-if="shell.activeView === 'canvas'" />
             <div v-else data-testid="view-content">
                 <p class="text-sm text-gray-600 dark:text-gray-400">
                     The {{ shell.activeView }} view is wired into the shell and will be

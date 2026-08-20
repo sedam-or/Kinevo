@@ -4,8 +4,11 @@ import { todayApi } from './api';
 import { useTodayStore } from './store';
 import { useShellStore } from '../shell/store';
 import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
+import ExecutionTimer from '../execution/ExecutionTimer.vue';
+import RechargeTimer from '../recharge/RechargeTimer.vue';
+import EmergencyPauseDialog from './EmergencyPauseDialog.vue';
 import { taskStates } from '../visualstate/derive';
-import type { EmptySlot, HardLandscapeEvent, TodayEvent } from './types';
+import type { EmptySlot, EmergencyPauseResponse, HardLandscapeEvent, TodayEvent } from './types';
 
 const props = defineProps<{
     date: string;
@@ -152,6 +155,58 @@ async function quickCapture(): Promise<void> {
         quickError.value = (err as { message?: string }).message ?? 'Quick capture failed.';
     }
 }
+
+function onExecutionCompleted(): void {
+    // A completed timer may have changed the task status (completed/continued);
+    // reload the day so the schedule, states, and NOW card reflect it.
+    void today.load(props.date);
+}
+
+function onRechargeCompleted(): void {
+    // A completed recharge updates the day's Work-Life Ratio; reload Today.
+    void today.load(props.date);
+}
+
+const miniPauseBusy = ref(false);
+const miniPauseError = ref<string | null>(null);
+const miniPauseMessage = ref<string | null>(null);
+
+async function miniPause(): Promise<void> {
+    miniPauseError.value = null;
+    miniPauseMessage.value = null;
+    miniPauseBusy.value = true;
+    try {
+        const result = await todayApi.miniPause({ date: props.date });
+        miniPauseMessage.value = result.explanation;
+        // The schedule changed (moves today's tasks to the next day); reload.
+        await today.load(props.date);
+    } catch (err) {
+        miniPauseError.value = (err as { message?: string }).message ?? 'Mini Pause failed.';
+    } finally {
+        miniPauseBusy.value = false;
+    }
+}
+
+const emergencyDialogOpen = ref(false);
+const emergencyMessage = ref<string | null>(null);
+const emergencyError = ref<string | null>(null);
+
+function onEmergencyConfirmed(result: EmergencyPauseResponse): void {
+    emergencyDialogOpen.value = false;
+    emergencyMessage.value = result.explanation;
+    emergencyError.value = null;
+    // The week is now tagged exceptional and tasks moved; reload so the
+    // schedule, recovery badge, and NOW card reflect it.
+    void today.load(props.date);
+}
+
+function onEmergencyCancelled(): void {
+    emergencyDialogOpen.value = false;
+}
+
+function openEmergencyDialog(): void {
+    emergencyDialogOpen.value = true;
+}
 </script>
 
 <template>
@@ -176,6 +231,20 @@ async function quickCapture(): Promise<void> {
         <div v-if="today.loading" class="text-sm text-gray-500" data-testid="today-loading">Loading Today…</div>
         <div v-if="today.error" class="text-sm text-[#F53003]" role="alert" data-testid="today-error">{{ today.error.message }}</div>
 
+        <!-- Emergency Pause recovery banner (FR-07): the week is exceptional. -->
+        <section
+            v-if="today.pause"
+            class="border border-gray-300 dark:border-gray-600 rounded-sm p-4 bg-gray-100 dark:bg-gray-800"
+            data-testid="recovery-banner"
+        >
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Recovery week</div>
+            <p class="text-sm">
+                This week is tagged as an exceptional recovery period
+                ({{ today.pause.week_start }} to {{ today.pause.week_end }}). Notifications are suppressed and this
+                week is excluded from capacity estimates.
+            </p>
+        </section>
+
         <!-- NOW card -->
         <section v-if="currentEvent" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="now-card">
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Now</div>
@@ -191,13 +260,53 @@ async function quickCapture(): Promise<void> {
                         <VisualStateBadge v-for="s in nowStates" :key="s" :state="s" />
                     </div>
                 </div>
-                <button
-                    type="button"
-                    class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
-                    data-testid="now-complete"
-                >
-                    Complete
-                </button>
+                <ExecutionTimer
+                    v-if="currentEvent.task"
+                    :task-id="currentEvent.task.id"
+                    :task-title="currentEvent.task.title"
+                    data-testid="now-execution"
+                    @completed="onExecutionCompleted"
+                />
+            </div>
+            <RechargeTimer
+                class="mt-3"
+                :date="today.date ?? props.date"
+                data-testid="now-recharge"
+                @completed="onRechargeCompleted"
+            />
+            <div class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3 flex items-center justify-between gap-2">
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                    <span v-if="miniPauseMessage" data-testid="mini-pause-message">{{ miniPauseMessage }}</span>
+                    <span v-else>Move today's remaining tasks to tomorrow.</span>
+                </div>
+                <div class="flex gap-2 shrink-0">
+                    <button
+                        type="button"
+                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                        :disabled="miniPauseBusy"
+                        data-testid="mini-pause-button"
+                        @click="miniPause"
+                    >
+                        {{ miniPauseBusy ? 'Pausing…' : 'Mini Pause' }}
+                    </button>
+                    <button
+                        type="button"
+                        class="border border-[#F53003] text-[#F53003] rounded-sm px-3 py-1 text-sm"
+                        data-testid="emergency-pause-button"
+                        @click="openEmergencyDialog"
+                    >
+                        Emergency Pause
+                    </button>
+                </div>
+            </div>
+            <div v-if="miniPauseError" class="text-sm text-[#F53003]" role="alert" data-testid="mini-pause-error">
+                {{ miniPauseError }}
+            </div>
+            <div v-if="emergencyMessage" class="text-sm text-gray-600 dark:text-gray-400 mt-2" data-testid="emergency-pause-message">
+                {{ emergencyMessage }}
+            </div>
+            <div v-if="emergencyError" class="text-sm text-[#F53003]" role="alert" data-testid="emergency-pause-error">
+                {{ emergencyError }}
             </div>
         </section>
         <section v-else-if="today.hasData" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="no-now">
@@ -283,5 +392,13 @@ async function quickCapture(): Promise<void> {
                 </button>
             </form>
         </section>
+
+        <EmergencyPauseDialog
+            v-if="emergencyDialogOpen"
+            :date="props.date"
+            :current-task-id="currentEvent?.task?.id ?? null"
+            @confirmed="onEmergencyConfirmed"
+            @cancelled="onEmergencyCancelled"
+        />
     </div>
 </template>

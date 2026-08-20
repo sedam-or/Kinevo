@@ -12,6 +12,7 @@ export const NAV_ITEMS: NavItem[] = [
     { key: 'goals', label: 'Goals / Roadmap', icon: 'goals' },
     { key: 'tasks', label: 'Tasks', icon: 'tasks' },
     { key: 'knowledge', label: 'Knowledge', icon: 'knowledge' },
+    { key: 'canvas', label: 'Canvas', icon: 'canvas' },
     { key: 'analytics', label: 'Analytics', icon: 'analytics' },
     { key: 'settings', label: 'Settings', icon: 'settings' },
 ];

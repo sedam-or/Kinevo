@@ -9,6 +9,7 @@ describe('shell navigation config', () => {
         expect(keys).toContain('calendar');
         expect(keys).toContain('goals');
         expect(keys).toContain('knowledge');
+        expect(keys).toContain('canvas');
         expect(keys).toContain('analytics');
         expect(keys).toContain('settings');
     });

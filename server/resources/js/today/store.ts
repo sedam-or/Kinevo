@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { todayApi } from './api';
-import type { CapacityIndicators, EmptySlot, TodayEvent, TodayResponse } from './types';
+import type { CapacityIndicators, EmptySlot, PauseInfo, TodayEvent, TodayResponse } from './types';
 import type { ApiError } from '../api/types';
 
 export const useTodayStore = defineStore('today', () => {
     const date = ref<string | null>(null);
     const scheduleVersion = ref<number | null>(null);
+    const pause = ref<PauseInfo | null>(null);
     const events = ref<TodayEvent[]>([]);
     const emptySlots = ref<EmptySlot[]>([]);
     const hardLandscape = ref<TodayResponse['hard_landscape']>([]);
@@ -19,6 +20,7 @@ export const useTodayStore = defineStore('today', () => {
     function apply(response: TodayResponse): void {
         date.value = response.date;
         scheduleVersion.value = response.schedule_version;
+        pause.value = response.pause ?? null;
         events.value = response.events;
         emptySlots.value = response.empty_slots;
         hardLandscape.value = response.hard_landscape;
@@ -41,6 +43,7 @@ export const useTodayStore = defineStore('today', () => {
     function clear(): void {
         date.value = null;
         scheduleVersion.value = null;
+        pause.value = null;
         events.value = [];
         emptySlots.value = [];
         hardLandscape.value = [];
@@ -51,6 +54,7 @@ export const useTodayStore = defineStore('today', () => {
     return {
         date,
         scheduleVersion,
+        pause,
         events,
         emptySlots,
         hardLandscape,

@@ -30,6 +30,9 @@ export default defineConfig({
             '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
         },
     },
+    oxc: {
+        jsx: { runtime: 'automatic' },
+    },
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],

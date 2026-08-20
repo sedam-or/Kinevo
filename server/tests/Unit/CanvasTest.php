@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Domain\Canvas\Canvas;
 use App\Domain\Canvas\CanvasDocument;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
 class CanvasTest extends TestCase
@@ -70,7 +71,26 @@ class CanvasTest extends TestCase
             'program_id' => null,
             'task_id' => null,
             'version' => 1,
+            'archived_at' => null,
         ], $canvas->toArray());
+    }
+
+    public function test_canvas_can_be_archived_and_restored(): void
+    {
+        $archivedAt = new DateTimeImmutable('2026-08-19 10:00:00');
+        $canvas = Canvas::create(1, 'Board')->withId(3);
+        $archived = $canvas->archive($archivedAt);
+
+        $this->assertTrue($archived->isArchived());
+        $this->assertSame($archivedAt, $archived->archivedAt);
+        $this->assertSame(2, $archived->version);
+        $this->assertFalse($canvas->isArchived());
+        $this->assertSame('2026-08-19 10:00:00', $archived->toArray()['archived_at']);
+
+        $restored = $archived->restore();
+        $this->assertFalse($restored->isArchived());
+        $this->assertNull($restored->archivedAt);
+        $this->assertSame(3, $restored->version);
     }
 
     public function test_canvas_document_can_be_created(): void

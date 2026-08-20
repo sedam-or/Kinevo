@@ -5,8 +5,7 @@ namespace App\Domain\Knowledge\ValueObjects;
 use InvalidArgumentException;
 
 /**
- * Domain object a knowledge item may link to (SRS §10.5). Canvases are linked
- * once the canvas aggregate ships (TASK-041).
+ * Domain object a knowledge item may link to (SRS §10.5, FR-54).
  */
 final class KnowledgeTargetType
 {
@@ -18,11 +17,17 @@ final class KnowledgeTargetType
 
     public const TASK = 'task';
 
+    public const CANVAS = 'canvas';
+
+    public const NOTE = 'note';
+
     private const TYPES = [
         self::GOAL,
         self::MILESTONE,
         self::PROGRAM,
         self::TASK,
+        self::CANVAS,
+        self::NOTE,
     ];
 
     public function __construct(
@@ -51,6 +56,16 @@ final class KnowledgeTargetType
     public static function task(): self
     {
         return new self(self::TASK);
+    }
+
+    public static function canvas(): self
+    {
+        return new self(self::CANVAS);
+    }
+
+    public static function note(): self
+    {
+        return new self(self::NOTE);
     }
 
     public static function all(): array

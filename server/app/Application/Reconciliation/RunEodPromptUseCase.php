@@ -5,6 +5,7 @@ namespace App\Application\Reconciliation;
 use App\Domain\Notifications\Contracts\NotificationRepository;
 use App\Domain\Notifications\Notification;
 use App\Domain\Notifications\ValueObjects\NotificationType;
+use App\Domain\Pauses\Contracts\PauseEventRepository;
 use App\Domain\Reconciliation\EndOfDayReconciliationService;
 use App\Domain\Tasks\Contracts\TaskRepository;
 use App\Domain\Tasks\Task;
@@ -15,17 +16,25 @@ use Carbon\CarbonImmutable;
  * per user/local-day listing untouched tasks. Idempotent: a retry returns the
  * existing notification and never creates a duplicate. No untouched tasks →
  * no notification (FR-35 Alternative Flow).
+ *
+ * During an Emergency Pause week the notification is suppressed while the
+ * pause event preserves audit data (FR-47 Business Rules).
  */
 final readonly class RunEodPromptUseCase
 {
     public function __construct(
         private TaskRepository $tasks,
         private NotificationRepository $notifications,
+        private PauseEventRepository $pauseEvents,
         private EndOfDayReconciliationService $service,
     ) {}
 
     public function __invoke(int $userId, CarbonImmutable $localDate): ?Notification
     {
+        if ($this->pauseEvents->isWeekExceptional($userId, $localDate)) {
+            return null;
+        }
+
         $existing = $this->notifications->findReconciliationForDay($userId, $localDate);
         if ($existing !== null) {
             return $existing;

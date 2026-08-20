@@ -9,9 +9,44 @@ vi.mock('../api', async (importOriginal) => {
         todayApi: {
             today: vi.fn(),
             quickCapture: vi.fn(),
+            miniPause: vi.fn(),
+            emergencyPause: vi.fn(),
+            weekRange: vi.fn(),
         },
     };
 });
+
+vi.mock('../../execution/api', () => ({
+    executionApi: {
+        active: vi.fn().mockResolvedValue({ execution: null }),
+        start: vi.fn(),
+        pause: vi.fn(),
+        resume: vi.fn(),
+        complete: vi.fn(),
+        abandon: vi.fn(),
+    },
+}));
+
+vi.mock('../../recharge/api', () => ({
+    rechargeApi: {
+        status: vi.fn().mockResolvedValue({
+            recharge: null,
+            cue_available: false,
+            completed_focus_today: 0,
+            due_recharges: 0,
+            completed_recharges_today: 0,
+            recharge_minutes_today: 0,
+            productive_minutes_today: 0,
+            work_ratio: 0,
+            recharge_ratio: 0,
+        }),
+        start: vi.fn(),
+        pause: vi.fn(),
+        resume: vi.fn(),
+        complete: vi.fn(),
+        abandon: vi.fn(),
+    },
+}));
 
 import TodayView from '../TodayView.vue';
 import { todayApi } from '../api';
@@ -21,6 +56,7 @@ import type { TodayResponse } from '../types';
 const response: TodayResponse = {
     date: '2026-08-19',
     schedule_version: 5,
+    pause: null,
     events: [
         {
             assignment: {
@@ -117,5 +153,150 @@ describe('TodayView', () => {
         await flushPromises();
 
         expect(wrapper.find('[data-testid="today-sync"]').text()).toContain('offline');
+    });
+
+    it('runs Mini Pause from the NOW card and reloads the day', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-08-19T09:30:00'));
+        vi.mocked(todayApi.today).mockResolvedValue(response);
+        vi.mocked(todayApi.miniPause).mockResolvedValue({
+            version: 6,
+            applied: true,
+            moves: [
+                {
+                    task_id: '10',
+                    title: 'Write report',
+                    from: { start: '2026-08-19T09:00:00', end: '2026-08-19T10:00:00' },
+                    to: { start: '2026-08-20T09:00:00', end: '2026-08-20T10:00:00' },
+                },
+            ],
+            conflict_task_ids: [],
+            explanation: 'Mini Pause: moved 1 task(s) to 2026-08-20: "Write report".',
+        });
+
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(TodayView, {
+            props: { date: '2026-08-19' },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="now-card"]').exists()).toBe(true);
+
+        await wrapper.find('[data-testid="mini-pause-button"]').trigger('click');
+        await flushPromises();
+
+        expect(todayApi.miniPause).toHaveBeenCalledWith({ date: '2026-08-19' });
+        expect(todayApi.today).toHaveBeenCalledTimes(2);
+        expect(wrapper.find('[data-testid="mini-pause-message"]').text()).toContain('2026-08-20');
+        vi.useRealTimers();
+    });
+
+    it('opens the Emergency Pause dialog, confirms, and shows the result', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-08-19T09:30:00'));
+        vi.mocked(todayApi.today).mockResolvedValue(response);
+        vi.mocked(todayApi.weekRange).mockResolvedValue({
+            from: '2026-08-17',
+            to: '2026-08-23',
+            schedule_version: 5,
+            events: [
+                {
+                    assignment: {
+                        id: 1,
+                        user_id: 1,
+                        task_id: 10,
+                        date: '2026-08-19',
+                        start_at: '2026-08-19T09:00:00',
+                        end_at: '2026-08-19T10:00:00',
+                        duration_minutes: 60,
+                        status: 'scheduled',
+                        source: 'manual',
+                        schedule_version: 5,
+                        locked: true,
+                        version: 1,
+                    },
+                    locked: true,
+                    conflict: false,
+                    task: { id: 10, user_id: 1, program_id: null, goal_id: null, milestone_id: null, title: 'Write report', description: null, status: 'scheduled', priority_tier: 1, estimated_minutes: 60, due_at: null, progress: 0, version: 1 },
+                    program: null,
+                    goal: null,
+                    milestone: null,
+                },
+            ],
+        });
+        vi.mocked(todayApi.emergencyPause).mockResolvedValue({
+            version: 6,
+            applied: true,
+            week_start: '2026-08-17',
+            week_end: '2026-08-23',
+            keep_task_ids: ['10'],
+            moves: [
+                {
+                    task_id: '10',
+                    title: 'Write report',
+                    from: { start: '2026-08-19T09:00:00', end: '2026-08-19T10:00:00' },
+                    to: { start: '2026-08-26T09:00:00', end: '2026-08-26T10:00:00' },
+                },
+            ],
+            conflict_task_ids: [],
+            explanation: 'Emergency Pause: 2026-08-17 to 2026-08-23 marked as an exceptional recovery week; moved 1 task(s).',
+        });
+
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(TodayView, {
+            props: { date: '2026-08-19' },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        await wrapper.find('[data-testid="emergency-pause-button"]').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="emergency-pause-dialog"]').exists()).toBe(true);
+        expect(todayApi.weekRange).toHaveBeenCalledWith('2026-08-17', '2026-08-23');
+        expect(wrapper.find('[data-testid="ep-confirm"]').exists()).toBe(true);
+
+        await wrapper.find('[data-testid="ep-confirm"]').trigger('click');
+        await flushPromises();
+
+        expect(todayApi.emergencyPause).toHaveBeenCalledWith({
+            date: '2026-08-19',
+            keep_task_ids: [10],
+        });
+        expect(todayApi.today).toHaveBeenCalledTimes(2);
+        expect(wrapper.find('[data-testid="emergency-pause-message"]').text()).toContain('Emergency Pause');
+        vi.useRealTimers();
+    });
+
+    it('shows a recovery banner when the week is tagged exceptional', async () => {
+        const exceptional: TodayResponse = {
+            ...response,
+            pause: {
+                type: 'emergency',
+                week_start: '2026-08-17',
+                week_end: '2026-08-23',
+                keep_task_ids: [],
+                moved_task_ids: ['10'],
+                conflict_task_ids: [],
+                schedule_version: 6,
+            },
+        };
+        vi.mocked(todayApi.today).mockResolvedValue(exceptional);
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(TodayView, {
+            props: { date: '2026-08-19' },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="recovery-banner"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="recovery-banner"]').text()).toContain('exceptional');
     });
 });

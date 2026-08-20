@@ -5,6 +5,7 @@ import EditorHost from '../editor/EditorHost.vue';
 import type { EditorAdapter, EditorChange, EditorDocument } from '../editor/types';
 import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
 import type { VisualStateValue } from '../visualstate/types';
+import LinkManager from '../knowledge/LinkManager.vue';
 
 const props = withDefaults(
     defineProps<{
@@ -131,10 +132,6 @@ watch(
     },
     { immediate: true },
 );
-
-function linkLabel(link: { target_type: string; link_type: string }): string {
-    return `${link.target_type} (${link.link_type})`;
-}
 </script>
 
 <template>
@@ -172,15 +169,9 @@ function linkLabel(link: { target_type: string; link_type: string }): string {
             </button>
         </section>
 
-        <!-- Linked entities -->
+        <!-- Linked entities (create/remove via Knowledge Linking UI) -->
         <section v-if="notes.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="note-links">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Linked</div>
-            <ul v-if="notes.links.length > 0" class="space-y-1">
-                <li v-for="link in notes.links" :key="link.id" class="text-sm" data-testid="note-link-item">
-                    {{ linkLabel(link) }} #{{ link.target_id }}
-                </li>
-            </ul>
-            <div v-else class="text-sm text-gray-500 dark:text-gray-400">No links yet.</div>
+            <LinkManager :note-id="notes.current.id" />
         </section>
     </div>
 </template>

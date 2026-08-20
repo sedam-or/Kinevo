@@ -2,8 +2,10 @@
 
 namespace App\Application\Knowledge;
 
+use App\Domain\Canvas\Contracts\CanvasRepository;
 use App\Domain\Goals\Contracts\GoalRepository;
 use App\Domain\Knowledge\Contracts\KnowledgeLinkRepository;
+use App\Domain\Knowledge\Contracts\NoteRepository;
 use App\Domain\Knowledge\KnowledgeLink;
 use App\Domain\Knowledge\ValueObjects\KnowledgeTargetType;
 use App\Domain\Milestones\Contracts\MilestoneRepository;
@@ -19,6 +21,8 @@ final class ListTargetLinksUseCase
         private readonly MilestoneRepository $milestones,
         private readonly ProgramRepository $programs,
         private readonly TaskRepository $tasks,
+        private readonly CanvasRepository $canvases,
+        private readonly NoteRepository $notes,
     ) {}
 
     /**
@@ -44,6 +48,8 @@ final class ListTargetLinksUseCase
             KnowledgeTargetType::MILESTONE => $this->milestones->findForUser($userId, $targetId) !== null,
             KnowledgeTargetType::PROGRAM => $this->programs->findForUser($userId, $targetId) !== null,
             KnowledgeTargetType::TASK => $this->tasks->findForUser($userId, $targetId) !== null,
+            KnowledgeTargetType::CANVAS => $this->canvases->findForUser($userId, $targetId) !== null,
+            KnowledgeTargetType::NOTE => $this->notes->findForUser($userId, $targetId) !== null,
             default => false,
         };
 

@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\CanvasController;
+use App\Http\Controllers\Api\EmergencyPauseController;
+use App\Http\Controllers\Api\ExecutionController;
 use App\Http\Controllers\Api\FocusSessionController;
 use App\Http\Controllers\Api\GoalController;
 use App\Http\Controllers\Api\HardLandscapeController;
@@ -13,11 +15,13 @@ use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\KnowledgeLinkController;
 use App\Http\Controllers\Api\KnowledgeSearchController;
 use App\Http\Controllers\Api\MilestoneController;
+use App\Http\Controllers\Api\MiniPauseController;
 use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ProgressEventController;
+use App\Http\Controllers\Api\RechargeController;
 use App\Http\Controllers\Api\RecoveryController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\ScheduleDraftController;
@@ -85,6 +89,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/recovery', [RecoveryController::class, 'index']);
     Route::post('/recovery/{taskId}', [RecoveryController::class, 'resolve']);
 
+    // Recharge Timer (FR-05, TASK-121) — persisted timer + Work-Life Ratio.
+    Route::get('/recharge/status', [RechargeController::class, 'status']);
+    Route::get('/recharge', [RechargeController::class, 'index']);
+    Route::post('/recharge/start', [RechargeController::class, 'start']);
+    Route::post('/recharge/{sessionId}/pause', [RechargeController::class, 'pause']);
+    Route::post('/recharge/{sessionId}/resume', [RechargeController::class, 'resume']);
+    Route::post('/recharge/{sessionId}/complete', [RechargeController::class, 'complete']);
+    Route::post('/recharge/{sessionId}/abandon', [RechargeController::class, 'abandon']);
+
     Route::get('/adaptive/context', [AdaptiveContextController::class, 'index']);
     Route::post('/adaptive/context', [AdaptiveContextController::class, 'store']);
     Route::get('/adaptive/burnout', [AdaptiveContextController::class, 'burnout']);
@@ -92,6 +105,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/focus-sessions', [FocusSessionController::class, 'index']);
     Route::post('/focus-sessions', [FocusSessionController::class, 'store']);
     Route::get('/focus-sessions/recommendation', [FocusSessionController::class, 'recommendation']);
+
+    // Execution Timer (FR-05, TASK-120) — persisted, server-derived timer state.
+    Route::get('/execution/active', [ExecutionController::class, 'active']);
+    Route::get('/execution', [ExecutionController::class, 'index']);
+    Route::post('/execution/start', [ExecutionController::class, 'start']);
+    Route::post('/execution/{sessionId}/pause', [ExecutionController::class, 'pause']);
+    Route::post('/execution/{sessionId}/resume', [ExecutionController::class, 'resume']);
+    Route::post('/execution/{sessionId}/complete', [ExecutionController::class, 'complete']);
+    Route::post('/execution/{sessionId}/abandon', [ExecutionController::class, 'abandon']);
 
     Route::get('/progress', [ProgressEventController::class, 'index']);
     Route::post('/progress', [ProgressEventController::class, 'store']);
@@ -119,6 +141,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notes/{noteId}/links', [KnowledgeLinkController::class, 'index']);
     Route::post('/notes/{noteId}/links', [KnowledgeLinkController::class, 'store']);
     Route::delete('/notes/{noteId}/links/{linkId}', [KnowledgeLinkController::class, 'destroy']);
+    Route::get('/canvases/{canvasId}/links', [KnowledgeLinkController::class, 'canvasIndex']);
+    Route::post('/canvases/{canvasId}/links', [KnowledgeLinkController::class, 'canvasStore']);
+    Route::delete('/canvases/{canvasId}/links/{linkId}', [KnowledgeLinkController::class, 'canvasDestroy']);
     Route::get('/knowledge/links', [KnowledgeLinkController::class, 'byTarget']);
     Route::get('/knowledge/search', [KnowledgeSearchController::class, 'search']);
 
@@ -126,6 +151,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/canvases', [CanvasController::class, 'store']);
     Route::get('/canvases/{canvasId}', [CanvasController::class, 'show']);
     Route::put('/canvases/{canvasId}', [CanvasController::class, 'save']);
+    Route::patch('/canvases/{canvasId}', [CanvasController::class, 'rename']);
+    Route::post('/canvases/{canvasId}/archive', [CanvasController::class, 'archive']);
     Route::get('/canvases/{canvasId}/files', [CanvasController::class, 'files']);
     Route::post('/canvases/{canvasId}/files', [CanvasController::class, 'addFile']);
 
@@ -147,6 +174,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/schedule/draft/apply', [ScheduleDraftController::class, 'apply']);
     Route::post('/schedule/reschedule', [ScheduleDraftController::class, 'reschedule']);
     Route::post('/schedule/reschedule/apply', [ScheduleDraftController::class, 'rescheduleApply']);
+
+    // Mini Pause (FR-07): move all eligible today tasks to the next day.
+    Route::post('/schedule/mini-pause', [MiniPauseController::class, 'store']);
+
+    // Emergency Pause (FR-07): tag the week exceptional, keep selected tasks,
+    // shift all other eligible tasks +1 week.
+    Route::post('/schedule/emergency-pause', [EmergencyPauseController::class, 'store']);
 
     // Schedule Overrides (FR-25; SRS §7.1).
     Route::get('/schedule-overrides', [ScheduleOverrideController::class, 'index']);

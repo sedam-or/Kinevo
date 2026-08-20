@@ -2,6 +2,7 @@
 
 namespace App\Domain\Canvas;
 
+use DateTimeImmutable;
 use InvalidArgumentException;
 
 final class Canvas
@@ -15,6 +16,7 @@ final class Canvas
         public readonly ?int $programId,
         public readonly ?int $taskId,
         public readonly int $version,
+        public readonly ?DateTimeImmutable $archivedAt = null,
     ) {}
 
     public static function create(
@@ -52,6 +54,7 @@ final class Canvas
             $this->programId,
             $this->taskId,
             $this->version,
+            $this->archivedAt,
         );
     }
 
@@ -70,6 +73,7 @@ final class Canvas
             $this->programId,
             $this->taskId,
             $this->version + 1,
+            $this->archivedAt,
         );
     }
 
@@ -88,6 +92,7 @@ final class Canvas
             $programId,
             $taskId,
             $this->version + 1,
+            $this->archivedAt,
         );
     }
 
@@ -102,7 +107,43 @@ final class Canvas
             $this->programId,
             $this->taskId,
             $version,
+            $this->archivedAt,
         );
+    }
+
+    public function archive(DateTimeImmutable $archivedAt): self
+    {
+        return new self(
+            $this->id,
+            $this->userId,
+            $this->title,
+            $this->goalId,
+            $this->milestoneId,
+            $this->programId,
+            $this->taskId,
+            $this->version + 1,
+            $archivedAt,
+        );
+    }
+
+    public function restore(): self
+    {
+        return new self(
+            $this->id,
+            $this->userId,
+            $this->title,
+            $this->goalId,
+            $this->milestoneId,
+            $this->programId,
+            $this->taskId,
+            $this->version + 1,
+            null,
+        );
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->archivedAt !== null;
     }
 
     public function toArray(): array
@@ -116,6 +157,7 @@ final class Canvas
             'program_id' => $this->programId,
             'task_id' => $this->taskId,
             'version' => $this->version,
+            'archived_at' => $this->archivedAt?->format('Y-m-d H:i:s'),
         ];
     }
 }

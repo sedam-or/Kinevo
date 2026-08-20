@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Application\Canvas\AddCanvasFileUseCase;
+use App\Application\Canvas\ArchiveCanvasUseCase;
 use App\Application\Canvas\CreateCanvasUseCase;
 use App\Application\Canvas\GetCanvasUseCase;
 use App\Application\Canvas\ListCanvasesUseCase;
 use App\Application\Canvas\ListCanvasFilesUseCase;
+use App\Application\Canvas\RenameCanvasUseCase;
 use App\Application\Canvas\SaveCanvasUseCase;
 use App\Domain\Canvas\CanvasVersionConflict;
 use App\Http\Controllers\Controller;
@@ -22,6 +24,8 @@ final class CanvasController extends Controller
         private readonly ListCanvasesUseCase $listCanvasesUseCase,
         private readonly GetCanvasUseCase $getCanvasUseCase,
         private readonly SaveCanvasUseCase $saveCanvasUseCase,
+        private readonly RenameCanvasUseCase $renameCanvasUseCase,
+        private readonly ArchiveCanvasUseCase $archiveCanvasUseCase,
         private readonly AddCanvasFileUseCase $addCanvasFileUseCase,
         private readonly ListCanvasFilesUseCase $listCanvasFilesUseCase,
     ) {}
@@ -104,6 +108,43 @@ final class CanvasController extends Controller
         }
 
         return response()->json(['document' => $document->toArray()]);
+    }
+
+    public function rename(Request $request, int $canvasId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => ['required', 'string', 'min:1', 'max:200'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $canvas = $this->renameCanvasUseCase->__invoke(
+                $request->user()->id,
+                $canvasId,
+                $validator->validated()['title'],
+            );
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+
+        return response()->json(['canvas' => $canvas->toArray()]);
+    }
+
+    public function archive(Request $request, int $canvasId): JsonResponse
+    {
+        try {
+            $canvas = $this->archiveCanvasUseCase->__invoke(
+                $request->user()->id,
+                $canvasId,
+            );
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+
+        return response()->json(['canvas' => $canvas->toArray()]);
     }
 
     public function files(Request $request, int $canvasId): JsonResponse

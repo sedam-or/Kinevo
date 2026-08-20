@@ -2,21 +2,13 @@
 import { computed } from 'vue';
 import { useShellStore } from './store';
 import { isShellView, type ShellView } from './navigation';
-import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
-import type { VisualStateValue } from '../visualstate/types';
+import SyncStatusPanel from './SyncStatusPanel.vue';
 
 const shell = useShellStore();
 
 const resolvedActive = computed<ShellView>(() =>
     isShellView(shell.activeView) ? shell.activeView : 'today',
 );
-
-const syncStateBadge = computed<VisualStateValue>(() => {
-    const valid: VisualStateValue[] = ['online', 'offline', 'syncing', 'queued', 'failed', 'saved'];
-    return valid.includes(shell.syncState as VisualStateValue)
-        ? (shell.syncState as VisualStateValue)
-        : 'online';
-});
 
 function selectView(view: ShellView): void {
     shell.setView(view);
@@ -36,7 +28,7 @@ function cycleTheme(): void {
             <div class="flex items-center gap-3">
                 <span class="font-semibold">Kinevo</span>
                 <span data-testid="sync-state">
-                    <VisualStateBadge :state="syncStateBadge" />
+                    <SyncStatusPanel />
                 </span>
                 <span v-if="shell.unreadCount > 0" class="text-xs" data-testid="notifications">
                     {{ shell.unreadCount }} unread

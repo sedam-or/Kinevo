@@ -2120,6 +2120,7 @@ The v1 core entities remain authoritative and SHALL be extended rather than dupl
 - `program_id?`
 - `task_id?`
 - `version`
+- `archived_at`
 - timestamps
 
 ### `canvas_documents`
@@ -2278,9 +2279,13 @@ GET   /api/v1/knowledge/search
 GET   /api/v1/canvases
 POST  /api/v1/canvases
 GET   /api/v1/canvases/{id}
+PATCH /api/v1/canvases/{id}
 PUT   /api/v1/canvases/{id}/document
+POST  /api/v1/canvases/{id}/archive
 POST  /api/v1/canvases/{id}/files
+GET   /api/v1/canvases/{id}/links
 POST  /api/v1/canvases/{id}/links
+DELETE /api/v1/canvases/{id}/links/{linkId}
 ```
 
 Canvas document PUT MUST accept a client version. A stale version MUST return `409 CANVAS_VERSION_CONFLICT`.
@@ -2420,7 +2425,7 @@ Search SHOULD index title and normalized plain text. Rich structured content MUS
 
 ## 10.5 Knowledge Linking
 
-Any Knowledge Item MAY link to one or more Goals, Milestones, Programs, Tasks, or Canvases. Link types SHOULD be explicit (`supports`, `references`, `derived_from`, `evidence_for`, `related_to`, etc.).
+Any Knowledge Item MAY link to one or more Goals, Milestones, Programs, Tasks, or Canvases. A Canvas MAY also act as a link source attached to Goals, Milestones, Programs, Tasks, or Notes. Link types SHOULD be explicit (`supports`, `references`, `derived_from`, `evidence_for`, `related_to`, etc.).
 
 ---
 
