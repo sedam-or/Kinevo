@@ -30,7 +30,7 @@ class BreakEndNotificationCommandTest extends TestCase
         $this->assertDatabaseHas('notifications', [
             'user_id' => $user->id,
             'type' => NotificationType::BREAK_END,
-            'scheduled_for' => '2026-08-18',
+            'scheduled_for' => '2026-08-18 00:00:00',
         ]);
     }
 

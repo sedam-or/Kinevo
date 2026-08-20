@@ -239,7 +239,7 @@ final class EmergencyPauseUseCaseTest extends TestCase
 
         // Task still exists with its owner; the assignment moved.
         $this->assertDatabaseHas('tasks', ['id' => $task->id, 'user_id' => $user->id]);
-        $this->assertDatabaseMissing('task_assignments', ['task_id' => $task->id, 'date' => '2026-08-19']);
-        $this->assertDatabaseHas('task_assignments', ['task_id' => $task->id, 'date' => '2026-08-26']);
+        $this->assertDatabaseMissing('task_assignments', ['task_id' => $task->id, 'date' => '2026-08-19 00:00:00']);
+        $this->assertDatabaseHas('task_assignments', ['task_id' => $task->id, 'date' => '2026-08-26 00:00:00']);
     }
 }

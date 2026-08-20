@@ -71,6 +71,9 @@ jobs:
         run: npm run typecheck
 
       - name: Run Vitest suite
+        env:
+          LARAVEL_BYPASS_ENV_CHECK: '1'
+          APP_ENV: testing
         run: npm run test
 
       - name: Build
