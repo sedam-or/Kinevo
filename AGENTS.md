@@ -192,6 +192,26 @@ not runtime product dependencies.
 Use adapters. Do not make Excalidraw, Tiptap, or any third-party editor the owner
 of Kinevo business semantics.
 
+### UI/UX implementation guidance (agent skills, not design authority)
+Two third-party skill packs are installed locally (via `npx skills add
+Leonxlnx/taste-skill` and the `ui-ux-pro-max-skill/` toolkit) as CONSIDERED
+WORKFLOWS for front-end craft and micro-interactions:
+- **taste-skill** (`design-taste-frontend` + companions in `.agents/skills/`)
+  — anti-slop front-end taste, brief-inference, pre-flight checks.
+- **ui-ux-pro-max** (`ui-ux-pro-max-skill/.claude/skills/*` + `search.py`) —
+  searchable UI styles, product palettes, font pairings, chart types, and UX
+  guidelines.
+Rule for every front-end execution: the agent MUST consult the relevant skill
+content before writing or reviewing user-facing UI (unless the change is a
+pure refactor with no visible behavior change). These skills are GUIDANCE ONLY
+and never override the normative hierarchy in the corresponding
+“Normative source hierarchy” section above: `docs/design.md`,
+`docs/design-tokens.md`, `docs/ui-audit.md`, and `docs/browser-e2e.md` remain
+the UI/UX authorities. If a skill suggestion conflicts with a design document,
+the design document wins and the conflict is recorded, not silently resolved.
+Installed dirs are git-ignored (third-party, not vendored); reinstall with the
+commands in the “Local developer tooling” note.
+
 ### UI/UX stabilization freeze (rescue R0–R7)
 During the rescue phase (TASK-R0…R7, see `TASK.md` Phase 16), the agent MUST NOT
 introduce new AI features, new scheduling algorithms, new major domain concepts,

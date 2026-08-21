@@ -34,3 +34,7 @@ server/.phpunit.cache/
 # Node
 server/node_modules/
 server/public/build/
+
+# Third-party agent skills (installed locally, not vendored in git)
+.agents/skills/
+ui-ux-pro-max-skill/
