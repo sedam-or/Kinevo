@@ -14,6 +14,15 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the UI/UX design-system stabilization baseline (rescue Phase R0–R7):
+  `docs/design.md` rewritten as the refined Neo-Brutalism product-experience
+  specification (Today-first execution surface, explainable automation,
+  persistence-state UX, canvas browser-integration canon, golden journeys, and
+  the R0–R7 rescue plan), plus `docs/design-tokens.md` (centralized token
+  system), `docs/ui-audit.md` (P0–P3 bug-taxonomy audit matrix), and
+  `docs/browser-e2e.md` (browser QA matrix + golden-journey records). The
+  rescue task board (TASK-R0…R7) is registered in `TASK.md` as Phase 16.
+  Documentation/governance only — no product behavior change, SRS not modified.
 - Added the golden one-week E2E journey (TASK-150): a single end-to-end test
   walks the full user journey — register/login, goal, milestone, program, task,
   auto-schedule draft + apply over a week, Today view, execution session,

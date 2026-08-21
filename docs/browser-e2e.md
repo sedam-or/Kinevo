@@ -1,0 +1,222 @@
+# Kinevo — Browser E2E Verification
+
+> **Document role:** Browser QA matrix + golden-journey records for the UI/UX
+> stabilization effort.
+>
+> **Status:** Baseline declared (lifecycle: ACTIVE). Live results entered after
+> rescue Phase R1 (real browser smoke test) and maintained through R6 (visual
+> regression) and R7 (release readiness).
+>
+> **Contract:** `docs/design.md` §35, §71, §72, §73, §86, §87, §99; SRS §17.4,
+> docs/test-strategy.md.
+
+---
+
+## 1. Purpose
+
+Record what must be proven in a real browser and whether it passes. The Canvas
+and offline surfaces are deliberately covered here because unit/adapter tests
+mock the Excalidraw island and the network edges.
+
+## 2. Principle
+
+`DONE` at contract level ≠ production-ready UX. Per `docs/design.md` §74, real
+browser verification is a separate gate. Automated unit counts do not close the
+rescue phase (design.md §103).
+
+## 3. Tooling (declared for R1)
+
+`tests/e2e/` is created in R1 with a real browser runner. Target matrix:
+
+```text
+Chromium
+Firefox
+WebKit/Safari-equivalent
+```
+
+Bare `docker run`-style headless runs for CI; wider matrix documented here.
+
+## 4. Global browser QA matrix (design.md §71)
+
+Focus surfaces: Today, Quick Capture, Task, Schedule, Notes, Canvas, Offline.
+
+| Browser | Today | Quick Capture | Task | Schedule | Notes | Canvas | Offline |
+| ------- | ----- | ------------- | ---- | -------- | ----- | ------ | ------- |
+| Chromium | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| Firefox | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| WebKit/Safari | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+
+Legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run.
+
+## 5. Canvas browser matrix (design.md §35, §72)
+
+| Scenario | Result |
+| -------- | ------ |
+| Open new canvas | ⚪ |
+| Open existing canvas | ⚪ |
+| Draw | ⚪ |
+| Text | ⚪ |
+| Move | ⚪ |
+| Delete | ⚪ |
+| Undo / Redo | ⚪ |
+| Save | ⚪ |
+| Reload (persistence) | ⚪ |
+| Offline | ⚪ |
+| Reconnect | ⚪ |
+| Version conflict (409) | ⚪ |
+| Archive | ⚪ |
+| Rename | ⚪ |
+| Context links | ⚪ |
+| Light mode / Dark mode | ⚪ |
+| Window resize | ⚪ |
+| Mobile-compatible fallback where supported | ⚪ |
+| Fresh session vs authenticated session | ⚪ |
+| Empty canvas / large canvas / image or file | ⚪ |
+| Route navigation, back/forward, refresh | ⚪ |
+
+Canvas entry state must never leave the page blank (design.md §34.2) and the
+save state must always be visible (design.md §34.4). The dev-only diagnostic
+route `/dev/canvas-diagnostics` (§36) is exercised in dev and verified disabled
+in production.
+
+## 6. Canvas boundary sequence (design.md §82)
+
+Measured per boundary:
+
+```text
+Canvas route
+ ↓ React island mount
+ ↓ Excalidraw render
+ ↓ load scene
+ ↓ change event
+ ↓ autosave
+ ↓ server persistence
+ ↓ offline
+ ↓ reconnect
+```
+
+Each boundary has a row in the R4 canvas-hardening record, not just one overall
+pass/fail.
+
+## 7. Golden user journeys (design.md §73, §99)
+
+### Journey A — Plan
+
+```text
+Create Goal
+Create Milestone
+Create Program
+Create Task
+```
+
+Result: ⚪
+
+### Journey B — Execute
+
+```text
+Open Today
+Start task
+Pause
+Resume
+Complete
+```
+
+Result: ⚪
+
+### Journey C — Recover
+
+```text
+Miss task
+EOD
+Morning Recovery
+Reschedule
+```
+
+Result: ⚪
+
+### Journey D — Knowledge
+
+```text
+Create Note
+Edit
+Link Goal
+Create Canvas
+Link Canvas
+```
+
+Result: ⚪
+
+### Journey E — Offline
+
+```text
+Go offline
+Quick Capture
+Edit
+Reconnect
+Sync
+```
+
+Result: ⚪
+
+### Journey F — AI
+
+```text
+Goal
+AI proposal
+Review
+Accept
+Milestones
+```
+
+Result: ⚪
+
+### Core loop (design.md §99 — highest priority)
+
+```text
+LOGIN → TODAY → NOW TASK → START → COMPLETE → PROGRESS → NEXT TASK
+```
+
+First browser journey that must be beautiful and reliable. Result: ⚪
+
+## 8. Journey execution record
+
+For each journey run, record:
+
+```text
+Journey id
+Date
+Runner (Playwright/CI job id)
+Browser(s)
+Seed data used
+Steps executed
+Assertions/user-visible checks
+Failures (finding id + repro)
+Result
+```
+
+## 9. Visual regression (design.md §87)
+
+Screens with baseline snapshots:
+
+```text
+Today
+Task detail
+Goals
+Notes
+Canvas shell
+Analytics
+```
+
+Snapshots are reviewed intentionally — never accepted automatically.
+
+## 10. Readiness gate
+
+R1 produces an empty-to-full matrix; R7 closes rescue only when all ⚪ rows are
+resolved and §102 design.md acceptance gate holds.
+
+---
+
+## Maintenance
+
+- Updated per browser run; each golden journey has an evidence trail.
+- The matrix reflects the live state of the repo, not intent.

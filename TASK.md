@@ -2954,3 +2954,336 @@ change, no user-facing behavior change).
 
 ---
 
+# Phase 16 — UI/UX STABILIZATION (RESCUE R0–R7)
+
+Requirement authority for this phase: `docs/design.md` (product-experience spec,
+incl. §74–§103 rescue plan), `docs/design-tokens.md`, `docs/ui-audit.md`,
+`docs/browser-e2e.md`. This phase does not redefine SRS requirements; it changes
+how requirements are experienced.
+
+The central insight (design.md §74): many frontend features are DONE at the
+contract level (unit/feature tests, typecheck, build, adapter mocks) but real
+browser UX is not yet proven. `DONE` means "implementation contract verified",
+not necessarily "production-ready UX". The rescue gates close only on real
+browser evidence and on design.md §102, never on unit-test counts alone.
+
+Phase mapping (design.md §98 R0–R14 → this board §103 R0–R7):
+
+```text
+R0 Freeze / R1 Browser smoke / R2 Bug taxonomy / R3 Diagnostics
+  → Phase R0 Stabilization · Phase R1 Browser Verification
+R4 Design tokens / R5 Shell / R6 Today / R7 Task·Goal / R8 Knowledge
+  → Phase R2 Design System · Phase R3 UI Refinement
+R9 Canvas stabilization → Phase R4 Canvas Hardening
+R11 Accessibility → Phase R5 Accessibility
+R12 Visual regression → Phase R6 Visual Regression
+R13 Full E2E / R14 Release candidate → Phase R7 Release Readiness
+```
+
+---
+
+# TASK-R0 — Freeze Feature Development (Stabilization Gate)
+
+## Status
+
+TODO
+
+## Requirements
+
+design.md §75, §99. No new AI features, scheduling algorithms, major domain
+concepts, or dependencies enter the codebase while R0 is in effect. Focus is
+limited to stability, usability, integration, browser correctness, and visual
+consistency.
+
+## Scope
+
+- [ ] Publish the freeze to contributors (AGENTS.md / CONTRIBUTING.md note) with
+      explicit exemption path (P0 fixes only, group approval).
+- [ ] Suspend acceptance of new non-trivial feature work; log any proposals to a
+      hold list with proposed priority.
+- [ ] Establish the first-love target: LOGIN → TODAY → NOW TASK → START →
+      COMPLETE → PROGRESS → NEXT TASK (design.md §99) as the team's prime
+      objective.
+
+## Acceptance
+
+- [ ] `docs/ui-audit.md` and `docs/browser-e2e.md` baselines exist and are wired
+      into the rescue phase.
+- [ ] No feature code merged during R0; P0 fixes only, each with a bug-taxonomy
+      record (design.md §77).
+
+## Verification
+
+- [ ] Git history confirms no new feature commits during R0.
+
+## Evidence
+
+Pending. Release Impact: NONE (governance process).
+
+---
+
+# TASK-R1 — Real Browser Smoke Test (Browser Verification)
+
+## Status
+
+TODO
+
+## Requirements
+
+design.md §76, §71, §99. Create `tests/e2e/` and prove the core loop in a real
+browser across Chromium, Firefox, and WebKit/Safari-equivalent.
+
+## Scope
+
+- [ ] Choose runner and wire into CI (documented in `docs/browser-e2e.md` §3).
+- [ ] First-verify journeys: login, app shell, Today, task, goal, note, canvas.
+- [ ] Record results in `docs/browser-e2e.md` global matrix (§4) and core loop
+      (§7).
+
+## Acceptance
+
+- [ ] `tests/e2e/` exists with a reproducible runnable target (Makefile/CI).
+- [ ] Core loop journey passes in at least Chromium + Firefox.
+- [ ] Every failure is classified P0–P3 (`docs/ui-audit.md §3`).
+
+## Verification
+
+- [ ] `docs/browser-e2e.md` §4 rows for the core surfaces are ✅/🔴 (no ⚪
+      claim of proof).
+
+## Evidence
+
+Pending. Release Impact: NONE (tooling/verification).
+
+---
+
+# TASK-R2 — Bug Taxonomy + Design System (Diagnostics → Tokens → Components)
+
+## Status
+
+TODO
+
+## Requirements
+
+design.md §77, §78, §65–§66, §50–§51, §95–§96; `docs/design-tokens.md`.
+
+## Scope
+
+- [ ] Classify every R1 finding by the P0–P3 taxonomy; P0 blocks all feature
+      work (design.md §77) and gets a record in `docs/ui-audit.md` §6.
+- [ ] Add development-only runtime diagnostics: API, Auth, Offline, Canvas,
+      Tiptap, Scheduler (design.md §78). `/dev/canvas-diagnostics` disabled or
+      protected in production (§36).
+- [ ] Implement the centralized token modules per `docs/design-tokens.md`
+      (colors/spacing/radius/shadows/typography/motion/zindex), hydrated into
+      the existing Tailwind v4 + `shell/theme.ts` baseline.
+- [ ] Introduce the shared component library (design.md §50) and retire
+      duplicates (design.md §80). Three button variants only (§51).
+- [ ] Component acceptance per §95–§96 (behavior + accessibility + visual
+      regression).
+
+## Acceptance
+
+- [ ] No hard-coded spacing/radius/shadow/color/z-index values in new code.
+- [ ] `VisualStateBadge` and persistence states use the token system.
+- [ ] P0/P1 findings from R1 are fixed or explicitly scheduled.
+
+## Verification
+
+- [ ] `docs/ui-audit.md` inventory (§5) rows flipped from ⚪ to a state.
+- [ ] Frontend tests + typecheck + build green (AGENTS.md pre-commit protocol).
+
+## Evidence
+
+Pending. Release Impact: PATCH (design-system refactor; no behavior/API change).
+
+---
+
+# TASK-R3 — UI Refinement (Shell → Today → Task/Goal → Knowledge)
+
+## Status
+
+TODO
+
+## Requirements
+
+design.md §2, §8–§19, §29–§33, §79, §84, §85, §57–§58.
+
+## Scope
+
+- [ ] Reorganize navigation into EXECUTE / PLAN / KNOWLEDGE / REVIEW / SYSTEM
+      groups (design.md §9); Topbar §10; bottom nav + floating capture on mobile
+      §8.3.
+- [ ] Today redesign: NOW card visual hierarchy §12, timeline geometry §13,
+      drag & drop with valid/invalid feedback §14, states §11.
+- [ ] Task / Goal redesign: task execution workspace §19, subtasks §20,
+      goal progress §17–§18, milestone roadmap §39.
+- [ ] Knowledge redesign: unified desk layout §30, minimal Tiptap toolbar §31,
+      autosave indicator top-right §32, linked-knowledge sidebar §33.
+- [ ] State-machine UI matrix per entity (Task/Goal/Milestone/Program/Canvas/
+      Note/Schedule/AI Proposal) §84.
+- [ ] Capacity feedback §22, adaptive context §23, notifications §28–§29,
+      empty/error language §11.2–§11.3, §56, §64.
+
+## Acceptance
+
+- [ ] Each redesigned surface passes design.md §70 QA dimensions and is recorded
+      in `docs/ui-audit.md` §4.
+- [ ] Primary action is obvious; one primary + one secondary + optional details
+      (design.md §2.3).
+
+## Verification
+
+- [ ] `docs/browser-e2e.md` golden journeys A/B/C/D updated (not just unit
+      tests).
+
+## Evidence
+
+Pending. Release Impact: PATCH (visual refactor; no API/schema/business change).
+
+---
+
+# TASK-R4 — Canvas Hardening (Browser-Integration Canon)
+
+## Status
+
+TODO
+
+## Requirements
+
+design.md §34–§36, §72, §82, §89. Canvas is a browser-integration feature, not
+merely an adapter.
+
+## Scope
+
+- [ ] Vue Workspace → CanvasHost → CanvasAdapter → React Island → Excalidraw
+      pipeline (design.md §34.1) with visible loading/ready/failure entry states
+      §34.2; never a blank page.
+- [ ] Kinevo product shell toolbar §34.3; always-visible save state §34.4;
+      conflict resolution §34.5; offline banner §34.6.
+- [ ] Walk and measure each boundary (design.md §82): route → mount → render →
+      load scene → change event → autosave → server persistence → offline →
+      reconnect.
+- [ ] `/dev/canvas-diagnostics` route §36 (dev-only, disabled in production).
+- [ ] Lazy-load Excalidraw by route (design.md §89).
+
+## Acceptance
+
+- [ ] design.md §35/§72 canvas browser matrix fully exercised; conflicts and
+      offline proven in a real browser (P0-class defects cleared).
+- [ ] No silent overwrite; conflict never auto-resolves without choice.
+
+## Verification
+
+- [ ] `docs/browser-e2e.md` §5 canvas matrix has no remaining ⚪ rows that claim
+      proof.
+
+## Evidence
+
+Pending. Release Impact: PATCH (canvas UX/persistence surfaces; no API change).
+
+---
+
+# TASK-R5 — Accessibility Pass
+
+## Status
+
+TODO
+
+## Requirements
+
+design.md §45, §46, §47; WCAG 2.2 AA target.
+
+## Scope
+
+- [ ] Keyboard system (global shortcuts §46, G-T/W/C/G/K), visible focus,
+      semantic landmarks, accessible dialogs with focus trapping, screen-reader
+      status, logical heading hierarchy.
+- [ ] No color-only meaning anywhere (§5.2); touch targets ~44px where
+      practical.
+- [ ] `prefers-reduced-motion` honored (§47); motion tokens §48.
+- [ ] Accessibility coverage for every critical shared component (§96).
+
+## Acceptance
+
+- [ ] WCAG 2.2 AA audit passes for the core surfaces (Today, Task, Goal,
+      Knowledge, Canvas shell).
+- [ ] Reduced-motion and keyboard-only flows verified in real browsers.
+
+## Verification
+
+- [ ] `docs/ui-audit.md` §4 keyboard/reduced-motion rows ✅.
+
+## Evidence
+
+Pending. Release Impact: PATCH (accessible behavior; no API change).
+
+---
+
+# TASK-R6 — Visual Regression + Full E2E
+
+## Status
+
+TODO
+
+## Requirements
+
+design.md §87, §88, §96, §71–§73, §100–§102.
+
+## Scope
+
+- [ ] Visual regression baseline for Today, Task detail, Goals, Notes, Canvas
+      shell, Analytics; snapshots reviewed intentionally (never auto-accepted).
+- [ ] Performance targets §88: fast initial shell, no layout shift, lazy-loaded
+      Canvas/Analytics/editor bundles §89.
+- [ ] Run golden journeys A–F + core loop across the §71 browser matrix and
+      record in `docs/browser-e2e.md`.
+
+## Acceptance
+
+- [ ] `docs/browser-e2e.md` full matrix ✅/🔴 with evidence; no ⚪.
+- [ ] Every UX anti-pattern in design.md §93 scanned for on all surfaces.
+
+## Verification
+
+- [ ] CI runs browser E2E + visual regression for critical screens.
+
+## Evidence
+
+Pending. Release Impact: PATCH (verification/performance; no behavior change).
+
+---
+
+# TASK-R7 — Release Readiness
+
+## Status
+
+TODO
+
+## Requirements
+
+design.md §102, §103; docs/release-management.md eligibility gates.
+
+## Scope
+
+- [ ] Resolve all P0/P1 findings; design.md §102 acceptance gate completed.
+- [ ] Privacy §91, data-safety UX §90, defensive patterns verified.
+- [ ] Release candidate build passes full gate suite (AGENTS.md pre-commit
+      protocol + make ci + browser E2E).
+
+## Acceptance
+
+- [ ] Every design.md §102 checkbox ticked with evidence.
+- [ ] docs/ui-audit.md + docs/browser-e2e.md closed without silent gaps.
+
+## Verification
+
+- [ ] `make ci`, release dry-run, and browser E2E all green on the RC.
+
+## Evidence
+
+Pending. Release Impact: RELEASE (user-visible visual overhaul; PATCH per
+release-management, requires changelog + version gates).
+
+---
+
