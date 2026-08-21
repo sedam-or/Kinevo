@@ -46,11 +46,31 @@ TASK-R1 Docker Playwright run (commit evidence below).
 
 | Browser | Today | Quick Capture | Task | Schedule | Notes | Canvas | Offline |
 | ------- | ----- | ------------- | ---- | -------- | ----- | ------ | ------- |
-| Chromium | ✅ rendered | ⚪ | ✅ rendered | ✅ rendered | ✅ rendered | ✅ shell rendered | ⚪ |
-| Firefox | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| WebKit/Safari | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| Chromium | ✅ rendered | ✅ create flow | ✅ create flow | ✅ rendered | ✅ edit + autosave | ✅ shell + create | ⚪ |
+| Firefox | ✅ rendered | ✅ create flow | ✅ create flow | ✅ rendered | ✅ edit + autosave | ✅ shell + create | ⚪ |
+| WebKit/Safari | ✅ rendered | ✅ create flow | ✅ create flow | ✅ rendered | ✅ edit + autosave | ✅ shell + create | ⚪ |
 
 Legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run.
+
+### R6 browser E2E evidence (TASK-R6)
+
+- Runner: `tests/e2e/` Docker Playwright (`mcr.microsoft.com/playwright:v1.62.1-jammy`),
+  projects **chromium**, **firefox**, **webkit**, host-network attach to the dev
+  SPA on `127.0.0.1:8000` (`make e2e` / `docker build -t kinevo-e2e tests/e2e`).
+- Result: **54/54 passed** across the three-browser matrix (1 worker, 1.3 min).
+  Specs: `login.spec.ts`, `journeys.spec.ts` (R1), `golden-journeys.spec.ts`
+  (R6 journeys A/B/D + surface create flows), `surface-qa.spec.ts`
+  (R6 §88/§93 — page errors, horizontal overflow, spinner), `visual-baseline.spec.ts`
+  (R6 §87 — screenshot artifacts).
+- Canonical evidence: `docs/browser-e2e.md` + Playwright list report / PNG
+  artifacts under `tests/e2e/test-results/screenshots/<browser>/`.
+- Per-browser surface QA: no uncaught page errors, no horizontal overflow on
+  Today/Week/Schedule/Goals/Tasks/Knowledge in Chromium, Firefox, WebKit.
+- Git commits: R1 `5f32f1d` (smoke harness); R6 spec + matrix commits listed in
+  the journal section below.
+- Known gaps (not yet browser-proven): Offline (Journey E), AI (Journey F),
+  Recover (Journey C), and full NOW executor transitions (start/pause/resume/
+  complete) — these require seeded scheduler state and land before R7 gate.
 
 ### R1 browser smoke evidence (TASK-R1)
 
@@ -64,8 +84,9 @@ Legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run.
   shell mount proven in a real browser. Deeper surface behavior (task/goal/note
   create-edit, canvas draw/persist, offline) is tracked as P2 gaps in
   `docs/ui-audit.md` (see §4 matrix rows still ⚪) and scheduled for R3/R4.
-- Known limit: `make e2e` currently covers Chromium only; Firefox + WebKit rows
-  are pending the same runner added to the matrix.
+- Known limit: the R1 harness covered Chromium only; the R6 matrix run
+  (`832c1ec..`) added Firefox + WebKit projects, so the ? rows are now updated
+  with real results (Offline still pending, see §4/§7).
 
 ## 5. Canvas browser matrix (design.md §35, §72)
 
@@ -137,8 +158,8 @@ Create Program
 PLAN group → Tasks
 Create Task
 ```
-
-Result: ⚪ (browser run pending)
+Result: ✅ R6 pass — goal create (Quarterly horizon to respect FR-19 yearly caps)
+and task create both surface in their lists on Chromium/Firefox/WebKit.
 
 ### Journey B — Execute
 
@@ -151,8 +172,9 @@ Resume
 Complete
 NEXT task advances
 ```
-
-Result: ⚪ (browser run pending)
+Result: ⚠ R6 partial — Today mounts and Quick Capture round-trips on all 3
+browsers; the NOW executor transitions need seeded schedule state (pending
+before R7).
 
 ### Journey C — Recover
 
@@ -163,8 +185,7 @@ EOD
 Morning Recovery
 Reschedule
 ```
-
-Result: ⚪ (browser run pending)
+Result: ⚪ (browser run pending — needs seeded missed-task state)
 
 ### Journey D — Knowledge
 
@@ -177,8 +198,9 @@ KNOWLEDGE group → Canvas
 Create Canvas
 Link Canvas
 ```
-
-Result: ⚪ (browser run pending)
+Result: ✅ R6 pass (partial) — Note create + edit surfaces autosave state, Canvas
+create mounts the lazy-loaded workspace on all 3 browsers. Goal-linking not
+re-verified in browser.
 
 ### Journey E — Offline
 
@@ -210,7 +232,9 @@ Result: ⚪
 LOGIN → TODAY → NOW TASK → START → COMPLETE → PROGRESS → NEXT TASK
 ```
 
-First browser journey that must be beautiful and reliable. Result: ⚪
+First browser journey that must be beautiful and reliable. Result: ⚠ R6 — the
+LOGIN → TODAY leg is proven in all 3 browsers; NOW/START/COMPLETE/NEXT legs
+need seeded executor state and are pending before the R7 gate.
 
 ## 8. Journey execution record
 
@@ -228,6 +252,27 @@ Failures (finding id + repro)
 Result
 ```
 
+### R6 journey runs
+
+```text
+Journey A (Plan)       2026-08-21  Playwright chromium/firefox/webkit  dev DB (fresh owners)
+                         steps: login → Goals → create goal (Quarterly) → Tasks → create task
+                         checks: goal + task visible in lists          Result: ✅
+Journey B (Execute)    2026-08-21  Playwright chromium/firefox/webkit  dev DB
+                         steps: login → Today → Quick Capture title → submit
+                         checks: capture accepted, surface reloads, qc field clears
+                         Result: ⚠ (NOW transitions pending)
+Journey D (Knowledge)  2026-08-21  Playwright chromium/firefox/webkit  dev DB
+                         steps: login → Knowledge → create note → edit title →
+                                Canvas → create canvas
+                         checks: autosave state visible, workspace mounts (lazy chunk)
+                         Result: ✅ (goal-link not re-verified in browser)
+Core loop              2026-08-21  Playwright chromium/firefox/webkit  dev DB
+                         steps: LOGIN → TODAY
+                         checks: today-view + sync-state visible
+Result: ⚠ (NOW/START/COMPLETE/NEXT pending seeded state)
+```
+
 ## 9. Visual regression (design.md §87)
 
 Screens with baseline snapshots:
@@ -241,7 +286,18 @@ Canvas shell
 Analytics
 ```
 
-Snapshots are reviewed intentionally — never accepted automatically.
+R6 baseline artifacts: `tests/e2e/test-results/screenshots/<browser>/`
+(e.g. `chromium/today.png`, `chromium/task.png`, `chromium/goals.png`,
+`chromium/notes.png`, `chromium/canvas.png`, `chromium/analytics.png`).
+Captured by `tests/e2e/tests/visual-baseline.spec.ts` per matrix browser on
+2026-08-21 (commit evidence in §4).
+
+Snapshots are reviewed intentionally — never accepted automatically. R6
+reviewer note: the artifact PNGs are stored for human review; the agent-level
+model cannot inspect pixels, so this run records the machine-checkable
+invariants instead (no uncaught page errors, no horizontal overflow, no
+persistent spinner — see `surface-qa.spec.ts`) plus the raw snapshots for a
+human pair-of-eyes before R7. No snapshot was auto-accepted.
 
 ## 10. Readiness gate
 

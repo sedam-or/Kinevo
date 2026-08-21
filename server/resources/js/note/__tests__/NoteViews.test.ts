@@ -132,7 +132,11 @@ describe('NoteEditView', () => {
         await flushPromises();
 
         expect(wrapper.find('[data-testid="note-editor"]').exists()).toBe(true);
-        expect(wrapper.find('[data-testid="editor-host"]').exists()).toBe(true);
+        // EditorHost is lazy (defineAsyncComponent, §89), so await its chunk.
+        await vi.waitFor(() => {
+            expect(wrapper.find('[data-testid="editor-host"]').exists()).toBe(true);
+        });
+        await wrapper.vm.$nextTick();
         expect(wrapper.find('[data-testid="note-save-state"]').exists()).toBe(true);
     });
 

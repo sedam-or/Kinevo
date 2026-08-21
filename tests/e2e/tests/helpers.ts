@@ -3,6 +3,13 @@ import { test as base, type Page } from '@playwright/test';
 export const OWNER_EMAIL = 'sampalan@gmail.com';
 export const OWNER_PASSWORD = process.env.E2E_OWNER_PASSWORD || 'KinevoE2E123!';
 
+/** Stable unique suffix so repeated journey runs create distinct fixtures. */
+export function unique(prefix: string): string {
+    const ts = Date.now().toString(36);
+    const rand = Math.random().toString(36).slice(2, 6);
+    return `${prefix}-${ts}-${rand}`;
+}
+
 /**
  * Log into the SPA through the real login form and wait for the Today
  * surface to render (the primary authenticated landing view).

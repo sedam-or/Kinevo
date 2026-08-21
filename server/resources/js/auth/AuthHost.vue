@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useAuthStore } from './store';
 import { useShellStore } from '../shell/store';
 import { useApiStore } from '../api/store';
@@ -20,7 +20,9 @@ import GoalView from '../goal/GoalView.vue';
 import ScheduleView from '../schedulerdraft/ScheduleView.vue';
 import NoteView from '../note/NoteView.vue';
 import CanvasView from '../canvas/CanvasView.vue';
-import AnalyticsView from '../analytics/AnalyticsView.vue';
+// Lazy: Analytics is a secondary route; keeping it out of the initial shell
+// trims the first-paint payload (§89).
+const AnalyticsView = defineAsyncComponent(() => import('../analytics/AnalyticsView.vue'));
 import QuickCapture from '../quickcapture/QuickCapture.vue';
 import { useQuickCaptureStore } from '../quickcapture/store';
 import { useKeyboardShortcuts } from '../shell/keyboard';

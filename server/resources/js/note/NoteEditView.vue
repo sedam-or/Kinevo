@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useNoteStore } from './store';
-import EditorHost from '../editor/EditorHost.vue';
+// Lazy: Tiptap + its deps are the heaviest bundle in the app. Splitting the
+// host splits the editor chunk out of the initial shell (§89).
+const EditorHost = defineAsyncComponent(() => import('../editor/EditorHost.vue'));
 import type { EditorAdapter, EditorChange, EditorDocument } from '../editor/types';
 import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
 import type { VisualStateValue } from '../visualstate/types';
