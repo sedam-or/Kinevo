@@ -3030,7 +3030,7 @@ Release Impact: NONE (governance process).
 
 ## Status
 
-IN PROGRESS (Chromium done; Firefox/WebKit pending)
+DONE — core loop proven in real browser across Chromium, Firefox, WebKit.
 
 ## Requirements
 
@@ -3043,30 +3043,37 @@ browser across Chromium, Firefox, and WebKit/Safari-equivalent.
       `make e2e`; CI wiring pending). Documented in `docs/browser-e2e.md` §3.
 - [x] First-verify journeys: login, app shell, Today, task, goal, note, canvas.
 - [x] Record results in `docs/browser-e2e.md` global matrix (§4).
+- [x] Prove the full first-love loop (§99) in the real browser: LOGIN → TODAY →
+      NOW task → START → COMPLETE → PROGRESS → NEXT (`tests/e2e/tests/core-loop.spec.ts`).
 
 ## Acceptance
 
 - [x] `tests/e2e/` exists with a reproducible runnable target (Makefile).
-- [ ] Core loop journey passes in at least Chromium + Firefox (Chromium proven;
-      Firefox row ⚪ pending).
+- [x] Core loop journey passes in at least Chromium + Firefox (Chromium +
+      Firefox + WebKit all green; `core-loop.spec.ts`).
 - [x] Every failure is classified P0–P3 (`docs/ui-audit.md §3`); none found in
       the run so far (all passes), so no taxonomy records added.
 
 ## Verification
 
 - [x] `docs/browser-e2e.md` §4 Chromium rows are ✅ (no ⚪ for surfaces actually
-      exercised); Firefox/WebKit rows remain ⚪ pending runner.
+      exercised); Firefox/WebKit rows ⚪ resolved by the matrix run.
+- [x] Full E2E suite green: **57/57 passed** (Chromium + Firefox + WebKit,
+      1 worker, ~1.4 min), incl. the R1 core-loop journey.
 
 ## Evidence
 
 - `tests/e2e/` (package.json, playwright.config.ts, Dockerfile, `tests/` specs:
-  login.spec.ts, journeys.spec.ts, helpers.ts).
-- `make e2e` runner; Chromium run **3/3 passed**: login → Today, invalid-password
-  rejection, all primary nav surfaces render (Today/Week/Schedule/Goals/Tasks/
-  Knowledge/Canvas/Analytics/Settings). Canonical report captured via
-  `--reporter=json` (expected 3, unexpected 0).
-- Remaining for full completion: add Firefox + WebKit projects to the same
-  runner and re-run the matrix (commit consuming `docs/browser-e2e.md` §4 rows).
+  login.spec.ts, journeys.spec.ts, golden-journeys.spec.ts, surface-qa.spec.ts,
+  visual-baseline.spec.ts, core-loop.spec.ts, helpers.ts).
+- `make e2e` runner; full matrix **57/57 passed** (~1.4 min). Core loop
+  (`core-loop.spec.ts`): login → Today → NOW card (seeded future-day task,
+  clock synced to its slot) → START (Running) → elapsed accrues from server
+  timestamp → COMPLETE (Ready) → NEXT card shows the queued task. Found an
+  interplay with the scheduler safety reserve (30% day budget): seeding the
+  shared owner's "today" exhausts capacity across repeated runs, so the spec
+  seeds a future day whose offset varies per run (§8 record in
+  `docs/browser-e2e.md`).
 
 Release Impact: NONE (tooling/verification).
 

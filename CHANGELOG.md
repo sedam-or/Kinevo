@@ -14,6 +14,14 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Proven the first-love browser journey end-to-end (rescue R1, TASK-R1): the
+  core loop LOGIN → TODAY → NOW task → START → COMPLETE → PROGRESS → NEXT now
+  executes through the real browser (`tests/e2e/tests/core-loop.spec.ts`) and
+  passes in Chromium, Firefox, and WebKit. Tasks are quick-captured onto a
+  future, free day so the scheduler's safety reserve is never exhausted; the
+  spec synced the browser clock to the assigned slot for the NOW card, then
+  restored real time so elapsed accrues from the server-side start timestamp.
+  Full E2E matrix: 57/57 green. Recorded in `docs/browser-e2e.md` §7–§8.
 - Added the UI/UX stabilization baseline (rescue R2, TASK-R2): centralized
   design-token modules (`tokens/`: colors, spacing, radius, shadows,
   typography, motion, z-index), CSS hydration into the Tailwind v4 theme with

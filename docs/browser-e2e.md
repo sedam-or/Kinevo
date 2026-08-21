@@ -69,8 +69,8 @@ Legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run.
 - Git commits: R1 `5f32f1d` (smoke harness); R6 spec + matrix commits listed in
   the journal section below.
 - Known gaps (not yet browser-proven): Offline (Journey E), AI (Journey F),
-  Recover (Journey C), and full NOW executor transitions (start/pause/resume/
-  complete) — these require seeded scheduler state and land before R7 gate.
+  Recover (Journey C). NOW executor transitions (start/complete/progress/next)
+  are now browser-proven by the R1 core-loop run (§8).
 
 ### R1 browser smoke evidence (TASK-R1)
 
@@ -172,9 +172,9 @@ Resume
 Complete
 NEXT task advances
 ```
-Result: ⚠ R6 partial — Today mounts and Quick Capture round-trips on all 3
-browsers; the NOW executor transitions need seeded schedule state (pending
-before R7).
+Result: ✅ proven end-to-end — Today mounts, Quick Capture round-trips, NOW
+task executes START → COMPLETE, and NEXT advances on all 3 browsers via the R1
+core-loop run (§8, §7 Core loop).
 
 ### Journey C — Recover
 
@@ -232,9 +232,9 @@ Result: ⚪
 LOGIN → TODAY → NOW TASK → START → COMPLETE → PROGRESS → NEXT TASK
 ```
 
-First browser journey that must be beautiful and reliable. Result: ⚠ R6 — the
-LOGIN → TODAY leg is proven in all 3 browsers; NOW/START/COMPLETE/NEXT legs
-need seeded executor state and are pending before the R7 gate.
+First browser journey that must be beautiful and reliable. Result: ✅ R1 — the
+full loop (LOGIN → TODAY → NOW → START → COMPLETE → PROGRESS → NEXT) passes in
+Chromium + Firefox (+ WebKit) through the real browser, see §8 R1 core-loop run.
 
 ## 8. Journey execution record
 
@@ -261,18 +261,31 @@ Journey A (Plan)       2026-08-21  Playwright chromium/firefox/webkit  dev DB (f
 Journey B (Execute)    2026-08-21  Playwright chromium/firefox/webkit  dev DB
                          steps: login → Today → Quick Capture title → submit
                          checks: capture accepted, surface reloads, qc field clears
-                         Result: ⚠ (NOW transitions pending)
+                         Result: ✅ (R1 core loop proves capture + NOW executor)
 Journey D (Knowledge)  2026-08-21  Playwright chromium/firefox/webkit  dev DB
                          steps: login → Knowledge → create note → edit title →
                                 Canvas → create canvas
                          checks: autosave state visible, workspace mounts (lazy chunk)
                          Result: ✅ (goal-link not re-verified in browser)
 Core loop              2026-08-21  Playwright chromium/firefox/webkit  dev DB
-                         steps: LOGIN → TODAY
-                         checks: today-view + sync-state visible
-Result: ⚠ (NOW/START/COMPLETE/NEXT pending seeded state)
+                         steps: LOGIN → TODAY → quick-capture → next-day shift
+                        Result: superseded by R1 core-loop run below.
+### R1 core-loop runs
+```text
+Core loop (R1)          2026-08-21  Playwright chromium/firefox/webkit  dev DB
+                         seed: quick-capture 2 tasks onto future day (adds
+                               fixtures to the 70% safety reserve only on that
+                               day; offset varies per run to stay free)
+                         steps: LOGIN → TODAY → NOW card visible (clock synced
+                               to assigned slot) → START (Running) → elapsed
+                               accrues from server timestamp (clock restored) →
+                               COMPLETE (Ready) → TODAY reloads without error
+                         checks: now-title == seeded task, next-card shows the
+                               second seeded task, status Running → Ready,
+                               today-error absent
+                         full suite: 57/57 passed (includes this journey)
+                        Result: ✅ (Chromium + Firefox + WebKit)
 ```
-
 ## 9. Visual regression (design.md §87)
 
 Screens with baseline snapshots:
