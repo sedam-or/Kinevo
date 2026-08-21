@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Canvas;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -21,14 +23,15 @@ Route::get('/dev/canvas-diagnostics', function () {
     }
     $dbUp = false;
     try {
-        \Illuminate\Support\Facades\DB::select('select 1');
+        DB::select('select 1');
         $dbUp = true;
-    } catch (\Throwable) {
+    } catch (Throwable) {
         $dbUp = false;
     }
+
     return view('dev.canvas-diagnostics', [
         'env' => app()->environment(),
         'dbUp' => $dbUp,
-        'canvasCount' => $dbUp ? \App\Models\Canvas::count() : null,
+        'canvasCount' => $dbUp ? Canvas::count() : null,
     ]);
 });
