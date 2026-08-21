@@ -2690,36 +2690,24 @@ Committed: see git log (TASK-150 golden one-week E2E journey).
 
 # TASK-151 — Offline UAT
 
-Test:
-
-```text
-load Today online
- ↓
-disconnect
- ↓
-open Today
- ↓
-Quick Capture
- ↓
-edit task
- ↓
-queue mutation
- ↓
-reconnect
- ↓
-sync
- ↓
-verify server state
-```
-
-Also test:
-
-```text
-offline conflict
-version conflict
-retry
-permanent failure
-```
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-051 (Today cache), TASK-052 (mutation queue), TASK-115 (offline sync UX)
+- SRS: FR-44 (Quick Capture offline), FR-57 (offline mutations queueable, conflict preserved), SRS §9.1–§9.4, offline-sync.md §Sync state machine / §Failure safety.
+- Acceptance:
+  - [x] Golden offline journey verified end to end: load Today online (network + cache baseline) → disconnect → open Today from cache (offline read) → Quick Capture (queued) → edit task (queued) → reconnect → sync → server received both mutations → Today re-fetches.
+  - [x] Offline conflict surfaced with local mutation preserved (conservative rule, SRS §9.4; never silently discarded).
+  - [x] Version conflict (stale `base_version` on a versioned note) surfaced as conflict with the local note retained.
+  - [x] Retry: transient failure → `retrying`; manual retry → `saved`; local preserved until applied.
+  - [x] Permanent failure (other 4xx) → `failed`; local copy preserved for the user to fix and resync.
+  - [x] Visible sync states use the same `SyncStatusController` + `MutationQueue` wiring as `AuthHost.vue` (in-memory stores/injectable applier substitute for IndexedDB/HTTP, per the testable seam used by TASK-052/115).
+- Verification:
+  - [x] Frontend: `npm run test` → OK (348 tests; +5 new Offline UAT integration cases: golden journey, offline conflict, version conflict, retry, permanent failure)
+  - [x] `npm run typecheck` → no errors; `npm run build` → built OK (2510 modules; root-owned stale `public/build` cleanup is an unrelated environment artifact)
+  - [x] Backend regression: unchanged (frontend-only UAT)
+  - [x] Repo gates (secrets/doc-links/validate/openapi/changelog/version) — see gates run
+- Evidence: server/resources/js/offline/__tests__/offline-uat.test.ts
+- Release Impact: PATCH (frontend-only UAT; no API/schema change)
 
 ---
 
