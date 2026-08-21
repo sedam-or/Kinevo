@@ -43,12 +43,17 @@ services:
     environment: &app_env
       APP_ENV: production
       APP_DEBUG: "false"
-      # REQUIRED at deploy: APP_KEY, APP_URL, DB_PASSWORD, DB_HOST, etc.
+      # REQUIRED at deploy (injected from the deployment environment/secret store;
+      # never baked into the image). Forwarded to every app role so the entrypoint
+      # and Laravel config resolve the canonical values.
+      APP_KEY: "${APP_KEY:?APP_KEY is required}"
+      APP_URL: "${APP_URL:?APP_URL is required}"
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: "5432"
       DB_DATABASE: kinevo
       DB_USERNAME: kinevo
+      DB_PASSWORD: "${DB_PASSWORD:?DB_PASSWORD is required}"
       DB_SSLMODE: disable
       SESSION_DRIVER: database
       CACHE_STORE: database
@@ -110,7 +115,7 @@ services:
       - |
         apk add --no-cache bash >/dev/null 2>&1
         while true; do
-          /backup/backup.sh || echo "[backup] run failed; retrying next cycle"
+          bash /backup/backup.sh || echo "[backup] run failed; retrying next cycle"
           sleep 86400
         done
     environment:
@@ -127,8 +132,8 @@ services:
       AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-}"
       AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-}"
     volumes:
-      - ./scripts/backup.sh:/backup/backup.sh:ro
-      - ./scripts/restore.sh:/backup/restore.sh:ro
+      - ../scripts/backup.sh:/backup/backup.sh:ro
+      - ../scripts/restore.sh:/backup/restore.sh:ro
       - kinevo_backups:/backups
     depends_on:
       postgres:

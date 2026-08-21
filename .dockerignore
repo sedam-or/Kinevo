@@ -11,6 +11,10 @@
 **/storage/framework/cache/*
 **/storage/framework/sessions/*
 **/storage/framework/views/*
+# User uploads / runtime storage must never enter the image (and can be
+# root-owned at build time, which breaks the build-context walk).
+**/storage/app/*
+!**/storage/app/.gitignore
 **/.env
 **/.env.*
 !**/.env.production.example

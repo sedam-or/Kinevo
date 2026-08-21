@@ -255,6 +255,28 @@ Release governance: see `docs/release-management.md`.
   task, program/goal/milestone context, lock and conflict state, capacity
   indicators, and empty (fillable) slots (FR-01/FR-11/FR-15).
 - Added release-management lifecycle documentation and release validation tooling.
+- Added the production smoke test (TASK-156): `scripts/prod-smoke.sh` (and
+  `make prod-smoke`) drives the real production Docker path — build, deploy,
+  migrate, health (through the live nginx + TLS proxy), register/login, goal,
+  task, schedule draft + apply, Today, backup, and a destructive restore with
+  post-restore data verification. Secrets are generated at runtime and never
+  persisted.
+
+### Fixed
+
+- Production deployment path fixes surfaced by the TASK-156 smoke test:
+  - The production `app`/`queue-worker`/`scheduler` roles now receive
+    `APP_KEY`, `APP_URL`, and `DB_PASSWORD` from the deployment environment
+    (previously the app could not connect to the database and the entrypoint
+    failed fast).
+  - The reverse-proxy nginx now uses `$document_root` (not `$realpath_root`) for
+    `SCRIPT_FILENAME`, so API/PHP requests route to `app:9000` instead of 404ing
+    (the proxy is a pure reverse proxy with no local docroot).
+  - `make prod-backup` / `make prod-restore` now mount `../scripts/*.sh` from
+    the correct relative path, invoke the scripts via `bash` (installed in the
+    `postgres:17-alpine` image), and the scripts are executable — previously the
+    wrong relative path caused Docker to mount empty directories and the backup
+    restore flow failed.
 
 ## [0.4.0] — 2026-08-17
 

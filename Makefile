@@ -15,7 +15,7 @@ COMPOSE_PROD := docker compose -f infrastructure/docker-compose.prod.yml
 	version version-check changelog-check release-check release-dry-run release-prepare \
 	ollama-up ollama-down ai-status ai-smoke \
 	prod-build prod-up prod-down prod-migrate prod-logs prod-certbot \
-	prod-backup prod-backup-list prod-restore
+	prod-backup prod-backup-list prod-restore prod-smoke
 
 # --- Documentation bootstrap -------------------------------------------------
 setup:
@@ -139,7 +139,7 @@ prod-certbot:
 # Run an on-demand backup against the running prod postgres. Remote copy is
 # enabled with REMOTE_BUCKET=s3://bucket/prefix.
 prod-backup:
-	$(COMPOSE_PROD) run --rm backup /backup/backup.sh
+	$(COMPOSE_PROD) run --rm --entrypoint /bin/sh backup -c "apk add --no-cache bash >/dev/null 2>&1 && bash /backup/backup.sh"
 
 # List local backups in the backup volume.
 prod-backup-list:
@@ -152,7 +152,14 @@ prod-restore:
 		-e BACKUP_DIR=/backups \
 		-e "BACKUP_FILE=$(BACKUP_FILE)" \
 		--entrypoint /bin/sh backup -c \
-		"apk add --no-cache bash >/dev/null 2>&1 && /backup/restore.sh \"$$BACKUP_FILE\""
+		"apk add --no-cache bash >/dev/null 2>&1 && bash /backup/restore.sh \"$$BACKUP_FILE\""
+
+# --- Production smoke test (TASK-156) --------------------------------------
+# Brings up the REAL production Docker path (build → deploy → migrate → health
+# → login → goal → task → schedule → today → backup → restore). Secrets are
+# generated at runtime; the stack is torn down afterwards unless KEEP_UP=1.
+prod-smoke:
+	./scripts/prod-smoke.sh
 
 # --- Quality gates (run inside the app container) ---------------------------
 test:

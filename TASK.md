@@ -2844,33 +2844,80 @@ Committed: see git log (TASK-155 AI golden flows E2E).
 
 # TASK-156 — Production Smoke Test
 
-From clean environment:
+Status: DONE
+
+Requirements: TASK-156 — the smoke test MUST cover the actual production Docker
+path (build → deploy → migrate → health → login → goal → task → schedule →
+today → backup → restore), not an internal shortcut.
+
+Implementation:
 
 ```text
-build
- ↓
-deploy
- ↓
-migrate
- ↓
-health
- ↓
-login
- ↓
-create goal
- ↓
-create task
- ↓
-schedule
- ↓
-Today
- ↓
-backup
- ↓
-restore
+scripts/prod-smoke.sh  — drives the REAL production compose
+                         (infrastructure/docker-compose.prod.yml) end to end:
+  build ......... docker compose -f infrastructure/docker-compose.prod.yml build
+  deploy ....... up postgres + app roles, provision self-signed TLS into the
+                proxy (bind-mounted certbot_conf override), up reverse proxy
+  migrate ...... docker compose run --rm app migrate --force
+  health ......  GET /api/v1/health through the live nginx + TLS proxy (200)
+  login ........ POST /auth/register (first-setup owner) → bearer token
+  goal ......... POST /goals
+  task ......... POST /tasks (linked to goal)
+  schedule ..... POST /schedule/draft → POST /schedule/draft/apply (version 2)
+  today ........ GET /today?date=<scheduled day> shows the task (conflict=false)
+  backup ....... docker compose run --rm backup /backup/backup.sh
+  restore ...... docker compose run --rm backup /backup/restore.sh (CONFIRM_RESTORE=yes)
+                → re-verify GET /today still shows the task (data intact)
 ```
 
-The smoke test must cover the actual production Docker path.
+Secrets (APP_KEY / DB_PASSWORD) are generated at runtime and never written to
+disk or the repository. The stack is torn down after the run unless KEEP_UP=1.
+
+Makefile target: `make prod-smoke`.
+
+Acceptance:
+- [x] Clean-environment run exercises the full production Docker path.
+- [x] Health is checked through the actual reverse proxy (nginx + TLS).
+- [x] Journey reaches goal → task → schedule → today against the live app.
+- [x] Backup produces a gzipped dump; restore re-applies it and the scheduled
+      task remains visible in Today (recoverability proven).
+- [x] `make prod-smoke` is the single entry point.
+
+Production defects found and fixed by this task (real path was broken):
+- prod `app`/`queue-worker`/`scheduler` roles did not receive `APP_KEY`,
+  `APP_URL`, or `DB_PASSWORD` → app could not connect to the DB and the
+  entrypoint failed fast. Now forwarded via the `&app_env` anchor.
+- reverse-proxy nginx used `$realpath_root` for `SCRIPT_FILENAME`; as a pure
+  proxy (no local docroot) every PHP/API request returned 404. Changed to
+  `$document_root` so requests route to `app:9000`.
+- `backup`/`restore` scripts were not executable and the compose mounted
+  `./scripts/*.sh` from the wrong relative path (`infrastructure/scripts`, which
+  does not exist) → Docker created empty directories and `make prod-backup` /
+  `make prod-restore` failed. Fixed paths to `../scripts/*.sh`, made the scripts
+  executable, and invoke them via `bash` after installing it in the
+  `postgres:17-alpine` image.
+- `.dockerignore` excluded `**/storage/app/*` so root-owned runtime uploads do
+  not break the build-context walk or ship into the image.
+
+Verification:
+- [x] `./scripts/prod-smoke.sh` → "Production smoke test PASSED" (full
+      build → deploy → migrate → health → login → goal → task → schedule →
+      today → backup → restore, post-restore data verified).
+- [x] Repo gates: validate / secrets / check-openapi / check-doc-links /
+      check-changelog / check-version — all PASS.
+
+Evidence: scripts/prod-smoke.sh, Makefile (`prod-smoke`),
+infrastructure/docker-compose.prod.yml, infrastructure/docker/nginx/default.conf,
+.dockerignore, scripts/backup.sh, scripts/restore.sh.
+
+Known limitation (separate from this task): the reverse proxy is a pure proxy
+and does not have the built frontend assets locally, so `/build/*` and `sw.js`
+static responses 404 in this smoke configuration; the API journey is unaffected.
+Serving static assets requires sharing the built `public/build` with the proxy
+(a follow-up production hardening item).
+
+Release Impact: PATCH (production deployment config + tooling; no API/schema
+change, no user-facing behavior change).
 
 ---
 
