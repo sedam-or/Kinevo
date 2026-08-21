@@ -318,4 +318,56 @@ class ScheduleSimulationSuiteTest extends TestCase
         $this->assertCount(1, $draft->assignments);
         $this->assertCount(0, $draft->unassigned);
     }
+
+    // -----------------------------
+    // TASK-152: overload — demand beyond capped capacity leaves tasks unassigned
+    // -----------------------------
+
+    #[Test]
+    public function overload_demand_beyond_capped_capacity_leaves_tasks_unassigned(): void
+    {
+        $tasks = [];
+        for ($i = 1; $i <= 10; $i++) {
+            $tasks[] = $this->task('t'.$i, 120);
+        }
+        $input = new DraftInput(
+            $this->week,
+            tasks: $tasks,
+            dailyCapacityPercent: 10,
+        );
+
+        $first = $this->generator->generate($input);
+        $second = $this->generator->generate($input);
+
+        $this->assertCount(10, array_merge($first->assignments, $first->unassigned));
+        $this->assertLessThan(10, count($first->assignments), 'capped week cannot absorb 1200 minutes');
+        $this->assertGreaterThanOrEqual(1, count($first->unassigned));
+        foreach ($first->unassigned as $unassigned) {
+            $this->assertSame('CAPACITY_CAP', $unassigned->reason);
+        }
+        $this->assertEquals($first, $second, 'overload outcome must be deterministic');
+    }
+
+    // -----------------------------
+    // TASK-152: context fit — draft fits around existing assignments
+    // -----------------------------
+
+    #[Test]
+    public function context_fit_draft_fits_around_existing_assignments(): void
+    {
+        $existing = $this->range('2026-08-17T09:00:00', '2026-08-17T12:00:00');
+        $input = new DraftInput(
+            $this->week,
+            existingAssignments: [$existing],
+            tasks: [$this->task('t1', 60)],
+        );
+
+        $draft = $this->generator->generate($input);
+
+        $this->assertCount(1, $draft->assignments);
+        $this->assertFalse(
+            $draft->assignments[0]->slot->overlaps($existing),
+            'scheduled work must fit the free context around existing events',
+        );
+    }
 }

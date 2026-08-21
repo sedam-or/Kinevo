@@ -2713,27 +2713,29 @@ Committed: see git log (TASK-150 golden one-week E2E journey).
 
 # TASK-152 — Scheduler Simulation Suite
 
-Create the complete simulation suite.
+Status: DONE
 
-At minimum:
+Requirements: Scheduling rule (deterministic engine) / docs/scheduling-engine.md — the complete simulation suite MUST cover every listed scenario and every simulation MUST be deterministic (same inputs → same draft).
+
+Implementation:
 
 ```text
-empty day
-hard landscape
-locked task
-sacred anchor
-deadline pressure
-multiple goals
-overload
-reserve
-context fit
-capacity reduction
-capacity boost
-conflicts
-dynamic reschedule
+suite ....... tests/Unit/Scheduling/ScheduleSimulationSuiteTest.php — pure-unit suite over
+              ScheduleDraftGenerator (SlotCalculator + HardConstraintEngine + TaskRankingEngine)
+scenarios ... empty day · hard landscape · locked task · sacred anchor · deadline pressure ·
+              multiple goals · overload (capacity reduction via daily cap + demand beyond cap) ·
+              capacity boost · reserve (safety reserve vs over-booking) · conflicts (overlapping
+              hard landscape) · dynamic reschedule (deterministic re-run) · context fit ·
+              null boost percent (no cap)
+determinism . every scenario asserts equal outcomes across repeated generate() runs where
+              ordering/assignment matters; no randomness, no wall-clock dependence (fixed week)
 ```
 
-Every simulation MUST be deterministic.
+Verification evidence: `php artisan test` 848 tests / 2718 assertions — 14/14 simulation tests pass; full suite green except an unrelated untracked TASK-153 WIP file (`CanvasE2ETest.php`, not part of this task); PHPStan 0 errors; Pint clean on the changed file; local PHP without PDO drivers cannot run DB-backed suites outside the container (environment artifact).
+
+Changes: `server/tests/Unit/Scheduling/ScheduleSimulationSuiteTest.php` (14 deterministic scenarios; committed in two increments — see git log TASK-152).
+
+Committed: see git log (TASK-152 scheduler simulation suite).
 
 ---
 
