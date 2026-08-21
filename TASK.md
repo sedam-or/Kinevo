@@ -2654,41 +2654,37 @@ This phase is mandatory.
 
 # TASK-150 — Golden One-Week E2E
 
-Implement the complete user journey:
+Status: DONE
+
+Requirements: TASK-150 / SRS §17.4 — implement the complete user journey (Login → Goal → Milestone → Program → Task → Schedule → Today → Execute → Complete → Activity → Progress → Analytics → Capacity → Future Schedule). The test MUST verify user-visible behavior; database-only assertions are insufficient.
+
+Implementation:
 
 ```text
-Login
- ↓
-Goal
- ↓
-Milestone
- ↓
-Program
- ↓
-Task
- ↓
-Schedule
- ↓
-Today
- ↓
-Execute
- ↓
-Complete
- ↓
-Activity
- ↓
-Progress
- ↓
-Analytics
- ↓
-Capacity
- ↓
-Future Schedule
+test ...... tests/Feature/E2E/GoldenWeekJourneyTest.php — one sequential golden-week journey
+scope ..... every assertion targets the public API responses the UI renders (user-visible
+            payloads); no database assertions are used anywhere in the journey
+login ..... register (first setup) → login → /auth/me
+plan ...... goal (quarterly, deadline) → milestone (sequence 1) → program (structured) →
+            task linked to all three
+schedule .. POST /schedule/draft over the golden week → apply (version 2) → discover the
+            scheduled day from the user-visible /schedule range view
+today ..... GET /today on the scheduled day: event title, unlocked, no conflict, capacity ≥ task length
+execute ... execution session start (auto in_progress) → complete (auto completes the task)
+verify .... GET /tasks/{id} shows completed
+activity .. GET /logs?event_type=task_completed returns the completion log
+progress .. manual progress event recorded and listed back
+analytics . GET /analytics/overview for the week: task_completion 1/1 completed,
+            activity.by_type.task_completed = 1, goal/milestone counted, focus session counted
+capacity .. overview capacity.days covers all 7 days; scheduled day carries the 60 minutes
+future .... second task drafted + applied for the following week and visible in /schedule
 ```
 
-The test MUST verify user-visible behavior.
+Verification evidence: `php artisan test` 833 passed (2674 assertions) on PostgreSQL and SQLite; PHPStan 0 errors; Pint clean (577 files); repo gates PASS.
 
-Database-only assertions are insufficient.
+Changes: `server/tests/Feature/E2E/GoldenWeekJourneyTest.php` (new E2E suite namespace).
+
+Committed: see git log (TASK-150 golden one-week E2E journey).
 
 ---
 

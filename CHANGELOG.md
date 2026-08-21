@@ -14,6 +14,12 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the golden one-week E2E journey (TASK-150): a single end-to-end test
+  walks the full user journey — register/login, goal, milestone, program, task,
+  auto-schedule draft + apply over a week, Today view, execution session,
+  completion, activity log, progress event, analytics overview with capacity,
+  and next-week future scheduling — asserting only on the user-visible API
+  payloads the UI renders.
 - Completed the import preview/fallback contract (TASK-144): the KRS PDF import
   now reports unreadable schedule-like lines as per-line validation errors and
   flags duplicate rows as warnings in the preview — nothing is silently dropped,

@@ -113,6 +113,7 @@ KRS PDF import (FR-24)                  ✅ DONE (TASK-141)
 iCal import (FR-30)                     ✅ DONE (TASK-142)
 iCal export (FR-30)                     ✅ DONE (TASK-143)
 Import preview/fallback contract        ✅ DONE (TASK-144)
+Golden one-week E2E journey              ✅ DONE (TASK-150)
 ```
 
 ### Evidence rule
