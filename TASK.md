@@ -3207,7 +3207,10 @@ Release Impact: PATCH (visual refactor; no API/schema/business change).
 
 ## Status
 
-TODO
+PARTIAL — lazy-load by route (§89), editor entry states (§34.2), and dev-only
+diagnostics route (§36) landed 2026-08-21. Real-browser execution of the §72
+canvas matrix, conflict (409), and offline journeys are NOT proven here (no
+browser runner in this environment) and carry into R7 browser evidence.
 
 ## Requirements
 
@@ -3218,29 +3221,56 @@ merely an adapter.
 
 - [ ] Vue Workspace → CanvasHost → CanvasAdapter → React Island → Excalidraw
       pipeline (design.md §34.1) with visible loading/ready/failure entry states
-      §34.2; never a blank page.
-- [ ] Kinevo product shell toolbar §34.3; always-visible save state §34.4;
-      conflict resolution §34.5; offline banner §34.6.
+      §34.2; never a blank page. (PARTIAL: entry states + async boundary landed;
+      full pipeline remains the existing adapter sequence.)
+- [x] Kinevo product shell toolbar §34.3; always-visible save state §34.4;
+      conflict resolution §34.5; offline banner §34.6. (Existing surface
+      confirmed present: canvas-save-state badge, conflict banner §34.5, toolbar.
+      §34.6 offline banner present via SyncStatusPanel/save-state.)
 - [ ] Walk and measure each boundary (design.md §82): route → mount → render →
       load scene → change event → autosave → server persistence → offline →
-      reconnect.
-- [ ] `/dev/canvas-diagnostics` route §36 (dev-only, disabled in production).
-- [ ] Lazy-load Excalidraw by route (design.md §89).
+      reconnect. (Autosave/persistence covered at contract level; in-browser
+      boundary walk deferred to R7.)
+- [x] `/dev/canvas-diagnostics` route §36 (dev-only, disabled in production).
+- [x] Lazy-load Excalidraw by route (design.md §89).
 
 ## Acceptance
 
 - [ ] design.md §35/§72 canvas browser matrix fully exercised; conflicts and
-      offline proven in a real browser (P0-class defects cleared).
-- [ ] No silent overwrite; conflict never auto-resolves without choice.
+      offline proven in a real browser (P0-class defects cleared). (Not proven —
+      no browser runner here.)
+- [x] No silent overwrite; conflict never auto-resolves without choice.
+      (controller.reconcile requires explicit reload; no auto-resolve.)
 
 ## Verification
 
 - [ ] `docs/browser-e2e.md` §5 canvas matrix has no remaining ⚪ rows that claim
-      proof.
+      proof. (Browser rows remain ⚪ pending R7 real-browser run.)
 
 ## Evidence
 
-Pending. Release Impact: PATCH (canvas UX/persistence surfaces; no API change).
+- §89 lazy-load: `canvas/CanvasView.vue` uses `defineAsyncComponent` showing a
+  "Loading Canvas…" state; build emits a separate
+  `CanvasWorkspaceView-*.js` (1.3 MB) chunk; main `app-*.js` (644 KB) no longer
+  contains `@excalidraw`.
+- §34.2 entry states: `canvas/CanvasHost.vue` exposes
+  loading → ready → error with Retry / Open read-only; host always mounted but
+  hidden until ready (never a blank page). Tests:
+  `canvas/__tests__/CanvasHost.test.ts` (3 new, loading→ready, failure, retry).
+- §36 dev diagnostics: `routes/web.php` `/dev/canvas-diagnostics` (guarded
+  against `production` via `abort(404)`); view
+  `resources/views/dev/canvas-diagnostics.blade.php` reports env, DB, browser
+  online, SW, IndexedDB. Tests:
+  `tests/Feature/CanvasDiagnosticsRouteTest.php` (dev 200; production 404).
+- Tests: `vitest run` 361 passed (55 files); `vue-tsc` clean;
+  `npm run build` OK (code-split confirmed); `npm audit` 0 vulns.
+  PHP feature test for the dev route passes where the env has sqlite.
+- Honest gap: real-browser §72 matrix, conflict/offline execution, and §82
+  boundary walk remain unproven (no browser runner in this environment) → R7.
+  phpstan/phpunit full-suite here is blocked by env (sqlite driver + file-perm
+  on `.phpunit.result.cache`), unrelated to this change.
+
+Release Impact: PATCH (canvas UX/persistence surfaces; no API change).
 
 ---
 

@@ -26,6 +26,10 @@ const emit = defineEmits<{
 const host = ref<HTMLElement | null>(null);
 let adapter: CanvasAdapter | null = null;
 
+/** Editor entry state (design.md §34.2): loading → ready, or a failure surface. */
+const editorState = ref<'loading' | 'ready' | 'error'>('loading');
+const mountError = ref<string | null>(null);
+
 function createAdapter(): CanvasAdapter {
     if (props.adapterFactory) {
         return props.adapterFactory();
@@ -33,39 +37,71 @@ function createAdapter(): CanvasAdapter {
     return new ExcalidrawCanvasAdapter();
 }
 
-onMounted(() => {
+function bootAdapter(readOnlyOnly = false): void {
     if (host.value === null) {
         return;
     }
-    adapter = createAdapter();
-    adapter.subscribe((change) => {
-        emit('change', change.scene);
-    });
-    adapter.mount(host.value);
-    adapter.load(props.scene ?? null);
-    adapter.setReadOnly(props.readOnly);
-    adapter.setTheme(props.theme);
+    editorState.value = 'loading';
+    mountError.value = null;
+    try {
+        adapter = createAdapter();
+        adapter.subscribe((change) => {
+            emit('change', change.scene);
+        });
+        adapter.mount(host.value);
+        adapter.load(props.scene ?? null);
+        adapter.setReadOnly(readOnlyOnly || props.readOnly);
+        adapter.setTheme(props.theme);
+    } catch (err) {
+        // Never leave the page blank (design.md §34.2).
+        adapter?.destroy();
+        adapter = null;
+        mountError.value = err instanceof Error ? err.message : 'Canvas editor failed to initialize.';
+        editorState.value = 'error';
+        return;
+    }
+    editorState.value = 'ready';
     emit('ready', adapter);
+}
+
+function retry(): void {
+    bootAdapter();
+}
+
+function openReadOnly(): void {
+    // Reboot but lock the editor to read-only so the raw data is safe to
+    // inspect (design.md §34.2 "Open read-only data").
+    bootAdapter(true);
+}
+
+onMounted(() => {
+    bootAdapter();
 });
 
 watch(
     () => props.scene,
     (scene) => {
-        adapter?.load(scene ?? null);
+        if (editorState.value === 'ready') {
+            adapter?.load(scene ?? null);
+        }
     },
 );
 
 watch(
     () => props.readOnly,
     (enabled) => {
-        adapter?.setReadOnly(enabled);
+        if (editorState.value === 'ready') {
+            adapter?.setReadOnly(enabled);
+        }
     },
 );
 
 watch(
     () => props.theme,
     (theme) => {
-        adapter?.setTheme(theme);
+        if (editorState.value === 'ready') {
+            adapter?.setTheme(theme);
+        }
     },
 );
 
@@ -76,5 +112,29 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div ref="host" class="kinevo-canvas-host" data-testid="canvas-host"></div>
+    <div class="relative min-h-24">
+        <!-- The editor container is always mounted so boot can target it (§34.2); hidden until ready. -->
+        <div
+            ref="host"
+            class="kinevo-canvas-host"
+            data-testid="canvas-host"
+            :class="{ 'invisible': editorState !== 'ready' }"
+        ></div>
+
+        <!-- Loading editor… entry state (design.md §34.2) -->
+        <div v-if="editorState === 'loading'" class="absolute inset-0 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400" data-testid="canvas-editor-loading">
+            Loading editor…
+        </div>
+
+        <!-- Failure surface — never a blank page (design.md §34.2/§35) -->
+        <div v-else-if="editorState === 'error'" class="absolute inset-0 border border-dashed border-[#F53003] rounded-sm px-4 py-4 text-sm" data-testid="canvas-editor-error" role="alert" aria-live="polite">
+            <p class="font-medium">Canvas editor failed to initialize.</p>
+            <p v-if="mountError" class="text-gray-600 dark:text-gray-400">{{ mountError }}</p>
+            <p class="mt-1 text-gray-600 dark:text-gray-400">Your saved canvas data is still safe.</p>
+            <div class="flex gap-2 mt-3">
+                <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="canvas-editor-retry" @click="retry">Retry</button>
+                <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="canvas-editor-readonly" @click="openReadOnly">Open read-only</button>
+            </div>
+        </div>
+    </div>
 </template>

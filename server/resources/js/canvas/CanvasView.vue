@@ -1,7 +1,19 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { defineAsyncComponent, ref } from 'vue';
 import CanvasListView from './CanvasListView.vue';
-import CanvasWorkspaceView from './CanvasWorkspaceView.vue';
+
+/**
+ * Lazy-load the canvas workspace (and its Excalidraw chunk) by route
+ * (design.md §89). Canvas isn't needed on every screen, so Excalidraw should
+ * not be in the initial bundle. The async boundary also gives us a visible
+ * loading entry state (§34.2) instead of a blank page.
+ */
+const CanvasWorkspaceView = defineAsyncComponent({
+    loader: () => import('./CanvasWorkspaceView.vue'),
+    loadingComponent: {
+        template: `<div class="text-sm text-gray-500 dark:text-gray-400" data-testid="canvas-workspace-loading">Loading Canvas…</div>`,
+    },
+});
 
 const selectedCanvasId = ref<number | null>(null);
 

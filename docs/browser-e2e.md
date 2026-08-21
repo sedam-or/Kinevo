@@ -96,7 +96,15 @@ Legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run.
 Canvas entry state must never leave the page blank (design.md §34.2) and the
 save state must always be visible (design.md §34.4). The dev-only diagnostic
 route `/dev/canvas-diagnostics` (§36) is exercised in dev and verified disabled
-in production.
+in production (TASK-R4).
+
+Contract-level entry-state coverage landed in TASK-R4:
+- Async boundary lazy-loads the Excalidraw chunk by route (§89) with a visible
+  "Loading Canvas…" state.
+- `CanvasHost` surfaces loading → ready → error entry states (§34.2) with
+  Retry / Open read-only, and never renders a blank page.
+- The `canvas-editor-loading` / `canvas-editor-error` / `canvas-host` states are
+  unit-tested (vitest); the browser rows above still await R7 real-browser runs.
 
 ## 6. Canvas boundary sequence (design.md §82)
 

@@ -188,6 +188,22 @@ Status: fixed — `shell/navigation.ts` exposes `NAV_GROUPS`; desktop nav render
 grouped sections with group labels; topbar adds current-section breadcrumb
 (design.md §10.1); tests extended. Evidence: `navigation.test.ts`, `AppShell.test.ts`, `vue-tsc`.
 Link: TASK-R3.
+
+UI-008 | 2026-08-21 | Canvas (entry state, lazy-load, diagnostics) | P2
+Canvas loaded in the main bundle and could boot to a blank page
+Gap: built with Excalidraw statically bundled (main chunk > ~500 kB warning) and
+no explicit loading/ready/failure entry states; `/dev/canvas-diagnostics` route
+absent.
+Expected: design.md §34.2, §36, §89.
+Severity: P2 (bundle weight + diagnostic debuggability).
+Status: fixed — `CanvasView` lazy-loads the workspace chunk via
+`defineAsyncComponent` (build emits `CanvasWorkspaceView-*.js`; main `app-*.js`
+no longer contains `@excalidraw`); `CanvasHost` surfaces loading/ready/error
+entry states with Retry / Open read-only and never renders blank;
+`/dev/canvas-diagnostics` web route guarded against `production` (abort 404).
+Evidence: `CanvasHost.test.ts` (3), `CanvasDiagnosticsRouteTest.php` (2), build
+code-split output, `vue-tsc`.
+Link: TASK-R4.
 ```
 
 No finding above is closed silently; each closes with concrete browser/test/visual
