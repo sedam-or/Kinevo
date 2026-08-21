@@ -22,9 +22,11 @@ Route::get('/dev/canvas-diagnostics', function () {
         abort(404);
     }
     $dbUp = false;
+    $canvasCount = null;
     try {
         DB::select('select 1');
         $dbUp = true;
+        $canvasCount = Canvas::count();
     } catch (Throwable) {
         $dbUp = false;
     }
@@ -32,6 +34,6 @@ Route::get('/dev/canvas-diagnostics', function () {
     return view('dev.canvas-diagnostics', [
         'env' => app()->environment(),
         'dbUp' => $dbUp,
-        'canvasCount' => $dbUp ? Canvas::count() : null,
+        'canvasCount' => $canvasCount,
     ]);
 });
