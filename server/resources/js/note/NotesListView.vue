@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue';
 import { useNoteStore } from './store';
+import KButton from '../components/KButton.vue';
+import KInput from '../components/KInput.vue';
 
 const emit = defineEmits<{
     (e: 'select', noteId: number): void;
@@ -51,8 +53,8 @@ async function createNote(): Promise<void> {
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">New note</div>
             <form class="flex gap-2" @submit.prevent="createNote">
                 <div v-if="createError" class="text-sm text-[#F53003]" role="alert">{{ createError }}</div>
-                <input v-model="createForm.title" type="text" placeholder="Note title" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2 text-sm flex-1" data-testid="note-create-title" />
-                <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" data-testid="note-create-submit">Create</button>
+                <KInput v-model="createForm.title" placeholder="Note title" class="flex-1" data-testid="note-create-title" />
+                <KButton type="submit" variant="primary" data-testid="note-create-submit">Create</KButton>
             </form>
         </section>
 
@@ -67,7 +69,7 @@ async function createNote(): Promise<void> {
         <div v-if="notes.error" class="text-sm text-[#F53003]" role="alert" data-testid="notes-error">{{ notes.error.message }}</div>
 
         <section data-testid="note-list">
-            <div v-if="displayedNotes().length === 0 && !notes.loading" class="text-sm text-gray-500 dark:text-gray-400">No notes found.</div>
+            <div v-if="displayedNotes().length === 0 && !notes.loading" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4">No notes found. Create a note above to begin capturing knowledge.</div>
             <article
                 v-for="note in displayedNotes()"
                 :key="note.id"

@@ -6,6 +6,7 @@ import type { EditorAdapter, EditorChange, EditorDocument } from '../editor/type
 import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
 import type { VisualStateValue } from '../visualstate/types';
 import LinkManager from '../knowledge/LinkManager.vue';
+import KButton from '../components/KButton.vue';
 
 const props = withDefaults(
     defineProps<{
@@ -138,7 +139,7 @@ watch(
     <div class="flex flex-col gap-4" data-testid="note-detail">
         <header class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="note-back" @click="emit('back')">← Back</button>
+                <KButton variant="ghost" data-testid="note-back" @click="emit('back')">← Back</KButton>
                 <input
                     v-model="title"
                     type="text"

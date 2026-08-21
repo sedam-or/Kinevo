@@ -23,9 +23,9 @@ describe('AppShell', () => {
     it('switches the active view when a nav item is selected', async () => {
         const wrapper = mount(AppShell, { global: { plugins: [pinia] } });
         const shell = useShellStore();
-        const settingsLink = wrapper.findAll('[data-testid="desktop-nav"] a').find((a) => a.text().includes('Settings'));
-        expect(settingsLink).toBeDefined();
-        await settingsLink!.trigger('click');
+        const settingsLink = wrapper.find('[data-testid="nav-settings"]');
+        expect(settingsLink.exists()).toBe(true);
+        await settingsLink.trigger('click');
         expect(shell.activeView).toBe('settings');
     });
 

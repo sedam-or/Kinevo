@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { NAV_ITEMS, PRIMARY_VIEW, type ShellView } from './navigation';
+import { NAV_GROUPS, NAV_ITEMS, PRIMARY_VIEW, type ShellView } from './navigation';
 import { applyTheme, readThemePreference, type ThemePreference } from './theme';
 import { VISIBLE_SYNC_STATES, type VisibleSyncState } from '../offline/sync-status';
 
@@ -30,6 +30,7 @@ export const useShellStore = defineStore('shell', () => {
     applyTheme(theme.value);
 
     const navItems = computed(() => NAV_ITEMS);
+    const navGroups = computed(() => NAV_GROUPS);
     const unreadCount = computed(() => notifications.value.filter((n) => n.unread).length);
 
     function setView(view: ShellView): void {
@@ -83,6 +84,7 @@ export const useShellStore = defineStore('shell', () => {
         notifications,
         errorMessage,
         navItems,
+        navGroups,
         unreadCount,
         setView,
         setTheme,

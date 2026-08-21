@@ -46,21 +46,21 @@ Scoring per surface uses the `docs/design.md` §70 design-QA dimensions. Status
 legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ clear`.
 
 | Dimension | Shell | Today | Task | Goal | Knowledge/Notes | Canvas | Analytics | Settings |
-| --------- | ----- | ----- | ---- | ---- | --------------- | ------ | --------- | -------- |
+| --------- | ----- | ----- | ---- | ---- | --------------- | ------ | --------- | -------- | -------- |
 | Visual consistency (§85) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Keyboard navigation (§45) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Responsive layout (§8, §58) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Loading / skeleton (§11.1) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Empty state (§11.2) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| Empty state (§11.2) | ⚪ | ⚪ | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Error state (§11.3) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Offline (§11, §90) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Conflict / save state (§2.5, §34.4) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| Conflict / save state (§2.5, §34.4) | ⚪ | ⚪ | ⚪ | ⚪ | ✅ | ⚪ | ⚪ | ⚪ |
 | Dark mode (§5.4) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Reduced motion (§47) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Primary action obvious (§2.3, §51) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| No color-only state (§5.2) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Token usage (§65, design-tokens.md) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Component consolidation (§50, §80) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| Primary action obvious (§2.3, §51) | ✅ | ✅ | ✅ | ✅ | ✅ | ⚪ | ⚪ | ⚪ |
+| No color-only state (§5.2) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
+| Token usage (§65, design-tokens.md) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
+| Component consolidation (§50, §80) | ✅ | ✅ | 🟡 | 🟡 | ✅ | ⚪ | ⚪ | ⚪ |
 
 ## 5. Component inventory checklist (design.md §50, §80)
 
@@ -68,8 +68,8 @@ Design-system components that MUST exist centrally (no per-page re-implementatio
 
 | Component | Exists centrally | Where detected |
 | --------- | ---------------- | -------------- |
-| Button / IconButton | ⚪ | — |
-| Input / Textarea / Select / Combobox | ⚪ | — |
+| Button / IconButton | ✅ | `components/KButton.vue` (primary/secondary/danger/ghost) |
+| Input / Textarea / Select / Combobox | 🟡 | `components/KInput.vue` exists; Select/Textarea/Combobox not yet centralized |
 | Checkbox / Switch | ⚪ | — |
 | Badge / VisualStateBadge | ⚪ | — |
 | Card / Panel | ⚪ | — |
@@ -151,7 +151,10 @@ Severity: P2 (visual inconsistency, high churn).
 Status: triaged — R2 token modules (`server/resources/js/tokens/`), CSS
 hydration (app.css), and component library v0 (KButton/KInput) land as a single
 commit 2026-08-21; migrating the remaining surfaces to tokens/components is
-TASK-R3. Closing record to follow in R3.
+TASK-R3. Partial close in R3: primary-action buttons and create-form inputs on
+Today, Task, Goal, and Knowledge/Notes now use KButton/KInput (commit 2026-08-21).
+Remaining hard-coded small/context buttons, `select`/`textarea`/native inputs on
+minor surfaces, and the KInput `select` gap carry forward.
 Link: this task (TASK-R2), docs/design-tokens.md.
 
 UI-005 | 2026-08-21 | Browser matrix (global) | P2
@@ -175,6 +178,16 @@ import.meta.env.DEV so production bundles exclude it. Closing evidence: vitest
 diagnostics suite; /dev/canvas-diagnostics in-browser route deferred to R4
 where the canvas island boundaries are the focus.
 Link: this task (TASK-R2).
+
+UI-007 | 2026-08-21 | Shell (navigation) | P3
+Flat navigation was a single ungrouped menu
+Observed: nav rendered one flat list; no mental-purpose grouping.
+Expected: design.md §9 — EXECUTE / PLAN / KNOWLEDGE / REVIEW / SYSTEM groups.
+Severity: P2 (visual/information architecture; not a functional blocker).
+Status: fixed — `shell/navigation.ts` exposes `NAV_GROUPS`; desktop nav renders
+grouped sections with group labels; topbar adds current-section breadcrumb
+(design.md §10.1); tests extended. Evidence: `navigation.test.ts`, `AppShell.test.ts`, `vue-tsc`.
+Link: TASK-R3.
 ```
 
 No finding above is closed silently; each closes with concrete browser/test/visual

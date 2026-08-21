@@ -122,48 +122,55 @@ pass/fail.
 ### Journey A — Plan
 
 ```text
+PLAN group → Goals
 Create Goal
 Create Milestone
 Create Program
+PLAN group → Tasks
 Create Task
 ```
 
-Result: ⚪
+Result: ⚪ (browser run pending)
 
 ### Journey B — Execute
 
 ```text
-Open Today
+EXECUTE group → Today
+NOW task visible
 Start task
 Pause
 Resume
 Complete
+NEXT task advances
 ```
 
-Result: ⚪
+Result: ⚪ (browser run pending)
 
 ### Journey C — Recover
 
 ```text
+EXECUTE group → Today
 Miss task
 EOD
 Morning Recovery
 Reschedule
 ```
 
-Result: ⚪
+Result: ⚪ (browser run pending)
 
 ### Journey D — Knowledge
 
 ```text
+KNOWLEDGE group → Knowledge
 Create Note
-Edit
+Edit (autosave indicator top-right)
 Link Goal
+KNOWLEDGE group → Canvas
 Create Canvas
 Link Canvas
 ```
 
-Result: ⚪
+Result: ⚪ (browser run pending)
 
 ### Journey E — Offline
 

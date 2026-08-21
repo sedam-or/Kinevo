@@ -10,6 +10,7 @@ import EmergencyPauseDialog from './EmergencyPauseDialog.vue';
 import BreakModeDialog from './BreakModeDialog.vue';
 import BoostDialog from './BoostDialog.vue';
 import { taskStates } from '../visualstate/derive';
+import KButton from '../components/KButton.vue';
 import type { EmptySlot, EmergencyPauseResponse, EndBreakResponse, EndBoostTargetResponse, HardLandscapeEvent, SetBoostTargetResponse, StartBreakResponse, TodayEvent } from './types';
 
 const props = defineProps<{
@@ -359,12 +360,17 @@ async function endBoostTarget(): Promise<void> {
             </div>
         </section>
 
-        <!-- NOW card -->
-        <section v-if="currentEvent" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="now-card">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Now</div>
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="font-semibold" data-testid="now-title">{{ currentEvent.task?.title ?? 'Untitled' }}</div>
+        <!-- NOW card (design.md §12.2: highest-priority surface — thick border, offset shadow, large title/time) -->
+        <section
+            v-if="currentEvent"
+            class="border-2 border-gray-300 dark:border-gray-600 rounded-sm p-5 shadow-[4px_4px_0_rgba(0,0,0,0.06)] dark:shadow-[4px_4px_0_rgba(255,255,255,0.06)]"
+            :class="{ 'border-[var(--color-primary)] dark:border-[var(--color-primary)]': currentEvent.locked }"
+            data-testid="now-card"
+        >
+            <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Now</div>
+            <div class="flex items-center justify-between gap-4">
+                <div class="min-w-0">
+                    <div class="text-lg font-semibold leading-snug" data-testid="now-title">{{ currentEvent.task?.title ?? 'Untitled' }}</div>
                     <div class="text-sm text-gray-600 dark:text-gray-400">
                         {{ formatTime(currentEvent.assignment.start_at) }} – {{ formatTime(currentEvent.assignment.end_at) }}
                         · {{ formatDuration(currentEvent.assignment.duration_minutes) }}
@@ -394,31 +400,28 @@ async function endBoostTarget(): Promise<void> {
                     <span v-else>Move today's remaining tasks to tomorrow.</span>
                 </div>
                 <div class="flex gap-2 shrink-0">
-                    <button
-                        type="button"
-                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                    <KButton
+                        variant="secondary"
                         :disabled="miniPauseBusy"
                         data-testid="mini-pause-button"
                         @click="miniPause"
                     >
                         {{ miniPauseBusy ? 'Pausing…' : 'Mini Pause' }}
-                    </button>
-                    <button
-                        type="button"
-                        class="border border-[#F53003] text-[#F53003] rounded-sm px-3 py-1 text-sm"
+                    </KButton>
+                    <KButton
+                        variant="danger"
                         data-testid="emergency-pause-button"
                         @click="openEmergencyDialog"
                     >
                         Emergency Pause
-                    </button>
-                    <button
-                        type="button"
-                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                    </KButton>
+                    <KButton
+                        variant="secondary"
                         data-testid="break-mode-button"
                         @click="openBreakDialog"
                     >
                         Break Mode
-                    </button>
+                    </KButton>
                 </div>
             </div>
             <div v-if="miniPauseError" class="text-sm text-[#F53003]" role="alert" data-testid="mini-pause-error">
@@ -515,9 +518,9 @@ async function endBoostTarget(): Promise<void> {
                         <input v-model.number="quickCaptureForm.durationMinutes" type="number" min="1" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="qc-duration" />
                     </label>
                 </div>
-                <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" data-testid="qc-submit">
+                <KButton type="submit" variant="primary" data-testid="qc-submit">
                     Capture
-                </button>
+                </KButton>
             </form>
         </section>
 

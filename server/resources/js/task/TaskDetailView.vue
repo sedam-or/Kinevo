@@ -3,6 +3,8 @@ import { onMounted, reactive, ref, watch } from 'vue';
 import { useTaskStore } from './store';
 import { TASK_TRANSITIONS, type Task, type TaskStatusValue } from './types';
 import AttachmentList from '../attachments/AttachmentList.vue';
+import KButton from '../components/KButton.vue';
+import KInput from '../components/KInput.vue';
 
 const props = defineProps<{
     taskId: number;
@@ -104,7 +106,7 @@ async function promote(subtaskId: number): Promise<void> {
     <div class="flex flex-col gap-4" data-testid="task-detail">
         <header class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="task-detail-back" @click="emit('back')">← Back</button>
+                <KButton variant="ghost" data-testid="task-detail-back" @click="emit('back')">← Back</KButton>
                 <h1 class="text-xl font-semibold" data-testid="task-detail-title">{{ tasks.current?.title ?? 'Task' }}</h1>
             </div>
             <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5" data-testid="task-detail-status">
@@ -121,7 +123,7 @@ async function promote(subtaskId: number): Promise<void> {
             <form class="flex flex-col gap-3" @submit.prevent="saveEdit">
                 <label class="flex flex-col gap-1 text-sm">
                     Title
-                    <input v-model="editForm.title" type="text" required class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-edit-title" />
+                    <KInput v-model="editForm.title" required data-testid="task-edit-title" />
                 </label>
                 <label class="flex flex-col gap-1 text-sm">
                     Description
@@ -145,9 +147,9 @@ async function promote(subtaskId: number): Promise<void> {
                         <input v-model="editForm.dueAt" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-edit-due" />
                     </label>
                 </div>
-                <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium self-start" data-testid="task-edit-save">
+                <KButton type="submit" variant="primary" class="self-start" data-testid="task-edit-save">
                     Save
-                </button>
+                </KButton>
             </form>
         </section>
 

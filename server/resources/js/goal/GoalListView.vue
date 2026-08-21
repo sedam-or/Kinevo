@@ -2,6 +2,8 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useGoalStore } from './store';
 import { GOAL_HORIZONS, PROGRAM_WORKLOAD_TYPES } from './types';
+import KButton from '../components/KButton.vue';
+import KInput from '../components/KInput.vue';
 
 const emit = defineEmits<{
     (e: 'selectGoal', goalId: number): void;
@@ -92,7 +94,7 @@ function workloadLabel(w: string): string {
                 <div v-if="formError" class="w-full text-sm text-[#F53003]">{{ formError }}</div>
                 <label class="flex flex-col gap-1 text-sm flex-1 min-w-40">
                     Title
-                    <input v-model="goalForm.title" type="text" required class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="goal-create-title" />
+                    <KInput v-model="goalForm.title" required class="flex-1 min-w-40" data-testid="goal-create-title" />
                 </label>
                 <label class="flex flex-col gap-1 text-sm">
                     Horizon
@@ -104,14 +106,14 @@ function workloadLabel(w: string): string {
                     Target date
                     <input v-model="goalForm.targetDate" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="goal-create-date" />
                 </label>
-                <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" data-testid="goal-create-submit">Add</button>
+                <KButton type="submit" variant="primary" data-testid="goal-create-submit">Add</KButton>
             </form>
         </section>
 
         <!-- Goal list -->
         <section data-testid="goal-list">
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Goals</div>
-            <div v-if="goals.goals.length === 0 && !goals.loading" class="text-sm text-gray-500 dark:text-gray-400">No goals yet.</div>
+            <div v-if="goals.goals.length === 0 && !goals.loading" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4">No goals yet. Create a goal above to begin your roadmap.</div>
             <article
                 v-for="goal in goals.goals"
                 :key="goal.id"
@@ -146,8 +148,7 @@ function workloadLabel(w: string): string {
                         <option v-for="w in PROGRAM_WORKLOAD_TYPES" :key="w" :value="w">{{ workloadLabel(w) }}</option>
                     </select>
                 </label>
-                <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" data-testid="program-create-submit">Add</button>
-            </form>
+                <KButton type="submit" variant="primary" data-testid="program-create-submit">Add</KButton>            </form>
         </section>
 
         <!-- Program list -->

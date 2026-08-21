@@ -3138,7 +3138,9 @@ Release Impact: PATCH (design-system refactor; no behavior/API/schema change).
 
 ## Status
 
-TODO
+PARTIAL — shell/nav groups, primary-action component migration, and today NOW-card
+hierarchy landed 2026-08-21; deep task/goal/knowledge visual redesign, timeline DnD,
+and full state-matrix UI migration carry into R4/R5 (see Evidence).
 
 ## Requirements
 
@@ -3146,35 +3148,58 @@ design.md §2, §8–§19, §29–§33, §79, §84, §85, §57–§58.
 
 ## Scope
 
-- [ ] Reorganize navigation into EXECUTE / PLAN / KNOWLEDGE / REVIEW / SYSTEM
+- [x] Reorganize navigation into EXECUTE / PLAN / KNOWLEDGE / REVIEW / SYSTEM
       groups (design.md §9); Topbar §10; bottom nav + floating capture on mobile
       §8.3.
-- [ ] Today redesign: NOW card visual hierarchy §12, timeline geometry §13,
-      drag & drop with valid/invalid feedback §14, states §11.
+- [x] Today redesign: NOW card visual hierarchy §12, timeline geometry §13,
+      states §11. (Drag & drop with valid/invalid feedback §14 carries to R4.)
 - [ ] Task / Goal redesign: task execution workspace §19, subtasks §20,
-      goal progress §17–§18, milestone roadmap §39.
+      goal progress §17–§18, milestone roadmap §39. (Partial: primary-action
+      component migration only; visual redesign carries to R4.)
 - [ ] Knowledge redesign: unified desk layout §30, minimal Tiptap toolbar §31,
-      autosave indicator top-right §32, linked-knowledge sidebar §33.
-- [ ] State-machine UI matrix per entity (Task/Goal/Milestone/Program/Canvas/
-      Note/Schedule/AI Proposal) §84.
+      linked-knowledge sidebar §33. (Partial: save/autosave indicator confirmed
+      present; toolbar/sidebar redesign carries to R4.)
+- [x] State-machine UI matrix per entity (Task/Goal/Milestone/Program/Canvas/
+      Note/Schedule/AI Proposal) §84 — documented in `docs/state-machine-ui.md`.
 - [ ] Capacity feedback §22, adaptive context §23, notifications §28–§29,
-      empty/error language §11.2–§11.3, §56, §64.
+      empty/error language §11.2–§11.3, §56, §64. (Empty-state copy §11.2 done
+      for Task/Goal/Notes; capacity/adaptive-context/notifications carry to R4.)
 
 ## Acceptance
 
-- [ ] Each redesigned surface passes design.md §70 QA dimensions and is recorded
+- [x] Each redesigned surface passes design.md §70 QA dimensions and is recorded
       in `docs/ui-audit.md` §4.
-- [ ] Primary action is obvious; one primary + one secondary + optional details
+- [x] Primary action is obvious; one primary + one secondary + optional details
       (design.md §2.3).
 
 ## Verification
 
-- [ ] `docs/browser-e2e.md` golden journeys A/B/C/D updated (not just unit
+- [x] `docs/browser-e2e.md` golden journeys A/B/C/D updated (not just unit
       tests).
 
 ## Evidence
 
-Pending. Release Impact: PATCH (visual refactor; no API/schema/business change).
+- Nav groups: `shell/navigation.ts` (`NAV_GROUPS`), `shell/AppShell.vue`
+  (grouped desktop nav + `nav-{key}` testids + current-section breadcrumb),
+  `shell/store.ts` (`navGroups`). Tests: `navigation.test.ts`,
+  `AppShell.test.ts`. design.md §9/§10.
+- Component migration to `components/KButton/KInput` (design.md §50–§51,
+  design-tokens.md §11): Today quick-capture/CONTEXT actions, Task list+detail,
+  Goal list, Notes list. Primary actions emphasized as KButton `primary`.
+- Today NOW card §12.2 hierarchy: thick border + offset shadow + larger title;
+  NOW-card action buttons migrated to KButton variants.
+- Empty-state copy §11.2 for Task / Goal / Notes.
+- §84 state-machine matrix documented in `docs/state-machine-ui.md`.
+- `docs/ui-audit.md` §4 matrix + §5 inventory updated; UI-004 partial close;
+  UI-007 added (nav grouping).
+- `docs/browser-e2e.md` journeys A/B/C/D navigation paths updated.
+- Tests: `vitest run` 358 passed; `vue-tsc` clean; `npm run build` OK.
+- Honest gap: deep visual redesign of Task/Goal/Knowledge surfaces, timeline
+  drag & drop with valid/invalid feedback, and full state-matrix migration of
+  minor surfaces are NOT done and remain in R4/R5. Golden journeys A–D remain
+  `⚪` because no browser runner exists in this environment.
+
+Release Impact: PATCH (visual refactor; no API/schema/business change).
 
 ---
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useShellStore } from './store';
-import { isShellView, type ShellView } from './navigation';
+import { isShellView, NAV_GROUPS, type ShellView } from './navigation';
 import SyncStatusPanel from './SyncStatusPanel.vue';
 import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel.vue';
 
@@ -10,6 +10,11 @@ const shell = useShellStore();
 const resolvedActive = computed<ShellView>(() =>
     isShellView(shell.activeView) ? shell.activeView : 'today',
 );
+
+const currentSection = computed(() => {
+    const item = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.key === resolvedActive.value);
+    return item ? item.label : 'Kinevo';
+});
 
 function selectView(view: ShellView): void {
     shell.setView(view);
@@ -28,6 +33,9 @@ function cycleTheme(): void {
         <header class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-3">
             <div class="flex items-center gap-3">
                 <span class="font-semibold">Kinevo</span>
+                <span data-testid="current-section" class="text-sm text-gray-500 dark:text-gray-400">
+                    / {{ currentSection }}
+                </span>
                 <span data-testid="sync-state">
                     <SyncStatusPanel />
                 </span>
@@ -59,25 +67,31 @@ function cycleTheme(): void {
         <div class="flex flex-col lg:flex-row">
             <!-- Desktop side navigation -->
             <nav
-                class="hidden lg:flex flex-col w-56 border-r border-gray-200 dark:border-gray-700 p-4 gap-1"
+                class="hidden lg:flex flex-col w-56 border-r border-gray-200 dark:border-gray-700 p-4 gap-4"
                 aria-label="Primary"
                 data-testid="desktop-nav"
             >
-                <a
-                    v-for="item in shell.navItems"
-                    :key="item.key"
-                    href="#"
-                    class="flex items-center gap-2 rounded-sm px-3 py-2 text-sm"
-                    :class="
-                        resolvedActive === item.key
-                            ? 'bg-gray-100 dark:bg-gray-800 font-medium'
-                            : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                    "
-                    :aria-current="resolvedActive === item.key ? 'page' : undefined"
-                    @click.prevent="selectView(item.key)"
-                >
-                    {{ item.label }}
-                </a>
+                <div v-for="group in shell.navGroups" :key="group.key" class="flex flex-col gap-1">
+                    <span class="px-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500" data-testid="nav-group-label">
+                        {{ group.label }}
+                    </span>
+                    <a
+                        v-for="item in group.items"
+                        :key="item.key"
+                        href="#"
+                        class="flex items-center gap-2 rounded-sm px-3 py-2 text-sm"
+                        :data-testid="`nav-${item.key}`"
+                        :class="
+                            resolvedActive === item.key
+                                ? 'bg-gray-100 dark:bg-gray-800 font-medium'
+                                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                        "
+                        :aria-current="resolvedActive === item.key ? 'page' : undefined"
+                        @click.prevent="selectView(item.key)"
+                    >
+                        {{ item.label }}
+                    </a>
+                </div>
             </nav>
 
             <!-- Content surface -->

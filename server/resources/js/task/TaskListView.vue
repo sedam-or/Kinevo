@@ -4,6 +4,7 @@ import { useTaskStore } from './store';
 import { TASK_TRANSITIONS, type Task, type TaskStatusValue } from './types';
 import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
 import { taskStates } from '../visualstate/derive';
+import KButton from '../components/KButton.vue';
 import type { VisualStateValue } from '../visualstate/types';
 
 const emit = defineEmits<{
@@ -92,9 +93,9 @@ async function applyStatus(task: Task, status: TaskStatusValue): Promise<void> {
                     Due
                     <input v-model="createForm.dueAt" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-create-due" />
                 </label>
-                <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" data-testid="task-create-submit">
+                <KButton type="submit" variant="primary" data-testid="task-create-submit">
                     Add
-                </button>
+                </KButton>
             </form>
         </section>
 
@@ -103,8 +104,8 @@ async function applyStatus(task: Task, status: TaskStatusValue): Promise<void> {
 
         <!-- List -->
         <section data-testid="task-list">
-            <div v-if="tasks.tasks.length === 0 && !tasks.loading" class="text-sm text-gray-500 dark:text-gray-400">
-                No tasks yet.
+            <div v-if="tasks.tasks.length === 0 && !tasks.loading" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="task-empty">
+                No tasks yet. Add your first task above to start planning your week.
             </div>
             <article
                 v-for="task in tasks.tasks"
