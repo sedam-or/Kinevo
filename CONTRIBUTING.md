@@ -87,6 +87,19 @@ Reference the relevant task when applicable, e.g.
   security impact, tests, docs, migrations, third-party changes).
 - Do not merge until checks pass and reviews are resolved.
 
+### UI/UX stabilization freeze (rescue R0–R7)
+
+- Effect: no PRs introducing new AI features, new scheduling algorithms, new
+  major domain concepts, or new dependencies are accepted during the rescue
+  phase. See `AGENTS.md` and `docs/design.md` §74–§103.
+- Allowed: stability, usability, integration, browser correctness, visual
+  consistency; work tracked via `docs/ui-audit.md` and `docs/browser-e2e.md`.
+- Exemption path: P0 fixes only — data loss, auth/save failure, core feature
+  blocked, canvas crash, offline mutation lost — classified per
+  `docs/ui-audit.md` §3 and logged there (§6) before the fix lands, with group
+  approval. P1+ waits.
+- The freeze lifts only when the rescue phase (TASK-R7) completes.
+
 ## 6. Testing
 
 - Backend: PHPUnit feature/unit tests live in `server/tests/`.

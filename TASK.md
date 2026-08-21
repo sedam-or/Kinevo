@@ -2986,7 +2986,7 @@ R13 Full E2E / R14 Release candidate → Phase R7 Release Readiness
 
 ## Status
 
-TODO
+DONE
 
 ## Requirements
 
@@ -2997,28 +2997,32 @@ consistency.
 
 ## Scope
 
-- [ ] Publish the freeze to contributors (AGENTS.md / CONTRIBUTING.md note) with
+- [x] Publish the freeze to contributors (AGENTS.md / CONTRIBUTING.md note) with
       explicit exemption path (P0 fixes only, group approval).
-- [ ] Suspend acceptance of new non-trivial feature work; log any proposals to a
-      hold list with proposed priority.
-- [ ] Establish the first-love target: LOGIN → TODAY → NOW TASK → START →
+- [x] Suspend acceptance of new non-trivial feature work; log any proposals to a
+      hold list (Feature Hold List below) with proposed priority.
+- [x] Establish the first-love target: LOGIN → TODAY → NOW TASK → START →
       COMPLETE → PROGRESS → NEXT TASK (design.md §99) as the team's prime
       objective.
 
 ## Acceptance
 
-- [ ] `docs/ui-audit.md` and `docs/browser-e2e.md` baselines exist and are wired
+- [x] `docs/ui-audit.md` and `docs/browser-e2e.md` baselines exist and are wired
       into the rescue phase.
-- [ ] No feature code merged during R0; P0 fixes only, each with a bug-taxonomy
+- [x] No feature code merged during R0; P0 fixes only, each with a bug-taxonomy
       record (design.md §77).
 
 ## Verification
 
-- [ ] Git history confirms no new feature commits during R0.
+- [x] Git history confirms no new feature commits during R0.
 
 ## Evidence
 
-Pending. Release Impact: NONE (governance process).
+AGENTS.md (UI/UX stabilization freeze section), CONTRIBUTING.md (PR rules §5
+freeze note), TASK.md Phase 16 (this record + Feature Hold List), commit
+`f3cf4c5`. The freeze remains in effect until TASK-R7 completes.
+
+Release Impact: NONE (governance process).
 
 ---
 
@@ -3284,6 +3288,19 @@ design.md §102, §103; docs/release-management.md eligibility gates.
 
 Pending. Release Impact: RELEASE (user-visible visual overhaul; PATCH per
 release-management, requires changelog + version gates).
+
+---
+
+# Feature Hold List (frozen during R0–R7)
+
+New non-trivial feature proposals are logged here while the stabilization freeze
+(AGENTS.md / CONTRIBUTING.md §5) is in effect. Entries are NOT scheduled for
+implementation; they are triaged when the rescue phase completes at TASK-R7.
+Format: date · proposal · proposed priority · rationale · status.
+
+```text
+(no proposals logged yet — first proposal gets entry KNL-FHL-001)
+```
 
 ---
 

@@ -192,6 +192,24 @@ not runtime product dependencies.
 Use adapters. Do not make Excalidraw, Tiptap, or any third-party editor the owner
 of Kinevo business semantics.
 
+### UI/UX stabilization freeze (rescue R0–R7)
+During the rescue phase (TASK-R0…R7, see `TASK.md` Phase 16), the agent MUST NOT
+introduce new AI features, new scheduling algorithms, new major domain concepts,
+or new dependencies. `docs/design.md` (incl. §74–§103) and `docs/design-tokens.md`
+are UI/UX authority; `docs/ui-audit.md` and `docs/browser-e2e.md` are the living
+gap/browser baselines. Allowed work: stability, usability, integration, browser
+correctness, visual consistency.
+- **Exemption path:** P0 fixes only (data loss, auth/save failure, core feature
+  blocked, canvas crash, offline mutation lost), each classified per
+  `docs/ui-audit.md` §3 and logged as a bug-taxonomy record `docs/ui-audit.md`
+  §6 before the fix lands. P1+ work waits for explicit group approval.
+- **Prime objective:** the first-love loop LOGIN → TODAY → NOW TASK → START →
+  COMPLETE → PROGRESS → NEXT TASK (`docs/design.md` §99) must be made beautiful
+  and reliable before any broader redesign.
+- The freeze lifts only when TASK-R7 (release readiness) marks the rescue phase
+  complete; `DONE` at contract level (tests/typecheck/build) is never sufficient
+  evidence to clear a rescue gate without real browser evidence.
+
 ### Release & documentation lifecycle
 - Versioning follows SemVer; the changelog follows Keep a Changelog; commits
   follow Conventional Commits. Governance: `docs/release-management.md`.
