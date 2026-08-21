@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { todayApi } from './api';
+import { useFocusTrap } from '../shell/focus-trap';
 import type { EmergencyPauseResponse } from './types';
 
 /**
@@ -35,6 +36,9 @@ const candidates = ref<KeepCandidate[]>([]);
 const keepTaskIds = ref<Set<number>>(new Set());
 const busy = ref(false);
 const error = ref<string | null>(null);
+
+const root = ref<HTMLElement | null>(null);
+useFocusTrap(root, cancel);
 
 onMounted(async () => {
     loading.value = true;
@@ -131,7 +135,7 @@ function cancel(): void {
 </script>
 
 <template>
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" data-testid="emergency-pause-dialog" @click.self="cancel">
+    <div ref="root" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="ep-title" data-testid="emergency-pause-dialog" @click.self="cancel">
         <div class="w-full max-w-lg border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-900 p-4 shadow-lg">
             <h2 class="text-lg font-semibold" data-testid="ep-title">Emergency Pause</h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">

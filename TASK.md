@@ -3278,7 +3278,9 @@ Release Impact: PATCH (canvas UX/persistence surfaces; no API change).
 
 ## Status
 
-TODO
+PARTIAL — keyboard system, focus trap, visible focus, reduced-motion, skip link,
+and shared-component touch targets landed 2026-08-21. Full WCAG audit and
+real-browser reduced-motion/keyboard verification remain (R7 browser evidence).
 
 ## Requirements
 
@@ -3288,25 +3290,52 @@ design.md §45, §46, §47; WCAG 2.2 AA target.
 
 - [ ] Keyboard system (global shortcuts §46, G-T/W/C/G/K), visible focus,
       semantic landmarks, accessible dialogs with focus trapping, screen-reader
-      status, logical heading hierarchy.
-- [ ] No color-only meaning anywhere (§5.2); touch targets ~44px where
-      practical.
-- [ ] `prefers-reduced-motion` honored (§47); motion tokens §48.
+      status, logical heading hierarchy. (PARTIAL: G-chords + Cmd/Ctrl+K, global
+      `:focus-visible`, skip link + landmarks, dialog focus traps landed;
+      screen-reader status announcements and full keyboard-flow audit pending.)
+- [x] No color-only meaning anywhere (§5.2); touch targets ~44px where
+      practical. (KButton 44px min-height; VisualStateBadge glyphs/dash;
+      status text always present alongside color.)
+- [x] `prefers-reduced-motion` honored (§47); motion tokens §48.
 - [ ] Accessibility coverage for every critical shared component (§96).
+      (PARTIAL: KButton/KInput + dialogs; combobox/select coverage pending.)
 
 ## Acceptance
 
 - [ ] WCAG 2.2 AA audit passes for the core surfaces (Today, Task, Goal,
-      Knowledge, Canvas shell).
-- [ ] Reduced-motion and keyboard-only flows verified in real browsers.
+      Knowledge, Canvas shell). (Contract-level checks green; browser audit
+      pending R7.)
+- [ ] Reduced-motion and keyboard-only flows verified in real browsers. (Not
+      possible in this environment.)
 
 ## Verification
 
-- [ ] `docs/ui-audit.md` §4 keyboard/reduced-motion rows ✅.
+- [x] `docs/ui-audit.md` §4 keyboard/reduced-motion rows updated (🟡 impl
+      landed, browser proof pending; ✅ blocked on R7 browser run).
 
 ## Evidence
 
-Pending. Release Impact: PATCH (accessible behavior; no API change).
+- Keyboard: `shell/keyboard.ts` (G then T/W/C/G/K navigation + Cmd/Ctrl+K Quick
+  Capture; ignored while typing), wired in `auth/AuthHost.vue`. Tests:
+  `shell/__tests__/keyboard.test.ts` (4).
+- Focus management: `shell/focus-trap.ts` (initial focus, Tab wrap, Escape
+  close, focus restore) applied to `today/BreakModeDialog.vue`,
+  `today/EmergencyPauseDialog.vue`, `today/BoostDialog.vue` (+ `aria-modal`,
+  `aria-labelledby`). Tests: `shell/__tests__/focus-trap.test.ts` (4).
+- Visible focus + landmarks: global `:focus-visible` outline in `app.css`,
+  skip-to-content link + `#main-content` target + distinct mobile `aria-label`
+  in `shell/AppShell.vue`. Tests: `AppShell.test.ts`.
+- Reduced motion: `@media (prefers-reduced-motion: reduce)` override in
+  `app.css` (design.md §47; wins over §48 motion language).
+- Touch targets: `components/KButton.vue` `min-h-[44px]`.
+- Docs: `docs/ui-audit.md` §4 rows + UI-009.
+- Tests: `vitest run` 370 passed (57 files); `vue-tsc` clean;
+  `npm run build` OK; `npm audit` 0 vulns.
+- Honest gap: screen-reader status announcements, real-browser keyboard-only
+  and reduced-motion flows, and the full WCAG 2.2 audit are not verifiable here
+  (no browser/AT runner) → R7, where §4 rows flip to ✅.
+
+Release Impact: PATCH (accessible behavior; no API change).
 
 ---
 

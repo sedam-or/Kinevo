@@ -48,7 +48,7 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 | Dimension | Shell | Today | Task | Goal | Knowledge/Notes | Canvas | Analytics | Settings |
 | --------- | ----- | ----- | ---- | ---- | --------------- | ------ | --------- | -------- | -------- |
 | Visual consistency (§85) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Keyboard navigation (§45) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| Keyboard navigation (§45) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | 🟡 |
 | Responsive layout (§8, §58) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Loading / skeleton (§11.1) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Empty state (§11.2) | ⚪ | ⚪ | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
@@ -56,7 +56,7 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 | Offline (§11, §90) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Conflict / save state (§2.5, §34.4) | ⚪ | ⚪ | ⚪ | ⚪ | ✅ | ⚪ | ⚪ | ⚪ |
 | Dark mode (§5.4) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Reduced motion (§47) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| Reduced motion (§47) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | 🟡 |
 | Primary action obvious (§2.3, §51) | ✅ | ✅ | ✅ | ✅ | ✅ | ⚪ | ⚪ | ⚪ |
 | No color-only state (§5.2) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Token usage (§65, design-tokens.md) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
@@ -204,6 +204,22 @@ entry states with Retry / Open read-only and never renders blank;
 Evidence: `CanvasHost.test.ts` (3), `CanvasDiagnosticsRouteTest.php` (2), build
 code-split output, `vue-tsc`.
 Link: TASK-R4.
+
+UI-009 | 2026-08-21 | Global (accessibility) | P2
+No global keyboard system, reduced-motion handling, or focus management
+Gap: no global shortcuts (§46); dialogs had focus + neither focus trap nor
+Escape-close; no skip link; duplicated nav landmark labels.
+Expected: design.md §45–§47; WCAG 2.2 2.4.1 / 2.4.7 / 2.1.2.
+Severity: P2 (WCAG AA; not a functional blocker).
+Status: fixed — `shell/keyboard.ts` G-chord navigation + Cmd/Ctrl+K quick capture
+(ignores editable targets); `shell/focus-trap.ts` focus trap + Escape-close +
+focus restore applied to Break/Boost/Emergency dialogs; `app.css` global
+`:focus-visible` outline + `prefers-reduced-motion` override; skip-to-content
+link + `#main-content`; distinct mobile-nav aria-label; KButton 44px min-height.
+Evidence: `keyboard.test.ts` (4), `focus-trap.test.ts` (4), `AppShell.test.ts`
+(a11y landmark tests), `vue-tsc`, `vitest` 370.
+Link: TASK-R5. Real-browser keyboard/reduced-motion verification still pending
+(R7); rows marked 🟡 in §4.
 ```
 
 No finding above is closed silently; each closes with concrete browser/test/visual

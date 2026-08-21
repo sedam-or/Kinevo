@@ -29,6 +29,15 @@ function cycleTheme(): void {
 
 <template>
     <div class="kinevo-app-shell min-h-screen bg-[#FDFDFC] text-[#1b1b18] dark:bg-[#0a0a0a] dark:text-[#EDEDEC]">
+        <!-- Skip link (WCAG 2.2 2.4.1 Bypass Blocks): first focusable element. -->
+        <a
+            href="#main-content"
+            class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[var(--z-critical-overlay)] focus:bg-[var(--color-bg)] focus:text-[var(--color-text)] focus:px-3 focus:py-2 focus:rounded-sm"
+            data-testid="skip-link"
+        >
+            Skip to content
+        </a>
+
         <!-- Sync + notification topbar -->
         <header class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-3">
             <div class="flex items-center gap-3">
@@ -95,7 +104,7 @@ function cycleTheme(): void {
             </nav>
 
             <!-- Content surface -->
-            <main class="flex-1 p-4" data-testid="content-surface">
+            <main id="main-content" tabindex="-1" class="flex-1 p-4" data-testid="content-surface">
                 <slot />
             </main>
         </div>
@@ -103,7 +112,7 @@ function cycleTheme(): void {
         <!-- Mobile bottom navigation -->
         <nav
             class="lg:hidden fixed bottom-0 inset-x-0 border-t border-gray-200 dark:border-gray-700 bg-[#FDFDFC] dark:bg-[#0a0a0a] flex justify-around"
-            aria-label="Primary"
+            aria-label="Primary mobile"
             data-testid="mobile-nav"
         >
             <a

@@ -23,6 +23,7 @@ import CanvasView from '../canvas/CanvasView.vue';
 import AnalyticsView from '../analytics/AnalyticsView.vue';
 import QuickCapture from '../quickcapture/QuickCapture.vue';
 import { useQuickCaptureStore } from '../quickcapture/store';
+import { useKeyboardShortcuts } from '../shell/keyboard';
 
 const auth = useAuthStore();
 const shell = useShellStore();
@@ -113,6 +114,23 @@ function goToRegister(): void {
 function goToLogin(): void {
     authMode.value = 'login';
 }
+
+// Global keyboard shortcuts (design.md §46). Only active once authenticated so
+// the guest login screen keeps its own input handling.
+useKeyboardShortcuts({
+    onNavigate(view) {
+        if (!auth.isAuthenticated) {
+            return;
+        }
+        shell.setView(view);
+    },
+    onQuickCapture() {
+        if (!auth.isAuthenticated) {
+            return;
+        }
+        qc.show();
+    },
+});
 
 const viewTitle = computed(() => {
     const item = shell.navItems.find((i) => i.key === shell.activeView);

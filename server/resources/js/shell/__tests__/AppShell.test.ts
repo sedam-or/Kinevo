@@ -48,4 +48,24 @@ describe('AppShell', () => {
         await toggle.trigger('click');
         expect(shell.theme).toBe('dark');
     });
+
+    it('provides a skip-to-content link and semantic landmarks', () => {
+        const wrapper = mount(AppShell, { global: { plugins: [pinia] } });
+
+        const skip = wrapper.find('[data-testid="skip-link"]');
+        expect(skip.exists()).toBe(true);
+        expect(skip.attributes('href')).toBe('#main-content');
+        // Skip link is visually hidden until focused (bypass block target).
+        expect(skip.classes()).toContain('sr-only');
+
+        const main = wrapper.find('[data-testid="content-surface"]');
+        expect(main.element.tagName).toBe('MAIN');
+        expect(main.attributes('id')).toBe('main-content');
+
+        // Distinct aria-labels so both nav landmarks are distinguishable to AT.
+        const desktop = wrapper.find('[data-testid="desktop-nav"]');
+        const mobile = wrapper.find('[data-testid="mobile-nav"]');
+        expect(desktop.attributes('aria-label')).toBe('Primary');
+        expect(mobile.attributes('aria-label')).toBe('Primary mobile');
+    });
 });

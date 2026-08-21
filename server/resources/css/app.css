@@ -60,3 +60,35 @@
     --color-info: #7FA6E0;
     --color-focus: #EDEDEC;
 }
+
+/* Reduced motion (design.md §47). prefers-reduced-motion always wins over the
+   interaction language (§48): disable decorative transitions/transforms and
+   collapse large offset-shadow offsets while keeping opacity-based feedback. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0ms !important;
+    }
+    .kinevo-app-shell [class*='shadow-['] {
+        box-shadow: none !important;
+    }
+    [class*='active:translate'],
+    [class*='hover:-translate'],
+    [class*='hover:scale'] {
+        --tw-translate-x: 0 !important;
+        --tw-translate-y: 0 !important;
+        transform: none !important;
+    }
+}
+
+/* Visible focus everywhere (design.md §45, WCAG 2.2 2.4.7). Central fallback
+   so every keyboard-focusable control shows a clear focus ring even where a
+   component does not declare its own focus-visible style. Components may refine it. */
+:is(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-focus) !important;
+    outline-offset: 2px;
+}
