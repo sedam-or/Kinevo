@@ -2810,50 +2810,35 @@ Committed: see git log (TASK-154 knowledge E2E lifecycle journey).
 
 # TASK-155 — AI Golden Flows
 
-Verify:
+Status: DONE
+
+Requirements: SRS FR-52 (Goal Breakdown Proposal) / FR-60 (AI provider unavailable → app operational) / FR-61 (AI output validated, invalid → no mutation, 422 `AI_OUTPUT_INVALID`) / FR-62 (extracted tasks only created on accept) / AI rule (structured response → schema validation → human approval → transaction). Offline rule N/A; AI is untrusted input per the AI boundary.
+
+Implementation:
 
 ```text
-Goal
- ↓
-AI breakdown proposal
- ↓
-Preview
- ↓
-Accept
- ↓
-Milestones
+test ...... tests/Feature/E2E/AiGoldenFlowsTest.php — 7 focused golden-flow tests
+scope ..... every assertion targets the public API responses the UI renders; accepted
+            outcomes are re-checked through the public list/index endpoints (user-visible)
+flow 1 .... Goal → POST /goals/{id}/breakdown-proposals (ollama fake) → pending proposal
+            (goal_breakdown, 2 milestones) → GET /ai/proposals/{id} preview →
+            POST /ai/proposals/{id}/accept → GET /goals/{id}/milestones shows 2 milestones
+flow 2 .... Note → POST /ai/extract-tasks (note_id) → pending proposal (task_extraction, 2 tasks)
+            → preview → accept → GET /tasks shows 2 tasks
+flow 3 .... config ai.driver=disabled → create goal 201 + create task 201 still work;
+            /ai/status available=false; /ai/generate 503 AI_PROVIDER_UNAVAILABLE;
+            breakdown-proposals 503 AI_PROVIDER_UNAVAILABLE (graceful degradation)
+edge ...... malformed AI JSON → 422 AI_OUTPUT_INVALID, no proposal/milestones;
+            cross-user proposal → 404 on GET + accept, no milestones;
+            stale (rejected then accepted) proposal → 422, no milestones;
+            rejected proposal → decision rejected, no milestones/tasks
 ```
 
-and:
+Verification evidence: `php artisan test` 856 passed (2845 assertions); AiGoldenFlowsTest 7 passed (56 assertions); PHPStan 0 errors; Pint clean (581 files); npm audit 0 vulnerabilities; vue-tsc typecheck clean; `npm run build` OK.
 
-```text
-Note
- ↓
-Task extraction
- ↓
-Preview
- ↓
-Accept
- ↓
-Tasks
-```
+Changes: `server/tests/Feature/E2E/AiGoldenFlowsTest.php` (new E2E suite).
 
-and:
-
-```text
-AI unavailable
- ↓
-core app still works
-```
-
-Also verify:
-
-```text
-malformed AI JSON
-cross-user proposal
-stale proposal
-rejected proposal
-```
+Committed: see git log (TASK-155 AI golden flows E2E).
 
 ---
 
