@@ -3020,7 +3020,7 @@ consistency.
 
 AGENTS.md (UI/UX stabilization freeze section), CONTRIBUTING.md (PR rules §5
 freeze note), TASK.md Phase 16 (this record + Feature Hold List), commit
-`f3cf4c5`. The freeze remains in effect until TASK-R7 completes.
+`d9c964c`. The freeze remains in effect until TASK-R7 completes.
 
 Release Impact: NONE (governance process).
 
