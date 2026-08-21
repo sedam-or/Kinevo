@@ -22,6 +22,6 @@ function onInput(event: Event): void {
         :type="type"
         :value="model"
         @input="onInput"
-        class="border border-gray-400 dark:border-gray-500 rounded-sm px-3 py-2 text-sm bg-[var(--color-bg)] text-[var(--color-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus)]"
+        class="border border-border rounded-sm px-3 py-2 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
     />
 </template>

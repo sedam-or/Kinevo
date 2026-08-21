@@ -29,16 +29,18 @@ const rows = computed(() => [
 </script>
 
 <template>
-    <div v-if="isDev" class="fixed bottom-2 left-2 z-[800] max-w-xs text-xs border border-gray-700 bg-[#131313] text-gray-100 rounded-sm p-3 shadow-lg" data-testid="runtime-diagnostics">
-        <div class="flex items-center justify-between mb-2">
-            <strong class="uppercase tracking-wide text-[10px] opacity-70">Runtime diagnostics</strong>
-            <button type="button" class="underline opacity-70 hover:opacity-100" data-testid="diagnostics-refresh" @click="refresh">refresh</button>
-        </div>
-        <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+    <div v-if="isDev" class="fixed bottom-2 left-2" :style="{ zIndex: 'var(--z-critical-overlay)' }" data-testid="runtime-diagnostics">
+        <div class="max-w-xs text-xs border border-border bg-surface text-text-muted rounded-sm shadow-rest p-3">
+            <div class="flex items-center justify-between mb-2">
+                <strong class="uppercase tracking-wide text-xs opacity-70">Runtime diagnostics</strong>
+                <button type="button" class="underline opacity-70 hover:opacity-100" data-testid="diagnostics-refresh" @click="refresh">refresh</button>
+            </div>
+            <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
             <template v-for="row in rows" :key="row.k">
                 <dt class="opacity-60">{{ row.k }}</dt>
                 <dd class="font-mono break-all" data-testid="diagnostics-row">{{ row.v }}</dd>
             </template>
         </dl>
     </div>
+</div>
 </template>

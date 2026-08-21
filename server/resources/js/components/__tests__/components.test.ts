@@ -20,7 +20,8 @@ describe('KButton (design.md §51, §95)', () => {
 
     it('exposes the primary variant class and is disabled when asked', () => {
         const wrapper = mount(KButton, { props: { variant: 'primary', disabled: true } });
-        expect(wrapper.classes()).toContain('bg-[var(--color-primary)]');
+        expect(wrapper.classes()).toContain('bg-primary');
+        expect(wrapper.classes()).toContain('shadow-rest');
         expect((wrapper.element as HTMLButtonElement).disabled).toBe(true);
     });
 

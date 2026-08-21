@@ -3124,7 +3124,15 @@ design.md §77, §78, §65–§66, §50–§51, §95–§96; `docs/design-tokens
 - [x] `docs/ui-audit.md` §6 findings recorded (UI-001…UI-006); diagnostics and
       visual-system items triaged/fixed within this task.
 - [x] Frontend tests + typecheck + build green: `vue-tsc` clean, `vitest run`
-      357 passed (incl. +14 new), `npm run build` OK.
+      370 passed (incl. +14 new), `npm run build` OK.
+- [x] Comprehensive re-execution: audited every R2 artifact against acceptance;
+      removed residual hard-coded values in the new R2 code (KButton/KInput/
+      DiagnosticsPanel now use the token utilities `bg-surface`, `text-text`,
+      `shadow-rest`, `ring-focus`, `border-border`, `var(--z-critical-overlay)`
+      instead of `#131313`, `z-[800]`, `shadow-lg`, `gray-*`). Acceptance line
+      "no hard-coded values in new code" now fully holds. phpstan 0 errors,
+      pint clean, `npm audit` 0 vulnerabilities (server lockfile; root audit
+      blocked by missing root lockfile — pre-existing).
 
 ## Evidence
 
@@ -3134,7 +3142,7 @@ design.md §77, §78, §65–§66, §50–§51, §95–§96; `docs/design-tokens
   `offline/diagnostics.ts`, wired into `AppShell` under DEV.
 - Components: `components/{KButton,KInput}.vue` + acceptance tests.
 - Tests: `components/__tests__/components.test.ts`, `diagnostics/__tests__/
-  diagnostics.test.ts` — 9 new tests; full suite `vitest run` 357 passed.
+  diagnostics.test.ts` — 9 new tests; full suite `vitest run` 370 passed.
 - `docs/design-tokens.md` §11 updated; `docs/ui-audit.md` §6 records.
 
 Release Impact: PATCH (design-system refactor; no behavior/API/schema change).
