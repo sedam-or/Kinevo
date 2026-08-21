@@ -2774,20 +2774,37 @@ Committed: see git log (TASK-153 canvas E2E lifecycle journey).
 
 # TASK-154 — Knowledge E2E
 
-Verify:
+Status: DONE
+
+Requirements: FR-53 (Knowledge Item Lifecycle: title, rich content, versioning, search text, ownership) / FR-54 (Knowledge Links between Notes and Goals, Milestones, Programs, Tasks, Canvases) / NFR-14 (note saves versioned).
+
+Implementation:
 
 ```text
-create Note
-edit Note
-save
-search
-link Goal
-link Milestone
-link Program
-link Task
-create Canvas
-link Canvas
+test ...... tests/Feature/E2E/KnowledgeE2ETest.php — one sequential knowledge/note journey
+scope ..... every assertion targets the public API responses the UI renders (user-visible
+            payloads); no database assertions are used anywhere in the journey
+create .... POST /notes → 201, version 1
+edit ...... PATCH /notes/{id} document body (base_version 1) → version bumped
+save ...... PATCH /notes/{id} derived caches (base_version from edit) → version bumped;
+            reload GET confirms title + plain_text_cache persisted
+search .... GET /knowledge/search?q=research → 200, exactly the note returned
+link goal .. POST /goals → POST /notes/{id}/links target_type=goal
+link milestone POST /goals/{goalId}/milestones → POST /notes/{id}/links target_type=milestone
+link program POST /programs → POST /notes/{id}/links target_type=program
+link task .. POST /tasks (goal_id) → POST /notes/{id}/links target_type=task
+create canvas POST /canvases → 201
+link canvas  POST /notes/{id}/links target_type=canvas
+final ...... GET /notes/{id}/links → 5 links sorted [canvas,goal,milestone,program,task]
 ```
+
+Verification evidence: `php artisan test` 849 passed (2789 assertions); KnowledgeE2ETest 1 passed (35 assertions); PHPStan 0 errors; Pint clean (580 files); npm audit 0 vulnerabilities; vue-tsc typecheck clean; `npm run build` OK.
+
+Contract note (observed, not changed): `Note::withTitle` and `Note::withContent` each increment the version (Note.php:72, :88), so a single PATCH editing both title and content advances the version by 2. The E2E asserts monotonic version increases plus persisted field values rather than hardcoded numbers, so it stays deterministic and signals a contract change if the domain later increments by 1.
+
+Changes: `server/tests/Feature/E2E/KnowledgeE2ETest.php` (new E2E suite).
+
+Committed: see git log (TASK-154 knowledge E2E lifecycle journey).
 
 ---
 
