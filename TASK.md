@@ -2741,21 +2741,34 @@ Committed: see git log (TASK-152 scheduler simulation suite).
 
 # TASK-153 — Canvas E2E
 
-Verify:
+Status: DONE
+
+Requirements: FR-54 (knowledge links to Goal/Milestone/Program/Task/Canvas) / FR-55 (Canvas Lifecycle: create/read/update/archive) / FR-56 (Canvas Version Conflict Protection → 409 `CANVAS_VERSION_CONFLICT`) / FR-57 (offline Canvas mutations queueable + sync) / NFR-14 (canvas saves versioned). Offline rule: IndexedDB is queue/cache, server authoritative; the E2E verifies the server-side sync/version contract the client reconciles through.
+
+Implementation:
 
 ```text
-open canvas
-draw
-autosave
-reload
-offline edit
-reconnect
-sync
-version conflict
-read-only
-linked Goal
-linked Task
+test ...... tests/Feature/E2E/CanvasE2ETest.php — one sequential canvas lifecycle journey
+scope ..... every assertion targets the public API responses the UI renders (user-visible
+            payloads); no database assertions are used anywhere in the journey
+open ...... POST /canvases → 201, GET /canvases/{id} shows version 1 + null document
+draw ..... PUT /canvases/{id} scene_json (base_version 0) → v1, then v2
+autosave . same PUT path with incremented base_version
+reload ... GET restores v2 scene + 2 elements
+offline .. device B PUT (v2→v3) while device A is "away"
+reconnect  device A GET sees v3 (ellipse1) — server is source of truth
+sync ...... device A PUTs merged 3-element scene (v3→v4)
+conflict . device A PUT with stale base_version 3 → 409 (Canvas version conflict)
+read-only  POST /canvases/{id}/archive → 200, list excludes it, GET still shows archived_at
+link goal  POST /canvases/{id}/links target_type=goal → 201
+link task  POST /canvases/{id}/links target_type=task → 201; GET /links returns 2 (goal,task)
 ```
+
+Verification evidence: `php artisan test` 848 passed (2754 assertions); CanvasE2ETest 1 passed (40 assertions); PHPStan 0 errors; Pint clean (579 files); npm audit 0 vulnerabilities; vue-tsc typecheck clean; `npm run build` OK.
+
+Changes: `server/tests/Feature/E2E/CanvasE2ETest.php` (new E2E suite, untracked → added).
+
+Committed: see git log (TASK-153 canvas E2E lifecycle journey).
 
 ---
 
