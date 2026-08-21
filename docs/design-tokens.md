@@ -244,14 +244,22 @@ Compacts spacing scale by ~½ step while preserving legibility.
 
 ## 11. Relationship to existing frontend
 
-Current baseline (pre-R2):
+Baseline + R2 (TASK-R2, 2026-08-21):
 
-- `server/resources/css/app.css` — Tailwind v4 entry point.
-- `server/resources/js/shell/theme.ts` — `Light | Dark | System` persistence.
-- `server/resources/js/visualstate/VisualStateBadge.vue` — non-color state vehicle.
-
-R2 converts these to the token system defined here without changing component
-behavior; component behavior changes follow `docs/design.md` §97 ordering.
+- `server/resources/js/tokens/` — implemented token modules: `colors.ts`,
+  `spacing.ts`, `radius.ts`, `shadows.ts`, `typography.ts`, `motion.ts`,
+  `zindex.ts` + `index.ts` barrel. Light and dark palettes; `primary`
+  preserves the existing `#F53003` accent so adoption doesn't shift colors.
+- `server/resources/css/app.css` — Tailwind v4 `@theme` hydrates the semantic
+  colors (`--color-*`), radius, offset shadows, and z-index tokens as CSS
+  custom properties; `.dark` overrides apply the dark palette on the `.dark`
+  class set by `shell/theme.ts`.
+- `server/resources/js/components/` — component library v0: `KButton` (three
+  variants: primary/secondary/danger + ghost) and `KInput`. Remaining surfaces
+  migrate to the library in TASK-R3 (`docs/ui-audit.md` §8 duplication hunt).
+- `server/resources/js/diagnostics/` + `offline/diagnostics.ts` — dev-only
+  runtime diagnostics (design.md §78) rendered by `DiagnosticsPanel` under
+  `import.meta.env.DEV`; production builds drop it (design.md §36).
 
 ---
 

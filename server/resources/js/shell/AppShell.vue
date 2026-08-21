@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useShellStore } from './store';
 import { isShellView, type ShellView } from './navigation';
 import SyncStatusPanel from './SyncStatusPanel.vue';
+import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel.vue';
 
 const shell = useShellStore();
 
@@ -107,5 +108,8 @@ function cycleTheme(): void {
                 {{ item.label }}
             </a>
         </nav>
+
+        <!-- Dev-only runtime diagnostics (TASK-R2; dropped in production builds) -->
+        <DiagnosticsPanel />
     </div>
 </template>

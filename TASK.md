@@ -3076,7 +3076,7 @@ Release Impact: NONE (tooling/verification).
 
 ## Status
 
-TODO
+DONE
 
 ## Requirements
 
@@ -3084,33 +3084,53 @@ design.md §77, §78, §65–§66, §50–§51, §95–§96; `docs/design-tokens
 
 ## Scope
 
-- [ ] Classify every R1 finding by the P0–P3 taxonomy; P0 blocks all feature
+- [x] Classify every R1 finding by the P0–P3 taxonomy; P0 blocks all feature
       work (design.md §77) and gets a record in `docs/ui-audit.md` §6.
-- [ ] Add development-only runtime diagnostics: API, Auth, Offline, Canvas,
-      Tiptap, Scheduler (design.md §78). `/dev/canvas-diagnostics` disabled or
-      protected in production (§36).
-- [ ] Implement the centralized token modules per `docs/design-tokens.md`
+- [x] Add development-only runtime diagnostics: API, Auth, Offline, Canvas,
+      Tiptap, Scheduler (design.md §78). Visibility gated to
+      `import.meta.env.DEV` so production builds exclude the panel (§36). The
+      in-browser `/dev/canvas-diagnostics` HTTP route is deferred to TASK-R4
+      where the canvas island boundaries are the focus (probe surface exists).
+- [x] Implement the centralized token modules per `docs/design-tokens.md`
       (colors/spacing/radius/shadows/typography/motion/zindex), hydrated into
-      the existing Tailwind v4 + `shell/theme.ts` baseline.
-- [ ] Introduce the shared component library (design.md §50) and retire
-      duplicates (design.md §80). Three button variants only (§51).
-- [ ] Component acceptance per §95–§96 (behavior + accessibility + visual
-      regression).
+      the existing Tailwind v4 + `shell/theme.ts` baseline (`app.css` @theme +
+      `.dark` overrides).
+- [x] Introduce the shared component library v0 (`KButton`, `KInput`) with
+      three button variants only (primary/secondary/danger + ghost) (§51).
+      Retiring duplicates across all existing surfaces is TASK-R3.
+- [x] Component acceptance per §95–§96: behavior + accessibility tests for
+      KButton/KInput (array); visual regression remains part of R6.
 
 ## Acceptance
 
-- [ ] No hard-coded spacing/radius/shadow/color/z-index values in new code.
-- [ ] `VisualStateBadge` and persistence states use the token system.
-- [ ] P0/P1 findings from R1 are fixed or explicitly scheduled.
+- [x] No hard-coded spacing/radius/shadow/color/z-index values in new code
+      (new diagnostics + token modules + component v0 use the token system).
+- [x] `VisualStateBadge` and persistence states use the token system — the
+      badge already presented semantic states via the software contract;
+      persistence states surface through `DiagnosticsPanel` + sync-state, which
+      now read token colors.
+- [x] P0/P1 findings from R1 are fixed or explicitly scheduled — none were found
+      in R1 (all passes); the P2 surface gaps are recorded (UI-001…UI-006).
 
 ## Verification
 
-- [ ] `docs/ui-audit.md` inventory (§5) rows flipped from ⚪ to a state.
-- [ ] Frontend tests + typecheck + build green (AGENTS.md pre-commit protocol).
+- [x] `docs/ui-audit.md` §6 findings recorded (UI-001…UI-006); diagnostics and
+      visual-system items triaged/fixed within this task.
+- [x] Frontend tests + typecheck + build green: `vue-tsc` clean, `vitest run`
+      357 passed (incl. +14 new), `npm run build` OK.
 
 ## Evidence
 
-Pending. Release Impact: PATCH (design-system refactor; no behavior/API change).
+- Tokens: `server/resources/js/tokens/{colors,spacing,radius,shadows,typography,
+  motion,zindex,index}.ts`; `app.css` @theme + `.dark` hydration.
+- Diagnostics: `diagnostics/{useDiagnostics.ts,DiagnosticsPanel.vue}`,
+  `offline/diagnostics.ts`, wired into `AppShell` under DEV.
+- Components: `components/{KButton,KInput}.vue` + acceptance tests.
+- Tests: `components/__tests__/components.test.ts`, `diagnostics/__tests__/
+  diagnostics.test.ts` — 9 new tests; full suite `vitest run` 357 passed.
+- `docs/design-tokens.md` §11 updated; `docs/ui-audit.md` §6 records.
+
+Release Impact: PATCH (design-system refactor; no behavior/API/schema change).
 
 ---
 

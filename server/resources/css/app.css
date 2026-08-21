@@ -6,4 +6,57 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Kinevo design tokens (TASK-R2, docs/design-tokens.md) — light theme.
+       Tailwind v4 maps --color-* into utilities; dark values follow via the
+       .dark class overrides below. */
+    --color-bg: #FDFDFC;
+    --color-surface: #EDEDEC;
+    --color-surface-raised: #FFFFFF;
+    --color-text: #1b1b18;
+    --color-text-muted: #636361;
+    --color-border: #1b1b18;
+    --color-primary: #F53003;
+    --color-primary-contrast: #FFFFFF;
+    --color-success: #1D8A4E;
+    --color-warning: #B7730F;
+    --color-danger: #D20812;
+    --color-info: #2C5FA8;
+    --color-focus: #2C5FA8;
+
+    --radius-none: 0px;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+
+    --shadow-rest: 4px 4px 0 currentColor;
+    --shadow-hover: 6px 6px 0 currentColor;
+    --shadow-active: 2px 2px 0 currentColor;
+
+    --z-sticky: 100;
+    --z-dropdown: 200;
+    --z-popover: 300;
+    --z-drawer: 400;
+    --z-modal: 500;
+    --z-toast: 600;
+    --z-command-palette: 700;
+    --z-critical-overlay: 800;
+}
+
+/* Dark theme token overrides (docs/design-tokens.md §2.4). Applied on the
+   .dark class set by shell/theme.ts. */
+.dark {
+    --color-bg: #0a0a0a;
+    --color-surface: #131313;
+    --color-surface-raised: #1b1b18;
+    --color-text: #EDEDEC;
+    --color-text-muted: #A1A19C;
+    --color-border: #343430;
+    --color-primary: #F53003;
+    --color-primary-contrast: #FFFFFF;
+    --color-success: #3BB573;
+    --color-warning: #E8A13A;
+    --color-danger: #FF5A4E;
+    --color-info: #7FA6E0;
+    --color-focus: #EDEDEC;
 }

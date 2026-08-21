@@ -14,6 +14,14 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the UI/UX stabilization baseline (rescue R2, TASK-R2): centralized
+  design-token modules (`tokens/`: colors, spacing, radius, shadows,
+  typography, motion, z-index), CSS hydration into the Tailwind v4 theme with
+  light/dark palettes, a shared component library v0 (`KButton` with three
+  variants, `KInput`), and a dev-only runtime diagnostics panel (API / auth /
+  offline / sync / shell state) that is excluded from production builds. The
+  R1 findings were classified into the P0–P3 taxonomy in `docs/ui-audit.md`.
+  No user-visible behavior change.
 - Added the UI/UX design-system stabilization baseline (rescue Phase R0–R7):
   `docs/design.md` rewritten as the refined Neo-Brutalism product-experience
   specification (Today-first execution surface, explainable automation,
