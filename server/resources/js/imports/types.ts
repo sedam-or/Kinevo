@@ -6,12 +6,21 @@ export interface KrsImportRow {
     location?: string | null;
 }
 
+export interface KrsImportReportItem {
+    line?: string;
+    course?: string | null;
+    error?: string;
+    warning?: string;
+}
+
 export interface KrsImport {
     id: number;
     filename: string;
     status: 'pending' | 'confirmed' | 'discarded';
     confidence: number | null;
     rows: KrsImportRow[];
+    errors: KrsImportReportItem[];
+    warnings: KrsImportReportItem[];
     created_at?: string | null;
 }
 

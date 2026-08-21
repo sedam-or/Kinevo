@@ -12,6 +12,11 @@ use Throwable;
  * range, then maps them to day/time/course/location. Confidence reflects how
  * much of the extracted text was understood; a low-confidence result is treated
  * as a parse failure and the user falls back to manual entry.
+ *
+ * TASK-144: nothing is silently dropped. Lines that look like schedule entries
+ * (day keyword) but cannot be fully parsed are reported as per-line errors, and
+ * exact duplicate rows are reported as warnings — the preview always shows the
+ * full picture before anything is persisted.
  */
 final readonly class KrsPdfParser
 {
@@ -30,11 +35,14 @@ final readonly class KrsPdfParser
     ) {}
 
     /**
-     * @return array{rows: array<int, array<string, mixed>>, confidence: float}
+     * @return array{rows: array<int, array<string, mixed>>, errors: array<int, array<string, mixed>>, warnings: array<int, array<string, mixed>>, confidence: float}
      */
     public function parse(string $pdfContents): array
     {
         $rows = [];
+        $errors = [];
+        $warnings = [];
+        $seen = [];
         $matchedLines = 0;
         $totalLines = 0;
 
@@ -42,7 +50,7 @@ final readonly class KrsPdfParser
             $pdf = $this->parser->parseContent($pdfContents);
             $text = $pdf->getText();
         } catch (Throwable) {
-            return ['rows' => [], 'confidence' => 0.0];
+            return ['rows' => [], 'errors' => [], 'warnings' => [], 'confidence' => 0.0];
         }
 
         $lines = preg_split('/\R+/u', trim($text)) ?: [];
@@ -55,15 +63,61 @@ final readonly class KrsPdfParser
             $totalLines++;
 
             $row = $this->extractRow($line);
-            if ($row !== null) {
-                $rows[] = $row;
-                $matchedLines++;
+            if ($row === null) {
+                if ($this->looksLikeScheduleLine($line)) {
+                    $errors[] = [
+                        'line' => mb_substr($line, 0, 120),
+                        'error' => 'Could not be read as a schedule row (expected a day, HH:MM–HH:MM time range, and course name).',
+                    ];
+                }
+
+                continue;
             }
+
+            if ($row['end_time'] <= $row['start_time']) {
+                $errors[] = [
+                    'line' => mb_substr($line, 0, 120),
+                    'error' => "Invalid time range ({$row['start_time']}–{$row['end_time']}) — end must be after start.",
+                ];
+
+                continue;
+            }
+
+            $key = mb_strtolower($row['day'].'|'.$row['start_time'].'|'.$row['end_time'].'|'.$row['course']);
+            if (isset($seen[$key])) {
+                $warnings[] = [
+                    'course' => $row['course'],
+                    'warning' => 'Duplicate entry skipped — an identical row was already staged.',
+                ];
+
+                continue;
+            }
+            $seen[$key] = true;
+
+            $rows[] = $row;
+            $matchedLines++;
         }
 
         $confidence = $totalLines > 0 ? round($matchedLines / $totalLines, 4) : 0.0;
 
-        return ['rows' => $rows, 'confidence' => $confidence];
+        return ['rows' => $rows, 'errors' => $errors, 'warnings' => $warnings, 'confidence' => $confidence];
+    }
+
+    /**
+     * A line that mentions a day keyword is an attempted schedule entry; if it
+     * could not be parsed it must be surfaced instead of silently dropped.
+     */
+    private function looksLikeScheduleLine(string $line): bool
+    {
+        $lower = mb_strtolower($line);
+
+        foreach (self::DAYS as $key => $_dayNumber) {
+            if (str_contains($lower, $key)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

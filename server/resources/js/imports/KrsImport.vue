@@ -114,6 +114,26 @@ function editingRows(): KrsImportRow[] {
                 <span class="text-xs text-gray-500 dark:text-gray-400">Confidence: {{ confidenceLabel(staged.confidence) }} · {{ staged.rows.length }} rows</span>
             </div>
 
+            <!-- Per-line parse errors (TASK-144) -->
+            <div v-if="staged.errors.length > 0" class="mb-2 text-sm" data-testid="krs-import-errors">
+                <p class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Skipped — could not be read ({{ staged.errors.length }})</p>
+                <ul class="space-y-1">
+                    <li v-for="(e, index) in staged.errors" :key="`error-${index}`" class="text-[#F53003]" data-testid="krs-import-error-item">
+                        {{ e.line ?? 'Line' }} — {{ e.error }}
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Per-row warnings (TASK-144) -->
+            <div v-if="staged.warnings.length > 0" class="mb-2 text-sm" data-testid="krs-import-warnings">
+                <p class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Noted ({{ staged.warnings.length }})</p>
+                <ul class="space-y-1">
+                    <li v-for="(w, index) in staged.warnings" :key="`warning-${index}`" class="text-amber-600 dark:text-amber-400" data-testid="krs-import-warning-item">
+                        {{ w.course ?? 'Row' }} — {{ w.warning }}
+                    </li>
+                </ul>
+            </div>
+
             <table class="w-full text-sm border-collapse" data-testid="krs-import-table">
                 <thead>
                     <tr class="text-left text-xs text-gray-500 dark:text-gray-400">

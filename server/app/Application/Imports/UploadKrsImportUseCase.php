@@ -43,6 +43,8 @@ final readonly class UploadKrsImportUseCase
             $file->getClientOriginalName() ?: 'krs.pdf',
             $result['confidence'],
             $result['rows'],
+            $result['errors'],
+            $result['warnings'],
         ));
     }
 }

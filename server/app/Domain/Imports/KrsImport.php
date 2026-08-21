@@ -9,6 +9,10 @@ use InvalidArgumentException;
  * A staged KRS PDF import (FR-24). Holds parsed schedule rows in a pending
  * staging state; rows are only persisted to Hard Landscape after explicit user
  * confirmation. Never silently overwrites an existing schedule.
+ *
+ * TASK-144: per-line validation errors and warnings are staged alongside the
+ * rows so the preview shows the full picture — invalid data is never imported
+ * silently.
  */
 final class KrsImport
 {
@@ -26,6 +30,8 @@ final class KrsImport
 
     /**
      * @param  array<int, array<string, mixed>>  $rows
+     * @param  array<int, array<string, mixed>>  $errors  per-line parse errors (TASK-144)
+     * @param  array<int, array<string, mixed>>  $warnings  per-row warnings (TASK-144)
      */
     public function __construct(
         public readonly ?int $id,
@@ -34,6 +40,8 @@ final class KrsImport
         public readonly string $status,
         public readonly ?float $confidence,
         public readonly array $rows,
+        public readonly array $errors = [],
+        public readonly array $warnings = [],
         public readonly ?CarbonImmutable $createdAt = null,
     ) {
         if (! in_array($status, self::STATUSES, true)) {
@@ -43,12 +51,16 @@ final class KrsImport
 
     /**
      * @param  array<int, array<string, mixed>>  $rows
+     * @param  array<int, array<string, mixed>>  $errors
+     * @param  array<int, array<string, mixed>>  $warnings
      */
     public static function stage(
         int $userId,
         string $filename,
         ?float $confidence,
         array $rows,
+        array $errors = [],
+        array $warnings = [],
     ): self {
         return new self(
             null,
@@ -57,23 +69,25 @@ final class KrsImport
             self::STATUS_PENDING,
             $confidence,
             $rows,
+            $errors,
+            $warnings,
             CarbonImmutable::now(),
         );
     }
 
     public function withId(int $id): self
     {
-        return new self($id, $this->userId, $this->filename, $this->status, $this->confidence, $this->rows, $this->createdAt);
+        return new self($id, $this->userId, $this->filename, $this->status, $this->confidence, $this->rows, $this->errors, $this->warnings, $this->createdAt);
     }
 
     public function confirmed(): self
     {
-        return new self($this->id, $this->userId, $this->filename, self::STATUS_CONFIRMED, $this->confidence, $this->rows, $this->createdAt);
+        return new self($this->id, $this->userId, $this->filename, self::STATUS_CONFIRMED, $this->confidence, $this->rows, $this->errors, $this->warnings, $this->createdAt);
     }
 
     public function discarded(): self
     {
-        return new self($this->id, $this->userId, $this->filename, self::STATUS_DISCARDED, $this->confidence, $this->rows, $this->createdAt);
+        return new self($this->id, $this->userId, $this->filename, self::STATUS_DISCARDED, $this->confidence, $this->rows, $this->errors, $this->warnings, $this->createdAt);
     }
 
     public function isPending(): bool
@@ -92,6 +106,8 @@ final class KrsImport
             'status' => $this->status,
             'confidence' => $this->confidence,
             'rows' => $this->rows,
+            'errors' => $this->errors,
+            'warnings' => $this->warnings,
             'created_at' => $this->createdAt?->toIso8601String(),
         ];
     }

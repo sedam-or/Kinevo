@@ -166,6 +166,8 @@ describe('KRS import', () => {
                 rows: [
                     { day: 'senin', start_time: '07:30', end_time: '09:00', course: 'Matematika Ruang A', location: null },
                 ],
+                errors: [{ line: 'SENIN Matematika tanpa jam', error: 'Could not be read as a schedule row (expected a day, HH:MM–HH:MM time range, and course name).' }],
+                warnings: [{ course: 'Matematika Ruang A', warning: 'Duplicate entry skipped — an identical row was already staged.' }],
                 created_at: '2026-08-20T00:00:00+00:00',
             },
         });
@@ -178,9 +180,11 @@ describe('KRS import', () => {
         expect(wrapper.find('[data-testid="krs-import-preview"]').exists()).toBe(true);
         expect(wrapper.findAll('[data-testid="krs-import-row"]')).toHaveLength(1);
         expect(wrapper.get('[data-testid="krs-import-row"]').text()).toContain('Matematika Ruang A');
+        expect(wrapper.get('[data-testid="krs-import-error-item"]').text()).toContain('Could not be read');
+        expect(wrapper.get('[data-testid="krs-import-warning-item"]').text()).toContain('Duplicate entry skipped');
 
         vi.mocked(importApi.confirm).mockResolvedValue({
-            import: { id: 7, filename: 'krs.pdf', status: 'confirmed', confidence: 0.5, rows: [], created_at: '2026-08-20T00:00:00+00:00' },
+            import: { id: 7, filename: 'krs.pdf', status: 'confirmed', confidence: 0.5, rows: [], errors: [], warnings: [], created_at: '2026-08-20T00:00:00+00:00' },
         });
         await wrapper.find('[data-testid="krs-import-confirm"]').trigger('click');
         await flushPromises();
@@ -199,6 +203,7 @@ describe('ICS import', () => {
         await flushPromises();
 
         expect(wrapper.find('[data-testid="ics-import"]').exists()).toBe(true);
+        expect(wrapper.get('[data-testid="ics-import-fallback"]').text()).toContain('manually as Hard Landscape');
 
         vi.mocked(importApi.uploadIcs).mockResolvedValue({
             import: {

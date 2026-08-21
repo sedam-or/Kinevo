@@ -87,6 +87,9 @@ function conflictLabel(row: IcsImportRow): string {
                 {{ busy ? 'Parsing…' : 'Choose .ics' }}
                 <input type="file" accept=".ics,.ical" class="hidden" data-testid="ics-import-file" :disabled="busy" @change="onFileSelected" />
             </label>
+            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="ics-import-fallback">
+                No .ics file available? You can add events manually as Hard Landscape instead.
+            </p>
         </div>
 
         <div v-if="error" class="mt-2 text-sm text-[#F53003]" role="alert" data-testid="ics-import-error">

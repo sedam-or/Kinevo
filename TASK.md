@@ -2601,18 +2601,42 @@ Committed: see git log (TASK-143 iCal export, backend + frontend + gates).
 
 # TASK-144 — Import Preview / Fallback
 
-Every import feature MUST have:
+Status: DONE
+
+Requirements: FR-24 / FR-30 cross-cutting contract (TASK-144) — every import feature MUST provide Preview, Validation Errors, Warnings, Accept, Cancel, and Manual Fallback; invalid data is never imported silently.
+
+Audit result (both import features):
 
 ```text
-Preview
-Validation Errors
-Warnings
-Accept
-Cancel
-Manual Fallback
+element ............ KRS PDF import (FR-24) ... iCal import (FR-30)
+Preview ............ already present ...... already present
+Validation Errors .. GAP → closed .......... already present (per-event)
+Warnings ........... GAP → closed .......... already present (per-event)
+Accept ............. already present ...... already present
+Cancel ............. already present ...... already present
+Manual Fallback .... already present ...... GAP → closed (note added)
 ```
 
-Never silently import invalid data.
+Implementation:
+
+```text
+krs parser . KrsPdfParser now reports per-line errors for schedule-like lines that cannot be
+             parsed (day keyword without readable time/course) and rejects rows whose end time
+             is not after the start time as errors — nothing is silently dropped; exact
+             duplicate rows are reported as warnings and skipped
+krs domain . KrsImport stages errors[] + warnings[] alongside rows (toArray exposes them);
+             EloquentKrsImportRepository persists {rows, errors, warnings} in the imports JSON
+             payload with a legacy-shape fallback for pre-TASK-144 records
+ics ui ..... IcsImport.vue shows the manual-fallback note ("add events manually as Hard
+             Landscape instead") mirroring the KRS import panel
+openapi .... KrsImport schema gains errors/warnings (+KrsImportReportItem)
+```
+
+Verification evidence: `php artisan test` 832 passed (2588 assertions) on PostgreSQL and SQLite; PHPStan 0 errors; Pint clean; Vitest 343 passed (51 files); vue-tsc typecheck clean; `npm run build` OK; npm audit 0 vulnerabilities; repo gates PASS (validate-repo, secrets, doc-links, openapi 111 paths, changelog, version).
+
+Changes: `app/Application/Imports/KrsPdfParser.php` (error/warning reporting); `app/Domain/Imports/KrsImport.php`; `app/Infrastructure/Imports/EloquentKrsImportRepository.php`; `app/Application/Imports/UploadKrsImportUseCase.php`; `docs/api/openapi.yaml`. Frontend: `imports/types.ts`, `imports/KrsImport.vue` (error/warning report sections), `imports/IcsImport.vue` (manual-fallback note). Tests: `KrsImportApiTest` +3 (unreadable-line errors incl. preview + confirm scoping, duplicate-row warnings, invalid-time-range errors) + ScheduleViews.test.ts assertions (KRS error/warning items render, iCal fallback note visible).
+
+Committed: see git log (TASK-144 import preview/fallback contract closure).
 
 ---
 

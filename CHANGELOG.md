@@ -14,6 +14,13 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Completed the import preview/fallback contract (TASK-144): the KRS PDF import
+  now reports unreadable schedule-like lines as per-line validation errors and
+  flags duplicate rows as warnings in the preview — nothing is silently dropped,
+  and rows with invalid time ranges are never staged. The iCal import panel now
+  shows the manual-fallback note. Both import features (KRS PDF, iCal) now fully
+  satisfy the Preview / Validation Errors / Warnings / Accept / Cancel / Manual
+  Fallback contract.
 - Added iCalendar export (TASK-143): the Schedule view can now download the
   selected date range as a valid .ics file (`/schedule/export/ics`). Scheduled
   tasks and one-time / permanent Hard Landscape events become calendar events;

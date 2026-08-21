@@ -3953,9 +3953,16 @@ components:
         end_time: {type: string, example: '09:00'}
         course: {type: string}
         location: {type: string, nullable: true}
+    KrsImportReportItem:
+      type: object
+      properties:
+        line: {type: string, description: Source PDF line (truncated) that produced the report}
+        course: {type: string, nullable: true}
+        error: {type: string}
+        warning: {type: string}
     KrsImport:
       type: object
-      required: [id, filename, status, confidence, rows, created_at]
+      required: [id, filename, status, confidence, rows, errors, warnings, created_at]
       properties:
         id: {type: integer}
         filename: {type: string}
@@ -3964,6 +3971,14 @@ components:
         rows:
           type: array
           items: {$ref: '#/components/schemas/KrsImportRow'}
+        errors:
+          type: array
+          description: Per-line parse errors (TASK-144 — unreadable schedule-like lines are reported, never silently dropped)
+          items: {$ref: '#/components/schemas/KrsImportReportItem'}
+        warnings:
+          type: array
+          description: Per-row warnings (TASK-144 — e.g. duplicate entries)
+          items: {$ref: '#/components/schemas/KrsImportReportItem'}
         created_at: {type: string, format: date-time}
     IcsImportRow:
       type: object

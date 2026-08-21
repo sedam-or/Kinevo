@@ -150,6 +150,72 @@ class KrsImportApiTest extends TestCase
         $this->assertCount(0, app(HardLandscapeRepository::class)->listForUser($user->id));
     }
 
+    public function test_upload_reports_unreadable_schedule_lines_as_errors(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('owner')->plainTextToken;
+
+        $response = $this->withToken($token)->post('/api/v1/imports/krs-pdf', [
+            'file' => $this->pdfUpload('krs.pdf', [
+                'SENIN 07.30-09.00 Matematika Ruang A',
+                'SENIN Matematika tanpa jam',
+            ]),
+        ])->assertStatus(201);
+
+        // The readable row is staged; the schedule-like but unreadable line is
+        // reported (TASK-144) instead of being silently dropped.
+        $response->assertJsonCount(1, 'import.rows')
+            ->assertJsonCount(1, 'import.errors')
+            ->assertJsonPath('import.errors.0.line', 'SENIN Matematika tanpa jam')
+            ->assertJsonPath('import.warnings', []);
+
+        // The preview exposes the same report.
+        $importId = $response->json('import.id');
+        $this->withToken($token)->get("/api/v1/imports/{$importId}")
+            ->assertOk()
+            ->assertJsonCount(1, 'import.errors');
+
+        // Confirm persists only the staged rows.
+        $this->withToken($token)->post("/api/v1/imports/{$importId}/confirm")->assertOk();
+        $this->assertCount(1, app(HardLandscapeRepository::class)->listForUser($user->id));
+    }
+
+    public function test_upload_flags_duplicate_rows_as_warnings(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('owner')->plainTextToken;
+
+        $this->withToken($token)->post('/api/v1/imports/krs-pdf', [
+            'file' => $this->pdfUpload('krs.pdf', [
+                'SENIN 07.30-09.00 Matematika Ruang A',
+                'Senin 07.30-09.00 Matematika Ruang A',
+            ]),
+        ])->assertStatus(201)
+            ->assertJsonCount(1, 'import.rows')
+            ->assertJsonCount(1, 'import.warnings')
+            ->assertJsonPath('import.warnings.0.course', 'Matematika Ruang A')
+            ->assertJsonPath('import.errors', []);
+    }
+
+    public function test_upload_rejects_invalid_time_range_as_error(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('owner')->plainTextToken;
+
+        $response = $this->withToken($token)->post('/api/v1/imports/krs-pdf', [
+            'file' => $this->pdfUpload('krs.pdf', [
+                'SENIN 07.30-09.00 Matematika Ruang A',
+                'SELASA 09.00-07.30 Backwards Jam',
+            ]),
+        ])->assertStatus(201);
+
+        // The backwards row is not staged; it is reported instead.
+        $response->assertJsonCount(1, 'import.rows')
+            ->assertJsonCount(1, 'import.errors');
+        $this->assertStringContainsString('Invalid time range', (string) $response->json('import.errors.0.error'));
+        $this->assertSame('Matematika Ruang A', $response->json('import.rows.0.course'));
+    }
+
     public function test_imports_are_scoped_to_owner(): void
     {
         $owner = User::factory()->create();
