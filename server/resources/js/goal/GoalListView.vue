@@ -126,10 +126,21 @@ function workloadLabel(w: string): string {
                     </button>
                     <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5">{{ statusLabel(goal.status) }}</span>
                 </div>
+                <!-- One dominant progress visualization per goal card (design.md §17) -->
+                <div class="mt-2" data-testid="goal-progress-bar" role="img" :aria-label="`${goal.progress}% complete`">
+                    <div class="h-2 rounded-sm bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                        <div
+                            class="h-full bg-primary transition-all"
+                            :style="{ width: `${Math.min(100, goal.progress)}%` }"
+                        ></div>
+                    </div>
+                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        <span data-testid="goal-progress-value">{{ goal.progress }}%</span>
+                        <span v-if="goal.target_date"> · due {{ goal.target_date }}</span>
+                    </div>
+                </div>
                 <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     {{ horizonLabel(goal.horizon) }}
-                    <span v-if="goal.target_date"> · due {{ goal.target_date }}</span>
-                    <span v-if="goal.progress > 0"> · {{ goal.progress }}%</span>
                 </div>
             </article>
         </section>

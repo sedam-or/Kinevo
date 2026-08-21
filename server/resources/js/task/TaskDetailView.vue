@@ -56,11 +56,55 @@ function statusLabel(status: string): string {
     return status.replace(/_/g, ' ');
 }
 
+/** The one recommended next action per task state (design.md §19). */
+const PRIMARY_ACTION: Partial<Record<TaskStatusValue, TaskStatusValue>> = {
+    backlog: 'scheduled',
+    scheduled: 'in_progress',
+    in_progress: 'completed',
+    partial: 'continued',
+    continued: 'in_progress',
+    missed: 'scheduled',
+    conflict: 'in_progress',
+};
+
+/** A more executable label for the recommended transition (design.md §19). */
+const PRIMARY_LABEL: Partial<Record<TaskStatusValue, string>> = {
+    scheduled: 'Schedule',
+    in_progress: 'Start',
+    completed: 'Complete',
+    continued: 'Continue',
+};
+
 function transitionsFor(task: Task | null): TaskStatusValue[] {
     if (!task) {
         return [];
     }
     return TASK_TRANSITIONS[task.status as TaskStatusValue] ?? [];
+}
+
+function primaryActionFor(task: Task | null): TaskStatusValue | null {
+    if (!task) {
+        return null;
+    }
+    const status = task.status as TaskStatusValue;
+    const preferred = PRIMARY_ACTION[status];
+    if (preferred && transitionsFor(task).includes(preferred)) {
+        return preferred;
+    }
+    // No firmly recommended action; fall back to the first valid transition.
+    return transitionsFor(task)[0] ?? null;
+}
+
+function primaryLabelFor(status: TaskStatusValue | null): string {
+    if (!status) {
+        return '';
+    }
+    return PRIMARY_LABEL[status] ?? statusLabel(status);
+}
+
+function secondaryActionsFor(task: Task | null): TaskStatusValue[] {
+    const primary = primaryActionFor(task);
+    return transitionsFor(task).filter((s) => s !== primary);
 }
 
 async function saveEdit(): Promise<void> {
@@ -153,27 +197,34 @@ async function promote(subtaskId: number): Promise<void> {
             </form>
         </section>
 
-        <!-- Status transitions + partial completion -->
-        <section v-if="tasks.current" class="flex gap-2 flex-wrap" data-testid="task-actions">
-            <button
-                v-for="next in transitionsFor(tasks.current)"
-                :key="next"
-                type="button"
-                class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1"
-                :data-testid="`task-to-${next}`"
-                @click="applyStatus(next)"
-            >
-                {{ statusLabel(next) }}
-            </button>
-            <button
+        <!-- Status transitions + partial completion (design.md §19: one primary action per state) -->
+        <section v-if="tasks.current" class="flex flex-wrap items-center gap-2" data-testid="task-actions">
+            <template v-if="primaryActionFor(tasks.current)">
+                <KButton
+                    variant="primary"
+                    :data-testid="`task-to-${primaryActionFor(tasks.current)}`"
+                    @click="applyStatus(primaryActionFor(tasks.current) as TaskStatusValue)"
+                >
+                    {{ primaryLabelFor(primaryActionFor(tasks.current)) }}
+                </KButton>
+                <KButton
+                    v-for="next in secondaryActionsFor(tasks.current)"
+                    :key="next"
+                    variant="secondary"
+                    :data-testid="`task-to-${next}`"
+                    @click="applyStatus(next)"
+                >
+                    {{ statusLabel(next) }}
+                </KButton>
+            </template>
+            <KButton
                 v-if="tasks.current.status === 'in_progress'"
-                type="button"
-                class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1"
+                variant="secondary"
                 data-testid="task-partial-complete"
                 @click="partialComplete"
             >
                 Partial complete
-            </button>
+            </KButton>
         </section>
 
         <!-- Subtasks -->

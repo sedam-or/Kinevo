@@ -63,8 +63,36 @@ function goalStatusActions(goal: Goal | null): string[] {
     return actions[goal.status] ?? [];
 }
 
-const sortedMilestones = () =>
-    [...goals.milestones].sort((a, b) => a.sequence - b.sequence);
+function sortedMilestones() {
+    return [...goals.milestones].sort((a, b) => a.sequence - b.sequence);
+}
+
+/** Roadmap glyph per milestone state (design.md §39: ✓ done, ● active, ○ planned). */
+function milestoneGlyph(status: string): string {
+    if (status === 'completed') {
+        return '✓';
+    }
+    if (status === 'active') {
+        return '●';
+    }
+    if (status === 'dropped' || status === 'blocked') {
+        return '✕';
+    }
+    return '○';
+}
+
+function milestoneGlyphEmphasis(status: string): string {
+    if (status === 'completed') {
+        return 'text-[var(--color-success)]';
+    }
+    if (status === 'active') {
+        return 'text-[var(--color-info)]';
+    }
+    if (status === 'dropped' || status === 'blocked') {
+        return 'text-[var(--color-danger)]';
+    }
+    return 'text-text-muted';
+}
 </script>
 
 <template>
@@ -90,10 +118,24 @@ const sortedMilestones = () =>
             </section>
 
             <!-- Deadline / Progress -->
-            <section class="flex gap-4 text-sm" data-testid="goal-meta">
-                <span class="rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-1">Horizon: {{ goals.currentGoal.horizon }}</span>
-                <span v-if="goals.currentGoal.target_date" class="rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-1">Deadline: {{ goals.currentGoal.target_date }}</span>
-                <span class="rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-1" data-testid="goal-progress">Progress: {{ goals.currentGoal.progress }}%</span>
+            <section data-testid="goal-meta">
+                <div class="flex flex-wrap gap-2 text-sm">
+                    <span class="rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-1">Horizon: {{ goals.currentGoal.horizon }}</span>
+                    <span v-if="goals.currentGoal.target_date" class="rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-1">Deadline: {{ goals.currentGoal.target_date }}</span>
+                </div>
+                <!-- One dominant progress visualization (design.md §17, §39:
+                     milestone roadmap preferred over multiple rings). -->
+                <div class="mt-2" data-testid="goal-progress-bar" role="img" :aria-label="`${goals.currentGoal.progress}% complete`">
+                    <div class="h-2 rounded-sm bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                        <div
+                            class="h-full bg-[var(--color-primary)] transition-all"
+                            :style="{ width: `${Math.min(100, goals.currentGoal.progress)}%` }"
+                        ></div>
+                    </div>
+                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        <span data-testid="goal-progress">Progress: {{ goals.currentGoal.progress }}%</span>
+                    </div>
+                </div>
             </section>
 
             <!-- Status actions -->
@@ -122,7 +164,14 @@ const sortedMilestones = () =>
                 <ol class="relative border-l border-gray-200 dark:border-gray-700 ml-2 space-y-4" data-testid="milestone-timeline">
                     <li v-for="ms in sortedMilestones()" :key="ms.id" class="ml-4" data-testid="milestone-item">
                         <div class="flex items-center justify-between">
-                            <span class="font-medium text-sm">{{ ms.title }}</span>
+                            <span class="flex items-center gap-2">
+                                <span
+                                    class="text-sm"
+                                    :class="milestoneGlyphEmphasis(ms.status)"
+                                    :aria-label="`${statusLabel(ms.status)}`"
+                                >{{ milestoneGlyph(ms.status) }}</span>
+                                <span class="font-medium text-sm">{{ ms.title }}</span>
+                            </span>
                             <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5">{{ statusLabel(ms.status) }}</span>
                         </div>
                         <div class="text-xs text-gray-600 dark:text-gray-400">

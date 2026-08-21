@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TiptapEditorAdapter } from '../TiptapEditorAdapter';
 import type { EditorDocument } from '../types';
+import type { Editor } from '@tiptap/core';
+
+/** Select-all helper that reaches the private editor field (test-only). */
+function selectAllText(adapter: TiptapEditorAdapter): void {
+    const editor = (adapter as unknown as { editor: Editor }).editor;
+    editor.commands.selectAll();
+    editor.commands.focus('start');
+}
 
 function sampleDoc(): EditorDocument {
     return {
@@ -151,5 +159,45 @@ describe('TiptapEditorAdapter', () => {
         adapter.destroy();
         adapter.flush();
         expect(notified).toBe(0);
+    });
+
+    it('runCommand applies bold and reports it active at the selection', () => {
+        const adapter = new TiptapEditorAdapter({ element });
+        adapter.load(sampleDoc());
+        selectAllText(adapter);
+
+        adapter.runCommand({ type: 'bold' });
+        expect(adapter.isCommandActive({ type: 'bold' })).toBe(true);
+
+        adapter.runCommand({ type: 'bold' });
+        expect(adapter.isCommandActive({ type: 'bold' })).toBe(false);
+        adapter.destroy();
+    });
+
+    it('runCommand toggles a heading and reports the level active', () => {
+        const adapter = new TiptapEditorAdapter({ element });
+        adapter.load(sampleDoc());
+        selectAllText(adapter);
+
+        adapter.runCommand({ type: 'heading', level: 2 });
+        expect(adapter.isCommandActive({ type: 'heading', level: 2 })).toBe(true);
+
+        adapter.runCommand({ type: 'heading', level: null });
+        expect(adapter.isCommandActive({ type: 'heading', level: null })).toBe(true);
+        adapter.destroy();
+    });
+
+    it('runCommand toggles task list and bullet list nodes', () => {
+        const adapter = new TiptapEditorAdapter({ element });
+        adapter.load(sampleDoc());
+        const editor = (adapter as unknown as { editor: Editor }).editor;
+        editor.commands.focus('start');
+
+        adapter.runCommand({ type: 'taskList' });
+        expect(adapter.isCommandActive({ type: 'taskList' })).toBe(true);
+
+        adapter.runCommand({ type: 'bulletList' });
+        expect(adapter.isCommandActive({ type: 'bulletList' })).toBe(true);
+        adapter.destroy();
     });
 });

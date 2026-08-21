@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import EditorHost from '../EditorHost.vue';
-import type { EditorAdapter, EditorChange, EditorDocument, EditorTheme, Unsubscribe } from '../types';
+import type { EditorAdapter, EditorChange, EditorDocument, EditorTheme, EditorToolbarCommand, Unsubscribe } from '../types';
 
 function fakeAdapter(): EditorAdapter & { loaded: EditorDocument | null; readonly: boolean; theme: string } {
     const listeners = new Set<(change: EditorChange) => void>();
@@ -35,6 +35,12 @@ function fakeAdapter(): EditorAdapter & { loaded: EditorDocument | null; readonl
         },
         flush(): void {
             listeners.forEach((l) => l({ document: { type: 'doc' }, derived: { markdown: '', plainText: '' } }));
+        },
+        runCommand(_command: EditorToolbarCommand): void {
+            /* no-op fake */
+        },
+        isCommandActive(_command: EditorToolbarCommand): boolean {
+            return false;
         },
         destroy(): void {
             listeners.clear();
@@ -76,5 +82,25 @@ describe('EditorHost', () => {
         await flushPromises();
         expect(adapter.readonly).toBe(true);
         expect(adapter.theme).toBe('dark');
+    });
+
+    it('renders the minimal §31 toolbar only when requested and editable', async () => {
+        const adapter = fakeAdapter();
+        const wrapper = mount(EditorHost, {
+            props: { document: null, toolbar: true, adapterFactory: () => adapter },
+        });
+        await flushPromises();
+        expect(wrapper.find('[data-testid="editor-toolbar"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="toolbar-b"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="toolbar-tasks"]').exists()).toBe(true);
+    });
+
+    it('omits the toolbar when readOnly is set', async () => {
+        const adapter = fakeAdapter();
+        const wrapper = mount(EditorHost, {
+            props: { document: null, readOnly: true, toolbar: true, adapterFactory: () => adapter },
+        });
+        await flushPromises();
+        expect(wrapper.find('[data-testid="editor-toolbar"]').exists()).toBe(false);
     });
 });

@@ -45,14 +45,21 @@ a record (format §6).
 Scoring per surface uses the `docs/design.md` §70 design-QA dimensions. Status
 legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ clear`.
 
+> 2026-08-22 (TASK-R3): Today capacity became a load bar with click-reveal (§22);
+> a lightweight adaptive-context check-in landed (§23); a notification center with
+> Unread/Today/Earlier groups was wired into the topbar (§28–§29); TaskDetail gained
+> a primary action per state (§19); Goal cards/detail gained a dominant progress
+> bar + milestone roadmap glyphs (§17/§39); Knowledge desk added the §31 toolbar and
+> the linked-entities desktop sidebar (§30/§33).
+
 | Dimension | Shell | Today | Task | Goal | Knowledge/Notes | Canvas | Analytics | Settings |
 | --------- | ----- | ----- | ---- | ---- | --------------- | ------ | --------- | -------- | -------- |
 | Visual consistency (§85) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Keyboard navigation (§45) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | 🟡 |
 | Responsive layout (§8, §58) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Loading / skeleton (§11.1) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Empty state (§11.2) | ⚪ | ⚪ | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
-| Error state (§11.3) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| Empty state (§11.2) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
+| Error state (§11.3) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Offline (§11, §90) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Conflict / save state (§2.5, §34.4) | ⚪ | ⚪ | ⚪ | ⚪ | ✅ | ⚪ | ⚪ | ⚪ |
 | Dark mode (§5.4) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |

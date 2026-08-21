@@ -108,7 +108,10 @@ function isOverloaded(date: string): boolean {
         </section>
 
         <div v-if="week.loading" class="text-sm text-gray-500" data-testid="week-loading">Loading week…</div>
-        <div v-if="week.error" class="text-sm text-[#F53003]" role="alert" data-testid="week-error">{{ week.error.message }}</div>
+        <div v-if="week.error" class="text-sm text-[#F53003] border border-[#F53003] rounded-sm p-3" role="alert" data-testid="week-error">
+            <span class="font-medium">We couldn't load your schedule.</span>
+            <span> {{ week.error.message }} Nothing is changed in your plan; retry when you're online.</span>
+        </div>
 
         <!-- Day columns -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3" data-testid="week-days">

@@ -23,6 +23,7 @@ import type {
     EditorDocument,
     EditorSaveResult,
     EditorTheme,
+    EditorToolbarCommand,
     Unsubscribe,
 } from './types';
 
@@ -153,6 +154,59 @@ export class TiptapEditorAdapter implements EditorAdapter {
             .querySelector('.tiptap')
             ?.getAttribute('data-editor-theme')
             ?? '';
+    }
+
+    runCommand(command: EditorToolbarCommand): void {
+        const chain = this.editor.chain().focus();
+        switch (command.type) {
+            case 'bold':
+                chain.toggleBold();
+                break;
+            case 'italic':
+                chain.toggleItalic();
+                break;
+            case 'heading':
+                if (command.level === null) {
+                    chain.setParagraph();
+                } else {
+                    chain.toggleHeading({ level: command.level as Level });
+                }
+                break;
+            case 'bulletList':
+                chain.toggleBulletList();
+                break;
+            case 'taskList':
+                chain.toggleTaskList();
+                break;
+            case 'link':
+                if (command.url === null) {
+                    chain.unsetLink();
+                } else {
+                    chain.extendMarkRange('link').setLink({ href: command.url });
+                }
+                break;
+        }
+        chain.run();
+    }
+
+    isCommandActive(command: EditorToolbarCommand): boolean {
+        switch (command.type) {
+            case 'bold':
+                return this.editor.isActive('bold');
+            case 'italic':
+                return this.editor.isActive('italic');
+            case 'heading':
+                if (command.level === null) {
+                    return this.editor.isActive('paragraph');
+                }
+                return this.editor.isActive('heading', { level: command.level });
+            case 'bulletList':
+                return this.editor.isActive('bulletList');
+            case 'taskList':
+                return this.editor.isActive('taskList');
+            case 'link':
+                return this.editor.isActive('link');
+        }
     }
 
     subscribe(listener: (change: EditorChange) => void): Unsubscribe {

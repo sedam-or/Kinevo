@@ -4,6 +4,7 @@ import { useShellStore } from './store';
 import { isShellView, NAV_GROUPS, type ShellView } from './navigation';
 import SyncStatusPanel from './SyncStatusPanel.vue';
 import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel.vue';
+import NotificationCenter from '../notifications/NotificationCenter.vue';
 
 const shell = useShellStore();
 
@@ -48,9 +49,8 @@ function cycleTheme(): void {
                 <span data-testid="sync-state">
                     <SyncStatusPanel />
                 </span>
-                <span v-if="shell.unreadCount > 0" class="text-xs" data-testid="notifications">
-                    {{ shell.unreadCount }} unread
-                </span>
+                <!-- Notification center (§28-§29): toast + center + contextual prompt. -->
+                <NotificationCenter />
             </div>
             <button
                 type="button"

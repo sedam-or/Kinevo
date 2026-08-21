@@ -3154,8 +3154,10 @@ Release Impact: PATCH (design-system refactor; no behavior/API/schema change).
 ## Status
 
 PARTIAL — shell/nav groups, primary-action component migration, and today NOW-card
-hierarchy landed 2026-08-21; deep task/goal/knowledge visual redesign, timeline DnD,
-and full state-matrix UI migration carry into R4/R5 (see Evidence).
+hierarchy landed 2026-08-21; task/goal progress + roadmap, knowledge desk + §31
+toolbar, capacity §22, adaptive check-in §23, and the notification center landed
+2026-08-22 (see Evidence). Remaining R3-adjacent work (timeline DnD, full
+state-matrix migration of minor surfaces) remains in R4/R5.
 
 ## Requirements
 
@@ -3168,17 +3170,25 @@ design.md §2, §8–§19, §29–§33, §79, §84, §85, §57–§58.
       §8.3.
 - [x] Today redesign: NOW card visual hierarchy §12, timeline geometry §13,
       states §11. (Drag & drop with valid/invalid feedback §14 carries to R4.)
-- [ ] Task / Goal redesign: task execution workspace §19, subtasks §20,
-      goal progress §17–§18, milestone roadmap §39. (Partial: primary-action
-      component migration only; visual redesign carries to R4.)
-- [ ] Knowledge redesign: unified desk layout §30, minimal Tiptap toolbar §31,
-      linked-knowledge sidebar §33. (Partial: save/autosave indicator confirmed
-      present; toolbar/sidebar redesign carries to R4.)
+- [x] Task / Goal redesign: task execution workspace §19, subtasks §20,
+      goal progress §17–§18, milestone roadmap §39. (Primary action per state
+      §19 landed 2026-08-22; subtasks were already present; goal cards/detail
+      now show one dominant progress bar and a milestone roadmap with
+      ✓/●/✕/○ glyphs §39.)
+- [x] Knowledge redesign: unified desk layout §30, minimal Tiptap toolbar §31,
+      linked-knowledge sidebar §33. (NoteEdit groups editor + linked-entities
+      on a desktop desk grid §30; §31 toolbar render behind `toolbar` prop with
+      `runCommand`/`isCommandActive` on the EditorAdapter boundary; linked
+      entities move into the right desk sidebar §33.)
 - [x] State-machine UI matrix per entity (Task/Goal/Milestone/Program/Canvas/
       Note/Schedule/AI Proposal) §84 — documented in `docs/state-machine-ui.md`.
-- [ ] Capacity feedback §22, adaptive context §23, notifications §28–§29,
-      empty/error language §11.2–§11.3, §56, §64. (Empty-state copy §11.2 done
-      for Task/Goal/Notes; capacity/adaptive-context/notifications carry to R4.)
+- [x] Capacity feedback §22, adaptive context §23, notifications §28–§29,
+      empty/error language §11.2–§11.3, §56, §64. (Today capacity is now a
+      load bar with click-to-reveal scheduled/available/overload §22; a
+      lightweight context check-in lives on Today §23; a notification center
+      with Unread/Today/Earlier groups is wired into the topbar §28–§29;
+      week error copy is plain-language and reconciles that nothing was
+      changed §56.)
 
 ## Acceptance
 
@@ -3205,14 +3215,32 @@ design.md §2, §8–§19, §29–§33, §79, §84, §85, §57–§58.
   NOW-card action buttons migrated to KButton variants.
 - Empty-state copy §11.2 for Task / Goal / Notes.
 - §84 state-machine matrix documented in `docs/state-machine-ui.md`.
+- Task execution workspace §19: `task/TaskDetailView.vue` computes one primary
+  action per state (Schedule/Start/Complete/Continue/Recover) rendered as KButton
+  primary with secondaries beside it.
+- Goal progress §17/§39: `goal/GoalListView.vue` cards and `goal/GoalDetailView.vue`
+  now show a single dominant progress bar; the milestone timeline renders
+  ✓/●/✕/○ roadmap glyphs per state.
+- Knowledge desk §30/§33: `note/NoteEditView.vue` desk grid (editor | linked
+  entities on desktop, stacked on mobile); `EditorHost.vue` gained the §31
+  minimal toolbar behind a `toolbar` prop, and `EditorAdapter` gained
+  `runCommand`/`isCommandActive`, implemented by `TiptapEditorAdapter` (tests in
+  `editor/__tests__`).
+- Capacity §22: `today/TodayView.vue` capacity chip replaced by a load bar with
+  click-to-reveal scheduled/available/overload minutes.
+- Adaptive context §23: `adaptive/` module (api/store/`AdaptiveContextPanel.vue`)
+  wired into Today; stores energy-level check-ins via `/adaptive/context`.
+- Notifications §28–§29: `notifications/` module (api/store/
+  `NotificationCenter.vue`) with Unread/Today/Earlier groups replaces the bare
+  unread counter in `shell/AppShell.vue`.
 - `docs/ui-audit.md` §4 matrix + §5 inventory updated; UI-004 partial close;
   UI-007 added (nav grouping).
 - `docs/browser-e2e.md` journeys A/B/C/D navigation paths updated.
-- Tests: `vitest run` 358 passed; `vue-tsc` clean; `npm run build` OK.
-- Honest gap: deep visual redesign of Task/Goal/Knowledge surfaces, timeline
-  drag & drop with valid/invalid feedback, and full state-matrix migration of
-  minor surfaces are NOT done and remain in R4/R5. Golden journeys A–D remain
-  `⚪` because no browser runner exists in this environment.
+- Tests: `vitest run` 385 passed; `vue-tsc` clean; `npm run build` OK.
+- Honest gap: timeline drag & drop with valid/invalid feedback, and full
+  state-matrix migration of minor surfaces are NOT done and remain in R4/R5.
+  Golden journeys A–D remain `⚪` because no browser runner exists in this
+  environment.
 
 Release Impact: PATCH (visual refactor; no API/schema/business change).
 

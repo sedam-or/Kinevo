@@ -44,6 +44,10 @@ function fakeAdapter(): EditorAdapter {
             listeners.add(listener);
             return () => listeners.delete(listener);
         },
+        runCommand(): void {},
+        isCommandActive(): boolean {
+            return false;
+        },
         flush(): void {},
         destroy(): void {},
     };

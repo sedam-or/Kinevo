@@ -55,6 +55,15 @@ export type EditorTheme = 'light' | 'dark' | 'auto';
 
 export type Unsubscribe = () => void;
 
+/** A single change a minimal editor toolbar can emit (design.md §31). */
+export type EditorToolbarCommand =
+    | { type: 'bold' }
+    | { type: 'italic' }
+    | { type: 'heading'; level: number | null }
+    | { type: 'bulletList' }
+    | { type: 'taskList' }
+    | { type: 'link'; url: string | null };
+
 /**
  * Application-level editor contract. Implementations MUST keep the canonical
  * document JSON authoritative and MUST NOT store Kinevo business state
@@ -84,6 +93,12 @@ export interface EditorAdapter {
 
     /** Subscribe to content changes. Returns an unsubscribe function. */
     subscribe(listener: (change: EditorChange) => void): Unsubscribe;
+
+    /** Execute a minimal toolbar command (design.md §31). */
+    runCommand(command: EditorToolbarCommand): void;
+
+    /** Whether the given toolbar command is currently active at the selection. */
+    isCommandActive(command: EditorToolbarCommand): boolean;
 
     /** Force any pending internal state to be flushed. */
     flush(): void;

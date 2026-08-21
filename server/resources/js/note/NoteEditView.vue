@@ -158,23 +158,28 @@ watch(
             <span v-if="notes.saveState === 'conflict'"> — this note was changed elsewhere; reload to reconcile.</span>
         </div>
 
-        <!-- Edit content (Tiptap via the replaceable EditorAdapter) -->
-        <section v-if="notes.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="note-editor">
-            <EditorHost
-                :document="editorDocument"
-                :read-only="false"
-                :adapter-factory="props.adapterFactory"
-                @ready="onEditorReady"
-                @change="onEditorChange"
-            />
-            <button type="button" class="mt-2 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="note-save-now" @click="flush">
-                Save now
-            </button>
-        </section>
+        <!-- Unified knowledge desk (design.md §30): desktop shows editor + linked
+             entities side by side; mobile stacks them (list → editor → context). -->
+        <div v-if="notes.current" class="grid gap-4 lg:grid-cols-[1fr_320px]">
+            <!-- Edit content (Tiptap via the replaceable EditorAdapter) -->
+            <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="note-editor">
+                <EditorHost
+                    :document="editorDocument"
+                    :read-only="false"
+                    :toolbar="true"
+                    :adapter-factory="props.adapterFactory"
+                    @ready="onEditorReady"
+                    @change="onEditorChange"
+                />
+                <button type="button" class="mt-2 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="note-save-now" @click="flush">
+                    Save now
+                </button>
+            </section>
 
-        <!-- Linked entities (create/remove via Knowledge Linking UI) -->
-        <section v-if="notes.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="note-links">
-            <LinkManager :note-id="notes.current.id" />
-        </section>
+            <!-- Linked-knowledge context sidebar (design.md §33) -->
+            <aside class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="note-links">
+                <LinkManager :note-id="notes.current.id" />
+            </aside>
+        </div>
     </div>
 </template>

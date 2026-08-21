@@ -32,6 +32,14 @@ vi.mock('../../execution/api', () => ({
     },
 }));
 
+vi.mock('../../adaptive/api', () => ({
+    adaptiveApi: {
+        list: vi.fn().mockResolvedValue({ observations: [] }),
+        checkIn: vi.fn(),
+        burnout: vi.fn().mockResolvedValue({ signal: { level: 'none', score: 0, reason: 'on track' } }),
+    },
+}));
+
 vi.mock('../../recharge/api', () => ({
     rechargeApi: {
         status: vi.fn().mockResolvedValue({

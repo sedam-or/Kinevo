@@ -11,6 +11,7 @@ import BreakModeDialog from './BreakModeDialog.vue';
 import BoostDialog from './BoostDialog.vue';
 import { taskStates } from '../visualstate/derive';
 import KButton from '../components/KButton.vue';
+import AdaptiveContextPanel from '../adaptive/AdaptiveContextPanel.vue';
 import type { EmptySlot, EmergencyPauseResponse, EndBreakResponse, EndBoostTargetResponse, HardLandscapeEvent, SetBoostTargetResponse, StartBreakResponse, TodayEvent } from './types';
 
 const props = defineProps<{
@@ -19,6 +20,20 @@ const props = defineProps<{
 
 const today = useTodayStore();
 const shell = useShellStore();
+
+/** §22: capacity as a share of the available envelope (0-100). */
+const capacityPercent = computed(() => {
+    if (!today.capacity || today.capacity.available_minutes <= 0) {
+        return 0;
+    }
+    const total = today.capacity.scheduled_minutes + today.capacity.available_minutes;
+    if (total <= 0) {
+        return 0;
+    }
+    return Math.round((today.capacity.scheduled_minutes / total) * 100);
+});
+
+const capacityRevealed = ref(false);
 
 const now = ref(new Date());
 
@@ -284,19 +299,35 @@ async function endBoostTarget(): Promise<void> {
                 <h1 class="text-xl font-semibold" data-testid="today-date">{{ formattedDate }}</h1>
                 <p class="text-sm text-gray-500 dark:text-gray-400" data-testid="today-sync">Status: {{ statusLabel }}</p>
             </div>
-            <div
-                class="text-sm rounded-sm px-2 py-1"
-                :class="capacityStatus === 'overload' ? 'bg-[#fff2f2] dark:bg-[#1D0002] text-[#F53003]' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'"
-                data-testid="today-capacity"
-            >
-                {{ today.capacity ? `${today.capacity.scheduled_minutes}m / ${today.capacity.available_minutes}m available` : 'No data' }}
-                <span v-if="today.capacity?.overload_minutes"> ({{ today.capacity.overload_minutes }}m overload)</span>
+            <!-- Capacity feedback (design.md §22): a load bar; click reveals details. -->
+            <div class="flex flex-col items-end gap-1" data-testid="today-capacity" :class="{ 'cursor-pointer': today.capacity }" @click="today.capacity && (capacityRevealed = !capacityRevealed)">
+                <div class="flex items-center gap-2 text-sm">
+                    <span :class="capacityStatus === 'overload' ? 'text-[#F53003]' : 'text-gray-600 dark:text-gray-300'">
+                        {{ today.capacity ? `${capacityPercent}% of capacity used` : 'No capacity data' }}
+                    </span>
+                    <span v-if="today.capacity?.overload_minutes" class="text-xs text-[#F53003]">({{ today.capacity.overload_minutes }}m overload)</span>
+                </div>
+                <div v-if="today.capacity" class="w-40 h-2 rounded-sm bg-gray-200 dark:bg-gray-700 overflow-hidden" role="img" :aria-label="`${capacityPercent}% capacity used`">
+                    <div
+                        class="h-full transition-all"
+                        :class="capacityStatus === 'overload' ? 'bg-[#F53003]' : 'bg-[#2C5FA8]'"
+                        :style="{ width: `${capacityPercent}%` }"
+                    ></div>
+                </div>
+                <dl v-if="today.capacity && capacityRevealed" class="text-xs text-gray-600 dark:text-gray-400 text-right space-y-0.5">
+                    <div><dt class="inline">Scheduled load:</dt> <dd class="inline">{{ today.capacity.scheduled_minutes }}m</dd></div>
+                    <div><dt class="inline">Available capacity:</dt> <dd class="inline">{{ today.capacity.available_minutes }}m</dd></div>
+                    <div v-if="today.capacity.overload_minutes"><dt class="inline">Overload:</dt> <dd class="inline">{{ today.capacity.overload_minutes }}m</dd></div>
+                </dl>
             </div>
         </header>
 
         <!-- Loading / error -->
         <div v-if="today.loading" class="text-sm text-gray-500" data-testid="today-loading">Loading Today…</div>
         <div v-if="today.error" class="text-sm text-[#F53003]" role="alert" data-testid="today-error">{{ today.error.message }}</div>
+
+        <!-- Lightweight adaptive-context check-in (design.md §23) -->
+        <AdaptiveContextPanel v-if="!today.loading && !today.error && today.date" />
 
         <!-- Emergency Pause recovery banner (FR-07): the week is exceptional. -->
         <section

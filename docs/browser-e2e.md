@@ -171,10 +171,13 @@ Pause
 Resume
 Complete
 NEXT task advances
+Capacity load bar reveals scheduled/available on click (§22)
+Context check-in: pick energy level, log (§23)
 ```
 Result: ✅ proven end-to-end — Today mounts, Quick Capture round-trips, NOW
 task executes START → COMPLETE, and NEXT advances on all 3 browsers via the R1
-core-loop run (§8, §7 Core loop).
+core-loop run (§8, §7 Core loop). Capacity bar + adaptive check-in landed in
+TASK-R3 (2026-08-22); not yet re-verified in browser.
 
 ### Journey C — Recover
 
@@ -193,14 +196,17 @@ Result: ⚪ (browser run pending — needs seeded missed-task state)
 KNOWLEDGE group → Knowledge
 Create Note
 Edit (autosave indicator top-right)
+Use §31 toolbar (heading/bold/italic/link/list/tasks)
+Linked entities show in the desktop desk sidebar (§33)
 Link Goal
 KNOWLEDGE group → Canvas
 Create Canvas
 Link Canvas
 ```
 Result: ✅ R6 pass (partial) — Note create + edit surfaces autosave state, Canvas
-create mounts the lazy-loaded workspace on all 3 browsers. Goal-linking not
-re-verified in browser.
+create mounts the lazy-loaded workspace on all 3 browsers. §31 toolbar + §33
+linked-entities desk sidebar landed in TASK-R3 (2026-08-22); not yet re-verified
+in browser.
 
 ### Journey E — Offline
 
