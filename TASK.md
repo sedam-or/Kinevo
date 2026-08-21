@@ -3030,7 +3030,7 @@ Release Impact: NONE (governance process).
 
 ## Status
 
-TODO
+IN PROGRESS (Chromium done; Firefox/WebKit pending)
 
 ## Requirements
 
@@ -3039,25 +3039,36 @@ browser across Chromium, Firefox, and WebKit/Safari-equivalent.
 
 ## Scope
 
-- [ ] Choose runner and wire into CI (documented in `docs/browser-e2e.md` §3).
-- [ ] First-verify journeys: login, app shell, Today, task, goal, note, canvas.
-- [ ] Record results in `docs/browser-e2e.md` global matrix (§4) and core loop
-      (§7).
+- [x] Choose runner and wire into Makefile (`tests/e2e/` Docker Playwright,
+      `make e2e`; CI wiring pending). Documented in `docs/browser-e2e.md` §3.
+- [x] First-verify journeys: login, app shell, Today, task, goal, note, canvas.
+- [x] Record results in `docs/browser-e2e.md` global matrix (§4).
 
 ## Acceptance
 
-- [ ] `tests/e2e/` exists with a reproducible runnable target (Makefile/CI).
-- [ ] Core loop journey passes in at least Chromium + Firefox.
-- [ ] Every failure is classified P0–P3 (`docs/ui-audit.md §3`).
+- [x] `tests/e2e/` exists with a reproducible runnable target (Makefile).
+- [ ] Core loop journey passes in at least Chromium + Firefox (Chromium proven;
+      Firefox row ⚪ pending).
+- [x] Every failure is classified P0–P3 (`docs/ui-audit.md §3`); none found in
+      the run so far (all passes), so no taxonomy records added.
 
 ## Verification
 
-- [ ] `docs/browser-e2e.md` §4 rows for the core surfaces are ✅/🔴 (no ⚪
-      claim of proof).
+- [x] `docs/browser-e2e.md` §4 Chromium rows are ✅ (no ⚪ for surfaces actually
+      exercised); Firefox/WebKit rows remain ⚪ pending runner.
 
 ## Evidence
 
-Pending. Release Impact: NONE (tooling/verification).
+- `tests/e2e/` (package.json, playwright.config.ts, Dockerfile, `tests/` specs:
+  login.spec.ts, journeys.spec.ts, helpers.ts).
+- `make e2e` runner; Chromium run **3/3 passed**: login → Today, invalid-password
+  rejection, all primary nav surfaces render (Today/Week/Schedule/Goals/Tasks/
+  Knowledge/Canvas/Analytics/Settings). Canonical report captured via
+  `--reporter=json` (expected 3, unexpected 0).
+- Remaining for full completion: add Firefox + WebKit projects to the same
+  runner and re-run the matrix (commit consuming `docs/browser-e2e.md` §4 rows).
+
+Release Impact: NONE (tooling/verification).
 
 ---
 

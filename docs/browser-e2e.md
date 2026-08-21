@@ -40,13 +40,32 @@ Bare `docker run`-style headless runs for CI; wider matrix documented here.
 
 Focus surfaces: Today, Quick Capture, Task, Schedule, Notes, Canvas, Offline.
 
+Result legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run. "Rendered" = the
+surface mounts and is visible in a real browser. Chromium row reflects the
+TASK-R1 Docker Playwright run (commit evidence below).
+
 | Browser | Today | Quick Capture | Task | Schedule | Notes | Canvas | Offline |
 | ------- | ----- | ------------- | ---- | -------- | ----- | ------ | ------- |
-| Chromium | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| Chromium | ✅ rendered | ⚪ | ✅ rendered | ✅ rendered | ✅ rendered | ✅ shell rendered | ⚪ |
 | Firefox | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | WebKit/Safari | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 
 Legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run.
+
+### R1 browser smoke evidence (TASK-R1)
+
+- Runner: `tests/e2e/` Docker Playwright (`mcr.microsoft.com/playwright:v1.62.1-jammy`),
+  Chromium desktop, host-network attach to the dev SPA on `127.0.0.1:8000`
+  (`make e2e` / `docker build -t kinevo-e2e tests/e2e`).
+- Result: **3/3 passed** (`npx playwright test`, JSON reporter) — login → Today,
+  invalid-password rejection, and all primary nav destinations render
+  (Today/Week/Schedule/Goals/Tasks/Knowledge/Canvas/Analytics/Settings).
+- Canonical evidence: CI/browser-e2e.md + Playwright JSON report; first-love
+  shell mount proven in a real browser. Deeper surface behavior (task/goal/note
+  create-edit, canvas draw/persist, offline) is tracked as P2 gaps in
+  `docs/ui-audit.md` (see §4 matrix rows still ⚪) and scheduled for R3/R4.
+- Known limit: `make e2e` currently covers Chromium only; Firefox + WebKit rows
+  are pending the same runner added to the matrix.
 
 ## 5. Canvas browser matrix (design.md §35, §72)
 

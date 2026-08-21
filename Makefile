@@ -165,6 +165,18 @@ prod-smoke:
 test:
 	$(APP) php artisan test
 
+# --- Browser E2E smoke (rescue R1) -------------------------------------------
+# Real-browser verification against the running dev SPA. Builds the Playwright
+# runner image on first use and attaches to the host network so it can reach the
+# app on 127.0.0.1:8000. Requires: dev stack up (make up) + SPA assets built
+# (npm run build). See tests/e2e/README.md.
+e2e-build:
+	docker build -t kinevo-e2e tests/e2e
+
+e2e:
+	docker run --rm --network host -e E2E_BASE_URL=http://127.0.0.1:8000 \
+		-v "$(CURDIR)/tests/e2e:/e2e" -w /e2e kinevo-e2e npx playwright test
+
 lint:
 	$(APP) vendor/bin/pint --test
 
