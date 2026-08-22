@@ -3486,7 +3486,7 @@ change).
 
 ## Status
 
-TODO
+IN_PROGRESS (journey gap closure landed; §102 gate sweep next)
 
 ## Requirements
 
@@ -3494,6 +3494,9 @@ design.md §102, §103; docs/release-management.md eligibility gates.
 
 ## Scope
 
+- [x] Golden-journey browser gaps closed (Journey C seeded + proven, Journey E
+      canvas variant + proven; findings F-R7-1 seed source 422 and F-R7-2
+      canvas offline-reconnect data loss fixed — see docs/browser-e2e.md §8).
 - [ ] Resolve all P0/P1 findings; design.md §102 acceptance gate completed.
 - [ ] Privacy §91, data-safety UX §90, defensive patterns verified.
 - [ ] Release candidate build passes full gate suite (AGENTS.md pre-commit
@@ -3510,8 +3513,11 @@ design.md §102, §103; docs/release-management.md eligibility gates.
 
 ## Evidence
 
-Pending. Release Impact: RELEASE (user-visible visual overhaul; PATCH per
-release-management, requires changelog + version gates).
+2026-08-22: journey-c-e.spec.ts green on chromium (Journey C + E); full e2e
+matrix 109 passed / 2 skipped; unit 386/386; phpstan clean; typecheck/build
+clean; npm audit 0 vulnerabilities. Release Impact: RELEASE (user-visible
+visual overhaul; PATCH per release-management, requires changelog + version
+gates).
 
 ---
 

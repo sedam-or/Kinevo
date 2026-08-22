@@ -14,6 +14,13 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Closed the remaining golden-journey browser gaps (rescue R7, TASK-R7):
+  Journey C (Recover) is now proven in a real browser against a seeded
+  missed-task state, and Journey E (Offline) is proven for canvases — draw
+  offline, see the offline badge, reconnect, and find the scene restored from
+  the server after reload (`tests/e2e/tests/journey-c-e.spec.ts`, recorded in
+  `docs/browser-e2e.md` §8).
+
 - Proven the first-love browser journey end-to-end (rescue R1, TASK-R1): the
   core loop LOGIN → TODAY → NOW task → START → COMPLETE → PROGRESS → NEXT now
   executes through the real browser (`tests/e2e/tests/core-loop.spec.ts`) and
@@ -289,6 +296,10 @@ Release governance: see `docs/release-management.md`.
 
 ### Fixed
 
+- Canvases no longer silently lose edits made while offline: an autosave that
+  failed because the device was offline is now retried automatically as soon
+  as connectivity returns (offline-sync.md "sync on reconnect"), instead of
+  surviving only in memory until the next edit.
 - Production deployment path fixes surfaced by the TASK-156 smoke test:
   - The production `app`/`queue-worker`/`scheduler` roles now receive
     `APP_KEY`, `APP_URL`, and `DB_PASSWORD` from the deployment environment

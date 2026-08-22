@@ -99,6 +99,10 @@ export class CanvasAutosaveController {
             this.unsavedScene = change.scene;
             this.markDirty();
         });
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('online', this.onOnline);
+        }
     }
 
     /** Current save state. */
@@ -126,6 +130,19 @@ export class CanvasAutosaveController {
     }
 
     /**
+     * Connectivity restored while a scene is still pending (state `offline`).
+     * offline-sync.md §Visible states: offline changes "sync on reconnect" —
+     * without this, an offline edit is silently lost on reload.
+     */
+    private readonly onOnline = (): void => {
+        if (this.disposed || this.state !== 'offline' || this.unsavedScene === null) {
+            return;
+        }
+        this.setState('saving');
+        void this.runSave();
+    };
+
+    /**
      * Reconcile after a conflict: adopt a new authoritative base version and
      * scene, returning to a clean state. The caller supplies the resolved
      * scene (server copy or user merge) and the server version.
@@ -146,6 +163,9 @@ export class CanvasAutosaveController {
     /** Release subscriptions and stop autosave. */
     dispose(): void {
         this.disposed = true;
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('online', this.onOnline);
+        }
         this.cancelDebounce();
         this.unsubscribeFromAdapter();
         this.listeners.clear();

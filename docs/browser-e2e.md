@@ -77,9 +77,11 @@ Legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run.
   Today/Week/Schedule/Goals/Tasks/Knowledge in Chromium, Firefox, WebKit.
 - Git commits: R1 `5f32f1d` (smoke harness); R6 spec + matrix commits listed in
   the journal section below.
-- Known gaps (not yet browser-proven): Offline (Journey E), AI (Journey F),
-  Recover (Journey C). NOW executor transitions (start/complete/progress/next)
-  are now browser-proven by the R1 core-loop run (§8).
+- Known gaps (not yet browser-proven): AI (Journey F). Recover (Journey C) and
+  the canvas Offline (Journey E) variant are browser-proven by R7 (§8);
+  Journey E's Quick Capture variant remains unit-proven only. NOW executor
+  transitions (start/complete/progress/next) are browser-proven by the R1
+  core-loop run (§8).
 
 ### R1 browser smoke evidence (TASK-R1)
 
@@ -230,7 +232,12 @@ EOD
 Morning Recovery
 Reschedule
 ```
-Result: ⚪ (browser run pending — needs seeded missed-task state)
+Result: ✅ R7 pass (chromium, seeded) — `tests/e2e/scripts/seed-journey-c.sh` +
+`eod:reconcile --phase=deadline` seed a missed task; browser proves the missed
+badge on the task item and the reschedule surface proposing moves or an explicit
+no-changes state. Single-engine by design (global seeded state); recorded in §7.
+Note: seeding must use assignment source `draft` — `scheduler` is not a valid
+ScheduleAssignmentSource and 422s draft generation (fixed 2026-08-22).
 
 ### Journey D — Knowledge
 
@@ -260,7 +267,14 @@ Reconnect
 Sync
 ```
 
-Result: ⚪
+Result: ✅ R7 pass (chromium) — canvas variant of the offline journey: draw
+offline → save badge leaves "saved" → reconnect → server-confirmed PUT →
+reload → scene restored from the server. This run exposed and closed a real
+§34.6 gap: `CanvasAutosaveController` dropped offline-pending scenes on reload
+(nothing re-saved on reconnect, violating offline-sync.md "sync on reconnect");
+fixed by an `online`-event retry in `autosave.ts`. The Quick Capture offline
+variant (note/task mutations through the general MutationQueue) remains
+covered at unit level only (TASK-115 suite); browser proof pending.
 
 ### Journey F — AI
 
@@ -332,7 +346,30 @@ Core loop (R1)          2026-08-21  Playwright chromium/firefox/webkit  dev DB
                                second seeded task, status Running → Ready,
                                today-error absent
                          full suite: 57/57 passed (includes this journey)
-                        Result: ✅ (Chromium + Firefox + WebKit)
+                         Result: ✅ (Chromium + Firefox + WebKit)
+ ```
+### R7 journey runs
+```text
+Journey C (Recover)     2026-08-22  Playwright chromium (single-engine record)
+ Journey E (Offline,     dev DB; C seeded via tests/e2e/scripts/seed-journey-c.sh
+ canvas variant)         + eod:reconcile --phase=deadline
+                         steps C: login → Tasks → missed badge on seeded task →
+                           Schedule → Generate Draft → Dynamic Reschedule →
+                           Propose (moves or explicit no-changes state)
+                         steps E: login → Canvas → create → go OFFLINE →
+                           adapter.load(rect) → save badge leaves "saved" →
+                           reconnect → ok PUT observed → reload+reopen →
+                           scene_json.elements contains the offline element
+                         findings fixed during the run:
+                           F-R7-1 seed used invalid assignment source
+                             `scheduler` (422 on draft generate); corrected to
+                             `draft` in seed script + DB
+                           F-R7-2 CanvasAutosaveController never retried an
+                             offline-pending scene on reconnect (silent loss vs
+                             offline-sync.md "sync on reconnect"); fixed with
+                             window-online retry in autosave.ts
+                         full suite at commit time: 109 passed / 2 skipped
+                         Result: ✅
 ```
 ## 9. Visual regression (design.md §87)
 

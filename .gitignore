@@ -37,4 +37,6 @@ server/public/build/
 
 # Third-party agent skills (installed locally, not vendored in git)
 .agents/skills/
+.claude/
+skills-lock.json
 ui-ux-pro-max-skill/
