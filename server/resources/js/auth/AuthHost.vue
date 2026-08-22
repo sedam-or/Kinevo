@@ -191,6 +191,8 @@ const viewTitle = computed(() => {
         </AppShell>
 
         <!-- Global Quick Capture (authenticated only) -->
-        <QuickCapture v-if="auth.isAuthenticated" />
+        <!-- Mounted only while open: useFocusTrap's onMounted must fire when
+             the dialog appears, or initial focus never lands (TASK-R6). -->
+        <QuickCapture v-if="auth.isAuthenticated && qc.open" />
     </AppErrorBoundary>
 </template>

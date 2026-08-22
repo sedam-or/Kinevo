@@ -62,6 +62,15 @@ Legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run.
   (R6 journeys A/B/D + surface create flows), `surface-qa.spec.ts`
   (R6 §88/§93 — page errors, horizontal overflow, spinner), `visual-baseline.spec.ts`
   (R6 §87 — screenshot artifacts).
+- Re-verification (2026-08-22, post-R4/R5): **105/105 passed** (3.0 min) — the
+  R4 canvas matrix and R5 accessibility suite joined the run. Two defects
+  found and fixed during re-verification:
+  1. A plain production build dead-code-eliminates the `__kinevoCanvasAdapter`
+     e2e seam, silently disarming the canvas draw/persistence tests.
+     `make e2e` now rebuilds assets with `KINEVO_E2E_SEAM=1` first (`e2e-assets`).
+  2. QuickCapture mounted once at boot with `v-if` inside, so
+     `useFocusTrap`'s onMounted initial focus never fired (focus stayed on
+     `<body>` after Ctrl+K). The dialog component now mounts only while open.
 - Canonical evidence: `docs/browser-e2e.md` + Playwright list report / PNG
   artifacts under `tests/e2e/test-results/screenshots/<browser>/`.
 - Per-browser surface QA: no uncaught page errors, no horizontal overflow on

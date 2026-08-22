@@ -92,13 +92,18 @@ test.describe('R5 — keyboard-only flows (§46)', () => {
         // Cmd/Ctrl+K opens Quick Capture; Escape closes it (dialog parity).
         await page.keyboard.press('ControlOrMeta+k');
         await page.getByTestId('quick-capture-modal').waitFor({ timeout: 15_000 });
-        // Focus must be INSIDE the dialog (focus trap initial focus).
-        await page.evaluate(() => {
-            const modal = document.querySelector('[data-testid="quick-capture-modal"]');
-            if (!modal?.contains(document.activeElement)) {
-                throw new Error('focus is outside the quick capture dialog');
-            }
-        });
+        // Focus must be INSIDE the dialog (focus trap initial focus). The
+        // trap's onMounted focus lands a tick after visibility, so poll.
+        await expect
+            .poll(
+                async () =>
+                    page.evaluate(() => {
+                        const modal = document.querySelector('[data-testid="quick-capture-modal"]');
+                        return Boolean(modal?.contains(document.activeElement));
+                    }),
+                { timeout: 10_000 },
+            )
+            .toBe(true);
         await page.keyboard.press('Escape');
         await expect(page.getByTestId('quick-capture-modal')).toBeHidden({ timeout: 15_000 });
     });

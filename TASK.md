@@ -3443,7 +3443,8 @@ design.md §87, §88, §96, §71–§73, §100–§102.
       Canvas/Analytics/editor bundles §89. Canvas was already a lazy chunk
       (`CanvasWorkspaceView-*.js`, 1.3M). R6 added EditorHost
       (`EditorHost-*.js`, 376K) and AnalyticsView (`AnalyticsView-*.js`, 20K) as
-      route-level async components — initial shell chunk shrank 632K → 184K
+      route-level async components — initial shell chunk shrank 632K → ~190K
+      (196K in the seam-enabled e2e build measured 2026-08-22)
       (`public/build/assets/app-*.js`). No layout shift: `surface-qa` horizontal
       overflow check passes on Today/Week/Schedule/Goals/Tasks/Knowledge in all
       3 browsers.
@@ -3470,10 +3471,14 @@ design.md §87, §88, §96, §71–§73, §100–§102.
 
 ## Evidence
 
-`make e2e` → **54 passed (1.3m)** on 2026-08-21; Playwright list report.
-Run includes: R1 smoke (login + nav), R6 journeys A/B/D, surface QA, and
-6-surface visual baselines per browser. Release Impact: PATCH (verification/
-performance; no behavior change).
+`make e2e` → **105 passed (3.0m)** on 2026-08-22 (post-R5 re-verification;
+was 54/54 on 2026-08-21). Run includes: R1 smoke (login + nav), R6 journeys
+A/B/D, surface QA, 6-surface visual baselines per browser, plus the R4 canvas
+matrix and R5 accessibility suite. Two re-verification defects fixed: the e2e
+seam stripped by plain builds (`make e2e` now rebuilds with `KINEVO_E2E_SEAM=1`
+first) and QuickCapture initial focus never firing (dialog component now mounts
+only while open). Release Impact: PATCH (verification/performance; no behavior
+change).
 
 ---
 

@@ -173,14 +173,20 @@ test:
 # --- Browser E2E smoke (rescue R1) -------------------------------------------
 # Real-browser verification against the running dev SPA. Builds the Playwright
 # runner image on first use and attaches to the host network so it can reach the
-# app on 127.0.0.1:8000. Requires: dev stack up (make up) + SPA assets built
-# (npm run build). See tests/e2e/README.md.
+# app on 127.0.0.1:8000. Requires: dev stack up (make up). See tests/e2e/README.md.
 e2e-build:
 	docker build -t kinevo-e2e tests/e2e
 
-e2e:
+# Always rebuild SPA assets WITH the compile-time e2e seam first: canvas tests
+# drive the __kinevoCanvasAdapter seam (§82), which plain production builds
+# dead-code-eliminate. Without this, a plain `npm run build` silently disarms
+# the canvas matrix (TASK-R6 incident).
+e2e: e2e-assets
 	docker run --rm --network host -e E2E_BASE_URL=http://127.0.0.1:8000 \
 		-v "$(CURDIR)/tests/e2e:/e2e" -w /e2e kinevo-e2e npx playwright test
+
+e2e-assets:
+	cd server && KINEVO_E2E_SEAM=1 npm run build
 
 lint:
 	$(APP) vendor/bin/pint --test

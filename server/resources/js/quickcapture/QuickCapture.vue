@@ -102,7 +102,7 @@ useFocusTrap(root, close);
 </script>
 
 <template>
-    <div v-if="qc.open" ref="root" role="dialog" aria-modal="true" aria-labelledby="qc-title" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" data-testid="quick-capture-modal" @click.self="close">
+    <div ref="root" role="dialog" aria-modal="true" aria-labelledby="qc-title" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" data-testid="quick-capture-modal" @click.self="close">
         <div class="bg-[#FDFDFC] dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] border border-gray-300 dark:border-gray-600 rounded-sm w-full max-w-lg p-5">
             <header class="flex items-center justify-between mb-4">
                 <h2 id="qc-title" class="text-lg font-semibold">Quick Capture</h2>
