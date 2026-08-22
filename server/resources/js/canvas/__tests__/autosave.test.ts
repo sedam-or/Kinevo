@@ -86,6 +86,33 @@ describe('CanvasAutosaveController', () => {
         controller.dispose();
     });
 
+    it('a continuous change stream cannot starve autosave; the save carries the latest scene', async () => {
+        const adapter = makeAdapter();
+        const persistence = makePersistence({ save: vi.fn().mockResolvedValue({ version: 7 }) });
+        const controller = new CanvasAutosaveController(adapter, persistence, 42, 5, 100);
+        const notify = captureNotifier(adapter);
+
+        // Emits faster than the debounce window — a re-arming debounce would
+        // never fire (TASK-R4 regression: Excalidraw echo loop starved saves).
+        for (let i = 0; i < 10; i++) {
+            notify({ elements: [{ id: `e${i}`, type: 'rectangle' }], appState: {} });
+            await vi.advanceTimersByTimeAsync(20);
+        }
+        await vi.advanceTimersByTimeAsync(100);
+
+        // The stream outlives one debounce window, so more than one save is
+        // correct — what must NEVER happen is zero saves (starvation), and
+        // the last save must carry the newest scene.
+        const calls = (persistence.save as ReturnType<typeof vi.fn>).mock.calls;
+        expect(calls.length).toBeGreaterThanOrEqual(1);
+        expect(calls[calls.length - 1][2]).toEqual({
+            elements: [{ id: 'e9', type: 'rectangle' }],
+            appState: {},
+        });
+        expect(controller.getState()).toBe('saved');
+        controller.dispose();
+    });
+
     it('conflict pauses autosave and surfaces conflict state', async () => {
         const adapter = makeAdapter();
         const err = new Error('stale') as Error & { code?: string };

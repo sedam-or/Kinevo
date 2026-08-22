@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue';
 import { ExcalidrawCanvasAdapter } from './ExcalidrawCanvasAdapter';
 import type { CanvasAdapter, CanvasScene, CanvasTheme } from './types';
 
@@ -25,6 +25,12 @@ const emit = defineEmits<{
 
 const host = ref<HTMLElement | null>(null);
 let adapter: CanvasAdapter | null = null;
+// The exact scene object this host last emitted upstream. When that same
+// reference comes back through props.scene (workspace mirrors changes), we
+// must NOT load it into the engine again — doing so re-enters Excalidraw's
+// onChange and creates an infinite change→prop→load loop that starves the
+// autosave debounce. Only foreign scenes (initial, server reconcile) load.
+let lastEmittedScene: CanvasScene | null = null;
 
 /** Editor entry state (design.md §34.2): loading → ready, or a failure surface. */
 const editorState = ref<'loading' | 'ready' | 'error'>('loading');
@@ -46,7 +52,8 @@ function bootAdapter(readOnlyOnly = false): void {
     try {
         adapter = createAdapter();
         adapter.subscribe((change) => {
-            emit('change', change.scene);
+            lastEmittedScene = change.scene;
+            emit('change', lastEmittedScene);
         });
         adapter.mount(host.value);
         adapter.load(props.scene ?? null);
@@ -61,6 +68,15 @@ function bootAdapter(readOnlyOnly = false): void {
         return;
     }
     editorState.value = 'ready';
+    // Dev/e2e-only seam: lets browser tests drive the REAL adapter boundary
+    // (§82) — headless runners cannot deliver trusted pointer events into
+    // Excalidraw. Compiled in only via `KINEVO_E2E_SEAM=1` builds
+    // (__KINEVO_E2E_SEAM__ define, see vite.config.ts); plain production
+    // builds dead-code-eliminate this block entirely. Never used by app code.
+    if (__KINEVO_E2E_SEAM__) {
+        (window as unknown as { __kinevoCanvasAdapter?: CanvasAdapter }).__kinevoCanvasAdapter =
+            adapter;
+    }
     emit('ready', adapter);
 }
 
@@ -81,7 +97,14 @@ onMounted(() => {
 watch(
     () => props.scene,
     (scene) => {
-        if (editorState.value === 'ready') {
+        // Skip echoes of our own changes (see lastEmittedScene above). Vue
+        // refs wrap assigned plain objects in reactive proxies, so the value
+        // coming back through props may be a proxy of the exact object we
+        // emitted — compare raw identities, never proxy vs raw.
+        if (
+            editorState.value === 'ready' &&
+            toRaw(scene ?? ({} as CanvasScene)) !== toRaw(lastEmittedScene ?? ({} as CanvasScene))
+        ) {
             adapter?.load(scene ?? null);
         }
     },
@@ -108,15 +131,21 @@ watch(
 onBeforeUnmount(() => {
     adapter?.destroy();
     adapter = null;
+    if (__KINEVO_E2E_SEAM__) {
+        delete (window as unknown as { __kinevoCanvasAdapter?: unknown }).__kinevoCanvasAdapter;
+    }
 });
 </script>
 
 <template>
-    <div class="relative min-h-24">
-        <!-- The editor container is always mounted so boot can target it (§34.2); hidden until ready. -->
+    <div class="relative h-full min-h-24">
+        <!-- The editor container is always mounted so boot can target it (§34.2);
+             a definite height is REQUIRED: Excalidraw measures its container and
+             a 0/auto height resolves to the max-canvas sentinel, which exceeds
+             browser canvas limits and crashes the tab (TASK-R4 browser finding). -->
         <div
             ref="host"
-            class="kinevo-canvas-host"
+            class="kinevo-canvas-host h-full"
             data-testid="canvas-host"
             :class="{ 'invisible': editorState !== 'ready' }"
         ></div>

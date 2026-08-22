@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
 import { Excalidraw } from '@excalidraw/excalidraw';
+import '@excalidraw/excalidraw/index.css';
 import type { CanvasScene } from '../types';
 
 /**

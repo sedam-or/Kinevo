@@ -140,15 +140,19 @@ async function doArchive(): Promise<void> {
     confirmArchive.value = false;
 }
 
-function conflictRecover(): void {
-    if (!canvas.current) {
+async function conflictRecover(): Promise<void> {
+    if (!canvas.current || !controller) {
         return;
     }
-    if (controller) {
-        const authoritative = (canvas.document ?? { elements: [], appState: {} }) as unknown as CanvasScene;
-        controller.reconcile(authoritative, canvas.documentVersion);
-        scene.value = authoritative;
+    // §34.5: "Reload server copy" must adopt the AUTHORITATIVE server state —
+    // never the stale in-memory document that lost the version race.
+    await canvas.open(props.canvasId);
+    if (!canvas.current || !controller) {
+        return;
     }
+    const authoritative = (canvas.document ?? { elements: [], appState: {} }) as unknown as CanvasScene;
+    controller.reconcile(authoritative, canvas.documentVersion);
+    scene.value = authoritative;
 }
 </script>
 

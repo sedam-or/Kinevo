@@ -164,7 +164,13 @@ export class CanvasAutosaveController {
     }
 
     private scheduleSave(): void {
-        this.cancelDebounce();
+        // Fixed-window trailing debounce: if a save is already scheduled, let
+        // it run — `unsavedScene` always holds the newest scene, so the save
+        // is never stale. Re-arming the timer on every change would let a
+        // continuous change stream starve autosave forever.
+        if (this.pendingSave !== null) {
+            return;
+        }
         this.pendingSave = this.debounce(() => {
             this.pendingSave = null;
             this.runSave();

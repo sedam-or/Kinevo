@@ -92,18 +92,18 @@ Legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run.
 
 | Scenario | Result |
 | -------- | ------ |
-| Open new canvas | ⚪ |
-| Open existing canvas | ⚪ |
-| Draw | ⚪ |
-| Text | ⚪ |
-| Move | ⚪ |
-| Delete | ⚪ |
-| Undo / Redo | ⚪ |
-| Save | ⚪ |
-| Reload (persistence) | ⚪ |
-| Offline | ⚪ |
-| Reconnect | ⚪ |
-| Version conflict (409) | ⚪ |
+| Open new canvas | ✅ chromium (TASK-R4) |
+| Open existing canvas | ✅ chromium (TASK-R4) |
+| Draw (adapter-boundary seam, see note) | ✅ chromium/firefox/webkit (TASK-R4) |
+| Text | ⚪ R7 |
+| Move | ⚪ R7 |
+| Delete | ⚪ R7 |
+| Undo / Redo | ⚪ R7 |
+| Save (autosave → server 200) | ✅ all three engines (TASK-R4) |
+| Reload (persistence) | ✅ all three engines (TASK-R4) |
+| Offline (save surfaces offline state) | ✅ all three engines (TASK-R4) |
+| Reconnect (sync path restored) | ✅ all three engines (TASK-R4) |
+| Version conflict (409) + manual reconcile | ✅ all three engines (TASK-R4) |
 | Archive | ⚪ |
 | Rename | ⚪ |
 | Context links | ⚪ |
@@ -126,6 +126,39 @@ Contract-level entry-state coverage landed in TASK-R4:
   Retry / Open read-only, and never renders a blank page.
 - The `canvas-editor-loading` / `canvas-editor-error` / `canvas-host` states are
   unit-tested (vitest); the browser rows above still await R7 real-browser runs.
+
+### R4 canvas-hardening browser evidence (TASK-R4)
+
+`tests/e2e/tests/canvas-hardening.spec.ts` — 8 tests × chromium/firefox/webkit,
+all passing (24/24, dockerized Playwright against a live server):
+
+| # | Test | §82 boundary proven |
+| - | ---- | ------------------- |
+| 1 | Entry: bounded canvas + visible save state | route → mount → render |
+| 2 | Draw → autosave → server persistence survives reload | change → autosave → server → reload |
+| 3 | Rename persists to list | server |
+| 4 | Theme cycle auto→light→dark + read-only toggle | render |
+| 5 | Conflict 409 surfaces banner; manual reconcile clears it | autosave → conflict → reconcile |
+| 6 | Offline draw surfaces offline state; reconnect restores path | offline → reconnect |
+| 7 | Archive confirm flow | server |
+| 8 | Back navigation remounts cleanly | route |
+
+**Draw input seam (documented limitation).** This runner's software-rendered
+headless engines trap (renderer int3) on real pointer input over Excalidraw.
+Tests drive `window.__kinevoCanvasAdapter.load(...)` — a dev/e2e-only seam
+(present only in artifacts built with `KINEVO_E2E_SEAM=1`; plain production
+builds dead-code-eliminate it). The seam
+enters through the app's REAL adapter boundary, so every boundary after "input"
+is production-identical. Real-input-device drawing remains an R7 physical/CI
+check (rows marked ⚪).
+
+**Defects found and fixed by this matrix (why it exists):**
+1. Infinite scene echo loop (`change` → workspace prop → `load` → `onChange`)
+   starved autosave — saves never fired for real users. Fixed via raw-identity
+   echo-guard in `CanvasHost` + fixed-window trailing debounce in
+   `CanvasAutosaveController` (unit-pinned).
+2. Conflict "Reload server copy" reconciled from the stale in-memory document
+   and never cleared the banner. Now re-fetches server truth first (§34.5).
 
 ## 6. Canvas boundary sequence (design.md §82)
 

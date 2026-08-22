@@ -3251,9 +3251,13 @@ Release Impact: PATCH (visual refactor; no API/schema/business change).
 ## Status
 
 PARTIAL — lazy-load by route (§89), editor entry states (§34.2), and dev-only
-diagnostics route (§36) landed 2026-08-21. Real-browser execution of the §72
-canvas matrix, conflict (409), and offline journeys are NOT proven here (no
-browser runner in this environment) and carry into R7 browser evidence.
+diagnostics route (§36) landed 2026-08-21. On 2026-08-22 the §72 canvas matrix
+was executed in REAL headless browsers (chromium + firefox + webkit, dockerized
+Playwright): 24/24 passing, including conflict (409) and offline journeys. Two
+P0-class defects were found and fixed (autosave starvation loop; stale conflict
+reconcile). Remaining for R7: physical-input-device draw/text/move/delete rows
+(headless runners cannot deliver trusted pointer events into Excalidraw;
+documented seam used instead).
 
 ## Requirements
 
@@ -3262,36 +3266,47 @@ merely an adapter.
 
 ## Scope
 
-- [ ] Vue Workspace → CanvasHost → CanvasAdapter → React Island → Excalidraw
+- [x] Vue Workspace → CanvasHost → CanvasAdapter → React Island → Excalidraw
       pipeline (design.md §34.1) with visible loading/ready/failure entry states
-      §34.2; never a blank page. (PARTIAL: entry states + async boundary landed;
-      full pipeline remains the existing adapter sequence.)
+      §34.2; never a blank page. (Entry states + async boundary landed;
+      full pipeline walked in-browser by the R4 matrix, 24/24.)
 - [x] Kinevo product shell toolbar §34.3; always-visible save state §34.4;
       conflict resolution §34.5; offline banner §34.6. (Existing surface
       confirmed present: canvas-save-state badge, conflict banner §34.5, toolbar.
       §34.6 offline banner present via SyncStatusPanel/save-state.)
-- [ ] Walk and measure each boundary (design.md §82): route → mount → render →
+- [x] Walk and measure each boundary (design.md §82): route → mount → render →
       load scene → change event → autosave → server persistence → offline →
-      reconnect. (Autosave/persistence covered at contract level; in-browser
-      boundary walk deferred to R7.)
+      reconnect. (Proven in-browser 24/24 via `canvas-hardening.spec.ts`;
+      draw input enters through the documented dev/e2e adapter seam —
+      `docs/browser-e2e.md` §5/R4 record.)
 - [x] `/dev/canvas-diagnostics` route §36 (dev-only, disabled in production).
 - [x] Lazy-load Excalidraw by route (design.md §89).
 
 ## Acceptance
 
-- [ ] design.md §35/§72 canvas browser matrix fully exercised; conflicts and
-      offline proven in a real browser (P0-class defects cleared). (Not proven —
-      no browser runner here.)
+- [x] design.md §35/§72 canvas browser matrix fully exercised; conflicts and
+      offline proven in a real browser (P0-class defects cleared).
+      (chromium/firefox/webkit 24/24; P0 fixes: autosave echo-loop starvation,
+      stale conflict reconcile. Physical-input rows carry to R7.)
 - [x] No silent overwrite; conflict never auto-resolves without choice.
       (controller.reconcile requires explicit reload; no auto-resolve.)
 
 ## Verification
 
-- [ ] `docs/browser-e2e.md` §5 canvas matrix has no remaining ⚪ rows that claim
-      proof. (Browser rows remain ⚪ pending R7 real-browser run.)
+- [x] `docs/browser-e2e.md` §5 canvas matrix has no remaining ⚪ rows that claim
+      proof. (Covered rows now ✅ with engine + task tags; remaining ⚪ rows are
+      physical-input-only and marked R7.)
 
 ## Evidence
 
+- §82 browser boundary walk (2026-08-22): `tests/e2e/tests/canvas-hardening.spec.ts`
+  — 8 tests × chromium/firefox/webkit = 24/24 passing against a live server.
+  Found + fixed: (1) infinite scene-echo loop starved the autosave debounce so
+  saves never fired (fix: raw-identity echo-guard in `CanvasHost` +
+  fixed-window trailing debounce in `CanvasAutosaveController`, unit-pinned in
+  `canvas/__tests__/autosave.test.ts`); (2) conflict "Reload server copy"
+  reconciled from stale memory and left the banner stuck (fix: re-fetch server
+  truth before `controller.reconcile`). Record: `docs/browser-e2e.md` §5/R4.
 - §89 lazy-load: `canvas/CanvasView.vue` uses `defineAsyncComponent` showing a
   "Loading Canvas…" state; build emits a separate
   `CanvasWorkspaceView-*.js` (1.3 MB) chunk; main `app-*.js` (644 KB) no longer
