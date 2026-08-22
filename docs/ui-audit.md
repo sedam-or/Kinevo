@@ -57,11 +57,17 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 > `tests/e2e/tests/accessibility.spec.ts`); keyboard/reduced-motion rows
 > flipped to ✅ on Shell/Today/Task/Goal/Knowledge. Canvas keeps 🟡 until its
 > own keyboard-only flow is walked (R7). See UI-010 for the fixed defects.
+>
+> 2026-08-22 (TASK-R7): Canvas keyboard-only flow walked in a real browser
+> (`tests/e2e/tests/release-gate.spec.ts`) — Canvas keyboard 🟡 → ✅. Dark-mode
+> axe scans clean on Today/Knowledge/Canvas shell after UI-011 fix. Mobile
+> 375px smoke clean on all primary surfaces after UI-012 fixes. Screen-reader
+> live-region smoke green (save/sync states announced, bell named).
 
 | Dimension | Shell | Today | Task | Goal | Knowledge/Notes | Canvas | Analytics | Settings |
 | --------- | ----- | ----- | ---- | ---- | --------------- | ------ | --------- | -------- | -------- |
 | Visual consistency (§85) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Keyboard navigation (§45) | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 | ⚪ | 🟡 |
+| Keyboard navigation (§45) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚪ | 🟡 |
 | Responsive layout (§8, §58) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Loading / skeleton (§11.1) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Empty state (§11.2) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
@@ -256,6 +262,39 @@ keyboard-only login/G-chords/Cmd+K flow, emulated prefers-reduced-motion —
 21/21 across chromium/firefox/webkit; vitest 386.
 Link: TASK-R5. Canvas-surface keyboard-only flow and screen-reader AT smoke
 remain R7 rows.
+```
+
+```text
+UI-011 | 2026-08-22 | Global (dark mode, WCAG contrast) | P2
+Gap: the danger KButton paired white text with bg-danger. In dark mode
+--color-danger is #FF5A4E; white-on-#FF5A4E is ~2.6:1 — axe-core flagged
+color-contrast (serious) on Today's danger action in emulated dark mode.
+Expected: WCAG 2.2 1.4.3; design-tokens.md §2.4.
+Severity: P2.
+Status: fixed — new `--color-danger-contrast` token (#FFFFFF light,
+#1D0002 dark) applied to the danger button variant; dark-mode axe scans of
+Today/Knowledge/Canvas shell now clean.
+Evidence: tests/e2e/tests/release-gate.spec.ts (R7 dark-mode scans);
+design-tokens.md updated.
+Link: TASK-R7.
+
+UI-012 | 2026-08-22 | Shell / SyncStatusPanel / Canvas workspace (responsive §58) | P2
+Gap: at 375px three surfaces scrolled horizontally: (a) topbar theme-toggle
+pushed past the viewport; (b) mobile bottom nav items could not shrink below
+label width ("Schedule"/"Settings" clipped); (c) the canvas workspace header
+rendered back/title/save/theme/readonly/archive as one non-wrapping row;
+(d) SyncStatusPanel's full explanation prose (~340px) forced overflow on
+Tasks/Goals.
+Expected: design.md §58 responsive layout — no horizontal scroll on primary
+surfaces.
+Severity: P2.
+Status: fixed — topbar truncates current-section and shrinks controls;
+bottom-nav anchors get min-w-0 + truncate; canvas header wraps in two rows;
+sync explanation CSS-clamped on small screens (full text stays in the
+accessibility tree; truncation is visual only).
+Evidence: tests/e2e/tests/release-gate.spec.ts — no horizontal overflow at
+375px on Today/Tasks/Goals/Knowledge/Canvas/Schedule + canvas workspace.
+Link: TASK-R7.
 ```
 
 No finding above is closed silently; each closes with concrete browser/test/visual

@@ -40,25 +40,24 @@ function cycleTheme(): void {
         </a>
 
         <!-- Sync + notification topbar -->
-        <header class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-            <div class="flex items-center gap-3">
-                <span class="font-semibold">Kinevo</span>
-                <span data-testid="current-section" class="text-sm text-gray-500 dark:text-gray-400">
+        <header class="flex items-center justify-between gap-2 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <span class="font-semibold shrink-0">Kinevo</span>
+                <span data-testid="current-section" class="text-sm text-gray-500 dark:text-gray-400 truncate">
                     / {{ currentSection }}
                 </span>
-                <span data-testid="sync-state">
+                <span data-testid="sync-state" class="shrink-0">
                     <SyncStatusPanel />
                 </span>
-                <!-- Notification center (§28-§29): toast + center + contextual prompt. -->
-                <NotificationCenter />
+                <span class="shrink-0"><NotificationCenter /></span>
             </div>
             <button
                 type="button"
-                class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1"
+                class="shrink-0 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1"
                 @click="cycleTheme"
                 data-testid="theme-toggle"
             >
-                Theme: {{ shell.theme }}
+                <span class="hidden sm:inline">Theme: </span>{{ shell.theme }}
             </button>
         </header>
 
@@ -119,7 +118,7 @@ function cycleTheme(): void {
                 v-for="item in shell.navItems"
                 :key="item.key"
                 href="#"
-                class="flex-1 py-3 text-center text-xs"
+                class="flex-1 min-w-0 px-1 py-3 text-center text-xs truncate"
                 :class="
                     resolvedActive === item.key
                         ? 'text-[#1b1b18] dark:text-[#EDEDEC] font-medium'

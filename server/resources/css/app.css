@@ -21,6 +21,7 @@
     --color-success: #1D8A4E;
     --color-warning: #B7730F;
     --color-danger: #D20812;
+    --color-danger-contrast: #FFFFFF;
     --color-info: #2C5FA8;
     --color-focus: #2C5FA8;
 
@@ -57,6 +58,7 @@
     --color-success: #3BB573;
     --color-warning: #E8A13A;
     --color-danger: #FF5A4E;
+    --color-danger-contrast: #1D0002;
     --color-info: #7FA6E0;
     --color-focus: #EDEDEC;
 }

@@ -300,6 +300,14 @@ Release governance: see `docs/release-management.md`.
   failed because the device was offline is now retried automatically as soon
   as connectivity returns (offline-sync.md "sync on reconnect"), instead of
   surviving only in memory until the next edit.
+- Dark mode now meets WCAG AA contrast on danger buttons: a new
+  `--color-danger-contrast` token pairs deep ink text with the lighter dark
+  theme's danger fill instead of failing white-on-red (ui-audit UI-011).
+- Fixed horizontal page overflow at mobile widths (375px): the topbar and its
+  theme toggle, the mobile bottom navigation labels, the canvas workspace
+  header, and the sync status explanation prose no longer push content past
+  the viewport; the sync explanation is visually clamped while screen readers
+  still receive the full state description (ui-audit UI-012).
 - Production deployment path fixes surfaced by the TASK-156 smoke test:
   - The production `app`/`queue-worker`/`scheduler` roles now receive
     `APP_KEY`, `APP_URL`, and `DB_PASSWORD` from the deployment environment

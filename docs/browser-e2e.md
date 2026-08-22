@@ -77,11 +77,12 @@ Legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run.
   Today/Week/Schedule/Goals/Tasks/Knowledge in Chromium, Firefox, WebKit.
 - Git commits: R1 `5f32f1d` (smoke harness); R6 spec + matrix commits listed in
   the journal section below.
-- Known gaps (not yet browser-proven): AI (Journey F). Recover (Journey C) and
-  the canvas Offline (Journey E) variant are browser-proven by R7 (§8);
-  Journey E's Quick Capture variant remains unit-proven only. NOW executor
-  transitions (start/complete/progress/next) are browser-proven by the R1
-  core-loop run (§8).
+- Known gaps (not yet browser-proven): AI (Journey F) — the AI backend
+  (proposals/accept contract) is proven at integration level only; no AI
+  mutation surface ships in the UI during the stabilization freeze (see §8
+  R7 record). Journey C, canvas Journey E, canvas keyboard flow, dark mode,
+  mobile 375px, and screen-reader state smoke are browser-proven by R7.
+  NOW executor transitions are browser-proven by the R1 core-loop run (§8).
 
 ### R1 browser smoke evidence (TASK-R1)
 
@@ -369,6 +370,21 @@ Journey C (Recover)     2026-08-22  Playwright chromium (single-engine record)
                              offline-sync.md "sync on reconnect"); fixed with
                              window-online retry in autosave.ts
                          full suite at commit time: 109 passed / 2 skipped
+                         Result: ✅
+Release gate (R7)       2026-08-22  Playwright chromium  dev DB
+                         tests/e2e/tests/release-gate.spec.ts — §102 proofs:
+                           canvas keyboard-only flow (create/leave, no mouse);
+                           mobile 375px smoke (no horizontal overflow on
+                           Today/Tasks/Goals/Knowledge/Canvas/Schedule +
+                           canvas workspace); dark-mode WCAG scans (Today/
+                           Knowledge/Canvas shell, island excluded); SR live-
+                           region smoke (save/sync role=status + aria-live,
+                           bell accessible name)
+                         findings fixed during the run: UI-011 (dark-mode
+                           danger-button contrast → --color-danger-contrast
+                           token), UI-012 (375px overflow: topbar, mobile nav,
+                           sync explanation clamp, canvas header wrap)
+                         full suite with this spec: 124 passed / 2 skipped
                          Result: ✅
 ```
 ## 9. Visual regression (design.md §87)

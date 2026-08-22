@@ -158,19 +158,19 @@ async function conflictRecover(): Promise<void> {
 
 <template>
     <div class="flex flex-col gap-4" data-testid="canvas-workspace">
-        <header class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
-                <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="canvas-back" @click="emit('back')">← Back</button>
+        <header class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <div class="flex items-center gap-2 min-w-0">
+                <button type="button" class="shrink-0 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="canvas-back" @click="emit('back')">← Back</button>
                 <input
                     v-model="title"
                     type="text"
-                    class="text-xl font-semibold bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-600 rounded-sm px-2 py-1"
+                    class="min-w-0 max-w-full text-xl font-semibold bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-600 rounded-sm px-2 py-1"
                     data-testid="canvas-title-input"
                     @change="saveTitle"
                     @keyup.enter="saveTitle"
                 />
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <!-- role=status + aria-live: save-state transitions (§34.4) are
                      announced politely; the badge label is the announced text. -->
                 <span data-testid="canvas-save-state" role="status" aria-live="polite"><VisualStateBadge :state="saveStateBadge" /></span>

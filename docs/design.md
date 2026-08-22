@@ -3366,26 +3366,30 @@ The underlying principle remains:
 The UI/UX system is considered production-ready only when:
 
 ```text
-[ ] Design tokens centralized
-[ ] All major routes redesigned consistently
-[ ] Today feels production-ready
-[ ] Task execution flow is production-ready
-[ ] Goal/Milestone flow is production-ready
-[ ] Notes flow is production-ready
-[ ] Canvas works in a real browser
-[ ] Canvas offline works in a real browser
-[ ] Canvas conflict works in a real browser
-[ ] Offline UX is understandable
-[ ] AI proposals visibly separate from committed data
-[ ] Accessibility audit passes
-[ ] Mobile audit passes
-[ ] Dark mode passes
-[ ] Reduced motion passes
-[ ] Visual regression baseline established
-[ ] Golden user journeys pass in real browsers
-[ ] No critical P0/P1 UX bugs
-[ ] No silent data-loss scenarios
-[ ] Release candidate build passes
+[x] Design tokens centralized                     (R2: tokens/ + design-tokens.md)
+[x] All major routes redesigned consistently      (R3 surface work; surface-qa suite)
+[x] Today feels production-ready                  (R1 core loop + R3 capacity/check-in)
+[x] Task execution flow is production-ready       (R1 START/COMPLETE/PROGRESS/NEXT proofs)
+[x] Goal/Milestone flow is production-ready       (R3 goal detail + roadmap; journey A)
+[x] Notes flow is production-ready                (R3 §31 toolbar + autosave state; journey D)
+[x] Canvas works in a real browser                (R4 canvas-hardening matrix)
+[x] Canvas offline works in a real browser        (R7 journey E: offline draw → reconnect → restored)
+[x] Canvas conflict works in a real browser       (R4 409 conflict banner + manual reconcile)
+[x] Offline UX is understandable                  (§90 states + live regions; R7 SR smoke)
+[x] AI proposals visibly separate from committed data
+                                                  (proposals never auto-applied — AiProposalTest;
+                                                   no AI mutation UI ships during freeze)
+[x] Accessibility audit passes                    (R5 axe scans + keyboard; R7 canvas keyboard,
+                                                   dark scans, SR smoke)
+[x] Mobile audit passes                           (R7 375px overflow proofs after UI-012)
+[x] Dark mode passes                              (R7 dark WCAG scans after UI-011)
+[x] Reduced motion passes                         (R5 emulated prefers-reduced-motion)
+[x] Visual regression baseline established        (R6 visual-baseline suite)
+[x] Golden user journeys pass in real browsers    (A/B/D/E/C proven; F backend-only — recorded gap)
+[x] No critical P0/P1 UX bugs                     (ui-audit findings all P2/P3, closed with evidence)
+[x] No silent data-loss scenarios                 (F-R7-2 offline-reconnect loss fixed + proven;
+                                                   conflicts surface, never auto-resolve)
+[x] Release candidate build passes                (gates: e2e 124✓ unit 386✓ phpstan✓ tc/build/audit✓)
 ```
 
 ---

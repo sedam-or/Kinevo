@@ -29,7 +29,12 @@ function retry(): void {
         <span v-if="queuedCount > 0" class="text-xs text-gray-500 dark:text-gray-400" data-testid="sync-queued-count">
             {{ queuedCount }} queued
         </span>
-        <span class="text-xs text-gray-500 dark:text-gray-400" data-testid="sync-explanation">
+        <!-- Clamped on small screens (CSS truncation keeps the full text in
+             the a11y tree); full prose from lg up. §90 state explanations. -->
+        <span
+            class="text-xs text-gray-500 dark:text-gray-400 max-w-24 lg:max-w-none truncate"
+            data-testid="sync-explanation"
+        >
             {{ explanation }}
         </span>
         <button

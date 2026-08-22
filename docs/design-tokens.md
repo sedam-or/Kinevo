@@ -55,6 +55,7 @@ where applicable, Tailwind v4 theme mapping.
 | `--color-success`       | Success semantics                      |
 | `--color-warning`       | Warning semantics                      |
 | `--color-danger`        | Danger / destructive semantics         |
+| `--color-danger-contrast` | Text on danger fills (buttons)       |
 | `--color-info`          | Information semantics                  |
 | `--color-focus`         | Visible focus indicator                |
 
@@ -86,6 +87,12 @@ text          bright
 border        high-contrast (lighter than bg)
 primary       controlled accent saturation (not neon)
 ```
+
+`--color-danger-contrast` exists because the danger role inverts between
+themes: light `#D20812` carries white text (5.9:1), dark `#FF5A4E` requires a
+deep ink fill text (`#1D0002`, ≥6:1). White-on-danger fails WCAG AA in dark
+mode — never pair `text-white` with `bg-danger`; use `text-danger-contrast`
+(R7, ui-audit UI-011).
 
 ### 2.5 Theme resolution
 

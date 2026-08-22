@@ -28,7 +28,7 @@ const props = withDefaults(
             primary: `border-2 border-border bg-primary text-primary-contrast ${offsets}`,
             secondary:
                 'border border-border bg-bg text-text hover:bg-surface dark:hover:bg-surface-raised',
-            danger: `border-2 border-danger bg-danger text-white ${offsets}`,
+            danger: `border-2 border-danger bg-danger text-danger-contrast ${offsets}`,
             ghost: 'border-none text-text hover:bg-surface',
         };
         return `${base} ${variants[props.variant]}`;
