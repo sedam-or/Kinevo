@@ -37,6 +37,12 @@ final class AiSchemaRegistry
             'fields' => [
                 'type' => ['required' => true, 'type' => 'string', 'enum' => ['goal_breakdown_proposal']],
                 'goal_id' => ['required' => true, 'type' => 'int', 'min' => 1],
+                'rationale' => ['type' => 'string', 'max_length' => 2000],
+                'risks' => [
+                    'type' => 'array',
+                    'max_items' => 10,
+                    'items' => ['type' => 'string', 'max_length' => 300],
+                ],
                 'milestones' => [
                     'required' => true,
                     'type' => 'array',

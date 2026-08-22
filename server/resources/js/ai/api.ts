@@ -28,6 +28,31 @@ export interface SaveAiProviderConfigInput {
     remove_api_key?: boolean;
 }
 
+export interface BreakdownMilestone {
+    title: string;
+    target_date?: string | null;
+    estimated_minutes?: number | null;
+}
+
+export interface AiProposalPayload {
+    type: 'goal_breakdown_proposal';
+    goal_id: number;
+    rationale?: string;
+    risks?: string[];
+    milestones: BreakdownMilestone[];
+}
+
+export interface AiProposal {
+    id: number;
+    user_id: number;
+    proposal_type: string;
+    schema_version: number;
+    payload: AiProposalPayload;
+    decision: string;
+    operation_id: string | null;
+    created_at: string;
+}
+
 export const aiApi = {
     async config(): Promise<{ config: AiProviderConfigPayload }> {
         return apiClient.request<{ config: AiProviderConfigPayload }>('/ai/config');
@@ -45,5 +70,28 @@ export const aiApi = {
             method: 'POST',
             body: JSON.stringify(input),
         });
+    },
+
+    async proposals(goalId: number, decision = 'pending'): Promise<{ proposals: AiProposal[] }> {
+        return apiClient.request<{ proposals: AiProposal[] }>(
+            `/ai/proposals?proposal_type=goal_breakdown&decision=${encodeURIComponent(decision)}&limit=20`,
+        ).then(async (page) => ({
+            proposals: page.proposals.filter((p) => p.payload?.goal_id === goalId),
+        }));
+    },
+
+    async updateProposal(proposalId: number, payload: AiProposalPayload): Promise<{ proposal: AiProposal }> {
+        return apiClient.request<{ proposal: AiProposal }>(`/ai/proposals/${proposalId}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload),
+        });
+    },
+
+    async acceptProposal(proposalId: number): Promise<void> {
+        await apiClient.request<unknown>(`/ai/proposals/${proposalId}/accept`, { method: 'POST' });
+    },
+
+    async rejectProposal(proposalId: number): Promise<void> {
+        await apiClient.request<unknown>(`/ai/proposals/${proposalId}/reject`, { method: 'POST' });
     },
 };

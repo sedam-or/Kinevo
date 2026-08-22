@@ -71,9 +71,29 @@ final class AiProposal
         );
     }
 
+    public function withPayload(array $payload, string $decision = 'edited'): self
+    {
+        return new self(
+            $this->id,
+            $this->userId,
+            $this->type,
+            $this->schemaVersion,
+            $payload,
+            $decision,
+            $this->operationId,
+            $this->createdAt,
+        );
+    }
+
     public function isPending(): bool
     {
         return $this->decision === 'pending';
+    }
+
+    /** A user-edited proposal keeps its approval gate: it may still be accepted. */
+    public function isApplicable(): bool
+    {
+        return in_array($this->decision, ['pending', 'edited'], true);
     }
 
     /**

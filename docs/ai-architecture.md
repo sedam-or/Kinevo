@@ -40,6 +40,8 @@ Example:
 {
   "type": "goal_breakdown_proposal",
   "goal_id": "uuid",
+  "rationale": "why this decomposition (optional, FR-63)",
+  "risks": ["what could go wrong (optional)"],
   "milestones": [
     {
       "title": "Literature Review",
@@ -71,6 +73,11 @@ provider configuration. Documented behavior:
 - API key rules: never stored in browser storage; never returned raw to any
   client payload; encrypted server-side; masked after save; replace/remove only.
 - Ollama path requires no API key.
+- Proposal review/edit/acceptance (TASK-P17-004): user edits of a pending
+  goal-breakdown proposal revalidate through the SAME schema rules as AI
+  output (PUT /api/v1/ai/proposals/{id}, decision becomes `edited`);
+  acceptance still gates every domain mutation — nothing reaches milestones
+  until the user accepts.
 - Status derives from ONE source of truth (GET /api/v1/ai/status): Disabled /
   Not Configured / Configured / Testing / Connected / Unavailable / Degraded.
   The UI distinguishes *configured* ≠ *available* (TASK-P17-007).

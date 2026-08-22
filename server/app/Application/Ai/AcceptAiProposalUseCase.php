@@ -39,7 +39,7 @@ final readonly class AcceptAiProposalUseCase
             throw new InvalidArgumentException('AI proposal not found.');
         }
 
-        if (! $proposal->isPending()) {
+        if (! $proposal->isApplicable()) {
             throw new InvalidArgumentException('AI proposal is not pending.');
         }
 

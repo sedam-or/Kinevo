@@ -4,6 +4,7 @@ import { useGoalStore } from './store';
 import { MILESTONE_STATUSES, type Goal } from './types';
 import type { EntityLink } from '../components/EntityLinks.vue';
 import EntityLinks from '../components/EntityLinks.vue';
+import ProposalReviewCard from '../ai/ProposalReviewCard.vue';
 
 const props = defineProps<{
     goalId: number;
@@ -167,6 +168,9 @@ function milestoneGlyphEmphasis(status: string): string {
                     {{ statusLabel(status) }}
                 </button>
             </section>
+
+            <!-- Pending AI breakdown proposal: review → edit → accept/reject (TASK-P17-004) -->
+            <ProposalReviewCard :goal-id="goalId" @accepted="goals.loadGoal(goalId)" />
 
             <!-- Milestones timeline -->
             <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="goal-milestones">

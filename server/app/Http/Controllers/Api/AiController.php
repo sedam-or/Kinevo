@@ -17,6 +17,7 @@ use App\Application\Ai\ListAiRunsUseCase;
 use App\Application\Ai\RejectAiProposalUseCase;
 use App\Application\Ai\SaveAiProviderConfigUseCase;
 use App\Application\Ai\TestAiProviderConnectionUseCase;
+use App\Application\Ai\UpdateAiProposalUseCase;
 use App\Domain\Ai\AiOutputException;
 use App\Domain\Ai\AiProviderException;
 use App\Domain\Ai\Contracts\AiProposalRepository;
@@ -48,6 +49,7 @@ final class AiController extends Controller
         private readonly AcceptNoteTaskExtractionUseCase $acceptNoteExtraction,
         private readonly AcceptCanvasProposalUseCase $acceptCanvasProposal,
         private readonly RejectAiProposalUseCase $rejectProposal,
+        private readonly UpdateAiProposalUseCase $updateProposal,
         private readonly AiProposalRepository $proposalRepository,
     ) {}
 
@@ -253,7 +255,22 @@ final class AiController extends Controller
 
         return response()->json(['proposal' => $proposal->toArray()]);
     }
-
+    public function proposalsUpdate(Request $request, int $proposalId): JsonResponse
+    {
+        $payload = $request->json()->all();
+        if ($payload === []) {
+            return response()->json(['error' => 'A proposal payload object is required.'], 422);
+        }
+        try {
+            $proposal = $this->updateProposal->__invoke($request->user()->id, $proposalId, $payload);
+        } catch (InvalidArgumentException $e) {
+            if ($e->getMessage() === 'AI proposal not found.') {
+                return response()->json(['error' => $e->getMessage()], 404);
+            }
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+        return response()->json(['proposal' => $proposal->toArray()]);
+    }
     public function proposalsAccept(Request $request, int $proposalId): JsonResponse
     {
         $userId = $request->user()->id;

@@ -73,6 +73,19 @@ final readonly class EloquentAiProposalRepository implements AiProposalRepositor
         return $proposal;
     }
 
+    public function updatePayload(AiProposal $proposal): AiProposal
+    {
+        AiProposalModel::query()
+            ->where('id', $proposal->id)
+            ->update([
+                'payload' => $proposal->payload,
+                'decision' => $proposal->decision,
+                'schema_version' => $proposal->schemaVersion,
+            ]);
+
+        return $proposal;
+    }
+
     private function toDomain(AiProposalModel $model): AiProposal
     {
         return new AiProposal(

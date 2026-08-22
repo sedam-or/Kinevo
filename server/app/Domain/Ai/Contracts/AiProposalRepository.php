@@ -16,4 +16,6 @@ interface AiProposalRepository
     public function listForUser(int $userId, ?string $proposalType = null, ?string $decision = null, int $limit = 50): array;
 
     public function updateDecision(AiProposal $proposal): AiProposal;
+
+    public function updatePayload(AiProposal $proposal): AiProposal;
 }

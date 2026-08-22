@@ -152,6 +152,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ai/proposals', [AiController::class, 'proposals']);
     Route::get('/ai/proposals', [AiController::class, 'proposalsIndex']);
     Route::get('/ai/proposals/{proposalId}', [AiController::class, 'proposalsShow']);
+    Route::put('/ai/proposals/{proposalId}', [AiController::class, 'proposalsUpdate']);
     Route::post('/ai/proposals/{proposalId}/accept', [AiController::class, 'proposalsAccept']);
     Route::post('/ai/proposals/{proposalId}/reject', [AiController::class, 'proposalsReject']);
     Route::post('/ai/summarize-note', [AiController::class, 'summarizeNote']);

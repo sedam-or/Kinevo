@@ -3698,7 +3698,7 @@ P17-G Analytics / Decision Support UX
         review/accept UI stays in TASK-P17-004.
 
 ### TASK-P17-004 — AI Goal Breakdown Flow
-- Status: TODO
+- Status: DONE (2026-08-23)
 - Priority: P0 (P0 within Phase 17 — goal decomposition is the glue between
       Goals and Scheduling; AI architecture itself remains P1)
 - Depends On: TASK-P17-003, TASK-P17-006
@@ -3707,14 +3707,40 @@ P17-G Analytics / Decision Support UX
 - Files: server/AI proposal backend (exists, verified), Goal breakdown UI,
        proposal review UI
 - Acceptance:
-  - [ ] build complete UI workflow: Goal → Generate AI Breakdown → Loading →
+  - [x] build complete UI workflow: Goal → Generate AI Breakdown → Loading →
         Proposal → Review → Edit → Accept (uses existing validated proposal
         contract; proposal shows milestones, estimated effort, suggested dates,
         rationale, risks)
-  - [ ] Accept only via existing validated proposal workflow; no bypass
-- Verification: [ ] E2E Journey G (create → generate → review → accept →
+  - [x] Accept only via existing validated proposal workflow; no bypass
+- Verification: [x] E2E Journey G (create → generate → review → accept →
         milestones appear); unit/feature on controller boundary
 - Notes: AI never silently creates milestones/tasks (discussion §44).
+- Evidence:
+  - Schema v1 extended with optional `rationale` + `risks` (FR-63); optional,
+    so stored proposals stay valid.
+  - New PUT /api/v1/ai/proposals/{id} (`UpdateAiProposalUseCase`): edits a
+    pending goal-breakdown proposal, revalidates through `AiSchemaRules`
+    (same validator as AI output — no bypass), forbids retargeting the goal,
+    decision becomes `edited`; accept guard widened to pending|edited via
+    `AiProposal::isApplicable()` so the approval gate holds.
+  - Frontend: `ai/ProposalReviewCard.vue` on GoalDetailView — rationale block,
+    milestone list with target date + effort formatting, risks list, inline
+    edit (title/date/minutes), Accept/Reject; accept refreshes goal+milestones.
+  - Tests: `AiProposalEditApiTest` 6 passed (edit marks edited, schema
+    revalidation 422, goal retarget 422, owner-scoped 404, decided-proposal
+    edit 422, accept applies EDITED payload); vitest `ProposalReviewCard`
+    5 passed (render, edit+save contract, accept emit, reject dismiss, empty);
+    proposal family regression 22/22.
+  - Live validation on dev stack (fake Ollama on docker gateway): create goal →
+    generate via SAVED provider config → GET shows rationale/risks → PUT edit
+    → decision=edited → accept creates milestones FROM EDITED payload →
+    GET /goals/{id}/milestones confirms; negative paths 422/422 live. Config
+    restored to disabled afterwards.
+  - Browser journey G2 spec committed (`golden-journeys.spec.ts`,
+    review→edit→accept with real provider precondition); browser run deferred
+    this session per user instruction — API-level flow fully validated.
+- Notes2: rationale/risks are display-only context; acceptance applies only
+        schema-valid milestones.
 
 ### TASK-P17-005 — Post-Goal AI Invocation
 - Status: TODO

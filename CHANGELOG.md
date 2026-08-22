@@ -14,6 +14,13 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Completed the AI goal-breakdown workflow (Phase 17, TASK-P17-004): the goal
+  detail now shows a review card for pending AI breakdown proposals with
+  rationale, risks, and milestone target dates/effort. Milestones can be
+  edited inline before accepting; edits are revalidated against the same
+  schema as AI output and the proposal is marked `edited`. Acceptance still
+  runs through the validated proposal contract — nothing is applied to the
+  goal until Accept, and already-decided proposals can no longer be changed.
 - Added the AI & Providers settings surface (Phase 17, TASK-P17-006): a new
   SYSTEM nav item opens Settings → AI & Providers where the AI provider
   (Disabled / local Ollama / OpenAI-compatible), model, base URL, and API key

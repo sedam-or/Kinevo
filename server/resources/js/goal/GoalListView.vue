@@ -169,7 +169,7 @@ function workloadLabel(w: string): string {
                 into actionable milestones?
             </p>
             <div v-if="proposalReady" class="text-sm text-[var(--color-primary)] mb-3" data-testid="goal-proposal-ready" role="status">
-                AI proposal generated. Review and accept it from the goal detail (full review flow lands in TASK-P17-004).
+                AI proposal generated. Open the goal to review, edit, and accept it.
             </div>
             <div v-if="suggestionError" class="text-sm text-danger mb-3" role="alert" data-testid="goal-proposal-error">
                 {{ suggestionError }}

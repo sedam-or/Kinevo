@@ -132,4 +132,42 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
         // Privacy blurb is always present on this surface (§104 contract).
         await expect(page.getByTestId('ai-privacy-blurb')).toContainText('never stored in browser storage');
     });
+});test.describe('R17 golden journey G2 — Breakdown proposal: review → edit → accept (P17-004)', () => {
+    // Preconditions: a reachable AI provider is configured in Settings → AI &
+    // Providers (journey H). Generation happens SERVER-side, so this journey
+    // cannot be route-mocked in the browser; it skips loudly otherwise.
+    test('generates a breakdown, edits the proposal, accepts it — milestones appear', async ({ page }) => {
+        await login(page);
+        const name = unique('r17-g2');
+        await page.getByTestId('nav-goals').click();
+        await expect(page.getByTestId('goals-view')).toBeVisible();
+        await page.getByTestId('goal-create-title').fill(name);
+        await page.getByTestId('goal-create-horizon').selectOption('Quarterly');
+        await page.getByTestId('goal-create-submit').click();
+        await expect(page.getByTestId('goal-breakdown-suggestion')).toBeVisible();
+        await page.getByTestId('goal-breakdown-ai').click();
+
+        // Loading state → the goal list confirms the pending proposal exists.
+        await expect(page.getByTestId('goal-proposal-ready')).toBeVisible({ timeout: 30_000 });
+
+        // Open the goal: the review card renders the validated proposal.
+        await page.getByTestId('goal-list').getByText(name, { exact: false }).first().click();
+        await expect(page.getByTestId('goal-detail')).toBeVisible();
+        await expect(page.getByTestId('proposal-review')).toBeVisible({ timeout: 10_000 });
+        const milestoneCount = await page.getByTestId('proposal-milestones').locator('li').count();
+        expect(milestoneCount).toBeGreaterThan(0);
+
+        // Edit the first milestone title before accepting (FR-62 approval gate).
+        await page.getByTestId('proposal-edit').click();
+        const firstTitle = page.getByTestId('proposal-milestone-title-0');
+        const originalTitle = await firstTitle.inputValue();
+        await firstTitle.fill(`${originalTitle} (edited)`);
+        await page.getByTestId('proposal-save-edits').click();
+        await expect(page.getByTestId('proposal-edited-badge')).toBeVisible();
+
+        // Accept → milestones land on the goal through the accepted contract.
+        await page.getByTestId('proposal-accept').click();
+        await expect(page.getByTestId('goal-milestones')).toContainText(`${originalTitle} (edited)`, { timeout: 15_000 });
+        await expect(page.getByTestId('milestone-timeline').locator('[data-testid="milestone-item"]')).toHaveCount(milestoneCount);
+    });
 });
