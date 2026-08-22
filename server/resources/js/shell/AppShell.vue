@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useShellStore } from './store';
-import { isShellView, NAV_GROUPS, type ShellView } from './navigation';
+import { isShellView, NAV_GROUPS, MOBILE_PRIMARY_KEYS, type ShellView } from './navigation';
+import { useFocusTrap } from './focus-trap';
 import SyncStatusPanel from './SyncStatusPanel.vue';
 import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel.vue';
 import NotificationCenter from '../notifications/NotificationCenter.vue';
@@ -15,6 +16,47 @@ const resolvedActive = computed<ShellView>(() =>
 const currentSection = computed(() => {
     const item = NAV_GROUPS.flatMap((g) => g.items).find((i) => i.key === resolvedActive.value);
     return item ? item.label : 'Kinevo';
+});
+
+/** Mobile "More" drawer state. */
+const mobileMoreOpen = ref(false);
+const moreRoot = ref<HTMLElement | null>(null);
+
+const mobileMoreGroups = computed(() =>
+    NAV_GROUPS
+        .map((group) => ({
+            ...group,
+            items: group.items.filter((item) => !MOBILE_PRIMARY_KEYS.includes(item.key)),
+        }))
+        .filter((group) => group.items.length > 0),
+);
+
+function toggleMobileMore(): void {
+    mobileMoreOpen.value = !mobileMoreOpen.value;
+}
+
+function closeMobileMore(): void {
+    mobileMoreOpen.value = false;
+}
+
+useFocusTrap(moreRoot, closeMobileMore);
+onBeforeUnmount(closeMobileMore);
+
+// The global focus trap is registered once (AppShell mount). When the drawer
+// mounts later, move initial focus into it so AT/keyboard users land inside
+// (same pattern as AuthHost's QuickCapture comment).
+watch(mobileMoreOpen, (open) => {
+    if (!open) {
+        return;
+    }
+    void nextTick(() => {
+        const root = moreRoot.value;
+        if (!root) {
+            return;
+        }
+        const first = root.querySelector<HTMLElement>('button, a[href], [tabindex]:not([tabindex="-1"])');
+        (first ?? root).focus();
+    });
 });
 
 function selectView(view: ShellView): void {
@@ -108,17 +150,15 @@ function cycleTheme(): void {
             </main>
         </div>
 
-        <!-- Mobile bottom navigation -->
-        <nav
-            class="lg:hidden fixed bottom-0 inset-x-0 border-t border-gray-200 dark:border-gray-700 bg-[#FDFDFC] dark:bg-[#0a0a0a] flex justify-around"
-            aria-label="Primary mobile"
-            data-testid="mobile-nav"
-        >
+        <!-- Mobile bottom navigation (design.md §8.3): primary subset +
+             "More" drawer so the fixed bar never becomes a scroller. -->
+        <nav class="lg:hidden fixed bottom-0 inset-x-0 border-t border-gray-200 dark:border-gray-700 bg-[#FDFDFC] dark:bg-[#0a0a0a] flex justify-around" aria-label="Primary mobile" data-testid="mobile-nav">
             <a
-                v-for="item in shell.navItems"
+                v-for="item in shell.mobilePrimaryItems"
                 :key="item.key"
                 href="#"
                 class="flex-1 min-w-0 px-1 py-3 text-center text-xs truncate"
+                :data-testid="`mobile-nav-${item.key}`"
                 :class="
                     resolvedActive === item.key
                         ? 'text-[#1b1b18] dark:text-[#EDEDEC] font-medium'
@@ -129,7 +169,59 @@ function cycleTheme(): void {
             >
                 {{ item.label }}
             </a>
+            <button
+                type="button"
+                class="flex-1 min-w-0 px-1 py-3 text-center text-xs truncate text-gray-500 dark:text-gray-400"
+                :aria-expanded="mobileMoreOpen"
+                aria-haspopup="true"
+                data-testid="mobile-more-toggle"
+                @click="toggleMobileMore"
+            >
+                More
+            </button>
         </nav>
+
+        <!-- Mobile "More" drawer -->
+        <div
+            v-if="mobileMoreOpen"
+            ref="moreRoot"
+            role="dialog"
+            aria-modal="false"
+            aria-label="More navigation"
+            class="lg:hidden fixed inset-0 z-[var(--z-popover)]"
+            data-testid="mobile-more-drawer"
+        >
+            <div class="absolute inset-0 bg-black/30" @click="closeMobileMore" />
+            <div class="absolute inset-x-0 bottom-0 bg-[#FDFDFC] dark:bg-[#0a0a0a] border-t border-gray-200 dark:border-gray-700 rounded-t-sm p-4 pb-8 max-h-[75vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold">More</span>
+                    <button type="button" class="text-sm text-gray-500 dark:text-gray-400" data-testid="mobile-more-close" @click="closeMobileMore">
+                        Close
+                    </button>
+                </div>
+                <div v-for="group in mobileMoreGroups" :key="group.key" class="flex flex-col gap-1 mb-3">
+                    <span class="px-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                        {{ group.label }}
+                    </span>
+                    <a
+                        v-for="item in group.items"
+                        :key="item.key"
+                        href="#"
+                        class="flex items-center gap-2 rounded-sm px-3 py-2 text-sm"
+                        :data-testid="`more-${item.key}`"
+                        :class="
+                            resolvedActive === item.key
+                                ? 'bg-gray-100 dark:bg-gray-800 font-medium'
+                                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                        "
+                        :aria-current="resolvedActive === item.key ? 'page' : undefined"
+                        @click.prevent="selectView(item.key); closeMobileMore()"
+                    >
+                        {{ item.label }}
+                    </a>
+                </div>
+            </div>
+        </div>
 
         <!-- Dev-only runtime diagnostics (TASK-R2; dropped in production builds) -->
         <DiagnosticsPanel />

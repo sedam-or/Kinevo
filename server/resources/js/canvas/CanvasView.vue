@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { defineAsyncComponent, ref } from 'vue';
 import CanvasListView from './CanvasListView.vue';
+import { useShellStore } from '../shell/store';
+
+/**
+ * Deep-open (TASK-P17-002): a related-entity link may navigate to the Canvas
+ * surface with a focus target; consume it once on mount so the linked canvas
+ * opens instead of the list.
+ */
+const shell = useShellStore();
+const focused = shell.consumeFocus('canvas');
 
 /**
  * Lazy-load the canvas workspace (and its Excalidraw chunk) by route
@@ -15,7 +24,7 @@ const CanvasWorkspaceView = defineAsyncComponent({
     },
 });
 
-const selectedCanvasId = ref<number | null>(null);
+const selectedCanvasId = ref<number | null>(focused);
 
 function select(canvasId: number): void {
     selectedCanvasId.value = canvasId;

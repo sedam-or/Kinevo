@@ -23,6 +23,7 @@ vi.mock('../api', async (importOriginal) => {
 
 import LinkManager from '../LinkManager.vue';
 import { knowledgeLinkApi } from '../api';
+import { useShellStore } from '../../shell/store';
 
 beforeEach(() => {
     setActivePinia(createPinia());
@@ -72,6 +73,37 @@ describe('LinkManager', () => {
         expect(item.exists()).toBe(true);
         expect(item.text()).toContain('Learn Laravel');
         expect(wrapper.find('[data-testid="link-remove-1"]').exists()).toBe(true);
+    });
+
+    it('opens a linked entity on its own surface (TASK-P17-002)', async () => {
+        vi.mocked(knowledgeLinkApi.linksForNote).mockResolvedValue({
+            links: [
+                { id: 1, user_id: 1, source_type: 'note', source_id: 1, target_type: 'goal', target_id: 9, link_type: 'supports' },
+                { id: 2, user_id: 1, source_type: 'note', source_id: 1, target_type: 'task', target_id: 3, link_type: 'references' },
+            ],
+        });
+        vi.mocked(knowledgeLinkApi.goals).mockResolvedValue({ goals: [{ id: 9, title: 'Learn Laravel' }] });
+        vi.mocked(knowledgeLinkApi.programs).mockResolvedValue({ programs: [] });
+        vi.mocked(knowledgeLinkApi.tasks).mockResolvedValue({ tasks: [{ id: 3, title: 'Task A' }] });
+        vi.mocked(knowledgeLinkApi.canvases).mockResolvedValue({ canvases: [] });
+
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(LinkManager, {
+            props: { noteId: 1 },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        const shell = useShellStore();
+        await wrapper.find('[data-testid="link-open-goal-9"]').trigger('click');
+        expect(shell.activeView).toBe('goals');
+        expect(shell.viewFocus['goals']).toBe(9);
+
+        await wrapper.find('[data-testid="link-open-task-3"]').trigger('click');
+        expect(shell.activeView).toBe('tasks');
+        expect(shell.viewFocus['tasks']).toBe(3);
     });
 
     it('creates a goal link via the form', async () => {

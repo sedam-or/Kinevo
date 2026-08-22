@@ -36,9 +36,20 @@ user-visible axis even if its feature tests pass.
 | P1    | feature unusable; wrong schedule; wrong state; navigation broken; major UX confusion | Blocks release     |
 | P2    | visual inconsistency; minor workflow friction; poor copy          | Scheduled cleanup  |
 | P3    | cosmetic; enhancement                                             | Backlog            |
-
 P0 findings block all feature work. No findings may be silently closed; each has
 a record (format §6).
+### Product-experience classes (Phase 17, design.md §104 / TASK-P17-031)
+Software bug and product-experience bug are distinct. Classify experience
+problems separately so they are fixed as UX, not patched as code failures.
+| Class | Definition                                             | Example                                    |
+| ----- | ------------------------------------------------------ | ------------------------------------------ |
+| UX-C1 | workflow broken (a flow cannot complete)               | create goal then AI breakdown unreachable  |
+| UX-C2 | workflow unclear (user does not know the next step)    | no "next action" surfaced                   |
+| UX-C3 | feature undiscoverable (no entry point or explanation) | AI provider settings hidden                 |
+| UX-C4 | visual inconsistency (hierarchy/affordance violated)   | five equal CTAs; everything boxed          |
+| UX-C5 | micro-interaction missing (no state feedback)          | save has no Saving→Saved confirmation       |
+| UX-C6 | information hierarchy problem (wrong emphasis)         | analytics shows 15 charts before signal     |
+UX-C findings follow the same record/close rules as P0–P3.
 
 ## 4. Surface audit matrix
 

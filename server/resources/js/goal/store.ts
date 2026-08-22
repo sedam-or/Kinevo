@@ -77,6 +77,17 @@ export const useGoalStore = defineStore('goal', () => {
         }
     }
 
+    async function createBreakdownProposal(goalId: number): Promise<{ id: number; status: string } | null> {
+        error.value = null;
+        try {
+            const { proposal } = await goalApi.breakdownProposal(goalId);
+            return proposal;
+        } catch (err) {
+            error.value = err as ApiError;
+            return null;
+        }
+    }
+
     async function setGoalStatus(goalId: number, status: string): Promise<void> {
         error.value = null;
         try {
@@ -131,6 +142,7 @@ export const useGoalStore = defineStore('goal', () => {
         createGoal,
         createProgram,
         createMilestone,
+        createBreakdownProposal,
         setGoalStatus,
         setMilestoneStatus,
         setProgramStatus,

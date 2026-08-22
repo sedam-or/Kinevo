@@ -32,6 +32,7 @@ server/.phpunit.result.cache
 server/.phpunit.cache/
 
 # Node
+/node_modules/
 server/node_modules/
 server/public/build/
 

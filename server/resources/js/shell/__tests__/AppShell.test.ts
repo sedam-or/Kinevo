@@ -68,4 +68,59 @@ describe('AppShell', () => {
         expect(desktop.attributes('aria-label')).toBe('Primary');
         expect(mobile.attributes('aria-label')).toBe('Primary mobile');
     });
+
+    it('marks the active route unmistakably on desktop via aria-current', async () => {
+        const wrapper = mount(AppShell, { global: { plugins: [pinia] } });
+        const todayLink = wrapper.find('[data-testid="nav-today"]');
+        expect(todayLink.attributes('aria-current')).toBe('page');
+
+        const settingsLink = wrapper.find('[data-testid="nav-settings"]');
+        await settingsLink.trigger('click');
+        expect(settingsLink.attributes('aria-current')).toBe('page');
+        // Previously active view loses its marker.
+        expect(wrapper.find('[data-testid="nav-today"]').attributes('aria-current')).toBeUndefined();
+        // Current context is visible in the topbar breadcrumb.
+        const section = wrapper.find('[data-testid="current-section"]');
+        expect(section.text()).toContain('Settings');
+    });
+
+    it('mobile bottom nav shows only the primary subset (design.md §8.3)', () => {
+        const wrapper = mount(AppShell, { global: { plugins: [pinia] } });
+        const mobileNav = wrapper.find('[data-testid="mobile-nav"]');
+        // Primary views are pinned with `mobile-nav-<key>` testids.
+        for (const key of ['today', 'tasks', 'goals', 'knowledge']) {
+            expect(mobileNav.find(`[data-testid="mobile-nav-${key}"]`).exists()).toBe(true);
+        }
+        // Secondary views are NOT pinned to the fixed bar (no nav-* link there).
+        const pinned = wrapper.findAll('[data-testid="mobile-nav"] [data-testid^="nav-"]');
+        expect(pinned.length).toBe(0);
+        expect(wrapper.find('[data-testid="mobile-more-toggle"]').exists()).toBe(true);
+    });
+
+    it('opens the More drawer, lists secondary views, and selects one', async () => {
+        const wrapper = mount(AppShell, { global: { plugins: [pinia] } });
+        const shell = useShellStore();
+        const toggle = wrapper.find('[data-testid="mobile-more-toggle"]');
+        expect(toggle.attributes('aria-expanded')).toBe('false');
+
+        await toggle.trigger('click');
+        expect(toggle.attributes('aria-expanded')).toBe('true');
+        const drawer = wrapper.find('[data-testid="mobile-more-drawer"]');
+        expect(drawer.exists()).toBe(true);
+
+        const canvas = drawer.find('[data-testid="more-canvas"]');
+        expect(canvas.exists()).toBe(true);
+        await canvas.trigger('click');
+        expect(shell.activeView).toBe('canvas');
+        // Selecting a drawer item closes the drawer.
+        expect(wrapper.find('[data-testid="mobile-more-drawer"]').exists()).toBe(false);
+    });
+
+    it('closes the More drawer via the Close button', async () => {
+        const wrapper = mount(AppShell, { global: { plugins: [pinia] } });
+        await wrapper.find('[data-testid="mobile-more-toggle"]').trigger('click');
+        expect(wrapper.find('[data-testid="mobile-more-drawer"]').exists()).toBe(true);
+        await wrapper.find('[data-testid="mobile-more-close"]').trigger('click');
+        expect(wrapper.find('[data-testid="mobile-more-drawer"]').exists()).toBe(false);
+    });
 });

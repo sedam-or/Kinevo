@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useTaskStore } from './store';
 import { TASK_TRANSITIONS, type Task, type TaskStatusValue } from './types';
+import type { EntityLink } from '../components/EntityLinks.vue';
+import EntityLinks from '../components/EntityLinks.vue';
 import AttachmentList from '../attachments/AttachmentList.vue';
 import KButton from '../components/KButton.vue';
 import KInput from '../components/KInput.vue';
@@ -144,6 +146,26 @@ async function partialComplete(): Promise<void> {
 async function promote(subtaskId: number): Promise<void> {
     await tasks.promoteSubtask(props.taskId, subtaskId);
 }
+
+/**
+ * Workflow continuity (TASK-P17-002): upstream planning context and
+ * downstream knowledge/execution surfaces, so a task page is never a
+ * dead end. Milestone/program have no dedicated surfaces — their goal
+ * carries them, so the Goal chip is the single upstream entry.
+ */
+const relatedLinks = computed<EntityLink[]>(() => {
+    const task = tasks.current;
+    const links: EntityLink[] = [];
+    if (task?.goal_id) {
+        links.push({ label: 'Goal', view: 'goals', focusId: task.goal_id });
+    }
+    links.push(
+        { label: 'Schedule', view: 'schedule' },
+        { label: 'Notes', view: 'knowledge' },
+        { label: 'Canvas', view: 'canvas' },
+    );
+    return links;
+});
 </script>
 
 <template>
@@ -161,7 +183,9 @@ async function promote(subtaskId: number): Promise<void> {
         <div v-if="tasks.loading" class="text-sm text-gray-500" data-testid="task-detail-loading">Loading…</div>
         <div v-if="tasks.error" class="text-sm text-danger" role="alert" data-testid="task-detail-error">{{ tasks.error.message }}</div>
 
-        <!-- Edit form -->
+        <EntityLinks :links="relatedLinks" />
+
+        <!-- Editform -->
         <section v-if="tasks.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="task-edit">
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Edit</div>
             <form class="flex flex-col gap-3" @submit.prevent="saveEdit">

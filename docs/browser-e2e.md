@@ -59,7 +59,8 @@ Legend: ✅ pass · 🔴 fail · ⚠ partial · ⚪ not run.
   SPA on `127.0.0.1:8000` (`make e2e` / `docker build -t kinevo-e2e tests/e2e`).
 - Result: **54/54 passed** across the three-browser matrix (1 worker, 1.3 min).
   Specs: `login.spec.ts`, `journeys.spec.ts` (R1), `golden-journeys.spec.ts`
-  (R6 journeys A/B/D + surface create flows), `surface-qa.spec.ts`
+  (R6 journeys A/B/D + journey G Plan→breakdown + surface create flows),
+  `surface-qa.spec.ts`
   (R6 §88/§93 — page errors, horizontal overflow, spinner), `visual-baseline.spec.ts`
   (R6 §87 — screenshot artifacts).
 - Re-verification (2026-08-22, post-R4/R5): **105/105 passed** (3.0 min) — the
@@ -289,6 +290,25 @@ Milestones
 
 Result: ⚪
 
+### Journey G — Plan, then decide how to break down (TASK-P17-003)
+
+```text
+LOGIN → PLAN (Goals) → New goal (Outcome/Description/Deadline)
+     → Goal created → breakdown suggestion:
+       [Generate with AI] [I'll do it myself] [Later]
+     → no automatic mutation of the goal
+```
+
+The goal-creation planning workflow: after submit the goal is stored and the
+product *offers* an AI breakdown; the goal/milestones are NEVER mutated without
+an explicit choice. "Generate with AI" creates a *pending* proposal via the
+validated proposal contract (SRS FR-52/FR-62); the full proposal review/accept
+UX is Journey F work (TASK-P17-004) and stays ⚪ here.
+
+Result: ✅ P17-003 pass (chromium) — `golden-journeys.spec.ts` "golden journey G";
+suggestion renders with all three actions; "I'll do it myself" opens the goal
+detail for manual planning.
+
 ### Core loop (design.md §99 — highest priority)
 
 ```text
@@ -333,6 +353,13 @@ Journey D (Knowledge)  2026-08-21  Playwright chromium/firefox/webkit  dev DB
 Core loop              2026-08-21  Playwright chromium/firefox/webkit  dev DB
                          steps: LOGIN → TODAY → quick-capture → next-day shift
                         Result: superseded by R1 core-loop run below.
+Journey G (Plan)        2026-08-22  Playwright chromium  dev DB (fresh owners)
+                         steps: login → Goals → create goal (Outcome/Description/
+                                Deadline, Quarterly) → breakdown suggestion →
+                                "I'll do it myself" → goal detail
+                         checks: suggestion shows [Generate with AI] [Manual]
+                                [Later]; goal never auto-mutated; manual opens detail
+                         Result: ✅ (golden-journeys.spec.ts, TASK-P17-003)
 ### R1 core-loop runs
 ```text
 Core loop (R1)          2026-08-21  Playwright chromium/firefox/webkit  dev DB
@@ -417,6 +444,63 @@ human pair-of-eyes before R7. No snapshot was auto-accepted.
 
 R1 produces an empty-to-full matrix; R7 closes rescue only when all ⚪ rows are
 resolved and §102 design.md acceptance gate holds.
+
+## 11. Phase 17 planned journeys (design.md §104)
+
+Rescue R0–R7 closed on the §102 gate with evidence (Journey A/B/C/D/E + core
+loop; Journey F = AI UI, intentionally browser-unproven and now triaged into
+Phase 17). Phase 17 adds four journeys; each is recorded here on execution and
+goes green across chromium/firefox/webkit before P17 tasks close:
+
+```text
+Journey G — Goal AI Breakdown    create goal → [Break down with AI] → generate
+                                 → review proposal → accept → milestones appear
+Journey H — Provider Setup       Settings → AI & Providers → set provider →
+                                 credential → test connection → save → reload →
+                                 status persists, key never returned raw
+Journey I — Task → Today → Progress   task created → scheduled → appears in
+                                 Today → start → complete → progress updates
+Journey J — Analytics → Action   analytics shows interpretation → user clicks
+                                 the related action → lands in that workflow
+```
+
+Theme real-browser proof (light/dark/system + reload + navigation + mobile) and
+the mobile width sweep (375/390/412/768/1024/1440) are Phase 17 verification
+items tracked in TASK.md (TASK-P17-013/033/034); visual baselines from §9 are
+re-captured per §9 rules after the P17 redesign (TASK-P17-035).
+
+### P17-001 — Product Information Architecture run (2026-08-22)
+```text
+tests/e2e/tests/navigation.spec.ts  chromium/firefox/webkit
+  checks: group labels render (EXECUTE/PLAN/KNOWLEDGE/REVIEW/SYSTEM);
+          Schedule pinned to PLAN, absent from SYSTEM (design.md §104);
+          aria-current moves with selection; current-section breadcrumb updates;
+          mobile bottom nav shows primary subset (today/tasks/goals/knowledge)
+          + More drawer; drawer discloses remaining views; keyboard Enter from
+          drawer selects and closes.  Result: ✅ 3 passed (3 browsers), plus
+          journeys + surface-qa regression 39 passed.
+accessibility.spec.ts (axe WCAG 2.2 A/AA) against the PRODUCTION bundle
+  (public/hot moved aside so Laravel serves built assets): Result: ✅
+  navigation + all core-surface scans clean — 24 passed. Note: running the
+  same scans through the Vite dev server (`/hot`) fails color-contrast on the
+  dev-only runtime-diagnostics panel (`opacity-60` dt rows) because DEV mode
+  renders it; production bundles compile the panel out (design.md §36,
+  ui-audit UI-006), so this is a dev-environment artifact, not product debt.
+```
+
+### P17-002 — Workflow Continuity Layer run (2026-08-22)
+```text
+tests/e2e/tests/continuity.spec.ts  chromium/firefox/webkit
+  checks: goal detail → continuity strip (Tasks/Schedule/Progress→Analytics)
+          navigates to each downstream surface; task detail → downstream
+          (Schedule/Notes/Canvas) surfaces render; unlinked task shows NO Goal
+          chip (no false upstream); deep-open (linked goal focus target) is
+          unit-proven and the strip is visible in-browser. Result: ✅ 6 passed
+          (3 browsers). Regression: journeys + golden-journeys + surface-qa +
+          core-loop green (33 passed). Note: Milestones/Programs have no
+          dedicated shell surface — their owning Goal is the single upstream
+          entry (documented here per P17-002 Notes).
+```
 
 ---
 

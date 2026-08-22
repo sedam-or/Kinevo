@@ -19,6 +19,26 @@ describe('shell store', () => {
         expect(shell.activeView).toBe('settings');
     });
 
+    it('records and consumes a one-shot deep-open focus per view (TASK-P17-002)', () => {
+        const shell = useShellStore();
+        expect(shell.consumeFocus('goals')).toBeNull();
+
+        shell.setView('goals', 42);
+        expect(shell.activeView).toBe('goals');
+        // First consume returns the target and clears it.
+        expect(shell.consumeFocus('goals')).toBe(42);
+        // Second consume is empty — one-shot semantics.
+        expect(shell.consumeFocus('goals')).toBeNull();
+    });
+
+    it('navigating without a focus target leaves existing focus untouched', () => {
+        const shell = useShellStore();
+        shell.setView('tasks', 7);
+        shell.setView('canvas');
+        expect(shell.activeView).toBe('canvas');
+        expect(shell.viewFocus['tasks']).toBe(7);
+    });
+
     it('tracks sync state', () => {
         const shell = useShellStore();
         shell.setSyncState('offline');

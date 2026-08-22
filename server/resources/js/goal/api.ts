@@ -49,6 +49,14 @@ export const goalApi = {
         });
     },
 
+    /** Create a pending AI goal-breakdown proposal (FR-52/FR-62; no mutation). */
+    breakdownProposal(goalId: number, instructions?: string): Promise<{ proposal: { id: number; status: string } }> {
+        return apiClient.request<{ proposal: { id: number; status: string } }>(
+            `/goals/${goalId}/breakdown-proposals`,
+            { method: 'POST', body: JSON.stringify({ instructions }) },
+        );
+    },
+
     programs(): Promise<ProgramListResponse> {
         return apiClient.request<ProgramListResponse>('/programs');
     },

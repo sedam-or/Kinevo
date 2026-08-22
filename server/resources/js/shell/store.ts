@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { NAV_GROUPS, NAV_ITEMS, PRIMARY_VIEW, type ShellView } from './navigation';
+import { NAV_GROUPS, NAV_ITEMS, MOBILE_MORE_KEYS, MOBILE_PRIMARY_KEYS, PRIMARY_VIEW, type ShellView } from './navigation';
 import { applyTheme, readThemePreference, type ThemePreference } from './theme';
 import { VISIBLE_SYNC_STATES, type VisibleSyncState } from '../offline/sync-status';
 
@@ -32,9 +32,31 @@ export const useShellStore = defineStore('shell', () => {
     const navItems = computed(() => NAV_ITEMS);
     const navGroups = computed(() => NAV_GROUPS);
     const unreadCount = computed(() => notifications.value.filter((n) => n.unread).length);
+    /** Primary mobile bottom-nav items (design.md §8.3). */
+    const mobilePrimaryItems = computed(() => NAV_ITEMS.filter((i) => MOBILE_PRIMARY_KEYS.includes(i.key)));
+    /** Everything that lives behind the mobile "More" drawer. */
+    const mobileMoreItems = computed(() => NAV_ITEMS.filter((i) => MOBILE_MORE_KEYS.includes(i.key)));
 
-    function setView(view: ShellView): void {
+    /**
+     * Pending deep-open target per view (TASK-P17-002 workflow continuity).
+     * A related-entity link navigates to a surface AND records which object
+     * should be opened there; the surface consumes (and clears) it on mount.
+     */
+    const viewFocus = ref<Partial<Record<ShellView, number>>>({});
+
+    function setView(view: ShellView, focusId?: number): void {
         activeView.value = view;
+        if (focusId !== undefined) {
+            viewFocus.value[view] = focusId;
+        }
+    }
+
+    function consumeFocus(view: ShellView): number | null {
+        const id = viewFocus.value[view] ?? null;
+        if (id !== null) {
+            delete viewFocus.value[view];
+        }
+        return id;
     }
 
     function setTheme(preference: ThemePreference): void {
@@ -85,8 +107,12 @@ export const useShellStore = defineStore('shell', () => {
         errorMessage,
         navItems,
         navGroups,
+        mobilePrimaryItems,
+        mobileMoreItems,
+        viewFocus,
         unreadCount,
         setView,
+        consumeFocus,
         setTheme,
         setLoading,
         setSyncState,

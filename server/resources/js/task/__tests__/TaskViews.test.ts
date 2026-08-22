@@ -35,6 +35,7 @@ import TaskListView from '../TaskListView.vue';
 import TaskDetailView from '../TaskDetailView.vue';
 import { taskApi } from '../api';
 import { attachmentApi } from '../../attachments/api';
+import { useShellStore } from '../../shell/store';
 import type { Task } from '../types';
 
 const task: Task = {
@@ -101,6 +102,45 @@ describe('TaskDetailView', () => {
         expect(wrapper.find('[data-testid="subtask-item"]').exists()).toBe(true);
         expect(wrapper.find('[data-testid="task-partial-complete"]').exists()).toBe(true);
         expect(wrapper.find('[data-testid="attachments"]').exists()).toBe(true);
+    });
+
+    it('renders workflow-continuity links and deep-opens the goal (TASK-P17-002)', async () => {
+        vi.mocked(taskApi.show).mockResolvedValue({ task: { ...task, goal_id: 42, status: 'in_progress' } });
+        vi.mocked(taskApi.subtasks).mockResolvedValue({ subtasks: [] });
+        vi.mocked(attachmentApi.rules).mockResolvedValue({ max_per_task: 3, max_bytes: 5 * 1024 * 1024, allowed_extensions: ['jpg'], allowed_mime: ['image/jpeg'] });
+        vi.mocked(attachmentApi.list).mockResolvedValue({ attachments: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(TaskDetailView, { props: { taskId: 1 }, global: { plugins: [pinia] } });
+        await flushPromises();
+
+        // Continuity strip renders downstream surfaces.
+        expect(wrapper.find('[data-testid="entity-links"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="entity-link-schedule"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="entity-link-knowledge"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="entity-link-canvas"]').exists()).toBe(true);
+
+        // Goal chip navigates to Goals with the goal as deep-open target.
+        const shell = useShellStore();
+        await wrapper.find('[data-testid="entity-link-goals"]').trigger('click');
+        expect(shell.activeView).toBe('goals');
+        expect(shell.viewFocus['goals']).toBe(42);
+    });
+
+    it('omits the Goal chip when the task has no goal', async () => {
+        vi.mocked(taskApi.show).mockResolvedValue({ task });
+        vi.mocked(taskApi.subtasks).mockResolvedValue({ subtasks: [] });
+        vi.mocked(attachmentApi.rules).mockResolvedValue({ max_per_task: 3, max_bytes: 5 * 1024 * 1024, allowed_extensions: ['jpg'], allowed_mime: ['image/jpeg'] });
+        vi.mocked(attachmentApi.list).mockResolvedValue({ attachments: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(TaskDetailView, { props: { taskId: 1 }, global: { plugins: [pinia] } });
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="entity-link-goals"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="entity-link-schedule"]').exists()).toBe(true);
     });
 
     it('renders evidence attachments on a completed task', async () => {

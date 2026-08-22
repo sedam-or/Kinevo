@@ -14,6 +14,7 @@ vi.mock('../api', async (importOriginal) => {
             milestones: vi.fn(),
             createMilestone: vi.fn(),
             setMilestoneStatus: vi.fn(),
+            breakdownProposal: vi.fn(),
             programs: vi.fn(),
             createProgram: vi.fn(),
             setProgramStatus: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock('../api', async (importOriginal) => {
 import GoalListView from '../GoalListView.vue';
 import GoalDetailView from '../GoalDetailView.vue';
 import { goalApi } from '../api';
+import { useShellStore } from '../../shell/store';
 import type { Goal, Milestone, Program } from '../types';
 
 const goal: Goal = {
@@ -75,6 +77,80 @@ describe('GoalListView', () => {
         await wrapper.find('[data-testid="goal-open"]').trigger('click');
         expect(wrapper.emitted('selectGoal')?.[0]).toEqual([1]);
     });
+
+    it('creates a goal as a planning workflow and offers an AI breakdown (P17-003)', async () => {
+        vi.mocked(goalApi.goals).mockResolvedValue({ goals: [] });
+        vi.mocked(goalApi.programs).mockResolvedValue({ programs: [] });
+        vi.mocked(goalApi.createGoal).mockResolvedValue({ goal: { ...goal, title: 'Write a book' } });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(GoalListView, { global: { plugins: [pinia] } });
+        await flushPromises();
+
+        await wrapper.find('[data-testid="goal-create-title"]').setValue('Write a book');
+        await wrapper.find('[data-testid="goal-create-description"]').setValue('A 200-page novel');
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+
+        expect(goalApi.createGoal).toHaveBeenCalledWith(
+            expect.objectContaining({ title: 'Write a book', description: 'A 200-page novel' }),
+        );
+        // Suggestion appears; the goal itself is NOT mutated further.
+        expect(wrapper.find('[data-testid="goal-breakdown-suggestion"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="goal-breakdown-ai"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="goal-breakdown-manual"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="goal-breakdown-later"]').exists()).toBe(true);
+
+        // Generate with AI hits the proposal backend (pending, non-mutating).
+        vi.mocked(goalApi.breakdownProposal).mockResolvedValue({ proposal: { id: 11, status: 'pending' } });
+        await wrapper.find('[data-testid="goal-breakdown-ai"]').trigger('click');
+        await flushPromises();
+        expect(goalApi.breakdownProposal).toHaveBeenCalledWith(1);
+        expect(wrapper.find('[data-testid="goal-proposal-ready"]').exists()).toBe(true);
+        // createMilestone was never called — no silent mutation.
+        expect(goalApi.createMilestone).not.toHaveBeenCalled();
+    });
+
+    it('surfaces the AI breakdown error without navigating away (P17-003)', async () => {
+        vi.mocked(goalApi.goals).mockResolvedValue({ goals: [] });
+        vi.mocked(goalApi.programs).mockResolvedValue({ programs: [] });
+        vi.mocked(goalApi.createGoal).mockResolvedValue({ goal });
+        vi.mocked(goalApi.breakdownProposal).mockRejectedValue(new Error('AI provider unavailable'));
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(GoalListView, { global: { plugins: [pinia] } });
+        await flushPromises();
+
+        await wrapper.find('[data-testid="goal-create-title"]').setValue('Ship v1');
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+        await wrapper.find('[data-testid="goal-breakdown-ai"]').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="goal-proposal-error"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="goal-breakdown-suggestion"]').exists()).toBe(true);
+    });
+
+    it('declining with "I\'ll do it myself" opens the goal directly (P17-003)', async () => {
+        vi.mocked(goalApi.goals).mockResolvedValue({ goals: [] });
+        vi.mocked(goalApi.programs).mockResolvedValue({ programs: [] });
+        vi.mocked(goalApi.createGoal).mockResolvedValue({ goal });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(GoalListView, { global: { plugins: [pinia] } });
+        await flushPromises();
+
+        await wrapper.find('[data-testid="goal-create-title"]').setValue('Ship v1');
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+        await wrapper.find('[data-testid="goal-breakdown-manual"]').trigger('click');
+
+        expect(wrapper.emitted('selectGoal')?.[0]).toEqual([1]);
+        expect(goalApi.breakdownProposal).not.toHaveBeenCalled();
+    });
 });
 
 describe('GoalDetailView', () => {
@@ -92,5 +168,25 @@ describe('GoalDetailView', () => {
         expect(wrapper.find('[data-testid="milestone-item"]').exists()).toBe(true);
         // active goal offers paused/completed/archived/dropped
         expect(wrapper.find('[data-testid="goal-to-completed"]').exists()).toBe(true);
+    });
+
+    it('renders downstream continuity links (TASK-P17-002)', async () => {
+        vi.mocked(goalApi.goal).mockResolvedValue({ goal });
+        vi.mocked(goalApi.milestones).mockResolvedValue({ milestones: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(GoalDetailView, { props: { goalId: 1 }, global: { plugins: [pinia] } });
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="entity-links"]').exists()).toBe(true);
+        for (const view of ['tasks', 'schedule', 'analytics']) {
+            expect(wrapper.find(`[data-testid="entity-link-${view}"]`).exists()).toBe(true);
+        }
+
+        // Chip navigates to the downstream surface.
+        const shell = useShellStore();
+        await wrapper.find('[data-testid="entity-link-tasks"]').trigger('click');
+        expect(shell.activeView).toBe('tasks');
     });
 });

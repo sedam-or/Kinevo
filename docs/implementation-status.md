@@ -114,6 +114,26 @@ iCal import (FR-30)                     ✅ DONE (TASK-142)
 iCal export (FR-30)                     ✅ DONE (TASK-143)
 Import preview/fallback contract        ✅ DONE (TASK-144)
 Golden one-week E2E journey              ✅ DONE (TASK-150)
+UI/UX rescue R0–R7 (stabilization)       ✅ DONE (Phase 16, closed 2026-08-22;
+                                         design.md §102 gate ticked, commit
+                                         `bb08441`; Journey F / AI UI gap
+                                         recorded and triaged to Phase 17)
+Phase 17 — Product Cohesion & Intelligence  🟡 IN PROGRESS (TASK-P17-001…038;
+                                         goal → AI breakdown → milestone →
+                                         task → schedule → Today → progress →
+                                         analytics; AI & Providers settings;
+                                         contextual feature education)
+Product Information Architecture            ✅ DONE (TASK-P17-001: nav groups
+                                         EXECUTE/PLAN/KNOWLEDGE/REVIEW/SYSTEM,
+                                         Schedule→PLAN, mobile primary subset +
+                                         More drawer; browser E2E green ×3)
+Workflow Continuity Layer                    ✅ DONE (TASK-P17-002: shared
+                                         EntityLinks strip on Goal/Task details,
+                                         Today NOW-card Goal link, clickable
+                                         knowledge links, one-shot deep-open
+                                         focus plumbing; E2E green ×3)
+AI Provider settings UI (FR-60)          🔴 NOT STARTED (TASK-P17-006)
+AI Goal breakdown UX flow (FR-52/61/62)  🔴 NOT STARTED (TASK-P17-004/005/026)
 ```
 
 ### Evidence rule

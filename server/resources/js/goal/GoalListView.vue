@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import { useGoalStore } from './store';
-import { GOAL_HORIZONS, PROGRAM_WORKLOAD_TYPES } from './types';
+import { GOAL_HORIZONS, PROGRAM_WORKLOAD_TYPES, type Goal } from './types';
 import KButton from '../components/KButton.vue';
 import KInput from '../components/KInput.vue';
 
@@ -13,6 +13,7 @@ const goals = useGoalStore();
 
 const goalForm = reactive({
     title: '',
+    description: '',
     horizon: 'yearly',
     targetDate: '',
     priorityTier: 3,
@@ -25,6 +26,12 @@ const programForm = reactive({
 });
 
 const formError = ref<string | null>(null);
+
+/** The just-created goal waiting on a breakdown decision (P17-003). */
+const suggestionGoal = ref<Goal | null>(null);
+const generating = ref(false);
+const suggestionError = ref<string | null>(null);
+const proposalReady = ref(false);
 
 onMounted(() => {
     void goals.loadAll();
@@ -45,6 +52,7 @@ async function createGoal(): Promise<void> {
     }
     const goal = await goals.createGoal({
         title: goalForm.title.trim(),
+        description: goalForm.description.trim() === '' ? null : goalForm.description.trim(),
         horizon: goalForm.horizon,
         target_date: goalForm.targetDate === '' ? null : goalForm.targetDate,
         priority_tier: goalForm.priorityTier,
@@ -54,7 +62,41 @@ async function createGoal(): Promise<void> {
         return;
     }
     goalForm.title = '';
+    goalForm.description = '';
     goalForm.targetDate = '';
+    // Planning workflow: immediately offer to break the goal down. The goal
+    // itself is never mutated automatically (design.md §104 AI safety rule).
+    suggestionGoal.value = goal;
+    proposalReady.value = false;
+    suggestionError.value = null;
+}
+
+async function generateBreakdown(): Promise<void> {
+    if (suggestionGoal.value === null) {
+        return;
+    }
+    generating.value = true;
+    suggestionError.value = null;
+    const proposal = await goals.createBreakdownProposal(suggestionGoal.value.id);
+    generating.value = false;
+    if (proposal === null) {
+        suggestionError.value = goals.error?.message ?? 'Could not generate a breakdown.';
+        return;
+    }
+    // The proposal is persisted server-side as pending — no milestones were
+    // created yet. Full review/edit/accept UX lands in TASK-P17-004.
+    proposalReady.value = true;
+}
+
+function doItMyself(): void {
+    if (suggestionGoal.value !== null) {
+        emit('selectGoal', suggestionGoal.value.id);
+    }
+    suggestionGoal.value = null;
+}
+
+function dismissSuggestion(): void {
+    suggestionGoal.value = null;
 }
 
 async function createProgram(): Promise<void> {
@@ -87,14 +129,18 @@ function workloadLabel(w: string): string {
         <div v-if="goals.loading" class="text-sm text-gray-500" data-testid="goals-loading">Loading…</div>
         <div v-if="goals.error" class="text-sm text-danger" role="alert" data-testid="goals-error">{{ goals.error.message }}</div>
 
-        <!-- Create goal -->
+        <!-- Create goal (planning workflow P17-003: outcome/deadline/description) -->
         <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="goal-create">
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">New goal</div>
             <form class="flex flex-wrap gap-3 items-end" @submit.prevent="createGoal">
                 <div v-if="formError" class="w-full text-sm text-danger">{{ formError }}</div>
                 <label class="flex flex-col gap-1 text-sm flex-1 min-w-40">
-                    Title
-                    <KInput v-model="goalForm.title" required class="flex-1 min-w-40" data-testid="goal-create-title" />
+                    Outcome
+                    <KInput v-model="goalForm.title" required placeholder="What do you want to achieve?" class="flex-1 min-w-40" data-testid="goal-create-title" />
+                </label>
+                <label class="flex flex-col gap-1 text-sm flex-1 min-w-40">
+                    Description
+                    <textarea v-model="goalForm.description" rows="2" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2 text-sm flex-1 min-w-40" data-testid="goal-create-description"></textarea>
                 </label>
                 <label class="flex flex-col gap-1 text-sm">
                     Horizon
@@ -103,11 +149,38 @@ function workloadLabel(w: string): string {
                     </select>
                 </label>
                 <label class="flex flex-col gap-1 text-sm">
-                    Target date
+                    Deadline
                     <input v-model="goalForm.targetDate" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="goal-create-date" />
                 </label>
-                <KButton type="submit" variant="primary" data-testid="goal-create-submit">Add</KButton>
+                <KButton type="submit" variant="primary" data-testid="goal-create-submit">Create</KButton>
             </form>
+        </section>
+
+        <!-- Post-creation planning suggestion (P17-003). The goal is never
+             mutated automatically — the user chooses how to proceed. -->
+        <section
+            v-if="suggestionGoal"
+            class="border-2 border-[var(--color-primary)] dark:border-[var(--color-primary)] rounded-sm p-4"
+            data-testid="goal-breakdown-suggestion"
+        >
+            <div class="font-medium mb-1">Goal created</div>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                “{{ suggestionGoal.title }}” is saved. Would you like Kinevo to break it down
+                into actionable milestones?
+            </p>
+            <div v-if="proposalReady" class="text-sm text-[var(--color-primary)] mb-3" data-testid="goal-proposal-ready" role="status">
+                AI proposal generated. Review and accept it from the goal detail (full review flow lands in TASK-P17-004).
+            </div>
+            <div v-if="suggestionError" class="text-sm text-danger mb-3" role="alert" data-testid="goal-proposal-error">
+                {{ suggestionError }}
+            </div>
+            <div class="flex gap-2 flex-wrap">
+                <KButton variant="primary" data-testid="goal-breakdown-ai" :disabled="generating" @click="generateBreakdown">
+                    {{ generating ? 'Generating…' : 'Generate with AI' }}
+                </KButton>
+                <KButton data-testid="goal-breakdown-manual" @click="doItMyself">I'll do it myself</KButton>
+                <KButton variant="ghost" data-testid="goal-breakdown-later" @click="dismissSuggestion">Later</KButton>
+            </div>
         </section>
 
         <!-- Goal list -->

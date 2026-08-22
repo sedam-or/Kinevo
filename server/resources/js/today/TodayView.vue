@@ -409,6 +409,17 @@ async function endBoostTarget(): Promise<void> {
                     <div v-if="contextLabel(currentEvent)" class="text-sm text-gray-600 dark:text-gray-400">{{ contextLabel(currentEvent) }}</div>
                     <div class="flex gap-2 mt-1 text-xs">
                         <VisualStateBadge v-for="s in nowStates" :key="s" :state="s" />
+                        <!-- Workflow continuity (TASK-P17-002): the executing task
+                             links back to the goal it serves. -->
+                        <button
+                            v-if="currentEvent.task?.goal_id"
+                            type="button"
+                            class="underline text-gray-600 dark:text-gray-300 hover:text-[var(--color-text)]"
+                            data-testid="now-goal-link"
+                            @click="shell.setView('goals', currentEvent.task!.goal_id!)"
+                        >
+                            Goal ↗
+                        </button>
                     </div>
                 </div>
                 <ExecutionTimer

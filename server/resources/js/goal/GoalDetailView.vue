@@ -2,6 +2,8 @@
 import { onMounted, reactive, watch } from 'vue';
 import { useGoalStore } from './store';
 import { MILESTONE_STATUSES, type Goal } from './types';
+import type { EntityLink } from '../components/EntityLinks.vue';
+import EntityLinks from '../components/EntityLinks.vue';
 
 const props = defineProps<{
     goalId: number;
@@ -26,6 +28,18 @@ watch(
     () => props.goalId,
     (id) => void goals.loadGoal(id),
 );
+
+/**
+ * Workflow continuity (TASK-P17-002): downstream execution surfaces for this
+ * goal — its tasks, the schedule that places them, and the progress/analytics
+ * that reflect movement. Milestones are inline above; programs surface through
+ * tasks.
+ */
+const downstreamLinks: EntityLink[] = [
+    { label: 'Tasks', view: 'tasks' },
+    { label: 'Schedule', view: 'schedule' },
+    { label: 'Progress', view: 'analytics' },
+];
 
 function statusLabel(s: string): string {
     return s.replace(/_/g, ' ');
@@ -109,6 +123,8 @@ function milestoneGlyphEmphasis(status: string): string {
 
         <div v-if="goals.loading" class="text-sm text-gray-500" data-testid="goal-detail-loading">Loading…</div>
         <div v-if="goals.error" class="text-sm text-danger" role="alert" data-testid="goal-detail-error">{{ goals.error.message }}</div>
+
+        <EntityLinks :links="downstreamLinks" />
 
         <template v-if="goals.currentGoal">
             <!-- Outcome -->

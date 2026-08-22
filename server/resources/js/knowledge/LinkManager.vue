@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useKnowledgeLinkStore } from './store';
 import { KNOWLEDGE_LINK_TYPES, type KnowledgeLinkType, type KnowledgeTargetType } from './types';
 import type { ApiError } from '../api/types';
+import { useShellStore } from '../shell/store';
 
 const props = defineProps<{
     noteId: number;
@@ -138,6 +139,33 @@ function linkLabel(type: KnowledgeTargetType, id: number): string {
     }
     return `#${id}`;
 }
+
+/**
+ * Workflow continuity (TASK-P17-002): a linked entity opens its own surface
+ * instead of being a dead-end label. Milestones/programs have no dedicated
+ * surface (they live inside their goal), so they stay plain text.
+ */
+const shell = useShellStore();
+function goTo(targetType: KnowledgeTargetType, targetId: number): void {
+    if (targetType === 'goal') {
+        shell.setView('goals', targetId);
+        return;
+    }
+    if (targetType === 'task') {
+        shell.setView('tasks', targetId);
+        return;
+    }
+    if (targetType === 'canvas') {
+        shell.setView('canvas', targetId);
+        return;
+    }
+    if (targetType === 'note') {
+        shell.setView('knowledge');
+    }
+}
+function isNavigable(type: KnowledgeTargetType): boolean {
+    return type === 'goal' || type === 'task' || type === 'canvas' || type === 'note';
+}
 </script>
 
 <template>
@@ -157,7 +185,16 @@ function linkLabel(type: KnowledgeTargetType, id: number): string {
             >
                 <span class="text-sm">
                     <span class="font-medium">{{ targetLabel(link.target_type) }}:</span>
-                    <span class="text-gray-600 dark:text-gray-300">{{ linkLabel(link.target_type, link.target_id) }}</span>
+                    <button
+                        v-if="isNavigable(link.target_type)"
+                        type="button"
+                        class="underline text-gray-600 dark:text-gray-300 hover:text-[var(--color-text)]"
+                        :data-testid="`link-open-${link.target_type}-${link.target_id}`"
+                        @click="goTo(link.target_type, link.target_id)"
+                    >
+                        {{ linkLabel(link.target_type, link.target_id) }}
+                    </button>
+                    <span v-else class="text-gray-600 dark:text-gray-300">{{ linkLabel(link.target_type, link.target_id) }}</span>
                     <span class="text-xs text-gray-500 dark:text-gray-400"> · {{ link.link_type.replace('_', ' ') }}</span>
                 </span>
                 <button

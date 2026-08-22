@@ -582,6 +582,7 @@ Week
 Calendar
 Goals
 Tasks
+Schedule
 Knowledge
 Canvas
 Analytics
@@ -599,6 +600,7 @@ EXECUTE
 PLAN
   Goals
   Tasks
+  Schedule
 
 KNOWLEDGE
   Notes
@@ -612,6 +614,9 @@ SYSTEM
 ```
 
 This grouping better communicates mental purpose than one flat menu.
+Schedule is a planning artifact (deciding *when* tasks run happens before
+execution), so it lives in PLAN — never under SYSTEM next to Settings
+(design.md §104).
 
 ---
 
@@ -3423,3 +3428,87 @@ Do not close the rescue phase based solely on automated unit test counts.
 The final criterion is:
 
 > A human user can complete the core Kinevo journey smoothly, understand the system state at every step, and trust that their data is safe.
+
+## 104. Phase 17 — Product Cohesion & Intelligence
+
+Rescue R0–R7 (this document §74–§103) closed 2026-08-22: foundations stabilized, browser-proven, accessible, release-gated. The next phase changes what the product *feels like*: individual features exist but must become one coherent operating system.
+
+### Six diagnosed gaps
+
+```text
+1. Product cohesion gap      — Goals/Tasks/Calendar/Knowledge/Canvas/Analytics/AI
+                               feel like separate apps, not one system
+2. AI configuration gap      — no AI & Providers settings surface
+3. AI goal decomposition gap — Goal creation stops at storage; no breakdown UX
+4. UX cognition gap          — missing hierarchy/context/progression/feedback
+5. Feedback/micro-interaction gap — system state changes are not felt
+6. Feature discovery gap     — features are not explained in-product
+```
+
+None of these is solved by "making the UI prettier". The intended mental model:
+
+```text
+GOAL → AI/MANUAL BREAKDOWN → MILESTONE → PROGRAM → TASK → SCHEDULE → TODAY →
+FOCUS → COMPLETE → PROGRESS → CAPACITY → ADAPTATION → NEXT ACTION
+```
+
+Every major screen must answer: where am I? why am I here? what matters? what can I do? what should I do next? what happened after I acted?
+
+### Goals
+
+```text
+P17-A Product Information Architecture        (EXECUTE / PLAN / KNOWLEDGE /
+                                                 REVIEW / SYSTEM groups)
+P17-B End-to-End Workflow Cohesion            (contextual navigation everywhere)
+P17-C AI Provider & AI Workflow UX            (settings + status, no hidden AI)
+P17-D Goal → AI Breakdown → Milestone → Task  (proposal → approval → persist)
+P17-E Contextual Feature Education            (in-product, once-dismissed)
+P17-F Micro-interaction & Feedback System     (state feels alive)
+P17-G Analytics / Decision Support UX         (charts drive action)
+```
+
+### Non-negotiable product rule
+
+Navigation must reflect the user's mental workflow, not the backend module list. No dead-end pages: every entity surfaces its upstream/downstream objects.
+
+### AI safety rule (unchanged, restated for the AI breakdown UX)
+
+"Automatically break a goal down" means **automatically OFFER** the breakdown — never **silently mutate** the goal/milestones/tasks. AI output is untrusted input: schema → domain validation → user review/approval → change. Goal decomposition is the UX bridge between Goals and Scheduling; its proposal and acceptance MUST flow through the existing validated proposal contract (SRS FR-52, FR-61, FR-62). Never expose AI chain-of-thought; show decision summary, assumptions, inputs, constraints.
+
+### AI Provider settings contract
+
+`Settings → AI & Providers` exposes provider, connection status, model, base URL, API key (masked), test connection, enable/disable, and a privacy note. API key rules: never stored in browser storage; never returned raw to the client; encrypted server-side; masked after save; replace/remove only. Ollama shows "API key not required". AI status derives from ONE source of truth (GET /api/v1/ai/status) with states Disabled / Not Configured / Configured / Testing / Connected / Unavailable / Degraded; the UI must distinguish *configured* from *available*.
+
+### Micro-interaction rules
+
+Micro-interactions are feedback, not decoration. They answer: did my action work? what changed? what is available now? Required sequences:
+
+```text
+task complete  → checkbox snap → progress advance → activity toast → next task emphasis
+save           → Saving… → Saved ✓
+offline        → Offline → Queued → Syncing → Synced
+AI generation  → Preparing context → Generating → Validating → Proposal ready
+accepted breakdown → milestone/progress tree expands
+```
+
+Interaction language (existing tokens): rest 4px / hover 6px / pressed 2px offset shadow; tactile primary components; ≈100–250ms; reduced-motion intact.
+
+### Golden journey (primary success criterion)
+
+> I create a long-horizon goal, Kinevo immediately helps me break it down, I approve the milestones, I see what happens next, the tasks get scheduled, Today tells me what to do now, completing the work updates progress, and Analytics tells me the next adaptation.
+
+```text
+Login → Create goal → Kinevo offers AI breakdown → Generate → Review → Accept →
+Milestones → Programs → Tasks → Schedule → Today → Start → Complete → Progress →
+Analytics → Capacity → adaptation → next action
+```
+
+It MUST be executable in a real browser (Playwright chromium/firefox/webkit).
+
+### Theme
+
+Theme persistence/dark mode are considered UNVERIFIED until real-browser proof: light→reload→light, dark→reload→dark, system→OS switch→follows system, both desktop and mobile, authenticated and unauth shell, Excalidraw shell adapts, no flash of wrong theme where practical, keyboard accessible.
+
+### Done criteria for P17
+
+P17 is not done because screens exist; it is done when the product feels like one coherent workflow and the golden journey above runs in a real browser. Task board: Phase 17 in `TASK.md` (TASK-P17-001…038); product gate PRODUCT COHESION READY (TASK-P17-038).
