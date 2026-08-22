@@ -77,3 +77,59 @@ test.describe('R6 golden journey D — Knowledge', () => {
         await expect(page.getByTestId('canvas-save-state')).toBeVisible({ timeout: 30_000 });
     });
 });
+
+test.describe('R17 golden journey G — Plan, then decide how to break down (P17-003)', () => {
+    test('creating a goal shows the breakdown suggestion; "I\'ll do it myself" opens the goal', async ({ page }) => {
+        await login(page);
+        const name = unique('r17-g');
+        // PLAN group → Goals: create a goal with Outcome/Description/Deadline.
+        await page.getByTestId('nav-goals').click();
+        await expect(page.getByTestId('goals-view')).toBeVisible();
+        await page.getByTestId('goal-create-title').fill(name);
+        await page.getByTestId('goal-create-description').fill('Outcome description for the journey');
+        await page.getByTestId('goal-create-horizon').selectOption('Quarterly');
+        await page.getByTestId('goal-create-submit').click();
+        // The planning workflow shows the breakdown suggestion (no auto-mutation).
+        await expect(page.getByTestId('goal-breakdown-suggestion')).toBeVisible();
+        await expect(page.getByTestId('goal-breakdown-ai')).toBeVisible();
+        await expect(page.getByTestId('goal-breakdown-manual')).toBeVisible();
+        await expect(page.getByTestId('goal-breakdown-later')).toBeVisible();
+        // Choosing to do it yourself opens the goal detail for manual planning.
+        await page.getByTestId('goal-breakdown-manual').click();
+        await expect(page.getByTestId('goal-detail')).toBeVisible();
+        await expect(page.getByTestId('goal-detail-title')).toContainText(name, { exact: false });
+    });
+});
+
+test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', () => {
+    test('configures the local Ollama provider: test, save, survive reload', async ({ page }) => {
+        await login(page);
+
+        // SYSTEM group → AI & Providers.
+        await page.getByTestId('nav-ai-settings').click();
+        await expect(page.getByTestId('ai-settings-view')).toBeVisible();
+
+        // Local Ollama path — no API key required (§104).
+        await page.getByTestId('ai-provider-select').selectOption('ollama');
+        await page.getByTestId('ai-model-input').fill('qwen2.5-coder:7b');
+        await page.getByTestId('ai-base-url-input').fill('http://localhost:11434');
+        await expect(page.getByTestId('ai-ollama-no-key')).toContainText('does not require an API key');
+
+        // Test BEFORE saving: candidate settings ping without persisting.
+        await page.getByTestId('ai-test-button').click();
+        await expect(page.getByTestId('ai-test-result')).toContainText('Connected to ollama', { timeout: 20_000 });
+
+        // Save.
+        await page.getByTestId('ai-save-button').click();
+        await expect(page.getByTestId('ai-settings-saved')).toBeVisible();
+
+        // Reload → configuration persists from the server (masked).
+        await page.reload();
+        await login(page);
+        await page.getByTestId('nav-ai-settings').click();
+        await expect(page.getByTestId('ai-provider-select')).toHaveValue('ollama');
+        await expect(page.getByTestId('ai-model-input')).toHaveValue('qwen2.5-coder:7b');
+        // Privacy blurb is always present on this surface (§104 contract).
+        await expect(page.getByTestId('ai-privacy-blurb')).toContainText('never stored in browser storage');
+    });
+});

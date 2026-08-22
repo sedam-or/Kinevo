@@ -2938,6 +2938,74 @@ paths:
                 $ref: '#/components/schemas/AiStatusResponse'
         '401': { description: Unauthorized }
 
+  /ai/config:
+    get:
+      tags: [AI]
+      summary: Masked AI provider configuration (design.md §104)
+      description: >-
+        Persisted provider settings for the Settings → AI & Providers surface.
+        The API key is NEVER returned: only `has_api_key` and a masked hint
+        (`…last4`). Status derives from GET /ai/status.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiProviderConfigResponse'
+        '401': { description: Unauthorized }
+    put:
+      tags: [AI]
+      summary: Save AI provider configuration
+      description: >-
+        Replace-only API key semantics: send `api_key` to store a new encrypted
+        key or `remove_api_key: true` to clear it. Saved keys are never echoed.
+        OpenAI requires a stored key; Ollama requires none.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AiProviderConfigRequest'
+      responses:
+        '200':
+          description: Saved (masked response)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiProviderConfigResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid payload }
+
+  /ai/config/test:
+    post:
+      tags: [AI]
+      summary: Test candidate provider connection without saving
+      description: >-
+        Pings the provider using CANDIDATE settings so the user can verify
+        before saving. Never persists anything and never returns the key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider]
+              properties:
+                provider: {type: string, enum: [disabled, ollama, openai]}
+                base_url: {type: string, maxLength: 255}
+                model: {type: string, maxLength: 128}
+                api_key: {type: string, maxLength: 4096}
+      responses:
+        '200':
+          description: Ping result (available may be false)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiStatusResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid payload }
+
   /ai/generate:
     post:
       tags: [AI]
@@ -4811,6 +4879,40 @@ components:
             available: {type: boolean}
             latency_ms: {type: integer, nullable: true, minimum: 0}
             error: {type: string, nullable: true}
+    AiProviderConfigRequest:
+      type: object
+      required: [provider]
+      properties:
+        provider: {type: string, enum: [disabled, ollama, openai]}
+        enabled: {type: boolean, default: true}
+        model: {type: string, nullable: true, maxLength: 128}
+        base_url: {type: string, nullable: true, maxLength: 255}
+        api_key: {type: string, maxLength: 4096, description: 'Replace-only; never echoed back'}
+        remove_api_key: {type: boolean, default: false}
+    AiProviderConfigResponse:
+      type: object
+      required: [config]
+      properties:
+        config:
+          type: object
+          required: [provider, enabled, has_api_key, status]
+          properties:
+            provider: {type: string}
+            enabled: {type: boolean}
+            model: {type: string, nullable: true}
+            base_url: {type: string, nullable: true}
+            has_api_key: {type: boolean}
+            api_key_hint: {type: string, nullable: true, description: 'Masked …last4 only'}
+            status:
+              type: object
+              required: [provider, model, available]
+              properties:
+                provider: {type: string}
+                model: {type: string}
+                available: {type: boolean}
+                latency_ms: {type: integer, nullable: true}
+                error: {type: string, nullable: true}
+            privacy_ok: {type: boolean}
     AiGenerateRequest:
       type: object
       required: [role, prompt]

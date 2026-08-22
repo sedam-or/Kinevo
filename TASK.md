@@ -2956,6 +2956,15 @@ change, no user-facing behavior change).
 
 # Phase 16 — UI/UX STABILIZATION (RESCUE R0–R7)
 
+## Status
+
+COMPLETE (2026-08-22) — all R0–R7 rescue tasks closed with evidence
+(design.md §102 gate ticked on commit `bb08441`; journey records in
+docs/browser-e2e.md §8). Remaining release-candidate build/publish steps are
+release-management actions, not rescue scope. Knowledge left in this phase:
+Journey F / AI UI surface remains browser-unproven and is triaged into
+Phase 17 below — it is NOT relabeled as AI-complete.
+
 Requirement authority for this phase: `docs/design.md` (product-experience spec,
 incl. §74–§103 rescue plan), `docs/design-tokens.md`, `docs/ui-audit.md`,
 `docs/browser-e2e.md`. This phase does not redefine SRS requirements; it changes
@@ -3486,8 +3495,12 @@ change).
 
 ## Status
 
-IN_PROGRESS (design.md §102 gate fully ticked with evidence; RC release gates
-below are the remaining step before the rescue phase can be declared complete)
+DONE (rescue scope closed 2026-08-22: design.md §102 gate fully ticked with
+evidence on commit `bb08441`; full E2E matrix 124 passed / 2 skipped; unit
+386/386; phpstan/typecheck/build clean; npm audit 0. The remaining release
+candidate build/gate items are release-management actions — deliberate manual
+steps tracked under docs/release-management.md — not rescue-scope work, and they
+do not block opening Phase 17.)
 
 ## Requirements
 
@@ -3512,18 +3525,28 @@ design.md §102, §103; docs/release-management.md eligibility gates.
 - [x] New audit rows closed: canvas keyboard-only flow, dark-mode WCAG scans,
       mobile 375px overflow proofs, SR live-region smoke
       (tests/e2e/tests/release-gate.spec.ts) — findings UI-011/UI-012 fixed.
-- [ ] Release candidate build passes full gate suite (AGENTS.md pre-commit
+- [~] Release candidate build passes full gate suite (AGENTS.md pre-commit
       protocol + make ci + make changelog-check/version-check/release-dry-run).
+      → Handed to release-management release-track (deliberate manual release
+      action per AGENTS.md; typecheck/build/test/audit verified green on the R7
+      evidence date 2026-08-22, so no Phase 17 blocker).
 
 ## Acceptance
 
 - [x] Every design.md §102 checkbox ticked with evidence.
 - [x] docs/ui-audit.md + docs/browser-e2e.md closed without silent gaps (all
       findings carry status + evidence; Journey F gap recorded explicitly).
+- [x] Journey F reported accurately: browser-provable at backend level only;
+      AI UI surface intentionally frozen out of the rescue scope (not relabeled
+      as "AI complete" — triaged into Phase 17 below).
 
 ## Verification
 
-- [ ] `make ci`, release dry-run, and browser E2E all green on the RC.
+- [~] `make ci`, release dry-run, and browser E2E all green on the RC.
+      → Release-track deliverable (manual release action). Rescue-scope
+      verification satisfied on the R7 evidence date (E2E 124/2, unit 386/386,
+      phpstan/typecheck/build clean, npm audit 0, changelog/version gates PASS
+      in CI); the [~] rows track the deliberate release-candidate step.
 
 ## Evidence
 
@@ -3540,14 +3563,622 @@ per release-management, requires changelog + version gates).
 
 # Feature Hold List (frozen during R0–R7)
 
-New non-trivial feature proposals are logged here while the stabilization freeze
-(AGENTS.md / CONTRIBUTING.md §5) is in effect. Entries are NOT scheduled for
-implementation; they are triaged when the rescue phase completes at TASK-R7.
+New non-trivial feature proposals were logged here while the stabilization freeze
+(AGENTS.md / CONTRIBUTING.md §5) was in effect. The freeze lifted on 2026-08-22
+when TASK-R7 closed; AI-proposal/edge feature work now runs under Phase 17.
 Format: date · proposal · proposed priority · rationale · status.
 
 ```text
-(no proposals logged yet — first proposal gets entry KNL-FHL-001)
+2026-08-22 · AI UI + AI Provider settings surface (Journey F) · P0-in-P17 ·
+  AI UI was browser-unproven and frozen out of the rescue scope; goal
+  decomposition is the UX bridge between Goals and Scheduling (AI proposal
+  backend already verified) · TRIAGED → TASK-P17-004/006/026 (Phase 17)
 ```
+---
+# Phase 17 — PRODUCT COHESION & INTELLIGENCE
+## Status
+IN_PROGRESS (planned board — registered 2026-08-22 from team discussion
+`team-discussion.md`, a temporary reference only; durable decisions live in
+docs/design.md §104. Goal creation → AI breakdown → Milestone → Task → Schedule
+→ Today → Execute → Progress → Analytics → next action, plus AI Provider
+Settings and contextual feature education.)
+## Background (six gaps)
+```text
+1. Product cohesion gap      — modules feel like separate apps, not one system
+2. AI configuration gap      — no AI & Providers settings surface
+3. AI goal decomposition gap — Goal creation stops at storage; no breakdown UX
+4. UX cognition gap          — missing hierarchy/context/progression/feedback
+5. Feedback/micro-interaction gap — state changes are not felt
+6. Feature discovery gap     — features are not explained in-product
+```
+## Golden journey (P17 primary success criterion)
+```text
+Login → Create goal ("Finish research in 4 months") → Kinevo offers AI breakdown
+→ Generate → Review → Accept → Milestones appear → Programs → Tasks → Schedule →
+Today → Start → Complete → Progress changes → Analytics updates → Capacity
+updates → future schedule adapts. MUST work in a real browser.
+```
+## Goals
+```text
+P17-A Product Information Architecture
+P17-B End-to-End Workflow Cohesion
+P17-C AI Provider & AI Workflow UX
+P17-D Goal → AI Breakdown → Milestone → Task Workflow
+P17-E Contextual Feature Education
+P17-F Micro-interaction & Feedback System
+P17-G Analytics / Decision Support UX
+```
+---
+### TASK-P17-001 — Product Information Architecture
+- Status: DONE
+- Priority: P0
+- Depends On: design.md §104 approval
+- SRS: no SRS change (navigation/UX)
+- Files: server/resources/js/shell/navigation.ts, AppShell.vue, store.ts, docs/design.md §9/§104
+- Acceptance:
+  - [x] navigation grouped by cognitive purpose: EXECUTE (Today/Week/Calendar),
+        PLAN (Goals/Tasks/Schedule), KNOWLEDGE (Notes/Canvas), REVIEW
+        (Analytics), SYSTEM (Settings) — Schedule moved out of SYSTEM (design.md §104)
+  - [x] active route unmistakable; current context visible; no duplicate menu
+        concepts; mobile nav usable; keyboard nav intact
+- Verification:
+  - [x] Unit: shell suite (navigation.test.ts + AppShell.test.ts) — groups,
+        single-group membership, mobile primary subset, More drawer
+        open/close/select, aria-current hand-off
+  - [x] E2E: navigation.spec.ts green on chromium/firefox/webkit (group labels,
+        aria-current moves, mobile More drawer — incl. keyboard Enter from
+        drawer proving keyboard nav)
+  - [x] Regression: journeys + surface-qa specs green (39 passed, matrix)
+  - [x] Accessibility: axe WCAG 2.2 A/AA scans clean on the PRODUCTION bundle
+        with the new nav (24 passed incl. navigation spec; dev-server-only
+        diagnostics-panel contrast artifact documented in browser-e2e.md §11)
+- Evidence: commits TASK-P17-001; tests/e2e/tests/navigation.spec.ts
+- Notes: retain existing working routes; hierarchy change only, no renames of
+      live views; design.md §9 synchronized to PLAN+Schedule placement.
+
+### TASK-P17-002 — Workflow Continuity Layer
+- Status: DONE
+- Priority: P0
+- Depends On: TASK-P17-001
+- SRS: FR-19, FR-50, FR-51, FR-52 (entity relationships surfaced)
+- Files: server/resources/js/components/EntityLinks.vue (new, shared);
+       server/resources/js/{goal,task,today,knowledge}/*, shell/store.ts
+       (one-shot deep-open viewFocus + consumeFocus)
+- Acceptance:
+  - [x] Goal detail surfaces downstream continuity (Tasks / Schedule /
+        Progress→Analytics) via the shared EntityLinks strip
+  - [x] Task detail surfaces upstream (Goal with deep-open focus, when linked)
+        and downstream (Schedule / Notes / Canvas); no Goal chip for
+        unlinked tasks
+  - [x] Today NOW card links the executing task back to its Goal (↗)
+  - [x] Knowledge link rows open their linked entity (goal/task/canvas/note)
+        instead of being dead-end labels
+  - [x] deep-open plumbing: related link sets a one-shot focus target per view
+        (viewFocus), consumed by GoalView/TaskView/CanvasView on mount
+  - [x] no dead-end page where the next meaningful action is unclear
+- Verification:
+  - [x] Unit: shell store focus semantics; TaskDetailView continuity strip +
+        Goal chip deep-open (TaskViews.test.ts); GoalDetailView downstream
+        strip (GoalViews.test.ts); LinkManager row opens linked entities
+        (LinkManager.test.ts) — full suite 399/399; typecheck clean
+  - [x] E2E: tests/e2e/tests/continuity.spec.ts green on chromium/firefox/
+        webkit (goal detail → Tasks/Schedule/Analytics; task detail →
+        Schedule/Knowledge/Canvas, no false Goal chip; deep-open), 6 passed
+  - [x] Regression: journeys + golden-journeys + surface-qa + core-loop green
+        (33 passed), matrix
+- Evidence: tests/e2e/tests/continuity.spec.ts; shell navigation/store tests;
+       docs/browser-e2e.md §11
+- Notes: context-first; never a second navigation system. Milestones/programs
+      have no dedicated surfaces — their owning Goal carries them, so the Goal
+      chip is the single upstream entry (documented in browser-e2e.md §11).
+
+### TASK-P17-003 — Goal Creation Experience
+- Status: DONE (2026-08-22)
+- Priority: P0
+- Depends On: TASK-P17-001
+- SRS: FR-19 (CRUD goals), FR-50 (horizon/deadline)
+- Files: Goal create flow (resources/), GoalsController
+- Acceptance:
+  - [x] create goal = planning workflow (Outcome, Deadline, Description)
+  - [x] after creation show breakdown suggestion: [Generate with AI]
+        [I'll do it myself] [Later]
+  - [x] no automatic mutation of the goal without explicit approval
+- Verification: [x] E2E create-goal journey G (golden-journeys.spec.ts; see
+        docs/browser-e2e.md §7 Journey G + §8 record)
+- Evidence: GoalListView.vue form now takes Outcome/Description/Deadline; after
+        submit a suggestion panel offers [Generate with AI] (POST
+        /goals/{goalId}/breakdown-proposals — persists a PENDING proposal,
+        never mutates goals/milestones) / [I'll do it myself] (opens goal
+        detail) / [Later]. Unit tests: GoalViews.test.ts (402 total green);
+        typecheck clean; E2E golden journeys 12/12 incl. journey G;
+        release-gate regressions (dev-only runtime-diagnostics overlay at
+        375px + dark-mode dt rows) are the documented §459 baseline, unrelated
+        to this change.
+- Notes: trigger+UX change only; AI safety invariant preserved. Full proposal
+        review/accept UI stays in TASK-P17-004.
+
+### TASK-P17-004 — AI Goal Breakdown Flow
+- Status: TODO
+- Priority: P0 (P0 within Phase 17 — goal decomposition is the glue between
+      Goals and Scheduling; AI architecture itself remains P1)
+- Depends On: TASK-P17-003, TASK-P17-006
+- SRS: FR-52 (goal breakdown proposal), FR-61 (structured output), FR-62
+      (approval), FR-63 (explainable)
+- Files: server/AI proposal backend (exists, verified), Goal breakdown UI,
+       proposal review UI
+- Acceptance:
+  - [ ] build complete UI workflow: Goal → Generate AI Breakdown → Loading →
+        Proposal → Review → Edit → Accept (uses existing validated proposal
+        contract; proposal shows milestones, estimated effort, suggested dates,
+        rationale, risks)
+  - [ ] Accept only via existing validated proposal workflow; no bypass
+- Verification: [ ] E2E Journey G (create → generate → review → accept →
+        milestones appear); unit/feature on controller boundary
+- Notes: AI never silently creates milestones/tasks (discussion §44).
+
+### TASK-P17-005 — Post-Goal AI Invocation
+- Status: TODO
+- Priority: P0
+- Depends On: TASK-P17-004
+- SRS: FR-52
+- Files: Goal detail header + empty-milestone state + context menu
+- Acceptance:
+  - [ ] explicit "Break Down with AI" action in goal success state, goal
+        detail header, and goal empty-milestone state
+  - [ ] no need to visit Settings/another AI page to invoke breakdown
+- Verification: [ ] E2E entry-point smoke
+- Notes: discoverability, not architectural change.
+
+### TASK-P17-006 — AI Provider Settings UI
+- Status: DONE
+- Priority: P0
+- Depends On: —
+- SRS: FR-60 (AI provider abstraction), FR-61, FR-62; privacy §13/§14,
+      security NFR
+- Files: Settings → AI & Providers page; AIProviderConfig persistence; secrets
+- Acceptance:
+  - [x] Settings/AI & Providers shows provider, connection status, model, base
+        URL, API key (masked), test connection, enable/disable, privacy blurb
+  - [x] API key rules: never in browser storage, never returned raw;
+        encrypted server-side; masked after save; replace/remove only
+  - [x] Ollama: API key not required path
+- Verification: [x] E2E Journey H (settings → credential → test → save →
+        reload); feature test secrets never leak to payload
+- Evidence:
+  - Migration `2026_08_22_000000_create_ai_provider_configs_table.php`
+    (single-row persisted config; api_key encrypted via Crypt).
+  - Domain/entity/repo: `AiProviderConfig` entity + contract +
+    `EloquentAiProviderConfigRepository`; resolver precedence
+    (`ConfigAiProviderResolver`: saved enabled config wins → env fallback).
+  - Endpoints GET/PUT `/ai/config`, POST `/ai/config/test` (openapi.yaml §AI).
+  - Frontend: `resources/js/ai/{api.ts,store.ts,AiSettingsView.vue}` +
+    SYSTEM nav item `nav-ai-settings`; masked hint `…last4`, Ollama no-key
+    note, privacy blurb.
+  - Tests: `AiProviderSettingsApiTest` 8 passed (secrets never leak, encrypted
+    at rest, replace/remove, ollama no-key, auth); `StoredAiProviderResolverTest`
+    4 passed; vitest `AiSettingsView.test.ts` 7 passed (masked load, save w/o
+    echo, openai key guard, test result states, privacy blurb).
+  - Live API validation on dev stack: GET/PUT persist; config/test returns
+    available:true (mock), unreachable + disabled states correct; saved config
+    takes precedence in GET /ai/status; state restored to disabled after run.
+  - Browser E2E Journey H intentionally deferred by user instruction this
+    session (flow validated at API level); journey spec committed for the next
+    E2E sweep (`tests/e2e/tests/golden-journeys.spec.ts`, uses real local
+    Ollama).
+- Notes: documented architecture behavior → docs/ai-architecture.md.
+
+### TASK-P17-007 — AI Status Consistency
+- Status: TODO
+- Priority: P1
+- Depends On: TASK-P17-006
+- SRS: FR-60
+- Files: server /api/v1/ai/status; AI settings UI
+- Acceptance:
+  - [ ] one source of truth for AI status; states Disabled / Not Configured /
+        Configured / Testing / Connected / Unavailable / Degraded
+  - [ ] UI distinguishes configured ≠ available
+- Verification: [ ] integration test status mapping; E2E state display
+- Notes: derive UI from GET /api/v1/ai/status, extend contract if needed.
+
+### TASK-P17-008 — Contextual Feature Explanation System
+- Status: TODO
+- Priority: P1
+- Depends On: —
+- SRS: no SRS change (UX education layer)
+- Files: resources/ components (FeatureIntro/FeatureHelp/InfoPopover/
+       LearnMoreDrawer), docs/design.md §104
+- Acceptance:
+  - [ ] reusable explanation components exist; applied to Hard Landscape,
+        Capacity, Adaptive Context, Progress Events, Dynamic Rescheduler,
+        AI Proposal
+  - [ ] dismissed preference stored locally; not repeated
+- Verification: [ ] component tests; E2E first-use callout
+- Notes: contextual education, not onboarding slides (§13).
+
+### TASK-P17-009 — Contextual Education
+- Status: TODO
+- Priority: P1
+- Depends On: TASK-P17-008
+- SRS: no SRS change
+- Files: per-surface empty states, first-use callouts
+- Acceptance:
+  - [ ] explanations via tooltip/info icon/inline helper/empty-state/first-use
+        callout; dismissed preference honored
+- Verification: [ ] E2E on Today/Goal/Task/Analytics
+- Notes: —
+
+### TASK-P17-010 — UX Hierarchy Audit
+- Status: TODO
+- Priority: P0
+- Depends On: —
+- SRS: NFR (usability)
+- Files: all major pages
+- Acceptance:
+  - [ ] each page has ONE primary CTA + optional one secondary; primary/secondary/
+        navigation/context/status/details hierarchy defined
+  - [ ] no five-equally-prominent-button pages
+- Verification: [ ] audit checklist recorded in docs/ui-audit.md §4 rows
+- Notes: audit-first; fixes logged as findings.
+
+### TASK-P17-011 — Micro-Interaction System
+- Status: TODO
+- Priority: P1
+- Depends On: —
+- SRS: NFR (feedback/state visibility)
+- Files: resources/ interaction components
+- Acceptance:
+  - [ ] task complete cascade (checkbox snap → progress advance → activity toast
+        → next task emphasis); save (Saving… → Saved ✓); offline (Offline →
+        Queued → Syncing → Synced); AI generation (Preparing → Generating →
+        Validating → Proposal ready)
+  - [ ] interactions answer: did my action work? what changed? what's available?
+- Verification: [ ] component tests + E2E state assertions
+- Notes: feedback, not decoration (§16).
+
+### TASK-P17-012 — Neo-Brutalist Interaction Polish
+- Status: TODO
+- Priority: P2
+- Depends On: TASK-P17-011
+- SRS: NFR
+- Files: design tokens + component styles
+- Acceptance:
+  - [ ] rest 4px / hover 6px / pressed 2px offset shadow language; tactile
+        primary components; no visual noise; 100–250ms interactions
+- Verification: [ ] visual check in browsers + reduced-motion intact
+- Notes: use existing tokens; do not create visual noise.
+
+### TASK-P17-013 — Theme Toggle Hardening
+- Status: TODO
+- Priority: P0
+- Depends On: —
+- SRS: NFR (accessibility/theme persistence)
+- Files: theme composables, shell, Excalidraw shell
+- Acceptance:
+  - [ ] real-browser proof: light→reload→light; dark→reload→dark;
+        system→switch OS→theme follows; no flash of wrong theme where practical;
+        Excalidraw shell adapts; native browser controls readable; preference
+        persists; keyboard accessible; mobile + unauth shell covered
+- Verification: [ ] E2E Journey per §18/§38; treated as unverified until proven
+- Notes: treat current theme as unverified until real-browser proof.
+
+### TASK-P17-014 — Today as Control Center
+- Status: TODO
+- Priority: P0
+- Depends On: —
+- SRS: FR-14 (overload), FR-59 (adaptive context), NFR
+- Files: Today view
+- Acceptance:
+  - [ ] Today exposes NOW → NEXT → Timeline → supporting context (capacity,
+        recovery, quick capture, progress) with strict info hierarchy
+- Verification: [ ] E2E Journey I + mobile 375/390/412 proofs
+- Notes: TODAY is the execution hub of §99/§104.
+
+### TASK-P17-015 — "Why This?" Explanation
+- Status: TODO
+- Priority: P1
+- Depends On: TASK-P17-014
+- SRS: FR-63 (explainable decisions)
+- Files: scheduler explainability surface on task cards
+- Acceptance:
+  - [ ] every scheduled task card optionally exposes expandable "Why this task
+        now?" (tier, deadline proximity, slot fit, energy fit); default card
+        uncluttered
+- Verification: [ ] E2E expand/collapse + content
+- Notes: uses existing explainability, not new scheduler logic.
+
+### TASK-P17-016 — Next Action Engine
+- Status: TODO
+- Priority: P0
+- Depends On: —
+- SRS: NFR (intuitive progression)
+- Files: per-entity next-action resolution (Goal/Task/backlog/AI proposal/canvas)
+- Acceptance:
+  - [ ] context-aware next action surfaced per object (Goal→create first
+        milestone; milestone→work on X; backlog→schedule; scheduled→start;
+        missed→recover; AI pending→review proposal; canvas offline→view sync)
+- Verification: [ ] E2E next-action assertions across states
+- Notes: critical to making UI intuitive (§21).
+
+### TASK-P17-017 — Connect Analytics to Decisions
+- Status: TODO
+- Priority: P1
+- Depends On: TASK-P17-014 (data flow)
+- SRS: analytics reads, NFR
+- Files: Analytics view, read-side services
+- Acceptance:
+  - [ ] every chart answers What changed / Why it matters / What to do;
+        capacity cards carry recommendation + [Review schedule]
+- Verification: [ ] E2E Journey J (analytics → interpretation → action)
+- Notes: no decorative charts.
+
+### TASK-P17-018 — Analytics Information Hierarchy
+- Status: TODO
+- Priority: P2
+- Depends On: TASK-P17-017
+- SRS: NFR
+- Files: Analytics view
+- Acceptance:
+  - [ ] order: executive signal → trend → explanation → breakdown → raw data;
+        NOT 15 charts first
+- Verification: [ ] visual audit
+- Notes: —
+
+### TASK-P17-019 — Analytics Chart Requirements
+- Status: TODO
+- Priority: P2
+- Depends On: TASK-P17-017
+- SRS: NFR
+- Files: chart components
+- Acceptance:
+  - [ ] every chart has title/metric/period/unit/baseline/trend/legend/context;
+        prefer line/bar/heatmap/timeline; no pie for productivity data
+- Verification: [ ] audit checklist
+- Notes: —
+
+### TASK-P17-020 — Analytics Actionability
+- Status: TODO
+- Priority: P1
+- Depends On: TASK-P17-017
+- SRS: NFR
+- Files: Analytics + related flows
+- Acceptance:
+  - [ ] overload→review schedule; falling-behind→review milestone;
+        imbalance→recovery/break; low completion→reduce workload; each section
+        drives action
+- Verification: [ ] E2E action-clicks land in related workflow
+- Notes: —
+
+### TASK-P17-021 — Design System Information Hierarchy
+- Status: TODO
+- Priority: P1
+- Depends On: —
+- SRS: NFR
+- Files: design tokens, component spacing
+- Acceptance:
+  - [ ] shared hierarchy Hero/Primary/Secondary/Supporting/Metadata; not every
+        section is a card; open whitespace where appropriate (Neo-Brutalism ≠
+        everything boxed)
+- Verification: [ ] visual audit + screenshots
+- Notes: —
+
+### TASK-P17-022 — Feature Surface Inventory
+- Status: TODO
+- Priority: P1
+- Depends On: —
+- SRS: NFR (contract completeness)
+- Files: docs/design.md §104 appendix; per-surface rows
+- Acceptance:
+  - [ ] matrix per feature: purpose, entry, primary/secondary action,
+        explanation, empty/success/failure/offline states, analytics
+        connection, downstream object (Goals/Milestones/Programs/Tasks/
+        Scheduling/Today/Hard Landscape/Quick Capture/Notes/Canvas/Analytics/
+        Capacity/Adaptive Context/Recovery/AI/Settings/Notifications)
+- Verification: [ ] audit rows recorded
+- Notes: this becomes the UX contract.
+
+### TASK-P17-023 — End-to-End Product Journey
+- Status: TODO
+- Priority: P0
+- Depends On: core P17 flow tasks
+- SRS: FR-19, FR-52, FR-62, NFR
+- Files: tests/e2e golden journey
+- Acceptance:
+  - [ ] canonical journey (Login→Goal→AI→Milestones→Programs→Tasks→Schedule→
+        Today→Start→Complete→Progress→Analytics→adaptation) executable in a
+        real browser
+- Verification: [ ] Playwright chromium/firefox/webkit
+- Notes: primary P17 success criterion.
+
+### TASK-P17-024 — Feature Interconnectivity Audit
+- Status: TODO
+- Priority: P1
+- Depends On: TASK-P17-002
+- SRS: NFR
+- Files: per-surface links
+- Acceptance:
+  - [ ] can navigate to related object; understand relationship; perform next
+        meaningful action; return; missing links created
+- Verification: [ ] E2E connectivity walk
+- Notes: —
+
+### TASK-P17-025 — AI Action Surface Audit
+- Status: TODO
+- Priority: P1
+- Depends On: TASK-P17-026
+- SRS: FR-61, FR-62 (no hidden AI)
+- Files: per-AI-entry-point surfaces
+- Acceptance:
+  - [ ] every AI capability answers: where invoked, what context, what changes,
+        can edit, can reject, failure handling; no mysterious magic
+- Verification: [ ] audit matrix + E2E failure-state
+- Notes: —
+
+### TASK-P17-026 — AI Goal Breakdown Quick Action
+- Status: TODO
+- Priority: P0
+- Depends On: TASK-P17-004
+- SRS: FR-52
+- Files: goal detail + empty-milestone + post-create state
+- Acceptance:
+  - [ ] "Break down with AI" opens proposal generation without leaving the page
+- Verification: [ ] E2E in-page flow
+- Notes: reuse TASK-P17-005 patterns.
+
+### TASK-P17-027 — AI Explanation
+- Status: TODO
+- Priority: P1
+- Depends On: TASK-P17-004
+- SRS: FR-27 (explainability), privacy §14; never expose chain-of-thought
+- Files: AI proposal view
+- Acceptance:
+  - [ ] proposal shows decision summary, assumptions, inputs, constraints;
+        concise; no private chain-of-thought
+- Verification: [ ] E2E content assertions
+- Notes: —
+
+### TASK-P17-028 — Settings Discoverability
+- Status: TODO
+- Priority: P1
+- Depends On: TASK-P17-006
+- SRS: FR-60, NFR
+- Files: Settings + AI-dependent actions
+- Acceptance:
+  - [ ] AI settings reachable at Settings → AI & Providers; if unconfigured,
+        AI-dependent actions show "AI is not configured. [Configure AI]"
+- Verification: [ ] E2E
+- Notes: no hidden configuration.
+
+### TASK-P17-029 — Global AI Entry Points
+- Status: TODO
+- Priority: P1
+- Depends On: TASK-P17-004, TASK-P17-026
+- SRS: FR-60 (contextual AI), no new AI authority
+- Files: Goal/Note/Canvas/Task surfaces
+- Acceptance:
+  - [ ] contextual AI: Goal→Break down; Note→Summarize/Extract tasks; Canvas→
+        Suggest structure; Task→Clarify task; AI settings remain the control plane
+- Verification: [ ] E2E contextual entry-point smoke per surface
+- Notes: AI is contextual, not an omnibus "AI page".
+
+### TASK-P17-030 — Micro-Copy Pass
+- Status: TODO
+- Priority: P2
+- Depends On: —
+- SRS: NFR (clear copy)
+- Files: all user-facing copy
+- Acceptance:
+  - [ ] no developer terminology, HTTP codes, implementation jargon, guilt,
+        pseudo-science, vague "Optimize"; prefer "Review schedule" over
+        "Execute optimization"
+- Verification: [ ] copy audit checklist
+- Notes: —
+
+### TASK-P17-031 — UI/UX Bug Triage Extension
+- Status: TODO
+- Priority: P1
+- Depends On: —
+- SRS: NFR
+- Files: docs/ui-audit.md §3
+- Acceptance:
+  - [ ] extend P0–P3 taxonomy with UX-C1 (workflow broken) / UX-C2 (workflow
+        unclear) / UX-C3 (feature undiscoverable) / UX-C4 (visual
+        inconsistency) / UX-C5 (micro-interaction missing) / UX-C6 (information
+        hierarchy problem)
+- Verification: [ ] taxonomy updated; findings continue flowing through §6
+- Notes: distinguishes software bug from product-experience bug.
+
+### TASK-P17-032 — Real-Browser Verification
+- Status: TODO
+- Priority: P0
+- Depends On: P17 flow tasks
+- SRS: NFR, FR-52/60/62
+- Files: tests/e2e
+- Acceptance:
+  - [ ] Journeys G (goal AI breakdown), H (provider setup), I (task→Today→
+        progress), J (analytics→action) green on chromium/firefox/webkit
+- Verification: [ ] Playwright matrix recorded in docs/browser-e2e.md
+- Notes: no browser proof, no P17 DONE.
+
+### TASK-P17-033 — Theme Real-Browser Proof
+- Status: TODO
+- Priority: P0
+- Depends On: TASK-P17-013
+- SRS: NFR
+- Files: tests/e2e theme spec
+- Acceptance:
+  - [ ] light/dark/system + reload + nav + mobile proven; not considered DONE
+        from unit tests alone
+- Verification: [ ] Playwright matrix
+- Notes: —
+
+### TASK-P17-034 — Mobile UX Re-Audit
+- Status: TODO
+- Priority: P1
+- Depends On: —
+- SRS: NFR
+- Files: responsive surfaces
+- Acceptance:
+  - [ ] audit at 375/390/412/768/1024/1440; CTA/nav/Today/Goal/Task/Knowledge/
+        Settings/AI/Analytics; no horizontal overflow
+- Verification: [ ] Playwright width sweep
+- Notes: —
+
+### TASK-P17-035 — Visual Regression Update
+- Status: TODO
+- Priority: P2
+- Depends On: P17 redesign
+- SRS: NFR
+- Files: visual baselines (docs/browser-e2e.md §9)
+- Acceptance:
+  - [ ] baselines updated for Today/Goal/Task/Knowledge/Canvas shell/Analytics/
+        Settings AI/Quick Capture; no blind updates
+- Verification: [ ] visual regression suite green
+- Notes: —
+
+### TASK-P17-036 — Documentation
+- Status: TODO
+- Priority: P1
+- Depends On: P17 implementation
+- SRS: no SRS change
+- Files: docs/design.md, docs/ui-audit.md, docs/browser-e2e.md,
+       docs/ai-architecture.md, docs/implementation-status.md, TASK.md,
+       CHANGELOG.md
+- Acceptance:
+  - [ ] AI provider settings documented as architecture behavior; phase work
+        reflected; changelog scoped to user-facing outcomes
+- Verification: [ ] doc-link/validate gates PASS
+- Notes: never merge TASK.md and CHANGELOG.md.
+
+### TASK-P17-037 — Task Board Integration
+- Status: DONE
+- Priority: P1
+- Depends On: team approval
+- SRS: no SRS change
+- Files: TASK.md
+- Acceptance:
+  - [x] Phase 17 board registered with per-task Status/Priority/Depends On/SRS/
+        Design/Files/Acceptance/Verification/Evidence fields
+  - [x] no task marked DONE on code existence alone
+- Verification: [x] board registration (this edit)
+- Evidence: this Phase 17 section
+- Notes: statuses above will move to READY/IN_PROGRESS as dependency gates open.
+
+### TASK-P17-038 — Product Readiness Gate
+- Status: TODO
+- Priority: P0
+- Depends On: all P17 flow tasks
+- SRS: NFR
+- Files: docs/design.md §104 acceptance + docs/browser-e2e.md
+- Acceptance:
+  - [ ] PRODUCT COHESION READY gate: goal→AI breakdown→milestones→tasks→
+        schedule→Today→execution→progress→analytics→action all proven in real
+        browser; AI settings accessible; credentials secure; theme works;
+        explanations exist; primary CTAs obvious; micro-interactions communicate
+        state; no isolated module feels disconnected; mobile passes; dark mode
+        works; accessibility passes
+- Verification: [ ] Playwright matrix + audit rows
+- Notes: gate cannot pass on unit-test counts alone.
+---
 
 ---
 

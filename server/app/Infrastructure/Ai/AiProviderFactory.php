@@ -43,4 +43,34 @@ final readonly class AiProviderFactory
             ),
         };
     }
+
+    /**
+     * Build a provider from candidate settings (TASK-P17-006 test connection).
+     * Mirrors create() so the settings UI can ping without persisting.
+     */
+    public function createFrom(string $driver, ?string $baseUrl, ?string $model, ?string $apiKey): AiProvider
+    {
+        $timeout = (int) $this->config->get('ai.timeout_seconds', 30);
+
+        return match ($driver) {
+            'ollama' => new OllamaProvider(
+                rtrim($baseUrl ?? '', '/') ?: 'http://localhost:11434',
+                $model ?? (string) $this->config->get('ai.ollama.model', 'llama3.1'),
+                $timeout,
+            ),
+            'openai' => new OpenAiCompatibleProvider(
+                rtrim($baseUrl ?? '', '/') ?: 'https://api.openai.com/v1',
+                $apiKey ?? (string) $this->config->get('ai.openai.api_key', ''),
+                $model ?? (string) $this->config->get('ai.openai.model', 'gpt-4o-mini'),
+                $timeout,
+            ),
+            'mock' => new MockProvider(
+                $model ?? (string) $this->config->get('ai.mock.model', 'mock-1'),
+            ),
+            'disabled' => new DisabledProvider,
+            default => throw new InvalidArgumentException(
+                "Unsupported AI provider driver: {$driver}"
+            ),
+        };
+    }
 }

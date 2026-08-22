@@ -145,6 +145,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/progress', [ProgressEventController::class, 'store']);
 
     Route::get('/ai/status', [AiController::class, 'status']);
+    Route::get('/ai/config', [AiController::class, 'configShow']);
+    Route::put('/ai/config', [AiController::class, 'configUpdate']);
+    Route::post('/ai/config/test', [AiController::class, 'configTest']);
     Route::post('/ai/generate', [AiController::class, 'generate']);
     Route::post('/ai/proposals', [AiController::class, 'proposals']);
     Route::get('/ai/proposals', [AiController::class, 'proposalsIndex']);

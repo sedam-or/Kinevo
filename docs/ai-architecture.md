@@ -63,6 +63,27 @@ Context builder SHOULD enforce:
 ### Privacy
 Local Ollama is preferred where privacy benefits justify operational complexity. External AI providers are opt-in capabilities and MUST have explicit configuration.
 
+### Provider settings & secret handling (design.md §104 / TASK-P17-006)
+`Settings → AI & Providers` is the control plane and the ONLY surface for
+provider configuration. Documented behavior:
+- Exposes provider (provider abstraction above), connection status, model,
+  base URL, API key (masked), test connection, enable/disable, privacy note.
+- API key rules: never stored in browser storage; never returned raw to any
+  client payload; encrypted server-side; masked after save; replace/remove only.
+- Ollama path requires no API key.
+- Status derives from ONE source of truth (GET /api/v1/ai/status): Disabled /
+  Not Configured / Configured / Testing / Connected / Unavailable / Degraded.
+  The UI distinguishes *configured* ≠ *available* (TASK-P17-007).
+
+Implementation (TASK-P17-006): configuration persists in a single-row
+`ai_provider_configs` table (MVP is single-user; global control plane, not
+user-scoped). The API key column is encrypted with the application key
+(`Crypt`) and excluded from every serialization; GET/PUT `/api/v1/ai/config`
+return only `has_api_key` plus a `…last4` hint, and POST
+`/api/v1/ai/config/test` pings candidate settings before saving. A saved,
+enabled, non-disabled configuration takes precedence over environment
+defaults (`ConfigAiProviderResolver`).
+
 ### Development models
 Development tooling MAY use a high-context reasoning model such as Qwythos 9B Q6_K or a coding-specialized model. This is not part of runtime requirements.
 

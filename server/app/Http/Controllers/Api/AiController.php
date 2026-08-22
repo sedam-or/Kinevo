@@ -10,10 +10,13 @@ use App\Application\Ai\GenerateCanvasProposalUseCase;
 use App\Application\Ai\GenerateNoteProposalUseCase;
 use App\Application\Ai\GenerateValidatedProposalUseCase;
 use App\Application\Ai\GetAiProposalUseCase;
+use App\Application\Ai\GetAiProviderConfigUseCase;
 use App\Application\Ai\GetAiProviderStatusUseCase;
 use App\Application\Ai\ListAiProposalsUseCase;
 use App\Application\Ai\ListAiRunsUseCase;
 use App\Application\Ai\RejectAiProposalUseCase;
+use App\Application\Ai\SaveAiProviderConfigUseCase;
+use App\Application\Ai\TestAiProviderConnectionUseCase;
 use App\Domain\Ai\AiOutputException;
 use App\Domain\Ai\AiProviderException;
 use App\Domain\Ai\Contracts\AiProposalRepository;
@@ -35,6 +38,9 @@ final class AiController extends Controller
         private readonly GenerateNoteProposalUseCase $generateNoteProposal,
         private readonly GenerateCanvasProposalUseCase $generateCanvasProposal,
         private readonly GetAiProviderStatusUseCase $providerStatus,
+        private readonly GetAiProviderConfigUseCase $providerConfig,
+        private readonly SaveAiProviderConfigUseCase $saveProviderConfig,
+        private readonly TestAiProviderConnectionUseCase $testProviderConnection,
         private readonly ListAiRunsUseCase $listRuns,
         private readonly ListAiProposalsUseCase $listProposals,
         private readonly GetAiProposalUseCase $getProposal,
@@ -48,6 +54,57 @@ final class AiController extends Controller
     public function status(): JsonResponse
     {
         return response()->json(['status' => $this->providerStatus->__invoke()->toArray()]);
+    }
+
+    public function configShow(): JsonResponse
+    {
+        return response()->json(['config' => $this->providerConfig->__invoke()]);
+    }
+
+    public function configUpdate(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'provider' => ['required', 'string'],
+            'enabled' => ['nullable', 'boolean'],
+            'model' => ['nullable', 'string', 'max:128'],
+            'base_url' => ['nullable', 'string', 'max:255'],
+            'api_key' => ['nullable', 'string', 'max:4096'],
+            'remove_api_key' => ['nullable', 'boolean'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $config = $this->saveProviderConfig->__invoke($validator->validated());
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['config' => $config]);
+    }
+
+    public function configTest(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'provider' => ['required', 'string'],
+            'base_url' => ['nullable', 'string', 'max:255'],
+            'model' => ['nullable', 'string', 'max:128'],
+            'api_key' => ['nullable', 'string', 'max:4096'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $status = $this->testProviderConnection->__invoke($validator->validated());
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        return response()->json($status);
     }
 
     public function generate(Request $request): JsonResponse

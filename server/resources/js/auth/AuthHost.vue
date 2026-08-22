@@ -12,6 +12,7 @@ import AppErrorBoundary from '../shell/AppErrorBoundary.vue';
 import LoginView from './LoginView.vue';
 import RegisterView from './RegisterView.vue';
 import ProfileView from './ProfileView.vue';
+import AiSettingsView from '../ai/AiSettingsView.vue';
 import TodayView from '../today/TodayView.vue';
 import WeekView from '../week/WeekView.vue';
 import CalendarView from '../week/CalendarView.vue';
@@ -173,6 +174,7 @@ const viewTitle = computed(() => {
             </div>
 
             <ProfileView v-if="shell.activeView === 'settings'" />
+            <AiSettingsView v-else-if="shell.activeView === 'ai-settings'" />
             <TodayView v-else-if="shell.activeView === 'today'" :date="todayDate" />
             <WeekView v-else-if="shell.activeView === 'week'" :anchor-date="todayDate" />
             <CalendarView v-else-if="shell.activeView === 'calendar'" :anchor-date="todayDate" />

@@ -28,6 +28,7 @@ export const NAV_GROUPS: NavGroup[] = [
         items: [
             { key: 'goals', label: 'Goals / Roadmap', icon: 'goals' },
             { key: 'tasks', label: 'Tasks', icon: 'tasks' },
+            { key: 'schedule', label: 'Schedule', icon: 'schedule' },
         ],
     },
     {
@@ -47,11 +48,23 @@ export const NAV_GROUPS: NavGroup[] = [
         key: 'SYSTEM',
         label: 'System',
         items: [
-            { key: 'schedule', label: 'Schedule', icon: 'schedule' },
             { key: 'settings', label: 'Settings', icon: 'settings' },
+            { key: 'ai-settings', label: 'AI & Providers', icon: 'ai' },
         ],
     },
 ];
+
+/**
+ * Mobile bottom-navigation priority (design.md §8.3). Only these keep a
+ * permanent slot on the fixed bottom bar; everything else lives behind
+ * "More" so the bar never becomes a horizontal scroller.
+ */
+export const MOBILE_PRIMARY_KEYS: readonly string[] = ['today', 'tasks', 'goals', 'knowledge'];
+
+/** The views that live behind the mobile "More" drawer (everything else). */
+export const MOBILE_MORE_KEYS: readonly string[] = NAV_GROUPS.flatMap((group) =>
+    group.items.map((item) => item.key).filter((key) => !MOBILE_PRIMARY_KEYS.includes(key)),
+);
 
 /** Flat list of every navigation item, preserving the §9 primary order. */
 export const NAV_ITEMS: NavItem[] = NAV_GROUPS.flatMap((group) => group.items);

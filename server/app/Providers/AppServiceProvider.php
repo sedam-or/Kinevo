@@ -6,6 +6,7 @@ use App\Domain\ActivityLogs\Contracts\ActivityLogRepository;
 use App\Domain\Adaptive\Contracts\ContextObservationRepository;
 use App\Domain\Ai\AiOrchestrator;
 use App\Domain\Ai\Contracts\AiProposalRepository;
+use App\Domain\Ai\Contracts\AiProviderConfigRepository;
 use App\Domain\Ai\Contracts\AiProviderResolver;
 use App\Domain\Ai\Contracts\AiRunRepository;
 use App\Domain\Attachments\Contracts\AttachmentRepository;
@@ -38,6 +39,7 @@ use App\Infrastructure\ActivityLogs\EloquentActivityLogRepository;
 use App\Infrastructure\Adaptive\EloquentContextObservationRepository;
 use App\Infrastructure\Ai\ConfigAiProviderResolver;
 use App\Infrastructure\Ai\EloquentAiProposalRepository;
+use App\Infrastructure\Ai\EloquentAiProviderConfigRepository;
 use App\Infrastructure\Ai\EloquentAiRunRepository;
 use App\Infrastructure\Attachments\EloquentAttachmentRepository;
 use App\Infrastructure\Boosts\EloquentBoostTargetRepository;
@@ -101,6 +103,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AiProviderResolver::class, ConfigAiProviderResolver::class);
         $this->app->singleton(AiRunRepository::class, EloquentAiRunRepository::class);
         $this->app->singleton(AiProposalRepository::class, EloquentAiProposalRepository::class);
+        $this->app->singleton(AiProviderConfigRepository::class, EloquentAiProviderConfigRepository::class);
         $this->app->singleton(AiOrchestrator::class, static fn ($app) => new AiOrchestrator($app->make(AiProviderResolver::class)));
         $this->app->singleton(SchedulerRunRepository::class, EloquentSchedulerRunRepository::class);
         $this->app->singleton(ObservabilityService::class, static function ($app) {

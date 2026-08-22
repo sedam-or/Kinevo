@@ -14,6 +14,42 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Added the AI & Providers settings surface (Phase 17, TASK-P17-006): a new
+  SYSTEM nav item opens Settings → AI & Providers where the AI provider
+  (Disabled / local Ollama / OpenAI-compatible), model, base URL, and API key
+  can be configured, tested, and persisted. The key is encrypted server-side,
+  never stored in browser storage, never returned raw (masked `…last4` hint
+  only), and is replace/remove-only; Ollama explicitly shows "API key not
+  required". Test-connection pings candidate settings before saving. A saved,
+  enabled configuration takes precedence over environment defaults.
+- Upgraded goal creation into a planning workflow (Phase 17, TASK-P17-003):
+  the New-goal form now captures Outcome, Description, and Deadline, and after
+  creation the product asks how to proceed instead of silently mutating the
+  goal: [Generate with AI] creates a *pending* breakdown proposal through the
+  validated proposal contract (goals/milestones are never touched without
+  approval), [I'll do it myself] opens the goal for manual planning, and
+  [Later] dismisses the prompt. Verified in Chromium (`golden-journeys.spec.ts`
+  journey G; recorded in `docs/browser-e2e.md` §7 and §8).
+
+- Added a workflow-continuity layer (Phase 17, TASK-P17-002): every major
+  entity page now links to its related surfaces so no screen is a dead end.
+  A goal detail offers its downstream execution surfaces (Tasks, Schedule,
+  Progress→Analytics); a task detail offers upstream context (its Goal, when
+  linked) plus Schedule/Notes/Canvas; the Today NOW card links back to the
+  serving Goal; and knowledge-desk linked entities are now clickable and open
+  on their own surface. Deep-open navigation remembers the target object so a
+  link lands directly on the linked item. Verified in Chromium/Firefox/WebKit
+  (`tests/e2e/tests/continuity.spec.ts`; recorded in `docs/browser-e2e.md` §11).
+
+- Restructured primary navigation into cognitive groups (Phase 17, TASK-P17-001):
+  EXECUTE (Today/Week/Calendar), PLAN (Goals/Tasks/Schedule), KNOWLEDGE
+  (Knowledge/Canvas), REVIEW (Analytics), SYSTEM (Settings). Schedule moved out
+  of System into Plan (a planning artifact — deciding *when* tasks run happens
+  before execution). On mobile the fixed bottom bar now keeps only the primary
+  subset (Today/Tasks/Goals/Knowledge) plus a "More" drawer for the rest, so the
+  bar never becomes a horizontal scroller. Verified in Chromium/Firefox/WebKit
+  (`tests/e2e/tests/navigation.spec.ts`; recorded in `docs/browser-e2e.md` §11).
+
 - Closed the remaining golden-journey browser gaps (rescue R7, TASK-R7):
   Journey C (Recover) is now proven in a real browser against a seeded
   missed-task state, and Journey E (Offline) is proven for canvases — draw
