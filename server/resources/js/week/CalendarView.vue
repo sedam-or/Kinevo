@@ -58,7 +58,7 @@ const cells = computed<{ date: string; day: number | null; task_count: number }[
         </header>
 
         <div v-if="week.loading" class="text-sm text-gray-500" data-testid="calendar-loading">Loading calendar…</div>
-        <div v-if="week.error" class="text-sm text-[#F53003]" role="alert" data-testid="calendar-error">{{ week.error.message }}</div>
+        <div v-if="week.error" class="text-sm text-danger" role="alert" data-testid="calendar-error">{{ week.error.message }}</div>
 
         <div class="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 dark:text-gray-400">
             <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>

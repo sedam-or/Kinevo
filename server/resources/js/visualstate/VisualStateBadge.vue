@@ -11,7 +11,7 @@ const def = computed<VisualStateDefinition>(() => visualState(props.state));
 
 const toneClasses: Record<VisualStateDefinition['tone'], string> = {
     neutral: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
-    danger: 'bg-[#fff2f2] dark:bg-[#1D0002] text-[#F53003]',
+    danger: 'bg-[#fff2f2] dark:bg-[#1D0002] text-danger',
     warning: 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300',
     info: 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300',
     success: 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300',

@@ -16,7 +16,7 @@
     --color-text: #1b1b18;
     --color-text-muted: #636361;
     --color-border: #1b1b18;
-    --color-primary: #F53003;
+    --color-primary: #DE3005; /* WCAG 2.2 AA on white text (4.63:1); was #F53003 (3.96:1), TASK-R5 */
     --color-primary-contrast: #FFFFFF;
     --color-success: #1D8A4E;
     --color-warning: #B7730F;
@@ -52,7 +52,7 @@
     --color-text: #EDEDEC;
     --color-text-muted: #A1A19C;
     --color-border: #343430;
-    --color-primary: #F53003;
+    --color-primary: #DE3005; /* WCAG 2.2 AA on white text (4.63:1); was #F53003 (3.96:1), TASK-R5 */
     --color-primary-contrast: #FFFFFF;
     --color-success: #3BB573;
     --color-warning: #E8A13A;

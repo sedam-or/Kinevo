@@ -51,11 +51,17 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 > a primary action per state (§19); Goal cards/detail gained a dominant progress
 > bar + milestone roadmap glyphs (§17/§39); Knowledge desk added the §31 toolbar and
 > the linked-entities desktop sidebar (§30/§33).
+>
+> 2026-08-22 (TASK-R5): axe-core WCAG 2.2 A/AA scans + keyboard-only flow +
+> emulated reduced-motion proven in real browsers (chromium/firefox/webkit,
+> `tests/e2e/tests/accessibility.spec.ts`); keyboard/reduced-motion rows
+> flipped to ✅ on Shell/Today/Task/Goal/Knowledge. Canvas keeps 🟡 until its
+> own keyboard-only flow is walked (R7). See UI-010 for the fixed defects.
 
 | Dimension | Shell | Today | Task | Goal | Knowledge/Notes | Canvas | Analytics | Settings |
 | --------- | ----- | ----- | ---- | ---- | --------------- | ------ | --------- | -------- | -------- |
 | Visual consistency (§85) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Keyboard navigation (§45) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | 🟡 |
+| Keyboard navigation (§45) | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 | ⚪ | 🟡 |
 | Responsive layout (§8, §58) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Loading / skeleton (§11.1) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Empty state (§11.2) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
@@ -63,7 +69,7 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 | Offline (§11, §90) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Conflict / save state (§2.5, §34.4) | ⚪ | ⚪ | ⚪ | ⚪ | ✅ | ⚪ | ⚪ | ⚪ |
 | Dark mode (§5.4) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Reduced motion (§47) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | 🟡 |
+| Reduced motion (§47) | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 | ⚪ | 🟡 |
 | Primary action obvious (§2.3, §51) | ✅ | ✅ | ✅ | ✅ | ✅ | ⚪ | ⚪ | ⚪ |
 | No color-only state (§5.2) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Token usage (§65, design-tokens.md) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
@@ -224,9 +230,32 @@ focus restore applied to Break/Boost/Emergency dialogs; `app.css` global
 `:focus-visible` outline + `prefers-reduced-motion` override; skip-to-content
 link + `#main-content`; distinct mobile-nav aria-label; KButton 44px min-height.
 Evidence: `keyboard.test.ts` (4), `focus-trap.test.ts` (4), `AppShell.test.ts`
-(a11y landmark tests), `vue-tsc`, `vitest` 370.
-Link: TASK-R5. Real-browser keyboard/reduced-motion verification still pending
-(R7); rows marked 🟡 in §4.
+(a11y landmark tests), `vue-tsc`, `vitest`.
+Link: TASK-R5. Real-browser keyboard/reduced-motion proof landed 2026-08-22
+(see UI-010); §4 keyboard/reduced-motion rows flipped to ✅ on the audited
+surfaces.
+
+UI-010 | 2026-08-22 | Global (WCAG 2.2 AA audit) | P2
+axe-core found real AA failures: notification bell had no accessible name
+(button-name, critical); nav-group labels, Today timeline hour labels and two
+submit buttons failed color-contrast (gray-400/#F53003 text on light bg);
+QuickCapture modal lacked dialog semantics (no role/aria-modal/focus trap/
+Escape); save-state + sync-state transitions were visual-only (no live
+regions).
+Expected: design.md §45–§47; WCAG 2.2 1.1.1 / 1.4.3 / 2.1.2 / 4.1.2 / 4.1.3.
+Severity: P2.
+Status: fixed — bell `aria-label`; QuickCapture given full dialog parity via
+`shell/focus-trap.ts`; `--color-primary` deepened #F53003 → #DE3005
+(white-on-primary 4.63:1; design-tokens.md updated); all hardcoded error
+text/borders moved to `text-danger`/`border-danger` tokens (#D20812 light
+5.45:1, #FF5A4E dark 5.88:1); nav/timeline labels gray-400 → gray-600;
+`role="status" aria-live="polite"` on canvas save badge + SyncStatusPanel.
+Evidence: `tests/e2e/tests/accessibility.spec.ts` — axe-core WCAG 2.2 A/AA
+scans of login + Today + Task + Goal + Knowledge + Canvas shell all clean,
+keyboard-only login/G-chords/Cmd+K flow, emulated prefers-reduced-motion —
+21/21 across chromium/firefox/webkit; vitest 386.
+Link: TASK-R5. Canvas-surface keyboard-only flow and screen-reader AT smoke
+remain R7 rows.
 ```
 
 No finding above is closed silently; each closes with concrete browser/test/visual

@@ -100,7 +100,7 @@ function isOverloaded(date: string): boolean {
             <span class="rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-1">Scheduled: {{ totalScheduled }}m</span>
             <span
                 v-if="overloadedDays.length > 0"
-                class="rounded-sm bg-[#fff2f2] dark:bg-[#1D0002] text-[#F53003] px-2 py-1"
+                class="rounded-sm bg-[#fff2f2] dark:bg-[#1D0002] text-danger px-2 py-1"
                 data-testid="week-overload"
             >
                 {{ overloadedDays.length }} overloaded day(s)
@@ -108,7 +108,7 @@ function isOverloaded(date: string): boolean {
         </section>
 
         <div v-if="week.loading" class="text-sm text-gray-500" data-testid="week-loading">Loading week…</div>
-        <div v-if="week.error" class="text-sm text-[#F53003] border border-[#F53003] rounded-sm p-3" role="alert" data-testid="week-error">
+        <div v-if="week.error" class="text-sm text-danger border border-danger rounded-sm p-3" role="alert" data-testid="week-error">
             <span class="font-medium">We couldn't load your schedule.</span>
             <span> {{ week.error.message }} Nothing is changed in your plan; retry when you're online.</span>
         </div>
@@ -127,7 +127,7 @@ function isOverloaded(date: string): boolean {
                 <div class="text-xs text-gray-600 dark:text-gray-400">{{ day.scheduled_minutes }}m</div>
 
                 <!-- Deadlines due that day -->
-                <div v-if="dayDeadlines(day.date).length > 0" class="mt-1 text-xs text-[#F53003]" data-testid="week-deadlines">
+                <div v-if="dayDeadlines(day.date).length > 0" class="mt-1 text-xs text-danger" data-testid="week-deadlines">
                     {{ dayDeadlines(day.date).length }} due
                 </div>
 

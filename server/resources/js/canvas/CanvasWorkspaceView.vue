@@ -171,7 +171,9 @@ async function conflictRecover(): Promise<void> {
                 />
             </div>
             <div class="flex items-center gap-3">
-                <span data-testid="canvas-save-state"><VisualStateBadge :state="saveStateBadge" /></span>
+                <!-- role=status + aria-live: save-state transitions (§34.4) are
+                     announced politely; the badge label is the announced text. -->
+                <span data-testid="canvas-save-state" role="status" aria-live="polite"><VisualStateBadge :state="saveStateBadge" /></span>
                 <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="canvas-theme-toggle" @click="cycleTheme">
                     Theme: {{ theme }}
                 </button>
@@ -191,13 +193,13 @@ async function conflictRecover(): Promise<void> {
         </header>
 
         <div v-if="canvas.loading" class="text-sm text-gray-500" data-testid="canvas-loading">Loading…</div>
-        <div v-if="canvas.error && !canvas.current" class="text-sm text-[#F53003]" role="alert" data-testid="canvas-error">
+        <div v-if="canvas.error && !canvas.current" class="text-sm text-danger" role="alert" data-testid="canvas-error">
             {{ canvas.error.message }}
         </div>
-        <div v-if="renameError" class="text-sm text-[#F53003]" role="alert" data-testid="canvas-rename-error">{{ renameError }}</div>
-        <div v-if="archiveError" class="text-sm text-[#F53003]" role="alert" data-testid="canvas-archive-error">{{ archiveError }}</div>
+        <div v-if="renameError" class="text-sm text-danger" role="alert" data-testid="canvas-rename-error">{{ renameError }}</div>
+        <div v-if="archiveError" class="text-sm text-danger" role="alert" data-testid="canvas-archive-error">{{ archiveError }}</div>
 
-        <div v-if="canvas.saveState === 'conflict'" class="border border-dashed border-[#F53003] rounded-sm px-4 py-2 text-sm" data-testid="canvas-conflict" role="alert">
+        <div v-if="canvas.saveState === 'conflict'" class="border border-dashed border-danger rounded-sm px-4 py-2 text-sm" data-testid="canvas-conflict" role="alert">
             This canvas was changed elsewhere.
             <button type="button" class="ml-2 underline" data-testid="canvas-conflict-reload" @click="conflictRecover">Reload server copy</button>
         </div>
@@ -217,7 +219,7 @@ async function conflictRecover(): Promise<void> {
             <p class="text-sm mb-2">Archive this canvas? It will be hidden from your list.</p>
             <div class="flex gap-2">
                 <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="canvas-archive-cancel" @click="confirmArchive = false">Cancel</button>
-                <button type="button" class="text-sm border border-[#F53003] text-[#F53003] rounded-sm px-3 py-1" data-testid="canvas-archive-confirm-action" @click="doArchive">Archive</button>
+                <button type="button" class="text-sm border border-danger text-danger rounded-sm px-3 py-1" data-testid="canvas-archive-confirm-action" @click="doArchive">Archive</button>
             </div>
         </div>
 

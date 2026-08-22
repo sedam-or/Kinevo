@@ -76,7 +76,7 @@ async function applyStatus(task: Task, status: TaskStatusValue): Promise<void> {
         <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="task-create">
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">New task</div>
             <form class="flex flex-wrap gap-3 items-end" @submit.prevent="createTask">
-                <div v-if="createError" class="w-full text-sm text-[#F53003]" role="alert">{{ createError }}</div>
+                <div v-if="createError" class="w-full text-sm text-danger" role="alert">{{ createError }}</div>
                 <label class="flex flex-col gap-1 text-sm flex-1 min-w-40">
                     Title
                     <input v-model="createForm.title" type="text" required class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-create-title" />
@@ -100,7 +100,7 @@ async function applyStatus(task: Task, status: TaskStatusValue): Promise<void> {
         </section>
 
         <div v-if="tasks.loading" class="text-sm text-gray-500" data-testid="task-loading">Loading tasks…</div>
-        <div v-if="tasks.error" class="text-sm text-[#F53003]" role="alert" data-testid="task-error">{{ tasks.error.message }}</div>
+        <div v-if="tasks.error" class="text-sm text-danger" role="alert" data-testid="task-error">{{ tasks.error.message }}</div>
 
         <!-- List -->
         <section data-testid="task-list">

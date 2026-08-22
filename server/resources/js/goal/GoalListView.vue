@@ -85,13 +85,13 @@ function workloadLabel(w: string): string {
         <h1 class="text-xl font-semibold">Goals / Roadmap</h1>
 
         <div v-if="goals.loading" class="text-sm text-gray-500" data-testid="goals-loading">Loading…</div>
-        <div v-if="goals.error" class="text-sm text-[#F53003]" role="alert" data-testid="goals-error">{{ goals.error.message }}</div>
+        <div v-if="goals.error" class="text-sm text-danger" role="alert" data-testid="goals-error">{{ goals.error.message }}</div>
 
         <!-- Create goal -->
         <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="goal-create">
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">New goal</div>
             <form class="flex flex-wrap gap-3 items-end" @submit.prevent="createGoal">
-                <div v-if="formError" class="w-full text-sm text-[#F53003]">{{ formError }}</div>
+                <div v-if="formError" class="w-full text-sm text-danger">{{ formError }}</div>
                 <label class="flex flex-col gap-1 text-sm flex-1 min-w-40">
                     Title
                     <KInput v-model="goalForm.title" required class="flex-1 min-w-40" data-testid="goal-create-title" />

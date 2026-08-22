@@ -67,7 +67,7 @@ async function exportIcs(): Promise<void> {
             </button>
         </div>
 
-        <p v-if="error" class="mt-2 text-sm text-[#F53003]" role="alert" data-testid="ics-export-error">
+        <p v-if="error" class="mt-2 text-sm text-danger" role="alert" data-testid="ics-export-error">
             {{ error }}
         </p>
         <p v-if="done" class="mt-2 text-sm text-green-700 dark:text-green-400" data-testid="ics-export-success">

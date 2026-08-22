@@ -103,7 +103,7 @@ function cancel(): void {
                 Loading setup…
             </div>
 
-            <div v-else-if="loadError" class="text-sm text-[#F53003]" role="alert" data-testid="boost-load-error">
+            <div v-else-if="loadError" class="text-sm text-danger" role="alert" data-testid="boost-load-error">
                 {{ loadError }}
             </div>
 
@@ -136,7 +136,7 @@ function cancel(): void {
                     <div v-if="warning" class="text-sm text-[#E8A13A]" role="alert" data-testid="boost-warning">
                         {{ warning }}
                     </div>
-                    <div v-if="error" class="text-sm text-[#F53003]" role="alert" data-testid="boost-error">
+                    <div v-if="error" class="text-sm text-danger" role="alert" data-testid="boost-error">
                         {{ error }}
                     </div>
 

@@ -3336,9 +3336,12 @@ Release Impact: PATCH (canvas UX/persistence surfaces; no API change).
 
 ## Status
 
-PARTIAL — keyboard system, focus trap, visible focus, reduced-motion, skip link,
-and shared-component touch targets landed 2026-08-21. Full WCAG audit and
-real-browser reduced-motion/keyboard verification remain (R7 browser evidence).
+PARTIAL — keyboard system, focus traps (incl. QuickCapture parity), visible
+focus, reduced-motion, skip link, touch targets, screen-reader live regions,
+and axe-core WCAG 2.2 A/AA-clean core surfaces landed; real-browser
+keyboard-only flow + reduced-motion proof landed 2026-08-22 (21/21 across
+chromium/firefox/webkit, `tests/e2e/tests/accessibility.spec.ts`). Remaining:
+canvas-surface keyboard-only walk + assistive-tech smoke (R7).
 
 ## Requirements
 
@@ -3346,35 +3349,54 @@ design.md §45, §46, §47; WCAG 2.2 AA target.
 
 ## Scope
 
-- [ ] Keyboard system (global shortcuts §46, G-T/W/C/G/K), visible focus,
+- [x] Keyboard system (global shortcuts §46, G-T/W/C/G/K), visible focus,
       semantic landmarks, accessible dialogs with focus trapping, screen-reader
-      status, logical heading hierarchy. (PARTIAL: G-chords + Cmd/Ctrl+K, global
-      `:focus-visible`, skip link + landmarks, dialog focus traps landed;
-      screen-reader status announcements and full keyboard-flow audit pending.)
+      status, logical heading hierarchy. (G-chords + Cmd/Ctrl+K, global
+      `:focus-visible`, skip link + landmarks, dialog focus traps incl.
+      QuickCapture; `role="status" aria-live="polite"` on canvas save badge +
+      SyncStatusPanel; keyboard-only login/chords/Cmd+K proven in real browsers.)
 - [x] No color-only meaning anywhere (§5.2); touch targets ~44px where
       practical. (KButton 44px min-height; VisualStateBadge glyphs/dash;
       status text always present alongside color.)
 - [x] `prefers-reduced-motion` honored (§47); motion tokens §48.
-- [ ] Accessibility coverage for every critical shared component (§96).
-      (PARTIAL: KButton/KInput + dialogs; combobox/select coverage pending.)
+- [x] Accessibility coverage for every critical shared component (§96).
+      (KButton/KInput + all dialogs incl. QuickCapture; selects are native
+      `<select>` inside label-wrapped forms — inherently accessible.)
 
 ## Acceptance
 
-- [ ] WCAG 2.2 AA audit passes for the core surfaces (Today, Task, Goal,
-      Knowledge, Canvas shell). (Contract-level checks green; browser audit
-      pending R7.)
-- [ ] Reduced-motion and keyboard-only flows verified in real browsers. (Not
-      possible in this environment.)
+- [x] WCAG 2.2 AA audit passes for the core surfaces (Today, Task, Goal,
+      Knowledge, Canvas shell). (axe-core scans clean 21/21 across
+      chromium/firefox/webkit; defects found were fixed: button-name, contrast,
+      QuickCapture dialog semantics, live regions; primary token deepened for
+      white-on-primary AA.)
+- [x] Reduced-motion and keyboard-only flows verified in real browsers.
+      (`accessibility.spec.ts`: emulated `prefers-reduced-motion` collapses
+      transitions; keyboard-only login + G-chords + Cmd/Ctrl+K open/Escape
+      close with focus-trap assertion.)
 
 ## Verification
 
-- [x] `docs/ui-audit.md` §4 keyboard/reduced-motion rows updated (🟡 impl
-      landed, browser proof pending; ✅ blocked on R7 browser run).
+- [x] `docs/ui-audit.md` §4 keyboard/reduced-motion rows updated (✅ on
+      Shell/Today/Task/Goal/Knowledge; Canvas 🟡 pending its keyboard-only walk;
+      Analytics ⚪ untouched). Defects recorded as UI-010 with fixes + evidence.
 
 ## Evidence
 
-- Keyboard: `shell/keyboard.ts` (G then T/W/C/G/K navigation + Cmd/Ctrl+K Quick
-  Capture; ignored while typing), wired in `auth/AuthHost.vue`. Tests:
+- Real-browser audit (2026-08-22): `tests/e2e/tests/accessibility.spec.ts` —
+  7 tests × 3 engines = 21/21. axe-core WCAG 2.2 A/AA scans clean on login,
+  Today, Task, Goal, Knowledge, Canvas shell (Excalidraw island excluded —
+  third-party engine boundary). Keyboard-only login → G-chords (G-W, G-T) →
+  Cmd/Ctrl+K quick capture with in-dialog focus assertion → Escape close.
+  Emulated `prefers-reduced-motion` collapses transitions (<1ms) app-wide.
+- Defects fixed (UI-010): bell accessible name; QuickCapture dialog parity
+  (`role="dialog"`, `aria-modal`, labelledby, focus trap + Escape); nav-group +
+  timeline labels gray-400→gray-600; `--color-primary` #F53003→#DE3005
+  (white-on-primary AA 4.63:1; design-tokens.md synced); error text/border
+  hardcodes swept to `text-danger`/`border-danger` tokens; live regions on
+  canvas save badge + SyncStatusPanel (`role="status"`).
+- Keyboard: `shell/keyboard.ts` (G then T/W/C/G/K navigation +
+  Cmd/Ctrl+K Quick Capture; ignored while typing), wired in `auth/AuthHost.vue`. Tests:
   `shell/__tests__/keyboard.test.ts` (4).
 - Focus management: `shell/focus-trap.ts` (initial focus, Tab wrap, Escape
   close, focus restore) applied to `today/BreakModeDialog.vue`,

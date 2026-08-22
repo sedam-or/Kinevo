@@ -116,7 +116,7 @@ function allowedHint(): string {
             Loading…
         </div>
 
-        <div v-else-if="error" class="text-sm text-[#F53003]" role="alert" data-testid="attachments-error">
+        <div v-else-if="error" class="text-sm text-danger" role="alert" data-testid="attachments-error">
             {{ error.message }}
         </div>
 
@@ -151,7 +151,7 @@ function allowedHint(): string {
                 No attachments yet.
             </p>
 
-            <div v-if="uploadError" class="mt-2 text-sm text-[#F53003]" role="alert" data-testid="attachments-upload-error">
+            <div v-if="uploadError" class="mt-2 text-sm text-danger" role="alert" data-testid="attachments-upload-error">
                 {{ uploadError }}
             </div>
 

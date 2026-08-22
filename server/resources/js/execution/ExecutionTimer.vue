@@ -99,7 +99,7 @@ async function complete(): Promise<void> {
             </div>
         </div>
 
-        <div v-if="actionError" class="text-sm text-[#F53003]" role="alert" data-testid="execution-error">
+        <div v-if="actionError" class="text-sm text-danger" role="alert" data-testid="execution-error">
             {{ actionError.message }}
         </div>
 

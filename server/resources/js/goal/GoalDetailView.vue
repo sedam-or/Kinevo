@@ -108,7 +108,7 @@ function milestoneGlyphEmphasis(status: string): string {
         </header>
 
         <div v-if="goals.loading" class="text-sm text-gray-500" data-testid="goal-detail-loading">Loading…</div>
-        <div v-if="goals.error" class="text-sm text-[#F53003]" role="alert" data-testid="goal-detail-error">{{ goals.error.message }}</div>
+        <div v-if="goals.error" class="text-sm text-danger" role="alert" data-testid="goal-detail-error">{{ goals.error.message }}</div>
 
         <template v-if="goals.currentGoal">
             <!-- Outcome -->

@@ -156,7 +156,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Failure surface — never a blank page (design.md §34.2/§35) -->
-        <div v-else-if="editorState === 'error'" class="absolute inset-0 border border-dashed border-[#F53003] rounded-sm px-4 py-4 text-sm" data-testid="canvas-editor-error" role="alert" aria-live="polite">
+        <div v-else-if="editorState === 'error'" class="absolute inset-0 border border-dashed border-danger rounded-sm px-4 py-4 text-sm" data-testid="canvas-editor-error" role="alert" aria-live="polite">
             <p class="font-medium">Canvas editor failed to initialize.</p>
             <p v-if="mountError" class="text-gray-600 dark:text-gray-400">{{ mountError }}</p>
             <p class="mt-1 text-gray-600 dark:text-gray-400">Your saved canvas data is still safe.</p>

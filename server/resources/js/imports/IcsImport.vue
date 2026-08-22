@@ -92,7 +92,7 @@ function conflictLabel(row: IcsImportRow): string {
             </p>
         </div>
 
-        <div v-if="error" class="mt-2 text-sm text-[#F53003]" role="alert" data-testid="ics-import-error">
+        <div v-if="error" class="mt-2 text-sm text-danger" role="alert" data-testid="ics-import-error">
             {{ error }}
         </div>
 
@@ -108,7 +108,7 @@ function conflictLabel(row: IcsImportRow): string {
             <div v-if="staged.errors.length > 0" class="mb-2 text-sm" data-testid="ics-import-errors">
                 <p class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Skipped — could not be read ({{ staged.errors.length }})</p>
                 <ul class="space-y-1">
-                    <li v-for="(e, index) in staged.errors" :key="`error-${index}`" class="text-[#F53003]" data-testid="ics-import-error-item">
+                    <li v-for="(e, index) in staged.errors" :key="`error-${index}`" class="text-danger" data-testid="ics-import-error-item">
                         {{ e.summary ?? 'Event' }} — {{ e.error }}
                     </li>
                 </ul>
@@ -143,7 +143,7 @@ function conflictLabel(row: IcsImportRow): string {
                             {{ formatDate(row.start_at) }} {{ formatTime(row.start_at) }}–{{ formatTime(row.end_at) }}
                         </td>
                         <td class="py-1 pr-2">{{ row.type === 'recurring' ? 'Repeats weekly' : 'One-off' }}</td>
-                        <td class="py-1" :class="row.conflict ? 'text-[#F53003]' : 'text-gray-500 dark:text-gray-400'" data-testid="ics-import-row-conflict">
+                        <td class="py-1" :class="row.conflict ? 'text-danger' : 'text-gray-500 dark:text-gray-400'" data-testid="ics-import-row-conflict">
                             {{ conflictLabel(row) || 'OK' }}
                         </td>
                     </tr>

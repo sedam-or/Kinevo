@@ -95,7 +95,7 @@ function cancel(): void {
                         data-testid="bk-end"
                     />
                 </label>
-                <div v-if="error" class="text-sm text-[#F53003]" role="alert" data-testid="bk-error">{{ error }}</div>
+                <div v-if="error" class="text-sm text-danger" role="alert" data-testid="bk-error">{{ error }}</div>
 
                 <div class="flex justify-end gap-2 mt-2">
                     <button

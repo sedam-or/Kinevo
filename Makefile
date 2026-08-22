@@ -162,8 +162,13 @@ prod-smoke:
 	./scripts/prod-smoke.sh
 
 # --- Quality gates (run inside the app container) ---------------------------
+# DB_* are pinned to in-memory sqlite at the process level: this Laravel
+# build's Dotenv is mutable, so phpunit.xml/.env.testing alone cannot stop a
+# RefreshDatabase run from migrate:fresh-ing the LIVE database (TASK-R5
+# incident: every `make test` wiped user data).
+TESTENV := $(COMPOSE) exec -T -e APP_ENV=testing -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: -e DB_URL= app
 test:
-	$(APP) php artisan test
+	$(TESTENV) php artisan test
 
 # --- Browser E2E smoke (rescue R1) -------------------------------------------
 # Real-browser verification against the running dev SPA. Builds the Playwright

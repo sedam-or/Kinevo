@@ -20,7 +20,9 @@ function retry(): void {
 </script>
 
 <template>
-    <div class="flex items-center gap-2" data-testid="sync-status-panel">
+    <!-- role=status + aria-live: screen readers announce offline/retrying/failed
+         transitions politely instead of leaving them visual-only (§5.2, §34.6). -->
+    <div class="flex items-center gap-2" data-testid="sync-status-panel" role="status" aria-live="polite">
         <span data-testid="sync-status-badge">
             <VisualStateBadge :state="state" />
         </span>
@@ -39,7 +41,7 @@ function retry(): void {
         >
             Retry sync
         </button>
-        <span v-if="error && showRetry" class="text-xs text-[#F53003]" data-testid="sync-error">
+        <span v-if="error && showRetry" class="text-xs text-danger" data-testid="sync-error">
             {{ error }}
         </span>
     </div>

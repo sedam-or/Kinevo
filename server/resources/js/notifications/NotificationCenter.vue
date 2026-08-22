@@ -59,6 +59,7 @@ async function onRead(n: KinevoNotification): Promise<void> {
             class="flex items-center gap-1 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1"
             :aria-expanded="open"
             aria-haspopup="true"
+            aria-label="Notifications"
             data-testid="notifications-bell"
             @click="toggle"
         >

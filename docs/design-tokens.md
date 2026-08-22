@@ -249,7 +249,9 @@ Baseline + R2 (TASK-R2, 2026-08-21):
 - `server/resources/js/tokens/` — implemented token modules: `colors.ts`,
   `spacing.ts`, `radius.ts`, `shadows.ts`, `typography.ts`, `motion.ts`,
   `zindex.ts` + `index.ts` barrel. Light and dark palettes; `primary`
-  preserves the existing `#F53003` accent so adoption doesn't shift colors.
+  preserves the brand accent hue — deepened from `#F53003` to `#DE3005` in
+  TASK-R5 so white-on-primary passes WCAG 2.2 AA (4.63:1; the old value was
+  3.96:1).
 - `server/resources/css/app.css` — Tailwind v4 `@theme` hydrates the semantic
   colors (`--color-*`), radius, offset shadows, and z-index tokens as CSS
   custom properties; `.dark` overrides apply the dark palette on the `.dark`

@@ -37,14 +37,14 @@ async function createCanvas(): Promise<void> {
         <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="canvas-create">
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">New canvas</div>
             <form class="flex gap-2" @submit.prevent="createCanvas">
-                <div v-if="createError" class="text-sm text-[#F53003]" role="alert">{{ createError }}</div>
+                <div v-if="createError" class="text-sm text-danger" role="alert">{{ createError }}</div>
                 <input v-model="createForm.title" type="text" placeholder="Canvas title" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2 text-sm flex-1" data-testid="canvas-create-title" />
                 <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" data-testid="canvas-create-submit">Create</button>
             </form>
         </section>
 
         <div v-if="canvas.loading" class="text-sm text-gray-500" data-testid="canvas-loading">Loading…</div>
-        <div v-if="canvas.error" class="text-sm text-[#F53003]" role="alert" data-testid="canvas-error">{{ canvas.error.message }}</div>
+        <div v-if="canvas.error" class="text-sm text-danger" role="alert" data-testid="canvas-error">{{ canvas.error.message }}</div>
 
         <section data-testid="canvas-list">
             <div v-if="canvas.canvases.length === 0 && !canvas.loading" class="text-sm text-gray-500 dark:text-gray-400">No canvases yet.</div>

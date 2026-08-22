@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue';
 import { useQuickCaptureStore } from './store';
+import { useFocusTrap } from '../shell/focus-trap';
 
 const emit = defineEmits<{
     (e: 'created', taskId: number): void;
@@ -93,18 +94,23 @@ function close(): void {
         qc.hide();
     }
 }
+
+// Modal a11y parity with the Today dialogs (design.md §52, WCAG 2.2):
+// initial focus, Tab wrap, Escape close, focus restore.
+const root = ref<HTMLElement | null>(null);
+useFocusTrap(root, close);
 </script>
 
 <template>
-    <div v-if="qc.open" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" data-testid="quick-capture-modal" @click.self="close">
+    <div v-if="qc.open" ref="root" role="dialog" aria-modal="true" aria-labelledby="qc-title" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4" data-testid="quick-capture-modal" @click.self="close">
         <div class="bg-[#FDFDFC] dark:bg-[#161615] text-[#1b1b18] dark:text-[#EDEDEC] border border-gray-300 dark:border-gray-600 rounded-sm w-full max-w-lg p-5">
             <header class="flex items-center justify-between mb-4">
-                <h2 class="text-lg font-semibold">Quick Capture</h2>
+                <h2 id="qc-title" class="text-lg font-semibold">Quick Capture</h2>
                 <button type="button" class="text-sm underline" data-testid="qc-close" @click="close">Close</button>
             </header>
 
-            <div v-if="localError" class="text-sm text-[#F53003] mb-3" role="alert">{{ localError }}</div>
-            <div v-if="qc.error && !localError" class="text-sm text-[#F53003] mb-3" role="alert">{{ qc.error.message }}</div>
+            <div v-if="localError" class="text-sm text-danger mb-3" role="alert">{{ localError }}</div>
+            <div v-if="qc.error && !localError" class="text-sm text-danger mb-3" role="alert">{{ qc.error.message }}</div>
 
             <!-- Capture form -->
             <form v-if="!qc.lastResult" class="flex flex-col gap-3" @submit.prevent="submit" data-testid="qc-form">
@@ -163,7 +169,7 @@ function close(): void {
                         <option v-for="m in qc.milestones" :key="m.id" :value="m.id">{{ m.title }}</option>
                     </select>
                 </label>
-                <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" :disabled="qc.busy" data-testid="qc-submit">
+                <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium text-gray-900 dark:text-gray-100" :disabled="qc.busy" data-testid="qc-submit">
                     {{ qc.busy ? 'Capturing…' : 'Capture' }}
                 </button>
             </form>
@@ -212,7 +218,7 @@ function close(): void {
                         Schedule Later — keep it in your backlog
                     </button>
                 </div>
-                <div v-if="qc.autoSwapResult && !qc.autoSwapResult.applied" class="text-sm text-[#F53003] mt-3" data-testid="qc-swap-failed">
+                <div v-if="qc.autoSwapResult && !qc.autoSwapResult.applied" class="text-sm text-danger mt-3" data-testid="qc-swap-failed">
                     {{ qc.autoSwapResult.explanation }}
                 </div>
             </div>

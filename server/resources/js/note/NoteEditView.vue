@@ -153,7 +153,7 @@ watch(
         </header>
 
         <div v-if="notes.loading" class="text-sm text-gray-500" data-testid="note-detail-loading">Loading…</div>
-        <div v-if="notes.error" class="text-sm text-[#F53003]" role="alert" data-testid="note-detail-error">
+        <div v-if="notes.error" class="text-sm text-danger" role="alert" data-testid="note-detail-error">
             {{ notes.error.message }}
             <span v-if="notes.saveState === 'conflict'"> — this note was changed elsewhere; reload to reconcile.</span>
         </div>

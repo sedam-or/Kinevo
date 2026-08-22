@@ -144,7 +144,7 @@ function cancel(): void {
             </p>
 
             <div v-if="loading" class="text-sm text-gray-500 mt-3" data-testid="ep-loading">Loading this week&rsquo;s tasks…</div>
-            <div v-if="loadError" class="text-sm text-[#F53003] mt-3" role="alert" data-testid="ep-load-error">{{ loadError }}</div>
+            <div v-if="loadError" class="text-sm text-danger mt-3" role="alert" data-testid="ep-load-error">{{ loadError }}</div>
 
             <ul v-if="!loading && !loadError" class="mt-3 max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-sm">
                 <li v-for="c in candidates" :key="c.taskId" class="flex items-center gap-3 px-3 py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
@@ -170,7 +170,7 @@ function cancel(): void {
                 </li>
             </ul>
 
-            <div v-if="error" class="text-sm text-[#F53003] mt-3" role="alert" data-testid="ep-error">{{ error }}</div>
+            <div v-if="error" class="text-sm text-danger mt-3" role="alert" data-testid="ep-error">{{ error }}</div>
 
             <div class="mt-4 flex justify-end gap-2">
                 <button

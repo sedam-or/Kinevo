@@ -11,7 +11,7 @@ onErrorCaptured((err) => {
 
 <template>
     <div>
-        <div v-if="error" class="bg-[#fff2f2] dark:bg-[#1D0002] text-[#F53003] px-4 py-2 text-sm" role="alert" data-testid="error-boundary">
+        <div v-if="error" class="bg-[#fff2f2] dark:bg-[#1D0002] text-danger px-4 py-2 text-sm" role="alert" data-testid="error-boundary">
             Something went wrong: {{ error }}
         </div>
         <slot />

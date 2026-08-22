@@ -52,7 +52,7 @@ async function createNote(): Promise<void> {
         <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="note-create">
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">New note</div>
             <form class="flex gap-2" @submit.prevent="createNote">
-                <div v-if="createError" class="text-sm text-[#F53003]" role="alert">{{ createError }}</div>
+                <div v-if="createError" class="text-sm text-danger" role="alert">{{ createError }}</div>
                 <KInput v-model="createForm.title" placeholder="Note title" class="flex-1" data-testid="note-create-title" />
                 <KButton type="submit" variant="primary" data-testid="note-create-submit">Create</KButton>
             </form>
@@ -66,7 +66,7 @@ async function createNote(): Promise<void> {
         </section>
 
         <div v-if="notes.loading" class="text-sm text-gray-500" data-testid="notes-loading">Loading…</div>
-        <div v-if="notes.error" class="text-sm text-[#F53003]" role="alert" data-testid="notes-error">{{ notes.error.message }}</div>
+        <div v-if="notes.error" class="text-sm text-danger" role="alert" data-testid="notes-error">{{ notes.error.message }}</div>
 
         <section data-testid="note-list">
             <div v-if="displayedNotes().length === 0 && !notes.loading" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4">No notes found. Create a note above to begin capturing knowledge.</div>

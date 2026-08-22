@@ -55,7 +55,7 @@ async function submit(): Promise<void> {
         <div v-if="saved" class="text-sm text-green-700 dark:text-green-400" data-testid="profile-saved">
             Saved.
         </div>
-        <div v-if="formError" class="text-sm text-[#F53003]" role="alert">
+        <div v-if="formError" class="text-sm text-danger" role="alert">
             {{ formError }}
         </div>
 

@@ -104,7 +104,7 @@ function editingRows(): KrsImportRow[] {
             </p>
         </div>
 
-        <div v-if="error" class="mt-2 text-sm text-[#F53003]" role="alert" data-testid="krs-import-error">
+        <div v-if="error" class="mt-2 text-sm text-danger" role="alert" data-testid="krs-import-error">
             {{ error }}
         </div>
 
@@ -118,7 +118,7 @@ function editingRows(): KrsImportRow[] {
             <div v-if="staged.errors.length > 0" class="mb-2 text-sm" data-testid="krs-import-errors">
                 <p class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Skipped — could not be read ({{ staged.errors.length }})</p>
                 <ul class="space-y-1">
-                    <li v-for="(e, index) in staged.errors" :key="`error-${index}`" class="text-[#F53003]" data-testid="krs-import-error-item">
+                    <li v-for="(e, index) in staged.errors" :key="`error-${index}`" class="text-danger" data-testid="krs-import-error-item">
                         {{ e.line ?? 'Line' }} — {{ e.error }}
                     </li>
                 </ul>

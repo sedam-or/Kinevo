@@ -65,7 +65,7 @@ function cycleTheme(): void {
         <!-- Error boundary / banner -->
         <div
             v-if="shell.errorMessage"
-            class="bg-[#fff2f2] dark:bg-[#1D0002] text-[#F53003] px-4 py-2 text-sm"
+            class="bg-[#fff2f2] dark:bg-[#1D0002] text-danger px-4 py-2 text-sm"
             role="alert"
             data-testid="error-banner"
         >
@@ -81,7 +81,7 @@ function cycleTheme(): void {
                 data-testid="desktop-nav"
             >
                 <div v-for="group in shell.navGroups" :key="group.key" class="flex flex-col gap-1">
-                    <span class="px-3 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500" data-testid="nav-group-label">
+                    <span class="px-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400" data-testid="nav-group-label">
                         {{ group.label }}
                     </span>
                     <a

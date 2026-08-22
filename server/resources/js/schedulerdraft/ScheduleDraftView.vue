@@ -89,7 +89,7 @@ function reasonLabel(reason: string): string {
                     {{ sd.busy ? 'Generating…' : 'Generate Draft' }}
                 </button>
             </div>
-            <div v-if="sd.error" class="text-sm text-[#F53003] mt-2" role="alert" data-testid="draft-error">{{ sd.error.message }}</div>
+            <div v-if="sd.error" class="text-sm text-danger mt-2" role="alert" data-testid="draft-error">{{ sd.error.message }}</div>
         </section>
 
         <!-- Draft preview -->
@@ -113,7 +113,7 @@ function reasonLabel(reason: string): string {
                 <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Not scheduled ({{ sd.draft.unassigned.length }})</div>
                 <ul class="space-y-1">
                     <li v-for="u in sd.draft.unassigned" :key="u.task_id" class="text-sm" data-testid="draft-rejected-item">
-                        {{ u.title }} — <span class="text-[#F53003]">{{ reasonLabel(u.reason) }}</span>
+                        {{ u.title }} — <span class="text-danger">{{ reasonLabel(u.reason) }}</span>
                     </li>
                 </ul>
             </section>

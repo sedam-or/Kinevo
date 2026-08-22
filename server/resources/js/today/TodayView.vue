@@ -302,10 +302,10 @@ async function endBoostTarget(): Promise<void> {
             <!-- Capacity feedback (design.md §22): a load bar; click reveals details. -->
             <div class="flex flex-col items-end gap-1" data-testid="today-capacity" :class="{ 'cursor-pointer': today.capacity }" @click="today.capacity && (capacityRevealed = !capacityRevealed)">
                 <div class="flex items-center gap-2 text-sm">
-                    <span :class="capacityStatus === 'overload' ? 'text-[#F53003]' : 'text-gray-600 dark:text-gray-300'">
+                    <span :class="capacityStatus === 'overload' ? 'text-danger' : 'text-gray-600 dark:text-gray-300'">
                         {{ today.capacity ? `${capacityPercent}% of capacity used` : 'No capacity data' }}
                     </span>
-                    <span v-if="today.capacity?.overload_minutes" class="text-xs text-[#F53003]">({{ today.capacity.overload_minutes }}m overload)</span>
+                    <span v-if="today.capacity?.overload_minutes" class="text-xs text-danger">({{ today.capacity.overload_minutes }}m overload)</span>
                 </div>
                 <div v-if="today.capacity" class="w-40 h-2 rounded-sm bg-gray-200 dark:bg-gray-700 overflow-hidden" role="img" :aria-label="`${capacityPercent}% capacity used`">
                     <div
@@ -324,7 +324,7 @@ async function endBoostTarget(): Promise<void> {
 
         <!-- Loading / error -->
         <div v-if="today.loading" class="text-sm text-gray-500" data-testid="today-loading">Loading Today…</div>
-        <div v-if="today.error" class="text-sm text-[#F53003]" role="alert" data-testid="today-error">{{ today.error.message }}</div>
+        <div v-if="today.error" class="text-sm text-danger" role="alert" data-testid="today-error">{{ today.error.message }}</div>
 
         <!-- Lightweight adaptive-context check-in (design.md §23) -->
         <AdaptiveContextPanel v-if="!today.loading && !today.error && today.date" />
@@ -369,7 +369,7 @@ async function endBoostTarget(): Promise<void> {
             <div class="mt-3 border-t border-gray-300 dark:border-gray-600 pt-3">
                 <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Boost Mode (FR-37/FR-38)</div>
                 <p v-if="boostMessage" class="text-sm" data-testid="boost-message">{{ boostMessage }}</p>
-                <p v-else-if="boostError" class="text-sm text-[#F53003]" role="alert" data-testid="boost-error">{{ boostError }}</p>
+                <p v-else-if="boostError" class="text-sm text-danger" role="alert" data-testid="boost-error">{{ boostError }}</p>
                 <div class="flex justify-end gap-2 mt-2">
                     <button
                         type="button"
@@ -455,19 +455,19 @@ async function endBoostTarget(): Promise<void> {
                     </KButton>
                 </div>
             </div>
-            <div v-if="miniPauseError" class="text-sm text-[#F53003]" role="alert" data-testid="mini-pause-error">
+            <div v-if="miniPauseError" class="text-sm text-danger" role="alert" data-testid="mini-pause-error">
                 {{ miniPauseError }}
             </div>
             <div v-if="emergencyMessage" class="text-sm text-gray-600 dark:text-gray-400 mt-2" data-testid="emergency-pause-message">
                 {{ emergencyMessage }}
             </div>
-            <div v-if="emergencyError" class="text-sm text-[#F53003]" role="alert" data-testid="emergency-pause-error">
+            <div v-if="emergencyError" class="text-sm text-danger" role="alert" data-testid="emergency-pause-error">
                 {{ emergencyError }}
             </div>
             <div v-if="breakMessage" class="text-sm text-gray-600 dark:text-gray-400 mt-2" data-testid="break-message">
                 {{ breakMessage }}
             </div>
-            <div v-if="breakError" class="text-sm text-[#F53003]" role="alert" data-testid="break-error">
+            <div v-if="breakError" class="text-sm text-danger" role="alert" data-testid="break-error">
                 {{ breakError }}
             </div>
         </section>
@@ -510,7 +510,7 @@ async function endBoostTarget(): Promise<void> {
                 v-for="e in sortedEvents"
                 :key="e.assignment.id"
                 class="absolute top-12 rounded-sm px-2 py-1 overflow-hidden text-xs"
-                :class="e.locked ? 'bg-blue-200 dark:bg-blue-800' : e.conflict ? 'bg-[#fff2f2] dark:bg-[#1D0002] text-[#F53003]' : 'bg-gray-100 dark:bg-gray-800'"
+                :class="e.locked ? 'bg-blue-200 dark:bg-blue-800' : e.conflict ? 'bg-[#fff2f2] dark:bg-[#1D0002] text-danger' : 'bg-gray-100 dark:bg-gray-800'"
                 :style="eventPosition(e)"
                 :title="`${e.task?.title ?? 'Untitled'} ${formatTime(e.assignment.start_at)}–${formatTime(e.assignment.end_at)}`"
                 data-testid="timeline-event"
@@ -518,7 +518,7 @@ async function endBoostTarget(): Promise<void> {
                 {{ formatTime(e.assignment.start_at) }} {{ e.task?.title ?? 'Untitled' }}
             </div>
 
-            <div class="absolute bottom-2 left-4 right-4 flex justify-between text-[10px] text-gray-400">
+            <div class="absolute bottom-2 left-4 right-4 flex justify-between text-[10px] text-gray-600 dark:text-gray-400">
                 <span>06:00</span>
                 <span>12:00</span>
                 <span>18:00</span>
@@ -530,7 +530,7 @@ async function endBoostTarget(): Promise<void> {
         <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="quick-capture">
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Quick Capture</div>
             <form class="flex flex-col gap-3" @submit.prevent="quickCapture">
-                <div v-if="quickError" class="text-sm text-[#F53003]" role="alert">{{ quickError }}</div>
+                <div v-if="quickError" class="text-sm text-danger" role="alert">{{ quickError }}</div>
                 <label class="flex flex-col gap-1 text-sm">
                     Title
                     <input v-model="quickCaptureForm.title" type="text" required class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="qc-title" />

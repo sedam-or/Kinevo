@@ -159,7 +159,7 @@ async function promote(subtaskId: number): Promise<void> {
         </header>
 
         <div v-if="tasks.loading" class="text-sm text-gray-500" data-testid="task-detail-loading">Loading…</div>
-        <div v-if="tasks.error" class="text-sm text-[#F53003]" role="alert" data-testid="task-detail-error">{{ tasks.error.message }}</div>
+        <div v-if="tasks.error" class="text-sm text-danger" role="alert" data-testid="task-detail-error">{{ tasks.error.message }}</div>
 
         <!-- Edit form -->
         <section v-if="tasks.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="task-edit">
@@ -234,7 +234,7 @@ async function promote(subtaskId: number): Promise<void> {
                 <input v-model="newSubtaskTitle" type="text" placeholder="Add subtask" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm flex-1" data-testid="subtask-title" />
                 <button type="submit" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="subtask-add">Add</button>
             </form>
-            <div v-if="subtaskError" class="text-sm text-[#F53003]">{{ subtaskError }}</div>
+            <div v-if="subtaskError" class="text-sm text-danger">{{ subtaskError }}</div>
             <ul class="space-y-1">
                 <li v-for="sub in tasks.subtasks" :key="sub.id" class="flex items-center gap-2 text-sm" data-testid="subtask-item">
                     <input type="checkbox" :checked="sub.completed" class="accent-current" data-testid="subtask-toggle" @change="toggle(sub.id)" />

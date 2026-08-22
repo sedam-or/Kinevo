@@ -234,7 +234,7 @@ function run(fn: () => Promise<void>): void {
             Loading…
         </div>
 
-        <div v-else-if="analytics.error" class="text-sm text-[#F53003]" role="alert" data-testid="analytics-error">
+        <div v-else-if="analytics.error" class="text-sm text-danger" role="alert" data-testid="analytics-error">
             {{ (analytics.error as ApiError).message }}
         </div>
 
@@ -356,7 +356,7 @@ function run(fn: () => Promise<void>): void {
                                 data-testid="analytics-capacity-load"
                             />
                         </div>
-                        <span class="w-32 shrink-0 text-right text-xs" :class="day.status === 'overload' ? 'text-[#F53003]' : 'text-gray-500 dark:text-gray-400'">
+                        <span class="w-32 shrink-0 text-right text-xs" :class="day.status === 'overload' ? 'text-danger' : 'text-gray-500 dark:text-gray-400'">
                             {{ minutesLabel(day.scheduled_minutes) }}{{ day.status === 'overload' ? ` / ${minutesLabel(day.overload_minutes)} overload` : '' }}
                         </span>
                     </li>
@@ -439,7 +439,7 @@ function run(fn: () => Promise<void>): void {
                 <div v-if="analytics.heatmapLoading" class="text-sm text-gray-500 dark:text-gray-400" data-testid="analytics-heatmap-loading">
                     Loading…
                 </div>
-                <div v-else-if="analytics.heatmapError" class="text-sm text-[#F53003]" role="alert" data-testid="analytics-heatmap-error">
+                <div v-else-if="analytics.heatmapError" class="text-sm text-danger" role="alert" data-testid="analytics-heatmap-error">
                     {{ (analytics.heatmapError as ApiError).message }}
                 </div>
                 <div v-else>

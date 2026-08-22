@@ -78,7 +78,7 @@ function cancel(): void {
                     {{ sd.busy ? 'Proposing…' : 'Propose Reschedule' }}
                 </button>
             </div>
-            <div v-if="sd.error" class="text-sm text-[#F53003] mt-2" role="alert" data-testid="reschedule-error">{{ sd.error.message }}</div>
+            <div v-if="sd.error" class="text-sm text-danger mt-2" role="alert" data-testid="reschedule-error">{{ sd.error.message }}</div>
         </section>
 
         <template v-if="proposed && sd.proposal">
@@ -109,8 +109,8 @@ function cancel(): void {
 
             <!-- Conflicts -->
             <section v-if="sd.proposal.conflict_task_ids.length > 0" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="reschedule-conflicts">
-                <div class="text-xs uppercase text-[#F53003] mb-2">Conflicts ({{ sd.proposal.conflict_task_ids.length }})</div>
-                <p class="text-sm text-[#F53003]">Tasks could not be placed and remain flagged for manual review.</p>
+                <div class="text-xs uppercase text-danger mb-2">Conflicts ({{ sd.proposal.conflict_task_ids.length }})</div>
+                <p class="text-sm text-danger">Tasks could not be placed and remain flagged for manual review.</p>
             </section>
 
             <div class="flex gap-2">

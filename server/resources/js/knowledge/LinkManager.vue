@@ -144,7 +144,7 @@ function linkLabel(type: KnowledgeTargetType, id: number): string {
     <div data-testid="knowledge-links">
         <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Linked entities</div>
 
-        <div v-if="links.error && !formError" class="text-sm text-[#F53003]" role="alert" data-testid="links-load-error">
+        <div v-if="links.error && !formError" class="text-sm text-danger" role="alert" data-testid="links-load-error">
             {{ links.error.message }}
         </div>
 
@@ -209,7 +209,7 @@ function linkLabel(type: KnowledgeTargetType, id: number): string {
                 </label>
             </div>
 
-            <div v-if="formError" class="text-sm text-[#F53003]" role="alert" data-testid="link-form-error">{{ formError }}</div>
+            <div v-if="formError" class="text-sm text-danger" role="alert" data-testid="link-form-error">{{ formError }}</div>
 
             <div class="flex items-center gap-2">
                 <button
