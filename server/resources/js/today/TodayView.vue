@@ -13,6 +13,8 @@ import { taskStates } from '../visualstate/derive';
 import KButton from '../components/KButton.vue';
 import FeatureHelp from '../components/FeatureHelp.vue';
 import { useToastStore } from '../components/toast';
+import WhyThis from '../components/WhyThis.vue';
+import { useAdaptiveStore } from '../adaptive/store';
 import AdaptiveContextPanel from '../adaptive/AdaptiveContextPanel.vue';
 import type { EmptySlot, EmergencyPauseResponse, EndBreakResponse, EndBoostTargetResponse, HardLandscapeEvent, SetBoostTargetResponse, StartBreakResponse, TodayEvent } from './types';
 
@@ -177,6 +179,7 @@ async function quickCapture(): Promise<void> {
 }
 
 const toast = useToastStore();
+const adaptive = useAdaptiveStore();
 // Today's progress (TASK-P17-014): the §99 loop ends in PROGRESS — surface
 // completed-vs-planned for the day as supporting context under the timeline.
 const completedCount = computed(() => today.events.filter((e) => e.task?.status === 'completed').length);
@@ -442,6 +445,15 @@ async function endBoostTarget(): Promise<void> {
                             Goal ↗
                         </button>
                     </div>
+                    <!-- FR-63: expandable scheduling explanation, collapsed by
+                         default so the NOW card stays uncluttered (P17-015). -->
+                    <WhyThis
+                        v-if="currentEvent.task"
+                        class="mt-1"
+                        :task="{ priority_tier: currentEvent.task.priority_tier, due_at: currentEvent.task.due_at, estimated_minutes: currentEvent.task.estimated_minutes }"
+                        :assignment="currentEvent.assignment"
+                        :energy-note="adaptive.latest?.energy_level != null ? `Latest energy check-in (${adaptive.latest.energy_level}/10) informed today's ordering.` : null"
+                    />
                 </div>
                 <ExecutionTimer
                     v-if="currentEvent.task"

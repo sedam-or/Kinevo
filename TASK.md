@@ -3986,17 +3986,24 @@ P17-G Analytics / Decision Support UX
         release-gate 60 passed; unit 437 passed incl. two new hierarchy tests
 
 ### TASK-P17-015 — "Why This?" Explanation
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-015)
 - Priority: P1
 - Depends On: TASK-P17-014
 - SRS: FR-63 (explainable decisions)
 - Files: scheduler explainability surface on task cards
 - Acceptance:
-  - [ ] every scheduled task card optionally exposes expandable "Why this task
-        now?" (tier, deadline proximity, slot fit, energy fit); default card
-        uncluttered
-- Verification: [ ] E2E expand/collapse + content
-- Notes: uses existing explainability, not new scheduler logic.
+  - [x] reusable WhyThis.vue: collapsed-by-default "Why this task now?"
+        toggle (aria-expanded) explaining tier, deadline proximity, slot fit
+        (estimate match / capacity fit / locked anchor) and an optional
+        energy note; wired into the Today NOW card (energy note from the
+        adaptive store when a check-in exists) and every Week assignment row;
+        default cards stay uncluttered. Deterministic UI derivation from
+        observable fields — no new scheduler logic
+- Verification: [x] component tests (6: collapsed default, expand content,
+        deadline proximity vs today, locked anchor, energy-note presence,
+        collapse) + E2E expand/collapse with content assertions in Journey I
+        ×3 browsers (12 passed); regression core-loop/surface-qa/
+        accessibility/theme 63 passed
 
 ### TASK-P17-016 — Next Action Engine
 - Status: TODO

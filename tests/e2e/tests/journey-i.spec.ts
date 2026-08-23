@@ -96,6 +96,21 @@ test.describe('Journey I — Task → Today → Progress (TASK-P17-014)', () => 
             ).toBeLessThanOrEqual(order[i].top);
         }
 
+        // WHY THIS (P17-015 / FR-63): collapsed by default, expands with
+        // deterministic content derived from the captured fields.
+        const whyToggle = page.getByTestId('why-this-toggle');
+        await expect(whyToggle).toBeVisible();
+        await expect(page.getByTestId('why-this-content')).toHaveCount(0);
+        await whyToggle.click();
+        const why = page.getByTestId('why-this-content');
+        await expect(why).toBeVisible();
+        await expect(why.getByTestId('why-tier')).toContainText('P3');
+        await expect(why.getByTestId('why-deadline')).toContainText('No deadline pressure');
+        await expect(why.getByTestId('why-slot')).toContainText('45m');
+        await expect(whyToggle).toHaveAttribute('aria-expanded', 'true');
+        await whyToggle.click();
+        await expect(page.getByTestId('why-this-content')).toHaveCount(0);
+
         // PROGRESS before completion: read the shared day's current counts
         // (the dev owner's days accumulate fixtures across runs).
         const before = await page

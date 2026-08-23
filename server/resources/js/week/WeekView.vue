@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import WhyThis from '../components/WhyThis.vue';
 import { useWeekStore } from './store';
 import type { ScheduleRangeEvent } from './types';
 
@@ -132,9 +133,15 @@ function isOverloaded(date: string): boolean {
                 </div>
 
                 <!-- Assignments -->
-                <ul class="mt-1 text-xs text-gray-700 dark:text-gray-300 space-y-0.5" data-testid="week-assignments">
-                    <li v-for="e in eventsByDay[day.date] ?? []" :key="e.assignment.id">
+                <ul class="mt-1 text-xs text-gray-700 dark:text-gray-300 space-y-1" data-testid="week-assignments">
+                    <li v-for="e in eventsByDay[day.date] ?? []" :key="e.assignment.id" class="flex flex-col gap-0.5">
                         {{ e.task?.title ?? 'Untitled' }}
+                        <!-- FR-63 (P17-015): per-placement explanation, collapsed. -->
+                        <WhyThis
+                            v-if="e.task"
+                            :task="{ priority_tier: e.task.priority_tier, due_at: e.task.due_at, estimated_minutes: e.task.estimated_minutes }"
+                            :assignment="e.assignment"
+                        />
                     </li>
                 </ul>
             </div>

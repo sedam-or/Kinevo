@@ -536,6 +536,15 @@ tests/e2e/tests/journey-i.spec.ts  chromium/firefox/webkit
   core-loop/surface-qa/accessibility/release-gate green (60 passed).
 ```
 
+### P17-015 — "Why This?" run (2026-08-23)
+```text
+journey-i.spec.ts extended (chromium/firefox/webkit)
+  checks: NOW card exposes the collapsed "Why this task now?" toggle;
+          expanding reveals tier (P3), no-deadline and 45m slot-fit lines;
+          aria-expanded flips; second click collapses.
+          Result: ✅ included in Journey I — 12 passed across browsers.
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.

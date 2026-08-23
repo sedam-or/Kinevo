@@ -13,6 +13,11 @@ Release governance: see `docs/release-management.md`.
 ## [Unreleased]
 ### Added
 
+- Task cards can now explain themselves (Phase 17, TASK-P17-015): a quiet
+  "Why this task now?" link on the current task and week-planner entries
+  expands to show the priority tier, how close the deadline is, why this
+  slot fits — and what your last energy check-in contributed.
+
 - Today reads top-down like a control center (Phase 17, TASK-P17-014):
   what's happening now leads, then what's next, then your day's timeline —
   with a new day-progress bar, the energy check-in and quick capture grouped
