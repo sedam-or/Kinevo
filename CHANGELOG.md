@@ -13,6 +13,10 @@ Release governance: see `docs/release-management.md`.
 ## [Unreleased]
 ### Added
 
+- Empty screens now teach (Phase 17, TASK-P17-009): when Today has nothing
+  in progress, or Goals/Tasks/Analytics are still empty, a short in-place
+  explanation shows what belongs there and what to do next. Dismissing any
+  explanation ("Got it") keeps it away on that device.
 - Features now explain themselves in place (Phase 17, TASK-P17-008): a small
   "What's this?" info control on Hard Landscape, Capacity, Context check-in,
   the Activity heatmap, the Dynamic Rescheduler, and AI breakdown proposals

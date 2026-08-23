@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FeatureHelp from '../components/FeatureHelp.vue';
 import { onMounted, reactive, ref } from 'vue';
 import { useGoalStore } from './store';
 import { GOAL_HORIZONS, PROGRAM_WORKLOAD_TYPES, type Goal } from './types';
@@ -186,7 +187,15 @@ function workloadLabel(w: string): string {
         <!-- Goal list -->
         <section data-testid="goal-list">
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Goals</div>
-            <div v-if="goals.goals.length === 0 && !goals.loading" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4">No goals yet. Create a goal above to begin your roadmap.</div>
+            <div v-if="goals.goals.length === 0 && !goals.loading" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4 flex flex-col gap-2" data-testid="goal-empty">
+                <span>No goals yet.</span>
+                <FeatureHelp
+                    id="goal-roadmap"
+                    variant="block"
+                    title="Goals are the start of the roadmap"
+                    body="A goal captures where you're heading. Kinevo can break it into milestones, programs, and tasks — you approve every step before anything is scheduled."
+                />
+            </div>
             <article
                 v-for="goal in goals.goals"
                 :key="goal.id"

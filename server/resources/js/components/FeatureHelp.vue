@@ -1,20 +1,29 @@
 <script setup lang="ts">
 /**
- * Contextual feature explanation (TASK-P17-008, design.md §104 P17-E).
+ * Contextual feature explanation (TASK-P17-008/009, design.md §104 P17-E).
  *
- * In-product education, NOT onboarding slides: a small info control next to
- * the feature it explains opens a short popover; "Got it" persists the
+ * Two variants:
+ * - `icon` (default): inline info control → popover, for feature headers.
+ * - `block`: dashed callout rendered INSIDE empty states / as an inline
+ *   helper — the explanation is visible immediately, no click needed.
+ *
+ * In-product education, NOT onboarding slides: "Got it" persists the
  * dismissal locally so it never repeats on this device. Purely a client
  * preference — no server state, no cross-device sync.
  */
 import { ref } from 'vue';
 
-const props = defineProps<{
-    /** Stable feature id — doubles as the localStorage dismissal key. */
-    id: string;
-    title: string;
-    body: string;
-}>();
+const props = withDefaults(
+    defineProps<{
+        /** Stable feature id — doubles as the localStorage dismissal key. */
+        id: string;
+        title: string;
+        body: string;
+        /** `icon` = popover trigger; `block` = always-visible callout. */
+        variant?: 'icon' | 'block';
+    }>(),
+    { variant: 'icon' },
+);
 
 const STORAGE_PREFIX = 'kinevo.feature-help.';
 
@@ -53,7 +62,28 @@ function dismiss(): void {
 </script>
 
 <template>
-    <span v-if="!dismissed" class="relative inline-flex" :data-testid="`feature-help-${id}`">
+    <!-- Block variant: always-visible explanation inside an empty state. -->
+    <span
+        v-if="variant === 'block' && !dismissed"
+        class="flex flex-col gap-1 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-3"
+        :data-testid="`feature-help-${id}`"
+    >
+        <span class="text-sm font-medium">{{ title }}</span>
+        <span class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ body }}</span>
+        <span class="flex justify-end">
+            <button
+                type="button"
+                class="text-xs border border-border bg-bg rounded-sm px-2 py-1 hover:bg-surface dark:hover:bg-surface-raised focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                :data-testid="`feature-help-${id}-dismiss`"
+                @click="dismiss"
+            >
+                Got it
+            </button>
+        </span>
+    </span>
+
+    <!-- Icon variant: info control + popover. -->
+    <span v-else-if="!dismissed" class="relative inline-flex" :data-testid="`feature-help-${id}`">
         <button
             type="button"
             class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-text dark:hover:text-text rounded-sm px-1 min-h-[24px] focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"

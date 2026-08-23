@@ -45,6 +45,30 @@ describe('FeatureHelp (TASK-P17-008)', () => {
         expect(again.find('[data-testid="feature-help-hard-landscape-trigger"]').exists()).toBe(false);
     });
 
+    it('block variant shows the explanation immediately inside empty states', async () => {
+        const wrapper = mount(FeatureHelp, {
+            props: {
+                id: 'goal-roadmap',
+                variant: 'block',
+                title: 'Goals are the start of the roadmap',
+                body: 'A goal captures where you are heading.',
+            },
+        });
+
+        // No click needed — visible by default.
+        expect(wrapper.find('[data-testid="feature-help-goal-roadmap"]').exists()).toBe(true);
+        expect(wrapper.text()).toContain('Goals are the start of the roadmap');
+        expect(wrapper.text()).toContain('A goal captures where you are heading.');
+
+        await wrapper.find('[data-testid="feature-help-goal-roadmap-dismiss"]').trigger('click');
+        expect(localStorage.getItem('kinevo.feature-help.goal-roadmap')).toBe('1');
+
+        const again = mount(FeatureHelp, {
+            props: { id: 'goal-roadmap', variant: 'block', title: 'x', body: 'y' },
+        });
+        expect(again.find('[data-testid="feature-help-goal-roadmap"]').exists()).toBe(false);
+    });
+
     it('escape closes without dismissing', async () => {
         const wrapper = mountHelp();
         await wrapper.find('[data-testid="feature-help-hard-landscape-trigger"]').trigger('click');

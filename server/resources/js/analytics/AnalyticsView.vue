@@ -239,8 +239,14 @@ function run(fn: () => Promise<void>): void {
             {{ (analytics.error as ApiError).message }}
         </div>
 
-        <div v-else-if="!analytics.hasData" class="text-sm text-gray-500 dark:text-gray-400" data-testid="analytics-empty">
-            No tracked time in this period yet.
+        <div v-else-if="!analytics.hasData" class="text-sm text-gray-500 dark:text-gray-400 flex flex-col gap-2" data-testid="analytics-empty">
+            <span>No tracked time in this period yet.</span>
+            <FeatureHelp
+                id="analytics-accumulates"
+                variant="block"
+                title="Analytics accumulates as you work"
+                body="Completions, focus sessions, and check-ins land here automatically. Work through today's plan for a few days and this view comes alive."
+            />
         </div>
 
         <template v-else>

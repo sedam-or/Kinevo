@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
+import FeatureHelp from '../components/FeatureHelp.vue';
 import { useTaskStore } from './store';
 import { TASK_TRANSITIONS, type Task, type TaskStatusValue } from './types';
 import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
@@ -104,8 +105,14 @@ async function applyStatus(task: Task, status: TaskStatusValue): Promise<void> {
 
         <!-- List -->
         <section data-testid="task-list">
-            <div v-if="tasks.tasks.length === 0 && !tasks.loading" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="task-empty">
-                No tasks yet. Add your first task above to start planning your week.
+            <div v-if="tasks.tasks.length === 0 && !tasks.loading" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4 flex flex-col gap-2" data-testid="task-empty">
+                <span>No tasks yet.</span>
+                <FeatureHelp
+                    id="tasks-feed-schedule"
+                    variant="block"
+                    title="Tasks feed the schedule"
+                    body="Tasks hold the work; the scheduler finds the time. Once a task has a duration and priority, drafting a schedule places it on your timeline."
+                />
             </div>
             <article
                 v-for="task in tasks.tasks"

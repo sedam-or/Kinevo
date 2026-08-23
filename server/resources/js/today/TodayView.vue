@@ -484,8 +484,14 @@ async function endBoostTarget(): Promise<void> {
                 {{ breakError }}
             </div>
         </section>
-        <section v-else-if="today.hasData" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="no-now">
-            No task in progress right now.
+        <section v-else-if="today.hasData" class="flex flex-col gap-2 text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="no-now">
+            <span>No task in progress right now.</span>
+            <FeatureHelp
+                id="today-flow"
+                variant="block"
+                title="How Today works"
+                body="Start the top task, complete it, and your progress updates itself. Kinevo always lines up what's next."
+            />
         </section>
 
         <!-- NEXT -->

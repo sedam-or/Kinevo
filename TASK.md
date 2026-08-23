@@ -3855,15 +3855,23 @@ P17-G Analytics / Decision Support UX
 - Notes: contextual education, not onboarding slides (§13).
 
 ### TASK-P17-009 — Contextual Education
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-009)
 - Priority: P1
 - Depends On: TASK-P17-008
 - SRS: no SRS change
 - Files: per-surface empty states, first-use callouts
 - Acceptance:
-  - [ ] explanations via tooltip/info icon/inline helper/empty-state/first-use
-        callout; dismissed preference honored
-- Verification: [ ] E2E on Today/Goal/Task/Analytics
+  - [x] explanations via tooltip/info icon/inline helper/empty-state/first-use
+        callout; dismissed preference honored — FeatureHelp gained a `block`
+        variant (always-visible callout for empty states, same
+        localStorage dismissal); info-icon variant from P17-008 covers the
+        rest; applied to Today (no-now), Goals empty, Tasks empty,
+        Analytics empty
+- Verification: [x] E2E on Today/Goal/Task/Analytics
+        (feature-education.spec.ts P17-009 journey, chromium/firefox/webkit:
+        callout visible per surface → dismiss goal callout → reload → still
+        gone, others persist); component tests 4/4 (block render, dismiss +
+        remount-gone); vitest suite 422/422
 - Notes: —
 
 ### TASK-P17-010 — UX Hierarchy Audit
