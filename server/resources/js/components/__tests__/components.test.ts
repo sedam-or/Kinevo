@@ -25,6 +25,21 @@ describe('KButton (design.md §51, §95)', () => {
         expect((wrapper.element as HTMLButtonElement).disabled).toBe(true);
     });
 
+    it('carries the tactile offset-shadow language on tactile variants (TASK-P17-012)', () => {
+        // rest 4px / hover 6px / pressed 2px — tokens --shadow-rest/hover/active.
+        for (const variant of ['primary', 'danger'] as const) {
+            const wrapper = mount(KButton, { props: { variant } });
+            expect(wrapper.classes()).toContain('shadow-rest');
+            expect(wrapper.classes()).toContain('hover:shadow-hover');
+            expect(wrapper.classes()).toContain('active:shadow-active');
+        }
+        // Quiet variants stay flat — no visual noise (§104).
+        for (const variant of ['secondary', 'ghost'] as const) {
+            const wrapper = mount(KButton, { props: { variant } });
+            expect(wrapper.classes()).not.toContain('shadow-rest');
+        }
+    });
+
     it('supports aria-label passthrough', () => {
         const wrapper = mount(KButton, { props: { 'aria-label': 'Close' } });
         expect(wrapper.attributes('aria-label')).toBe('Close');

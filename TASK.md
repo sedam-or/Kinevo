@@ -3913,16 +3913,26 @@ P17-G Analytics / Decision Support UX
 - Notes: feedback, not decoration (§16).
 
 ### TASK-P17-012 — Neo-Brutalist Interaction Polish
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-012)
 - Priority: P2
 - Depends On: TASK-P17-011
 - SRS: NFR
 - Files: design tokens + component styles
 - Acceptance:
-  - [ ] rest 4px / hover 6px / pressed 2px offset shadow language; tactile
-        primary components; no visual noise; 100–250ms interactions
-- Verification: [ ] visual check in browsers + reduced-motion intact
-- Notes: use existing tokens; do not create visual noise.
+  - [x] rest 4px / hover 6px / pressed 2px offset shadow language — tokens
+        already existed (--shadow-rest/hover/active) and KButton carried
+        them; audit found the scheduler pages as the raw-button holdout and
+        they now use KButton (UI-013 closed)
+  - [x] tactile primary components — Generate/Propose/Apply are tactile
+        primaries; Cancel/Back/Dynamic Reschedule quiet secondaries; quiet
+        variants stay flat (no visual noise, asserted in unit tests)
+  - [x] 100–250ms interactions — all transitions on defaults (150ms);
+        complete-snap 180ms; no custom durations found in the sweep
+- Verification: [x] visual check in browsers + reduced-motion intact —
+        tests/e2e/tests/tactile-language.spec.ts asserts computed
+        box-shadow 4→6(hover)→2(press) px on chromium+firefox;
+        surface-qa + accessibility suites green in all three browsers
+- Notes: used existing tokens only.
 
 ### TASK-P17-013 — Theme Toggle Hardening
 - Status: TODO

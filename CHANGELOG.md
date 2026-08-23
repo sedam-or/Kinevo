@@ -13,6 +13,11 @@ Release governance: see `docs/release-management.md`.
 ## [Unreleased]
 ### Added
 
+- The scheduler earned its buttons back (Phase 17, TASK-P17-012): draft
+  generation, reschedule proposals and their apply actions are now bold,
+  tactile primaries with the app's offset-shadow press feedback, replacing
+  unstyled placeholders.
+
 - Actions now answer back (Phase 17, TASK-P17-011): completing a task
   snaps the button, refreshes your progress, pops a confirmation and briefly
   spotlights the next task; energy check-ins flash "Saved ✓"; goal AI

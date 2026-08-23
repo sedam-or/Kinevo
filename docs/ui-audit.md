@@ -104,8 +104,8 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 > | Goal detail | Accept proposal / state action | edit milestones inline | ✅ |
 > | Tasks list | Add task | filter/status controls | ✅ |
 > | Task detail | Status transition (per state) | edit form Save, secondary transitions | ✅ after fix |
-> | Schedule draft | — generate/apply unstyled | — | 🟡 finding UI-013 |
-> | Reschedule | — propose/apply unstyled | — | 🟡 finding UI-013 |
+> | Schedule draft | Generate → Apply (staged, tactile) | Cancel, Dynamic Reschedule | ✅ after UI-013 fix |
+> | Reschedule | Propose → Apply (staged, tactile) | Back, Cancel | ✅ after UI-013 fix |
 > | Knowledge/Notes desk | New note | toolbar actions | ✅ |
 > | Canvas | Excalidraw-owned tools | Kinevo shell chrome | ✅ external boundary |
 > | Analytics | — (read-only) | range/pillar filters | ✅ |
@@ -151,6 +151,16 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 > Matrix flips: Shell + Settings "Conflict / save state" → ✅; Today → ✅
 > (complete cascade + Saved ✓ + toasts). Task/Goal/Knowledge per-form save
 > flashes remain ⚪/🟡 pending the P17-012 token pass.
+>
+> 2026-08-23 (TASK-P17-012, neo-brutalist interaction polish): audited the
+> offset-shadow language against design-tokens.md — tokens existed
+> (--shadow-rest/hover/active = 4/6/2px) and KButton already carried them;
+> the gap was the scheduler pages still using raw buttons (UI-013). All
+> transition durations verified within 100–250ms (Tailwind default 150ms;
+> snap 180ms); reduced-motion collapse rules intact and re-proven by the
+> accessibility suite. No new visual noise: quiet variants stay flat.
+> Matrix flips: schedule draft/reschedule CTA hierarchy 🟡 → ✅ (UI-013
+> closed).
 
 
 ¹ Canvas: audited 2026-08-23 (P17-010) — page-level chrome has no competing primaries; drawing tools are Excalidraw-owned (§104 external engine boundary).
@@ -382,8 +392,15 @@ Expected: design.md §51 — exactly one primary per decision context; apply
 (a material mutation) should be unmistakably primary; generate/propose
 secondary.
 Severity: P2.
-Status: open — polish lands with TASK-P17-012 (token pass), not silently.
-Evidence: server/resources/js/schedulerdraft/{ScheduleDraftView,RescheduleView}.vue
+Status: fixed (2026-08-23, TASK-P17-012) — all scheduler flow buttons now use
+the shared KButton: Generate Draft / Propose Reschedule and Apply Draft /
+Apply are tactile primaries (rest 4px / hover 6px / pressed 2px offset
+shadows); Cancel / Dynamic Reschedule / Back are quiet secondaries. Generate
+and Apply never compete — they own different stages of the flow (draft
+preview renders after generate).
+Evidence: tests/e2e/tests/tactile-language.spec.ts asserts computed
+box-shadow 4px→6px(hover)→2px(press) on draft-generate in chromium+firefox;
+surface-qa + accessibility suites green in all three browsers.
 Link: TASK-P17-010, TASK-P17-012.
 ```
 

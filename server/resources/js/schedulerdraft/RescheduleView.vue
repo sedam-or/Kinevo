@@ -3,6 +3,7 @@ import { reactive, ref } from 'vue';
 import { useScheduleDraftStore } from './store';
 import { formatDate, formatTime } from './date';
 import FeatureHelp from '../components/FeatureHelp.vue';
+import KButton from '../components/KButton.vue';
 
 const emit = defineEmits<{
     (e: 'back'): void;
@@ -61,7 +62,7 @@ function cancel(): void {
 <template>
     <div class="flex flex-col gap-4" data-testid="reschedule-view">
         <header class="flex items-center gap-2">
-            <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="reschedule-back" @click="emit('back')">← Back</button>
+            <KButton variant="secondary" type="button" data-testid="reschedule-back" @click="emit('back')">← Back</KButton>
             <h1 class="text-xl font-semibold">Dynamic Rescheduler</h1>
             <FeatureHelp id="dynamic-rescheduler" title="Dynamic Rescheduler" body="Re-fits unfinished tasks into the rest of your week based on priorities and real capacity. Nothing changes until you review and accept the proposal." />
         </header>
@@ -76,9 +77,9 @@ function cancel(): void {
                     To
                     <input v-model="range.to" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="reschedule-to" />
                 </label>
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" :disabled="sd.busy" data-testid="reschedule-propose" @click="propose">
+                <KButton variant="primary" type="button" :disabled="sd.busy" data-testid="reschedule-propose" @click="propose">
                     {{ sd.busy ? 'Proposing…' : 'Propose Reschedule' }}
-                </button>
+                </KButton>
             </div>
             <div v-if="sd.error" class="text-sm text-danger mt-2" role="alert" data-testid="reschedule-error">{{ sd.error.message }}</div>
         </section>
@@ -115,11 +116,11 @@ function cancel(): void {
                 <p class="text-sm text-danger">Tasks could not be placed and remain flagged for manual review.</p>
             </section>
 
-            <div class="flex gap-2">
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" :disabled="sd.busy" data-testid="reschedule-apply" @click="apply">
+            <div class="flex flex-wrap gap-2">
+                <KButton variant="primary" type="button" :disabled="sd.busy" data-testid="reschedule-apply" @click="apply">
                     {{ sd.busy ? 'Applying…' : 'Apply' }}
-                </button>
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2" data-testid="reschedule-cancel" @click="cancel">Cancel</button>
+                </KButton>
+                <KButton variant="secondary" type="button" data-testid="reschedule-cancel" @click="cancel">Cancel</KButton>
             </div>
         </template>
     </div>

@@ -3,6 +3,7 @@ import { onMounted, reactive, ref } from 'vue';
 import { useScheduleDraftStore } from './store';
 import { formatDate, formatTime } from './date';
 import SchedulerExplanation from '../visualstate/SchedulerExplanation.vue';
+import KButton from '../components/KButton.vue';
 import KrsImport from '../imports/KrsImport.vue';
 import IcsImport from '../imports/IcsImport.vue';
 import IcsExport from '../exports/IcsExport.vue';
@@ -85,9 +86,9 @@ function reasonLabel(reason: string): string {
                     To
                     <input v-model="range.to" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="draft-to" />
                 </label>
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" :disabled="sd.busy" data-testid="draft-generate" @click="generate">
+                <KButton variant="primary" type="button" :disabled="sd.busy" data-testid="draft-generate" @click="generate">
                     {{ sd.busy ? 'Generating…' : 'Generate Draft' }}
-                </button>
+                </KButton>
             </div>
             <div v-if="sd.error" class="text-sm text-danger mt-2" role="alert" data-testid="draft-error">{{ sd.error.message }}</div>
         </section>
@@ -131,15 +132,14 @@ function reasonLabel(reason: string): string {
             </section>
 
             <!-- Apply / Cancel -->
-            <!-- Apply / Cancel -->
-            <div class="flex gap-2">
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" :disabled="sd.busy" data-testid="draft-apply" @click="apply">
+            <div class="flex flex-wrap gap-2">
+                <KButton variant="primary" type="button" :disabled="sd.busy" data-testid="draft-apply" @click="apply">
                     {{ sd.busy ? 'Applying…' : 'Apply Draft' }}
-                </button>
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2" data-testid="draft-cancel" @click="cancel">Cancel</button>
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2" data-testid="draft-reschedule" @click="emit('reschedule')">
+                </KButton>
+                <KButton variant="secondary" type="button" data-testid="draft-cancel" @click="cancel">Cancel</KButton>
+                <KButton variant="secondary" type="button" data-testid="draft-reschedule" @click="emit('reschedule')">
                     Dynamic Reschedule
-                </button>
+                </KButton>
             </div>
         </template>
 
