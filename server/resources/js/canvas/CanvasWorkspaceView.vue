@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useCanvasStore } from './store';
 import { CanvasAutosaveController, type CanvasSaveStateChange } from './autosave';
 import { HttpCanvasPersistence } from './http-persistence';
@@ -10,6 +10,8 @@ import type { VisualStateValue } from '../visualstate/types';
 import { useShellStore } from '../shell/store';
 import { resolvedTheme } from '../shell/theme';
 import type { CanvasAdapter, CanvasScene, CanvasTheme } from './types';
+import NextActionBanner from '../components/NextActionBanner.vue';
+import { resolveCanvasNextAction } from '../next-action';
 
 const props = withDefaults(
     defineProps<{
@@ -36,6 +38,7 @@ const scene = ref<CanvasScene | null>(null);
 const readOnly = ref(false);
 const theme = ref<CanvasTheme>(resolvedTheme(shell.theme));
 const saveStateBadge = ref<VisualStateValue>('saved');
+const canvasNextAction = computed(() => resolveCanvasNextAction(String(saveStateBadge.value)));
 const confirmArchive = ref(false);
 const renameError = ref<string | null>(null);
 const archiveError = ref<string | null>(null);
@@ -176,6 +179,11 @@ async function conflictRecover(): Promise<void> {
     <div class="flex flex-col gap-4" data-testid="canvas-workspace">
         <header class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <div class="flex items-center gap-2 min-w-0">
+                <NextActionBanner
+                    v-if="canvasNextAction"
+                    :action="canvasNextAction"
+                    data-testid="canvas-next-action"
+                />
                 <button type="button" class="shrink-0 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="canvas-back" @click="emit('back')">← Back</button>
                 <input
                     v-model="title"
@@ -190,6 +198,7 @@ async function conflictRecover(): Promise<void> {
                 <!-- role=status + aria-live: save-state transitions (§34.4) are
                      announced politely; the badge label is the announced text. -->
                 <span data-testid="canvas-save-state" role="status" aria-live="polite"><VisualStateBadge :state="saveStateBadge" /></span>
+                <!-- Offline next action (P17-016): point at the queued sync. -->
                 <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="canvas-theme-toggle" @click="cycleTheme">
                     Theme: {{ theme }}
                 </button>

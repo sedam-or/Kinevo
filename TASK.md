@@ -4006,17 +4006,27 @@ P17-G Analytics / Decision Support UX
         accessibility/theme 63 passed
 
 ### TASK-P17-016 — Next Action Engine
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-016)
 - Priority: P0
 - Depends On: —
 - SRS: NFR (intuitive progression)
 - Files: per-entity next-action resolution (Goal/Task/backlog/AI proposal/canvas)
 - Acceptance:
-  - [ ] context-aware next action surfaced per object (Goal→create first
-        milestone; milestone→work on X; backlog→schedule; scheduled→start;
-        missed→recover; AI pending→review proposal; canvas offline→view sync)
-- Verification: [ ] E2E next-action assertions across states
-- Notes: critical to making UI intuitive (§21).
+  - [x] context-aware next action surfaced per object via pure resolver
+        (next-action.ts) + reusable NextActionBanner: Goal→create first
+        milestone (focuses the milestone form) / milestone→work on X (opens
+        Today) / AI pending→review proposal (scrolls to the review card);
+        Task backlog→schedule / scheduled→start / missed→recover (navigate
+        scheduler/Today); canvas offline|queued→view-sync note. Surfaced on
+        GoalDetail, TaskDetail, and the canvas workspace header
+- Verification: [x] E2E across states (tests/e2e/tests/next-action.spec.ts,
+        5 tests ×3 browsers = 15 passed: goal-create focuses form, backlog
+        and missed navigate to scheduler, scheduled→Today, canvas offline
+        shows queued note). AI-pending browser state needs the Ollama-
+        dependent breakdown flow — resolver unit-proven, env blocker already
+        documented (browser-e2e.md §11). Unit: 9 resolver/banner tests +
+        goal-detail focus test. Found+fixed during proofs: NOW-card pause
+        button row overflowed 375px — now wraps (§58)
 
 ### TASK-P17-017 — Connect Analytics to Decisions
 - Status: TODO

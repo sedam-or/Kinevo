@@ -13,6 +13,11 @@ Release governance: see `docs/release-management.md`.
 ## [Unreleased]
 ### Added
 
+- Every object now suggests its next step (Phase 17, TASK-P17-016): an
+  empty goal asks for its first milestone, a backlog task asks to be
+  scheduled, a missed task asks to be recovered, and an offline drawing board
+  points at its queued sync — one clear suggestion instead of guessing.
+
 - Task cards can now explain themselves (Phase 17, TASK-P17-015): a quiet
   "Why this task now?" link on the current task and week-planner entries
   expands to show the priority tier, how close the deadline is, why this

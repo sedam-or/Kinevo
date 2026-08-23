@@ -545,6 +545,20 @@ journey-i.spec.ts extended (chromium/firefox/webkit)
           Result: ✅ included in Journey I — 12 passed across browsers.
 ```
 
+### P17-016 — Next Action Engine run (2026-08-23)
+```text
+tests/e2e/tests/next-action.spec.ts  chromium/firefox/webkit
+  checks: goal without milestones → create-milestone (Do it focuses the
+          milestone form); backlog task → schedule-task (navigates scheduler);
+          scheduled → start-task (navigates Today); missed → recover-task
+          (navigates scheduler); canvas offline → view-sync strip with queued
+          note. AI-pending → review-proposal is resolver-unit-proven only
+          (browser state requires Ollama; see §11 env note).
+  Result: 5 tests × 3 browsers = 15 passed. Fix from proofs: the NOW-card
+          pause-control row could bleed past 375px with long state messages —
+          it now wraps (design.md §58); journey-i mobile proofs re-green.
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.

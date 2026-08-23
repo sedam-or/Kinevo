@@ -6,6 +6,9 @@ import type { EntityLink } from '../components/EntityLinks.vue';
 import EntityLinks from '../components/EntityLinks.vue';
 import ProposalReviewCard from '../ai/ProposalReviewCard.vue';
 import { useGenerationStages } from '../components/useGenerationStages';
+import NextActionBanner from '../components/NextActionBanner.vue';
+import { resolveGoalNextAction, type NextAction } from '../next-action';
+import { useShellStore } from '../shell/store';
 
 const props = defineProps<{
     goalId: number;
@@ -24,6 +27,8 @@ const goals = useGoalStore();
  * proposal contract as everywhere else (FR-52/FR-62).
  */
 const reviewCard = ref<InstanceType<typeof ProposalReviewCard> | null>(null);
+const milestoneTitleInput = ref<HTMLInputElement | null>(null);
+const shell = useShellStore();
 const hasPendingProposal = ref(false);
 const { running: generating, label: generationStage, start: startGeneration, stop: stopGeneration } = useGenerationStages();
 const generateError = ref<string | null>(null);
@@ -44,6 +49,28 @@ async function generateBreakdown(): Promise<void> {
 }
 
 const milestoneCount = computed(() => sortedMilestones().length);
+
+// Next Action Engine (TASK-P17-016): one suggested action per goal state.
+const nextAction = computed(() =>
+    resolveGoalNextAction({
+        milestoneCount: milestoneCount.value,
+        hasPendingProposal: hasPendingProposal.value,
+        openMilestoneTitle:
+            sortedMilestones().find((m) => m.status === 'planned' || m.status === 'active')?.title ?? null,
+    }),
+);
+
+function onGoalNextAction(id: NextAction['id']): void {
+    if (id === 'create-milestone') {
+        milestoneTitleInput.value?.focus();
+        return;
+    }
+    if (id === 'review-proposal') {
+        (reviewCard.value?.$el as HTMLElement | undefined)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+    }
+    shell.setView('today');
+}
 
 const milestoneForm = reactive({
     title: '',
@@ -160,6 +187,11 @@ function milestoneGlyphEmphasis(status: string): string {
                 >{{ generating ? generationStage : 'Break Down with AI' }}</button>
             </div>
         </header>
+        <NextActionBanner
+            v-if="nextAction"
+            :action="nextAction"
+            @act="onGoalNextAction"
+        />
 
         <div v-if="goals.loading" class="text-sm text-gray-500" data-testid="goal-detail-loading">Loading…</div>
         <div v-if="goals.error" class="text-sm text-danger" role="alert" data-testid="goal-detail-error">{{ goals.error.message }}</div>
@@ -227,7 +259,7 @@ function milestoneGlyphEmphasis(status: string): string {
                     >{{ generating ? generationStage : 'Break Down with AI' }}</button>
                 </div>
                 <form class="flex gap-2 mb-3" @submit.prevent="addMilestone">
-                    <input v-model="milestoneForm.title" type="text" placeholder="Add milestone" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm flex-1" data-testid="milestone-title" />
+                    <input ref="milestoneTitleInput" v-model="milestoneForm.title" type="text" placeholder="Add milestone" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm flex-1" data-testid="milestone-title" />
                     <input v-model="milestoneForm.targetDate" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm" data-testid="milestone-date" />
                     <button type="submit" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="milestone-add">Add</button>
                 </form>

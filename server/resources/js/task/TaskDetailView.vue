@@ -6,6 +6,9 @@ import type { EntityLink } from '../components/EntityLinks.vue';
 import EntityLinks from '../components/EntityLinks.vue';
 import AttachmentList from '../attachments/AttachmentList.vue';
 import KButton from '../components/KButton.vue';
+import NextActionBanner from '../components/NextActionBanner.vue';
+import { resolveTaskNextAction, type NextAction } from '../next-action';
+import { useShellStore } from '../shell/store';
 import KInput from '../components/KInput.vue';
 
 const props = defineProps<{
@@ -17,6 +20,7 @@ const emit = defineEmits<{
 }>();
 
 const tasks = useTaskStore();
+const shell = useShellStore();
 
 const editForm = reactive({
     title: '',
@@ -153,6 +157,18 @@ async function promote(subtaskId: number): Promise<void> {
  * dead end. Milestone/program have no dedicated surfaces — their goal
  * carries them, so the Goal chip is the single upstream entry.
  */
+// Next Action Engine (TASK-P17-016): backlog → schedule, scheduled → start,
+// missed → recover.
+const nextAction = computed(() => resolveTaskNextAction(String(tasks.current?.status ?? '')));
+
+function onTaskNextAction(id: NextAction['id']): void {
+    if (id === 'start-task') {
+        shell.setView('today');
+        return;
+    }
+    shell.setView('schedule');
+}
+
 const relatedLinks = computed<EntityLink[]>(() => {
     const task = tasks.current;
     const links: EntityLink[] = [];
@@ -179,6 +195,11 @@ const relatedLinks = computed<EntityLink[]>(() => {
                 {{ tasks.current ? statusLabel(tasks.current.status) : '' }}
             </span>
         </header>
+        <NextActionBanner
+            v-if="nextAction"
+            :action="nextAction"
+            @act="onTaskNextAction"
+        />
 
         <div v-if="tasks.loading" class="text-sm text-gray-500" data-testid="task-detail-loading">Loading…</div>
         <div v-if="tasks.error" class="text-sm text-danger" role="alert" data-testid="task-detail-error">{{ tasks.error.message }}</div>

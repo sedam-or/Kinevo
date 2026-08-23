@@ -176,6 +176,28 @@ describe('GoalDetailView', () => {
         expect(wrapper.find('[data-testid="goal-to-completed"]').exists()).toBe(true);
     });
 
+    it('next action: empty goal focuses the milestone form (TASK-P17-016)', async () => {
+        vi.mocked(goalApi.goal).mockResolvedValue({ goal });
+        vi.mocked(goalApi.milestones).mockResolvedValue({ milestones: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(GoalDetailView, { props: { goalId: 1 }, global: { plugins: [pinia] } });
+        await flushPromises();
+
+        // Banner resolves to create-milestone; Do it focuses the form input.
+        expect(wrapper.find('[data-testid="next-action"]').attributes('data-action')).toBe('create-milestone');
+        // The action focuses the milestone form input (real browser focus is
+        // proven by next-action.spec.ts; here we assert the call target).
+        const inputEl = wrapper.find('input[data-testid="milestone-title"]').element as HTMLInputElement;
+        const focusSpy = vi.spyOn(inputEl, 'focus');
+        await wrapper.find('[data-testid="next-action-button"]').trigger('click');
+        expect(focusSpy).toHaveBeenCalledTimes(1);
+
+        // With a pending proposal the banner switches to review-proposal.
+        // (covered by resolver unit tests for the pending state)
+    });
+
     it('renders downstream continuity links (TASK-P17-002)', async () => {
         vi.mocked(goalApi.goal).mockResolvedValue({ goal });
         vi.mocked(goalApi.milestones).mockResolvedValue({ milestones: [] });

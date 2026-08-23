@@ -469,12 +469,12 @@ async function endBoostTarget(): Promise<void> {
                 data-testid="now-recharge"
                 @completed="onRechargeCompleted"
             />
-            <div class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3 flex items-center justify-between gap-2">
+            <div class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3 flex flex-wrap items-center justify-between gap-2">
                 <div class="text-sm text-gray-600 dark:text-gray-400">
                     <span v-if="miniPauseMessage" data-testid="mini-pause-message">{{ miniPauseMessage }}</span>
                     <span v-else>Move today's remaining tasks to tomorrow.</span>
                 </div>
-                <div class="flex gap-2 shrink-0">
+                <div class="flex flex-wrap gap-2">
                     <KButton
                         variant="secondary"
                         :disabled="miniPauseBusy"
