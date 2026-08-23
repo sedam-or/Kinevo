@@ -2,12 +2,18 @@
 import { onMounted, ref, watch } from 'vue';
 import { aiApi, type AiProposal, type AiProposalPayload, type BreakdownMilestone } from './api';
 
+/**
+ * Review surface for a pending goal-breakdown proposal (TASK-P17-004).
+ * Emits `pending` so parents can hide duplicate "Break Down with AI"
+ * entry points while a proposal awaits a decision (TASK-P17-005).
+ */
 const props = defineProps<{
     goalId: number;
 }>();
 
 const emit = defineEmits<{
     (e: 'accepted'): void;
+    (e: 'pending', value: boolean): void;
 }>();
 
 const proposal = ref<AiProposal | null>(null);
@@ -119,6 +125,7 @@ function formatMinutes(minutes: number | null | undefined): string {
 
 onMounted(load);
 watch(() => props.goalId, load);
+watch(proposal, (p) => emit('pending', p !== null), { immediate: true });
 
 defineExpose({ load });
 </script>

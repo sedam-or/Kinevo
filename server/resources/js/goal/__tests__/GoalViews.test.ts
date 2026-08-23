@@ -189,4 +189,34 @@ describe('GoalDetailView', () => {
         await wrapper.find('[data-testid="entity-link-tasks"]').trigger('click');
         expect(shell.activeView).toBe('tasks');
     });
+    it('offers Break Down with AI in the header and the empty-milestone state (TASK-P17-005)', async () => {
+        vi.mocked(goalApi.goal).mockResolvedValue({ goal });
+        vi.mocked(goalApi.milestones).mockResolvedValue({ milestones: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(GoalDetailView, { props: { goalId: 1 }, global: { plugins: [pinia] } });
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="goal-detail-breakdown"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="milestones-empty-breakdown"]').exists()).toBe(true);
+
+        // Invoking from the empty state calls the same validated contract.
+        vi.mocked(goalApi.breakdownProposal).mockResolvedValue({ proposal: { id: 21, status: 'pending' } });
+        await wrapper.find('[data-testid="milestones-empty-breakdown"]').trigger('click');
+        await flushPromises();
+        expect(goalApi.breakdownProposal).toHaveBeenCalledWith(1);
+    });
+    it('surfaces a failed breakdown generation without leaving the goal (TASK-P17-005)', async () => {
+        vi.mocked(goalApi.goal).mockResolvedValue({ goal });
+        vi.mocked(goalApi.milestones).mockResolvedValue({ milestones: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(GoalDetailView, { props: { goalId: 1 }, global: { plugins: [pinia] } });
+        await flushPromises();
+
+        vi.mocked(goalApi.breakdownProposal).mockRejectedValue(new Error('AI provider unavailable'));
+        await wrapper.find('[data-testid="goal-detail-breakdown"]').trigger('click');
+        await flushPromises();
+        expect(wrapper.find('[data-testid="goal-detail-generate-error"]').exists()).toBe(true);
+    });
 });

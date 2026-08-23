@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useGoalStore } from './store';
 import { MILESTONE_STATUSES, type Goal } from './types';
 import type { EntityLink } from '../components/EntityLinks.vue';
@@ -15,6 +15,34 @@ const emit = defineEmits<{
 }>();
 
 const goals = useGoalStore();
+
+/**
+ * Post-goal AI invocation (TASK-P17-005): breakdown is reachable where the
+ * goal lives — header action and the empty-milestone state — without visiting
+ * Settings or another AI page. Generation goes through the same validated
+ * proposal contract as everywhere else (FR-52/FR-62).
+ */
+const reviewCard = ref<InstanceType<typeof ProposalReviewCard> | null>(null);
+const hasPendingProposal = ref(false);
+const generating = ref(false);
+const generateError = ref<string | null>(null);
+
+async function generateBreakdown(): Promise<void> {
+    if (generating.value || hasPendingProposal.value) {
+        return;
+    }
+    generating.value = true;
+    generateError.value = null;
+    const proposal = await goals.createBreakdownProposal(props.goalId);
+    if (proposal === null) {
+        generateError.value = goals.error?.message ?? 'AI breakdown could not be generated.';
+    } else {
+        await reviewCard.value?.load();
+    }
+    generating.value = false;
+}
+
+const milestoneCount = computed(() => sortedMilestones().length);
 
 const milestoneForm = reactive({
     title: '',
@@ -117,13 +145,24 @@ function milestoneGlyphEmphasis(status: string): string {
                 <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="goal-detail-back" @click="emit('back')">← Back</button>
                 <h1 class="text-xl font-semibold" data-testid="goal-detail-title">{{ goals.currentGoal?.title ?? 'Goal' }}</h1>
             </div>
-            <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5" data-testid="goal-detail-status">
-                {{ goals.currentGoal ? statusLabel(goals.currentGoal.status) : '' }}
-            </span>
+            <div class="flex items-center gap-2">
+                <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5" data-testid="goal-detail-status">
+                    {{ goals.currentGoal ? statusLabel(goals.currentGoal.status) : '' }}
+                </span>
+                <button
+                    v-if="!hasPendingProposal"
+                    type="button"
+                    class="text-sm border border-[var(--color-primary)] text-[var(--color-primary)] rounded-sm px-3 py-1 disabled:opacity-50"
+                    data-testid="goal-detail-breakdown"
+                    :disabled="generating"
+                    @click="generateBreakdown"
+                >{{ generating ? 'Generating…' : 'Break Down with AI' }}</button>
+            </div>
         </header>
 
         <div v-if="goals.loading" class="text-sm text-gray-500" data-testid="goal-detail-loading">Loading…</div>
         <div v-if="goals.error" class="text-sm text-danger" role="alert" data-testid="goal-detail-error">{{ goals.error.message }}</div>
+        <div v-if="generateError" class="text-sm text-danger" role="alert" data-testid="goal-detail-generate-error">{{ generateError }}</div>
 
         <EntityLinks :links="downstreamLinks" />
 
@@ -170,11 +209,22 @@ function milestoneGlyphEmphasis(status: string): string {
             </section>
 
             <!-- Pending AI breakdown proposal: review → edit → accept/reject (TASK-P17-004) -->
-            <ProposalReviewCard :goal-id="goalId" @accepted="goals.loadGoal(goalId)" />
+            <ProposalReviewCard ref="reviewCard" :goal-id="goalId" @accepted="goals.loadGoal(goalId)" @pending="hasPendingProposal = $event" />
 
             <!-- Milestones timeline -->
             <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="goal-milestones">
                 <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Milestones</div>
+                <!-- Empty-milestone state: explicit AI entry point (TASK-P17-005). -->
+                <div v-if="milestoneCount === 0 && !hasPendingProposal" class="mb-3 flex items-center justify-between gap-3 rounded-sm bg-gray-50 dark:bg-gray-800 px-3 py-2" data-testid="milestones-empty">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">No milestones yet.</span>
+                    <button
+                        type="button"
+                        class="text-sm border border-[var(--color-primary)] text-[var(--color-primary)] rounded-sm px-3 py-1 disabled:opacity-50"
+                        data-testid="milestones-empty-breakdown"
+                        :disabled="generating"
+                        @click="generateBreakdown"
+                    >{{ generating ? 'Generating…' : 'Break Down with AI' }}</button>
+                </div>
                 <form class="flex gap-2 mb-3" @submit.prevent="addMilestone">
                     <input v-model="milestoneForm.title" type="text" placeholder="Add milestone" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm flex-1" data-testid="milestone-title" />
                     <input v-model="milestoneForm.targetDate" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm" data-testid="milestone-date" />

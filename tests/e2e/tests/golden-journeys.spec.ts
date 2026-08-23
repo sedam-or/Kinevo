@@ -171,3 +171,23 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
         await expect(page.getByTestId('milestone-timeline').locator('[data-testid="milestone-item"]')).toHaveCount(milestoneCount);
     });
 });
+test.describe('R17 golden journey G3 — Post-goal invocation entry points (P17-005)', () => {
+    // Discoverability smoke: breakdown must be invokable where the goal lives.
+    // (Generation itself needs a reachable provider — covered by journey G2.)
+    test('goal detail exposes Break Down with AI without visiting Settings', async ({ page }) => {
+        await login(page);
+        const name = unique('r17-g3');
+        await page.getByTestId('nav-goals').click();
+        await expect(page.getByTestId('goals-view')).toBeVisible();
+        await page.getByTestId('goal-create-title').fill(name);
+        await page.getByTestId('goal-create-horizon').selectOption('Quarterly');
+        await page.getByTestId('goal-create-submit').click();
+        // Success state already offers the action (P17-003); take the manual
+        // path into the detail surface and verify both remaining entries.
+        await page.getByTestId('goal-breakdown-manual').click();
+        await expect(page.getByTestId('goal-detail')).toBeVisible();
+        await expect(page.getByTestId('goal-detail-breakdown')).toBeVisible();
+        await expect(page.getByTestId('milestones-empty')).toBeVisible();
+        await expect(page.getByTestId('milestones-empty-breakdown')).toBeVisible();
+    });
+});

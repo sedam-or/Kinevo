@@ -3743,17 +3743,30 @@ P17-G Analytics / Decision Support UX
         schema-valid milestones.
 
 ### TASK-P17-005 — Post-Goal AI Invocation
-- Status: TODO
+- Status: DONE (2026-08-23)
 - Priority: P0
 - Depends On: TASK-P17-004
 - SRS: FR-52
 - Files: Goal detail header + empty-milestone state + context menu
 - Acceptance:
-  - [ ] explicit "Break Down with AI" action in goal success state, goal
+  - [x] explicit "Break Down with AI" action in goal success state, goal
         detail header, and goal empty-milestone state
-  - [ ] no need to visit Settings/another AI page to invoke breakdown
-- Verification: [ ] E2E entry-point smoke
+  - [x] no need to visit Settings/another AI page to invoke breakdown
+- Verification: [x] E2E entry-point smoke (journey G3 spec committed)
 - Notes: discoverability, not architectural change.
+- Evidence:
+  - Goal success state: P17-003 suggestion panel [Generate with AI] (existing).
+  - GoalDetailView header button `goal-detail-breakdown` + empty-milestone CTA
+    `milestones-empty-breakdown`; both call the same validated contract
+    (`goals.createBreakdownProposal` → POST /goals/{id}/breakdown-proposals)
+    and reload ProposalReviewCard in place. Entry points hide while a pending
+    proposal awaits decision (card `pending` emit) so duplicates can't stack.
+  - Failure UX: `goal-detail-generate-error` alert keeps the user on the goal.
+  - Tests: GoalViews.test.ts +2 (entry points render & invoke contract;
+    failed generation surfaces inline) — 9 passed.
+  - Browser journey G3 smoke spec committed (golden-journeys.spec.ts);
+    browser run deferred this session per user instruction — generation loop
+    itself was live-validated end-to-end under TASK-P17-004.
 
 ### TASK-P17-006 — AI Provider Settings UI
 - Status: DONE
