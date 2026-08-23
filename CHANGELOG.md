@@ -13,6 +13,11 @@ Release governance: see `docs/release-management.md`.
 ## [Unreleased]
 ### Added
 
+- Today reads top-down like a control center (Phase 17, TASK-P17-014):
+  what's happening now leads, then what's next, then your day's timeline —
+  with a new day-progress bar, the energy check-in and quick capture grouped
+  underneath as support instead of competing for attention.
+
 - Dark mode is finally dependable (Phase 17, TASK-P17-013): your light/dark/
   system choice now survives reloads without a white flash, dark mode reaches
   the login screen and native controls like date pickers, and the drawing

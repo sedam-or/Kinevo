@@ -3964,16 +3964,26 @@ P17-G Analytics / Decision Support UX
         container; unrelated to this task.
 
 ### TASK-P17-014 — Today as Control Center
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-014)
 - Priority: P0
 - Depends On: —
 - SRS: FR-14 (overload), FR-59 (adaptive context), NFR
 - Files: Today view
 - Acceptance:
-  - [ ] Today exposes NOW → NEXT → Timeline → supporting context (capacity,
-        recovery, quick capture, progress) with strict info hierarchy
-- Verification: [ ] E2E Journey I + mobile 375/390/412 proofs
-- Notes: TODAY is the execution hub of §99/§104.
+  - [x] Today exposes NOW → NEXT → Timeline → supporting context with strict
+        info hierarchy: the adaptive check-in no longer sits between header
+        and NOW — supporting context is grouped under the timeline in order
+        progress → check-in → quick capture; capacity stays as the compact
+        §22 header signal; recovery/break banners remain state-critical above
+        NOW; new "Today's progress" strip (completed/planned) closes the §99
+        loop's PROGRESS step on Today itself
+- Verification: [x] E2E Journey I (tests/e2e/tests/journey-i.spec.ts):
+        capture→scheduled→Today hierarchy (DOM top-order assertion)→start→
+        complete→progress delta updates, ×3 browsers = 12 passed; mobile
+        375/390/412 overflow+hierarchy proofs included. Found+fixed during
+        proofs: adaptive energy row overflowed 375px (10×32px buttons) — now
+        wraps (responsive §58). Regression: core-loop/surface-qa/accessibility/
+        release-gate 60 passed; unit 437 passed incl. two new hierarchy tests
 
 ### TASK-P17-015 — "Why This?" Explanation
 - Status: TODO

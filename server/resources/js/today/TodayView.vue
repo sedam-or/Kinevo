@@ -177,6 +177,13 @@ async function quickCapture(): Promise<void> {
 }
 
 const toast = useToastStore();
+// Today's progress (TASK-P17-014): the §99 loop ends in PROGRESS — surface
+// completed-vs-planned for the day as supporting context under the timeline.
+const completedCount = computed(() => today.events.filter((e) => e.task?.status === 'completed').length);
+const progressPercent = computed(() =>
+    today.events.length === 0 ? 0 : Math.round((completedCount.value / today.events.length) * 100),
+);
+
 const nextEmphasis = ref(false);
 let emphasisTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -342,9 +349,6 @@ async function endBoostTarget(): Promise<void> {
         <!-- Loading / error -->
         <div v-if="today.loading" class="text-sm text-gray-500" data-testid="today-loading">Loading Today…</div>
         <div v-if="today.error" class="text-sm text-danger" role="alert" data-testid="today-error">{{ today.error.message }}</div>
-
-        <!-- Lightweight adaptive-context check-in (design.md §23) -->
-        <AdaptiveContextPanel v-if="!today.loading && !today.error && today.date" />
 
         <!-- Emergency Pause recovery banner (FR-07): the week is exceptional. -->
         <section
@@ -562,6 +566,22 @@ async function endBoostTarget(): Promise<void> {
                 <span>24:00</span>
             </div>
         </section>
+
+        <!-- Supporting context (TASK-P17-014): progress → check-in → capture.
+             Strict hierarchy per design.md §104: NOW → NEXT → Timeline →
+             context; nothing above competes with the execution hub. -->
+        <section v-if="today.events.length > 0" class="flex items-center gap-3" data-testid="today-progress">
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 shrink-0">Today's progress</div>
+            <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-sm overflow-hidden" aria-hidden="true">
+                <div class="h-full bg-[var(--color-primary)] transition-all" :style="{ width: progressPercent + '%' }"></div>
+            </div>
+            <span class="text-xs text-gray-600 dark:text-gray-400 tabular-nums" data-testid="today-progress-count">
+                {{ completedCount }}/{{ today.events.length }} done
+            </span>
+        </section>
+
+        <!-- Lightweight adaptive-context check-in (design.md §23) -->
+        <AdaptiveContextPanel v-if="!today.loading && !today.error && today.date" />
 
         <!-- Quick Capture -->
         <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="quick-capture">

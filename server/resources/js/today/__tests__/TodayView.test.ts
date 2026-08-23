@@ -183,6 +183,70 @@ describe('TodayView', () => {
         vi.useRealTimers();
     });
 
+    it('keeps the control-center hierarchy NOW → NEXT → Timeline → context (TASK-P17-014)', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-08-19T09:30:00'));
+        const resp: TodayResponse = JSON.parse(JSON.stringify(response));
+        resp.events.push({
+            assignment: { ...resp.events[0].assignment, id: 2, start_at: '2026-08-19T11:00:00', end_at: '2026-08-19T12:00:00', locked: false },
+            locked: false,
+            conflict: false,
+            task: { ...resp.events[0].task!, id: 11, title: 'Review notes', version: 1 },
+            program: null,
+            goal: null,
+            milestone: null,
+        });
+        vi.mocked(todayApi.today).mockResolvedValue(resp);
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(TodayView, {
+            props: { date: '2026-08-19' },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        const html = wrapper.html();
+        const orderOf = (testid: string) => html.indexOf(`data-testid="${testid}"`);
+        const now = orderOf('now-card');
+        const next = orderOf('next-card');
+        const timeline = orderOf('today-timeline');
+        expect(now).toBeGreaterThanOrEqual(0);
+        expect(now).toBeLessThan(next);
+        expect(next).toBeLessThan(timeline);
+        // Supporting context comes strictly after the timeline.
+        expect(timeline).toBeLessThan(orderOf('today-progress'));
+        expect(timeline).toBeLessThan(orderOf('adaptive-context'));
+        expect(timeline).toBeLessThan(orderOf('quick-capture'));
+        vi.useRealTimers();
+    });
+
+    it('surfaces day progress as supporting context (TASK-P17-014)', async () => {
+        const resp: TodayResponse = JSON.parse(JSON.stringify(response));
+        resp.events.push({
+            assignment: { ...resp.events[0].assignment, id: 2, start_at: '2026-08-19T11:00:00', end_at: '2026-08-19T12:00:00', locked: false },
+            locked: false,
+            conflict: false,
+            task: { ...resp.events[0].task!, id: 11, title: 'Review notes', status: 'completed', version: 1 },
+            program: null,
+            goal: null,
+            milestone: null,
+        });
+        vi.mocked(todayApi.today).mockResolvedValue(resp);
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(TodayView, {
+            props: { date: '2026-08-19' },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        const strip = wrapper.find('[data-testid="today-progress"]');
+        expect(strip.exists()).toBe(true);
+        expect(wrapper.find('[data-testid="today-progress-count"]').text()).toContain('1/2');
+    });
+
     it('renders the quick capture form', async () => {
         vi.mocked(todayApi.today).mockResolvedValue(response);
         const pinia = createPinia();

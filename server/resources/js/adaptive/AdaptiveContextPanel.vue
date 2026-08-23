@@ -81,7 +81,7 @@ async function submit(): Promise<void> {
         <form class="flex flex-wrap items-end gap-3" @submit.prevent="submit">
             <fieldset>
                 <legend class="text-sm mb-1 sr-only">Energy level</legend>
-                <div class="flex gap-1">
+                <div class="flex flex-wrap gap-1">
                     <button
                         v-for="level in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
                         :key="level"

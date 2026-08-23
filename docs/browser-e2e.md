@@ -523,6 +523,19 @@ provider pings cannot reach it. Journeys were green on 2026-08-22 (P17-002
 record); restore an Ollama endpoint reachable from the app container
 (e.g. OLLAMA_HOST=0.0.0.0 + compose extra_hosts) to re-run them.
 
+### P17-014 — Today control-center run (2026-08-23)
+```text
+tests/e2e/tests/journey-i.spec.ts  chromium/firefox/webkit
+  checks: seeded tasks render under the strict hierarchy NOW → NEXT →
+          Timeline → progress → check-in → quick capture (DOM top-offset
+          ordering); start → complete flips the progress strip by exactly one;
+          mobile 375/390/412 have no horizontal overflow and keep the hub
+          above the timeline. Result: ✅ 4 tests × 3 browsers = 12 passed.
+  Fix landed from the proof: the adaptive check-in energy row (10×32px
+  buttons) bled past 375px — it now wraps (design.md §58); regression
+  core-loop/surface-qa/accessibility/release-gate green (60 passed).
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.
