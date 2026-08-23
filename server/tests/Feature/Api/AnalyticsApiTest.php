@@ -173,6 +173,23 @@ class AnalyticsApiTest extends TestCase
             ->assertJsonPath('exceptions.1.kind', 'recharge_only');
     }
 
+    public function test_date_only_to_includes_same_day_events(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        ActivityLog::query()->create([
+            'user_id' => $user->id, 'event_type' => 'task_completed', 'entity_type' => 'task',
+            'entity_id' => 1, 'title' => 'Same-day event', 'event_at' => '2026-08-20 09:30:00',
+            'operation_id' => 'op-day', 'payload' => [],
+        ]);
+        // A date-only `to` means "through the end of that day" — an event at
+        // 09:30 on the `to` day must be inside the period (UTC rollover guard).
+        $overview = $this->withToken($token)
+            ->getJson('/api/v1/analytics/overview?from=2026-08-20&to=2026-08-20')
+            ->assertStatus(200);
+        $this->assertSame(1, $overview->json('activity.by_type.task_completed'));
+        $this->assertSame(1, $overview->json('activity.total_events'));
+    }
+
     public function test_overview_returns_all_read_models_for_the_period(): void
     {
         [$user, $token] = $this->userWithToken();

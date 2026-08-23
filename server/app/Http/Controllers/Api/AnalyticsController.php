@@ -113,9 +113,9 @@ final class AnalyticsController extends Controller
         $validated = $validator->validated();
         $userId = $request->user()->id;
 
-        $to = isset($validated['to'])
+        $to = self::inclusiveTo(isset($validated['to'])
             ? CarbonImmutable::parse($validated['to'])
-            : CarbonImmutable::now();
+            : CarbonImmutable::now());
         $from = isset($validated['from'])
             ? CarbonImmutable::parse($validated['from'])
             : $to->subDays(364); // default: trailing year
@@ -148,9 +148,9 @@ final class AnalyticsController extends Controller
 
         $validated = $validator->validated();
 
-        $to = isset($validated['to'])
+        $to = self::inclusiveTo(isset($validated['to'])
             ? CarbonImmutable::parse($validated['to'])
-            : CarbonImmutable::now();
+            : CarbonImmutable::now());
         $from = isset($validated['from'])
             ? CarbonImmutable::parse($validated['from'])
             : $to->startOfWeek();
@@ -160,5 +160,14 @@ final class AnalyticsController extends Controller
         }
 
         return [$request->user()->id, $from, $to];
+    }
+
+    /**
+     * A date-only `to` (YYYY-MM-DD) means "through the end of that day";
+     * otherwise same-day events would fall outside the period (UTC rollover).
+     */
+    private static function inclusiveTo(CarbonImmutable $to): CarbonImmutable
+    {
+        return $to->format('H:i:s') === '00:00:00' ? $to->endOfDay() : $to;
     }
 }

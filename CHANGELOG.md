@@ -14,6 +14,11 @@ Release governance: see `docs/release-management.md`.
 
 ### Added
 
+- Breakdown is now invokable where the goal lives (Phase 17, TASK-P17-005):
+  the goal detail header and the empty-milestone state both offer an explicit
+  [Break Down with AI] action — no trip to Settings or another AI page. While
+  a proposal awaits review the entry points hide so duplicates can't stack,
+  and generation failures surface inline without leaving the goal.
 - Completed the AI goal-breakdown workflow (Phase 17, TASK-P17-004): the goal
   detail now shows a review card for pending AI breakdown proposals with
   rationale, risks, and milestone target dates/effort. Milestones can be
@@ -364,6 +369,12 @@ Release governance: see `docs/release-management.md`.
     `postgres:17-alpine` image), and the scripts are executable — previously the
     wrong relative path caused Docker to mount empty directories and the backup
     restore flow failed.
+
+### Fixed
+- Analytics periods with a date-only `to` (YYYY-MM-DD) now include events
+  that happen ON the end day. Previously `to=2026-08-23` cut off at
+  00:00:00, so same-day activity silently disappeared from the overview —
+  a latent bug that surfaced on UTC date rollover (overview + heatmap).
 
 ## [0.4.0] — 2026-08-17
 
