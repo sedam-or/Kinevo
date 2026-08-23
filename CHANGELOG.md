@@ -13,6 +13,11 @@ Release governance: see `docs/release-management.md`.
 ## [Unreleased]
 ### Added
 
+- Dark mode is finally dependable (Phase 17, TASK-P17-013): your light/dark/
+  system choice now survives reloads without a white flash, dark mode reaches
+  the login screen and native controls like date pickers, and the drawing
+  board follows the app theme instead of ignoring it.
+
 - The scheduler earned its buttons back (Phase 17, TASK-P17-012): draft
   generation, reschedule proposals and their apply actions are now bold,
   tactile primaries with the app's offset-shadow press feedback, replacing

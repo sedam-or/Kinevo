@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { useShellStore } from '../store';
 import { applyTheme, readThemePreference, resolvedTheme, writeThemePreference } from '../theme';
 
 const originalMatchMedia = window.matchMedia;
@@ -38,6 +40,19 @@ describe('shell theme handling', () => {
     it('defaults to system preference', () => {
         stubLocalStorage();
         expect(readThemePreference()).toBe('system');
+    });
+
+    it('persists a new preference through the shell store (TASK-P17-013)', () => {
+        stubLocalStorage();
+        setActivePinia(createPinia());
+        const shell = useShellStore();
+        shell.setTheme('dark');
+        expect(readThemePreference()).toBe('dark');
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
+        shell.setTheme('light');
+        expect(readThemePreference()).toBe('light');
+        shell.cycleTheme(); // light -> dark
+        expect(shell.theme).toBe('dark');
     });
 
     it('resolves system to dark when the OS is dark', () => {

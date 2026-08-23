@@ -64,11 +64,6 @@ function selectView(view: ShellView): void {
     shell.setView(view);
 }
 
-function cycleTheme(): void {
-    const order = ['light', 'dark', 'system'] as const;
-    const next = order[(order.indexOf(shell.theme) + 1) % order.length];
-    shell.setTheme(next);
-}
 </script>
 
 <template>
@@ -97,7 +92,7 @@ function cycleTheme(): void {
             <button
                 type="button"
                 class="shrink-0 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1"
-                @click="cycleTheme"
+                @click="shell.cycleTheme()"
                 data-testid="theme-toggle"
             >
                 <span class="hidden sm:inline">Theme: </span>{{ shell.theme }}

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { NAV_GROUPS, NAV_ITEMS, MOBILE_MORE_KEYS, MOBILE_PRIMARY_KEYS, PRIMARY_VIEW, type ShellView } from './navigation';
-import { applyTheme, readThemePreference, type ThemePreference } from './theme';
+import { applyTheme, readThemePreference, writeThemePreference, type ThemePreference } from './theme';
 import { VISIBLE_SYNC_STATES, type VisibleSyncState } from '../offline/sync-status';
 
 /** The visible sync states the shell presents (TASK-115). */
@@ -28,6 +28,18 @@ export const useShellStore = defineStore('shell', () => {
     const errorMessage = ref<string | null>(null);
 
     applyTheme(theme.value);
+    // TASK-P17-013: in system mode the theme follows live OS switches, not
+    // just the value captured at startup. The store lives for the app's
+    // lifetime, so no teardown is needed.
+    if (typeof window !== 'undefined' && window.matchMedia) {
+        window
+            .matchMedia('(prefers-color-scheme: dark)')
+            .addEventListener('change', () => {
+                if (theme.value === 'system') {
+                    applyTheme('system');
+                }
+            });
+    }
 
     const navItems = computed(() => NAV_ITEMS);
     const navGroups = computed(() => NAV_GROUPS);
@@ -61,7 +73,13 @@ export const useShellStore = defineStore('shell', () => {
 
     function setTheme(preference: ThemePreference): void {
         theme.value = preference;
-        applyTheme(preference);
+        // TASK-P17-013: persist, not just apply — the toggle was losing the
+        // preference on reload.
+        writeThemePreference(preference);
+    }
+    function cycleTheme(): void {
+        const order: ThemePreference[] = ['light', 'dark', 'system'];
+        setTheme(order[(order.indexOf(theme.value) + 1) % order.length]);
     }
 
     function setLoading(loading: boolean): void {
@@ -98,6 +116,7 @@ export const useShellStore = defineStore('shell', () => {
     return {
         activeView,
         theme,
+        cycleTheme,
         isLoading,
         syncState,
         syncQueuedCount,

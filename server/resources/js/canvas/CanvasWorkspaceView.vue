@@ -7,6 +7,8 @@ import CanvasHost from './CanvasHost.vue';
 import CanvasContextPanel from './CanvasContextPanel.vue';
 import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
 import type { VisualStateValue } from '../visualstate/types';
+import { useShellStore } from '../shell/store';
+import { resolvedTheme } from '../shell/theme';
 import type { CanvasAdapter, CanvasScene, CanvasTheme } from './types';
 
 const props = withDefaults(
@@ -24,11 +26,15 @@ const emit = defineEmits<{
 }>();
 
 const canvas = useCanvasStore();
+// TASK-P17-013: the canvas follows the app theme by default and keeps
+// following it until the user overrides it with the canvas-local toggle.
+const shell = useShellStore();
+const themeFollowsApp = ref(true);
 
 const title = ref('');
 const scene = ref<CanvasScene | null>(null);
 const readOnly = ref(false);
-const theme = ref<CanvasTheme>('auto');
+const theme = ref<CanvasTheme>(resolvedTheme(shell.theme));
 const saveStateBadge = ref<VisualStateValue>('saved');
 const confirmArchive = ref(false);
 const renameError = ref<string | null>(null);
@@ -101,6 +107,14 @@ watch(readOnly, (enabled) => {
 watch(theme, (next) => {
     adapter?.setTheme(next);
 });
+watch(
+    () => shell.theme,
+    () => {
+        if (themeFollowsApp.value) {
+            theme.value = resolvedTheme(shell.theme);
+        }
+    },
+);
 
 onBeforeUnmount(() => {
     if (controller) {
@@ -111,6 +125,8 @@ onBeforeUnmount(() => {
 });
 
 function cycleTheme(): void {
+    // A deliberate canvas-local choice detaches from the app theme.
+    themeFollowsApp.value = false;
     const order: CanvasTheme[] = ['auto', 'light', 'dark'];
     theme.value = order[(order.indexOf(theme.value) + 1) % order.length];
 }

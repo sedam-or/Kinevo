@@ -75,14 +75,24 @@ test.describe('R7 — Canvas keyboard-only flow (§46)', () => {
 
 test.describe('R7 — mobile viewport smoke (§8, §58)', () => {
     const MOBILE = { width: 375, height: 667 };
-    /** Mobile bottom-bar items are plain anchors (no testids) — key → label. */
-    const MOBILE_NAV: Array<[string, string]> = [
-        ['tasks', 'Tasks'],
-        ['goals', 'Goals / Roadmap'],
-        ['knowledge', 'Knowledge'],
-        ['canvas', 'Canvas'],
-        ['schedule', 'Schedule'],
+    /** P17-001 IA: mobile bottom bar carries the primary subset; Canvas and
+     * Schedule live behind the More drawer (key → primary?). */
+    const MOBILE_NAV: Array<[string, boolean]> = [
+        ['tasks', true],
+        ['goals', true],
+        ['knowledge', true],
+        ['canvas', false],
+        ['schedule', false],
     ];
+
+    async function openMobileNavItem(page: Page, key: string, primary: boolean): Promise<void> {
+        if (primary) {
+            await page.getByTestId(`mobile-nav-${key}`).click();
+            return;
+        }
+        await page.getByTestId('mobile-more-toggle').click();
+        await page.getByTestId(`more-${key}`).click();
+    }
 
     async function noHorizontalOverflow(page: Page): Promise<boolean> {
         return page.evaluate(
@@ -98,16 +108,22 @@ test.describe('R7 — mobile viewport smoke (§8, §58)', () => {
         // The desktop rail hides on small screens; the bottom bar takes over.
         await expect(page.getByTestId('mobile-nav')).toBeVisible();
 
-        for (const [key, label] of MOBILE_NAV) {
-            await page.getByTestId('mobile-nav').getByText(label, { exact: true }).click();
+        for (const [key, primary] of MOBILE_NAV) {
+            await openMobileNavItem(page, key, primary);
             await page.waitForTimeout(400);
             expect(await noHorizontalOverflow(page), `${key} overflows at 375px`).toBe(true);
+            if (!primary) {
+                await page.getByTestId('mobile-more-toggle').click();
+                await page.getByTestId('mobile-more-close').click().catch(() => {});
+                await page.waitForTimeout(200);
+            }
         }
         await context.close();
     });
 
     async function openMobileCanvasWorkspace(page: Page): Promise<void> {
-        await page.getByTestId('mobile-nav').getByText('Canvas', { exact: true }).click();
+        await page.getByTestId('mobile-more-toggle').click();
+        await page.getByTestId('more-canvas').click();
         await page.getByTestId('canvas-view').waitFor({ timeout: 30_000 });
         await page.getByTestId('canvas-create-title').fill('R7 gate mobile canvas');
         await page.getByTestId('canvas-create-submit').click();

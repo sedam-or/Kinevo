@@ -3935,18 +3935,33 @@ P17-G Analytics / Decision Support UX
 - Notes: used existing tokens only.
 
 ### TASK-P17-013 — Theme Toggle Hardening
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-013)
 - Priority: P0
 - Depends On: —
 - SRS: NFR (accessibility/theme persistence)
 - Files: theme composables, shell, Excalidraw shell
 - Acceptance:
-  - [ ] real-browser proof: light→reload→light; dark→reload→dark;
-        system→switch OS→theme follows; no flash of wrong theme where practical;
-        Excalidraw shell adapts; native browser controls readable; preference
-        persists; keyboard accessible; mobile + unauth shell covered
-- Verification: [ ] E2E Journey per §18/§38; treated as unverified until proven
-- Notes: treat current theme as unverified until real-browser proof.
+  - [x] real-browser proof (tests/e2e/tests/theme.spec.ts,
+        chromium/firefox/webkit): light→reload→light ✓; dark→reload→dark ✓
+        with pre-hydration class snapshot proving no flash (inline head
+        script in app.blade.php); system→switch OS→theme follows LIVE
+        (matchMedia listener added to shell store); Excalidraw shell adapts
+        (island theme now a render prop — the old appState.theme write was a
+        silent no-op; workspace starts on the RESOLVED app theme and follows
+        it until the canvas-local toggle overrides); native controls readable
+        (color-scheme light/dark on :root/.dark); preference persists
+        (store.setTheme now calls writeThemePreference — persistence was
+        broken); keyboard accessible (focus + Enter proven); mobile 375px +
+        unauth gate covered (theme toggle added to the auth gate)
+- Verification: [x] theme.spec.ts green ×3 browsers; release-gate,
+        canvas-hardening, navigation, continuity, core-loop, surface-qa,
+        accessibility regressions green; canvas-hardening mobile theme-cycle
+        expectations updated to the resolved-theme contract (P17-001 stale
+        flat-nav selectors in release-gate mobile smoke also re-aligned to
+        the More drawer)
+- Notes: known env blocker recorded in browser-e2e.md §11 — golden-journeys
+        H/G2 cannot reach host Ollama (binds 127.0.0.1) from the app
+        container; unrelated to this task.
 
 ### TASK-P17-014 — Today as Control Center
 - Status: TODO

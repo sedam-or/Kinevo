@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createPinia, setActivePinia } from 'pinia';
+import { createPinia, getActivePinia, setActivePinia } from 'pinia';
 import { flushPromises, mount } from '@vue/test-utils';
 
 vi.mock('../api', async (importOriginal) => {
@@ -24,6 +24,7 @@ vi.mock('../react/ExcalidrawIsland', () => ({
 }));
 
 import CanvasWorkspaceView from '../CanvasWorkspaceView.vue';
+import { useShellStore } from '../../shell/store';
 import { canvasApi } from '../api';
 
 const canvasRow = {
@@ -94,14 +95,36 @@ describe('CanvasWorkspaceView', () => {
 
         const host = wrapper.findComponent({ name: 'CanvasHost' });
         expect(host.props('readOnly')).toBe(false);
-        expect(host.props('theme')).toBe('auto');
+        // TASK-P17-013: canvas starts on the RESOLVED app theme (jsdom has no
+        // matchMedia -> system resolves to light), not a hardcoded 'auto'.
+        expect(host.props('theme')).toBe('light');
 
         await wrapper.find('[data-testid="canvas-readonly-toggle"] input').setValue(true);
         await wrapper.find('[data-testid="canvas-theme-toggle"]').trigger('click');
         await flushPromises();
 
         expect(wrapper.findComponent({ name: 'CanvasHost' }).props('readOnly')).toBe(true);
-        expect(wrapper.findComponent({ name: 'CanvasHost' }).props('theme')).toBe('light');
+        // Local override cycles the RESOLVED light -> dark.
+        expect(wrapper.findComponent({ name: 'CanvasHost' }).props('theme')).toBe('dark');
+    });
+
+    it('follows app theme changes until locally overridden (TASK-P17-013)', async () => {
+        vi.mocked(canvasApi.show).mockResolvedValue({ canvas: canvasRow, document: null });
+        const wrapper = mountView();
+        await flushPromises();
+
+        const pinia = getActivePinia();
+        if (!pinia) throw new Error('pinia missing');
+        useShellStore().setTheme('dark');
+        await flushPromises();
+        expect(`${useShellStore().theme}|${String(wrapper.findComponent({ name: 'CanvasHost' }).props('theme'))}`).toBe('dark|dark');
+
+        // Local override detaches from the app theme: cycling from dark wraps
+        // to the canvas-local 'auto', and later app flips no longer apply.
+        await wrapper.find('[data-testid="canvas-theme-toggle"]').trigger('click');
+        useShellStore().setTheme('light');
+        await flushPromises();
+        expect(wrapper.findComponent({ name: 'CanvasHost' }).props('theme')).toBe('auto');
     });
 
     it('archives with a confirmation step and navigates back', async () => {

@@ -211,11 +211,13 @@ test.describe('R4 canvas matrix — entry + lifecycle', () => {
         await openCanvasWorkspace(page, unique('r4-theme'));
         const themeBtn = page.getByTestId('canvas-theme-toggle');
         // Theme changes re-render the island; drive via evaluate for stability.
-        await expect(themeBtn).toContainText('auto');
-        await themeBtn.evaluate((el) => (el as HTMLButtonElement).click());
+        // TASK-P17-013: the canvas starts on the RESOLVED app theme (Playwright
+        // defaults to a light OS) instead of the detached 'auto'.
         await expect(themeBtn).toContainText('light');
         await themeBtn.evaluate((el) => (el as HTMLButtonElement).click());
         await expect(themeBtn).toContainText('dark');
+        await themeBtn.evaluate((el) => (el as HTMLButtonElement).click());
+        await expect(themeBtn).toContainText('auto');
         // Read-only control present (§34.3).
         await expect(page.getByTestId('canvas-readonly-toggle')).toBeVisible();
         await expect(page.getByTestId('canvas-readonly-toggle').locator('input')).toBeEnabled();

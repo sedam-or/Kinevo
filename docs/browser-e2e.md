@@ -504,6 +504,25 @@ tests/e2e/tests/continuity.spec.ts  chromium/firefox/webkit
 
 ---
 
+### P17-013 — Theme hardening run (2026-08-23)
+```text
+tests/e2e/tests/theme.spec.ts  chromium/firefox/webkit
+  checks: unauth gate toggle reachable + switches theme; light/dark reload
+          persistence with a pre-hydration class snapshot (no flash);
+          color-scheme flips for native controls; system mode follows live OS
+          switches; keyboard operable (focus + Enter); Excalidraw island
+          re-themes live (.theme--dark present/absent); mobile 375px reachable.
+  Result: ✅ 6 tests × 3 browsers = 18 passed. Regression: release-gate,
+          canvas-hardening, navigation, continuity, core-loop, surface-qa,
+          accessibility, tactile-language green across browsers.
+```
+Environment note (not product debt): `golden-journeys.spec.ts` journeys H and
+G2 currently fail with "Ollama is unreachable" — the host Ollama binds
+127.0.0.1 while the app runs in the compose bridge network, so server-side
+provider pings cannot reach it. Journeys were green on 2026-08-22 (P17-002
+record); restore an Ollama endpoint reachable from the app container
+(e.g. OLLAMA_HOST=0.0.0.0 + compose extra_hosts) to re-run them.
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.

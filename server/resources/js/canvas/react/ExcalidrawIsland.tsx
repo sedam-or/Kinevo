@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Excalidraw } from '@excalidraw/excalidraw';
 import '@excalidraw/excalidraw/index.css';
 import type { CanvasScene } from '../types';
@@ -71,6 +71,12 @@ export const ExcalidrawIsland = forwardRef<ExcalidrawIslandHandle, ExcalidrawIsl
         const listenersRef = useRef<Set<(scene: CanvasScene) => void>>(new Set());
         const onSceneChangeRef = useRef(onSceneChange);
         const latestSceneRef = useRef<CanvasScene | null>(initialScene);
+        // TASK-P17-013: Excalidraw's theme is a render prop, not appState —
+        // drive it through component state so live toggles actually re-render.
+        const [themeState, setThemeState] = useState(initialTheme);
+        useEffect(() => {
+            setThemeState(initialTheme);
+        }, [initialTheme]);
 
         useEffect(() => {
             onSceneChangeRef.current = onSceneChange;
@@ -108,9 +114,7 @@ export const ExcalidrawIsland = forwardRef<ExcalidrawIslandHandle, ExcalidrawIsl
                     });
                 },
                 setTheme(theme) {
-                    apiRef.current?.updateScene({
-                        appState: { theme: theme === 'auto' ? 'light' : theme },
-                    });
+                    setThemeState(theme);
                 },
                 subscribe(listener) {
                     listenersRef.current.add(listener);
@@ -155,7 +159,7 @@ export const ExcalidrawIsland = forwardRef<ExcalidrawIslandHandle, ExcalidrawIsl
                             ),
                         );
                     }}
-                    theme={initialTheme === 'auto' ? 'light' : initialTheme}
+                    theme={themeState === 'auto' ? 'light' : themeState}
                 />
             </div>
         );

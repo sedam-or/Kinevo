@@ -149,7 +149,16 @@ const viewTitle = computed(() => {
         </div>
 
         <!-- Guest: login / register -->
-        <div v-else-if="!auth.isAuthenticated" class="min-h-screen flex flex-col items-center justify-center bg-[#FDFDFC] text-[#1b1b18] dark:bg-[#0a0a0a] dark:text-[#EDEDEC] px-4" data-testid="auth-gate">
+        <div v-else-if="!auth.isAuthenticated" class="relative min-h-screen flex flex-col items-center justify-center bg-[#FDFDFC] text-[#1b1b18] dark:bg-[#0a0a0a] dark:text-[#EDEDEC] px-4" data-testid="auth-gate">
+            <!-- Theme is reachable before login too (TASK-P17-013). -->
+            <button
+                type="button"
+                class="absolute top-3 right-3 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1"
+                data-testid="theme-toggle"
+                @click="shell.cycleTheme()"
+            >
+                <span class="hidden sm:inline">Theme: </span>{{ shell.theme }}
+            </button>
             <LoginView v-if="authMode === 'login'" :on-go-to-register="goToRegister" />
             <RegisterView v-else :on-go-to-login="goToLogin" />
         </div>

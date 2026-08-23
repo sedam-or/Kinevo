@@ -3,6 +3,12 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* Native controls follow the active theme (TASK-P17-013): date pickers,
+   scrollbars and form chrome must stay readable in dark mode (design.md §5.4). */
+:root {
+    color-scheme: light;
+}
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
@@ -47,6 +53,7 @@
 /* Dark theme token overrides (docs/design-tokens.md §2.4). Applied on the
    .dark class set by shell/theme.ts. */
 .dark {
+    color-scheme: dark;
     --color-bg: #0a0a0a;
     --color-surface: #131313;
     --color-surface-raised: #1b1b18;
