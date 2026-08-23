@@ -1,5 +1,7 @@
 <?php
+
 namespace Tests\Feature\Api;
+
 use App\Models\Goal;
 use App\Models\Milestone;
 use App\Models\User;
@@ -29,6 +31,7 @@ class AiProposalEditApiTest extends TestCase
             'progress_mode' => 'derived',
             'progress' => 0,
         ]);
+
         return [$user, $token, $goal];
     }
 

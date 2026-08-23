@@ -28,6 +28,7 @@ class AiProviderConfig extends Model
     public function freshApiKey(): ?string
     {
         $value = $this->getAttributes()['api_key'] ?? null;
+
         return $value === null ? null : Crypt::decryptString($value);
     }
 }

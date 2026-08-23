@@ -1,5 +1,7 @@
 <?php
+
 namespace Tests\Unit\Ai;
+
 use App\Application\Ai\GetAiProviderStatusUseCase;
 use App\Domain\Ai\Entities\AiProviderConfig;
 use App\Domain\Ai\ValueObjects\AiProviderStatus;

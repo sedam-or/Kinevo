@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Application\Ai;
+
 use App\Domain\Ai\AiOutputException;
 use App\Domain\Ai\AiSchemaRegistry;
 use App\Domain\Ai\AiSchemaRules;

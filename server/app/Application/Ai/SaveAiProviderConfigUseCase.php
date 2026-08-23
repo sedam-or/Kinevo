@@ -20,7 +20,7 @@ final readonly class SaveAiProviderConfigUseCase
     ) {}
 
     /**
-     * @param array<string, mixed> $input
+     * @param  array<string, mixed>  $input
      */
     public function __invoke(array $input): array
     {

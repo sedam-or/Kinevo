@@ -20,8 +20,11 @@ final readonly class AiProviderConfig
     ) {}
 
     public const PROVIDER_DISABLED = 'disabled';
+
     public const PROVIDER_OLLAMA = 'ollama';
+
     public const PROVIDER_OPENAI = 'openai';
+
     public const PROVIDER_MOCK = 'mock';
 
     public static function defaults(): self

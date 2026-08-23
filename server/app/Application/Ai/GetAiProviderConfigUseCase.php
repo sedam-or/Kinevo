@@ -21,6 +21,7 @@ final readonly class GetAiProviderConfigUseCase
     {
         $config = $this->configs->get() ?? AiProviderConfig::defaults();
         $status = $this->ai->status();
+
         // Canonical state from the SAME mapper as /ai/status (TASK-P17-007):
         // the two endpoints can never disagree.
         return [
@@ -42,6 +43,7 @@ final readonly class GetAiProviderConfigUseCase
         if ($key === null || strlen($key) <= 4) {
             return null;
         }
+
         return '…'.substr($key, -4);
     }
 }

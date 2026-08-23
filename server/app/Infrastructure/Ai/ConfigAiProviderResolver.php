@@ -38,6 +38,7 @@ final class ConfigAiProviderResolver implements AiProviderResolver
                 $config->apiKey,
             );
         }
+
         return $this->factory->create();
     }
 }

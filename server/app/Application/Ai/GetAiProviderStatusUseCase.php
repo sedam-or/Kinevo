@@ -1,8 +1,10 @@
 <?php
+
 namespace App\Application\Ai;
+
 use App\Domain\Ai\AiOrchestrator;
-use App\Domain\Ai\Entities\AiProviderConfig;
 use App\Domain\Ai\Contracts\AiProviderConfigRepository;
+use App\Domain\Ai\Entities\AiProviderConfig;
 use App\Domain\Ai\ValueObjects\AiProviderStatus;
 
 /**
@@ -28,11 +30,17 @@ use App\Domain\Ai\ValueObjects\AiProviderStatus;
 final class GetAiProviderStatusUseCase
 {
     public const STATE_DISABLED = 'disabled';
+
     public const STATE_NOT_CONFIGURED = 'not_configured';
+
     public const STATE_CONFIGURED = 'configured';
+
     public const STATE_TESTING = 'testing';
+
     public const STATE_CONNECTED = 'connected';
+
     public const STATE_DEGRADED = 'degraded';
+
     public const STATE_UNAVAILABLE = 'unavailable';
 
     /** Latency above this (ms) counts as degraded while still usable. */
@@ -61,6 +69,7 @@ final class GetAiProviderStatusUseCase
                 null,
                 null,
             );
+
             return $this->snapshot($status, self::STATE_CONFIGURED, $config);
         }
 
@@ -81,6 +90,7 @@ final class GetAiProviderStatusUseCase
             // No saved preference: the deployment default applies.
             // A disabled/unresolved deployment means AI is simply off.
             $deploymentOff = $status->provider === 'disabled' || $status->provider === '';
+
             return $deploymentOff ? self::STATE_DISABLED : self::stateForEnabled($status);
         }
         // Enabled provider that can never work without its credential is
@@ -88,6 +98,7 @@ final class GetAiProviderStatusUseCase
         if ($config->provider === AiProviderConfig::PROVIDER_OPENAI && $config->apiKey === null) {
             return self::STATE_NOT_CONFIGURED;
         }
+
         return self::stateForEnabled($status);
     }
 
@@ -99,6 +110,7 @@ final class GetAiProviderStatusUseCase
         if (($status->latencyMs ?? 0) > self::DEGRADED_LATENCY_MS) {
             return self::STATE_DEGRADED;
         }
+
         return self::STATE_CONNECTED;
     }
 

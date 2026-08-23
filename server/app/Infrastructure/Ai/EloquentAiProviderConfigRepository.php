@@ -15,6 +15,7 @@ final readonly class EloquentAiProviderConfigRepository implements AiProviderCon
         if ($model === null) {
             return null;
         }
+
         return new AiProviderConfig(
             $model->provider,
             (bool) $model->enabled,

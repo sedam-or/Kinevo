@@ -255,6 +255,7 @@ final class AiController extends Controller
 
         return response()->json(['proposal' => $proposal->toArray()]);
     }
+
     public function proposalsUpdate(Request $request, int $proposalId): JsonResponse
     {
         $payload = $request->json()->all();
@@ -267,10 +268,13 @@ final class AiController extends Controller
             if ($e->getMessage() === 'AI proposal not found.') {
                 return response()->json(['error' => $e->getMessage()], 404);
             }
+
             return response()->json(['error' => $e->getMessage()], 422);
         }
+
         return response()->json(['proposal' => $proposal->toArray()]);
     }
+
     public function proposalsAccept(Request $request, int $proposalId): JsonResponse
     {
         $userId = $request->user()->id;
