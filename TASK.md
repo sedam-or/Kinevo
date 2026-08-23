@@ -4029,66 +4029,171 @@ P17-G Analytics / Decision Support UX
         button row overflowed 375px — now wraps (§58)
 
 ### TASK-P17-017 — Connect Analytics to Decisions
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-017)
 - Priority: P1
 - Depends On: TASK-P17-014 (data flow)
 - SRS: analytics reads, NFR
 - Files: Analytics view, read-side services
 - Acceptance:
-  - [ ] every chart answers What changed / Why it matters / What to do;
-        capacity cards carry recommendation + [Review schedule]
-- Verification: [ ] E2E Journey J (analytics → interpretation → action)
-- Notes: no decorative charts.
+  - [x] every chart answers What changed / Why it matters / What to do —
+        `analytics/interpretation.ts` derives deterministic read-side
+        interpretation for Work-Life, Goals, Capacity, Pillars, Heatmap, and
+        Per-day; rendered via reusable `InterpretationStrip` under each chart
+        (design.md §38 value/period/trend/meaning + §104 P17-G charts-drive-action)
+  - [x] capacity cards carry recommendation + [Review schedule] — existing
+        recommendation label/confidence/reason retained; card now adds the
+        Review schedule action that navigates to the Schedule workflow
+- Verification:
+  - [x] E2E Journey J (analytics → interpretation → action): `tests/e2e/tests/journey-j.spec.ts`
+        seeds a scheduled task + focus session, asserts the What/Why/What-to-do
+        strip renders with data, capacity recommendation + [Review schedule]
+        visible, click lands in `schedule-draft-view`
+  - [x] Unit: `interpretation.test.ts` (13 cases: work-life baseline/delta,
+        goal pressure, capacity overload/boost, lowest pillar, heatmap
+        consistency, per-day pattern) + `AnalyticsView.test.ts` extended
+        (interpretation strips per chart, review-schedule navigates shell to
+        'schedule')
+  - [x] Frontend: `npm run typecheck`, `npm run build`, `vitest run`
+        (68 files / 467 tests) all green
+  - [x] Backend: `phpstan analyse` 0 errors; `composer test` 887 tests — 4
+        pre-existing env failures (`could not find driver`, local PHP lacks
+        sqlite PDO; Makefile suite runs those in docker), no PHP changed
+- Evidence: commits TASK-P17-017; browser-e2e.md §11 Journey J run
+- Notes: no decorative charts — every chart now carries interpretation +
+  action copy; backend business numbers unchanged.
 
 ### TASK-P17-018 — Analytics Information Hierarchy
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-018)
 - Priority: P2
 - Depends On: TASK-P17-017
 - SRS: NFR
 - Files: Analytics view
 - Acceptance:
-  - [ ] order: executive signal → trend → explanation → breakdown → raw data;
-        NOT 15 charts first
-- Verification: [ ] visual audit
-- Notes: —
+  - [x] order: executive signal → trend → explanation → breakdown → raw data;
+        NOT 15 charts first — `interpretation.ts::executiveSignal` resolves the
+        single most decision-relevant statement by deterministic priority
+        (overdue → at-risk goal → overloaded days → work-heavy imbalance →
+        all-clear) with severity styling and a resolving action (Review goal /
+        Review schedule); rendered as the FIRST block of the Analytics view,
+        above every chart (design.md §37 "Do not present 20 graphs immediately",
+        §104 P17-G; closes ui-audit UX-C6 "analytics shows 15 charts before signal")
+- Verification:
+  - [x] visual audit, real browser — journey-j.spec.ts now asserts DOM
+        top-offset ordering of every rendered section (signal → summary →
+        goals → capacity → pillars → heatmap → days) on chromium/firefox/webkit:
+        3 passed against the live stack
+  - [x] Unit: executiveSignal priority cases (5) in interpretation.test.ts;
+        AnalyticsView.test.ts proves no chart precedes the signal
+        (compareDocumentPosition) + danger escalation + overload routing to
+        schedule (4 new tests)
+  - [x] Frontend gates: vitest 68 files / 475 tests, vue-tsc, vite build green
+  - [x] Regression: surface-qa/feature-education/continuity/accessibility/
+        journeys/login/core-loop on live stack = 81 passed; firefox/webkit
+        feature-education Today-empty-state failures reproduce on the BASELINE
+        build too (pre-existing drift, unrelated to analytics diff)
+- Evidence: commits TASK-P17-018; browser-e2e.md §11 visual-audit run
+- Notes: backend numbers unchanged; hierarchy is presentation-order + one
+  deterministic signal resolver.
 
 ### TASK-P17-019 — Analytics Chart Requirements
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-019)
 - Priority: P2
 - Depends On: TASK-P17-017
 - SRS: NFR
 - Files: chart components
 - Acceptance:
-  - [ ] every chart has title/metric/period/unit/baseline/trend/legend/context;
-        prefer line/bar/heatmap/timeline; no pie for productivity data
-- Verification: [ ] audit checklist
-- Notes: —
+  - [x] every chart has title/metric/period/unit/baseline/trend/legend/context —
+        new reusable `ChartMeta` header (period, unit, color legend swatches)
+        now sits under every chart title; each chart already carried its
+        metric, baseline (previous period / target / planned), trend (weekly
+        trend / heatmap), and interpretation context (P17-017)
+  - [x] prefer line/bar/heatmap/timeline; no pie for productivity data — all
+        analytics charts are stacked bars / heatmap; no pie introduced
+- Verification:
+  - [x] audit checklist — AnalyticsView.test.ts asserts chart-meta testids
+        (period reflects the resolved overview range; unit captions on all five
+        chart ids; legends match bar colors incl. Scheduled/Overload on
+        capacity) + journey-j.spec.ts real-browser audit assertions (chart-meta
+        visible, period range, unit, legend counts) across chromium/firefox/webkit
+  - [x] Unit: 476 tests green (68 files) incl. new chart metadata audit
+  - [x] Gates: vue-tsc typecheck + vite build green
+  - [x] Regression: surface-qa/continuity/accessibility/feature-education/
+        journeys/login/core-loop on live stack = 81 passed; the 9 failures are
+        pre-existing (confirmed on baseline build): golden-journeys AI/Ollama
+        env blockers + canvas + feature-education Today empty-state drift
+- Evidence: commits TASK-P17-019; browser-e2e.md §11 audit run
+- Notes: presentation-only; no chart engine or backend changes.
 
 ### TASK-P17-020 — Analytics Actionability
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-020)
 - Priority: P1
 - Depends On: TASK-P17-017
 - SRS: NFR
 - Files: Analytics + related flows
 - Acceptance:
-  - [ ] overload→review schedule; falling-behind→review milestone;
-        imbalance→recovery/break; low completion→reduce workload; each section
-        drives action
-- Verification: [ ] E2E action-clicks land in related workflow
-- Notes: —
+  - [x] overload→review schedule — capacity card action (P17-017), routes to
+        Schedule workflow
+  - [x] falling-behind→review milestone — Goals card gains Review milestone
+        when overdue+at-risk > 0, routes to the Goals workflow
+  - [x] imbalance→recovery/break — Work-Life card gains "Plan a recharge
+        block"/"Plan a focus block" on work_leaning/recharge_leaning, routes
+        to Today (recharge/focus blocks live in the NOW slot)
+  - [x] low completion→reduce workload — NEW Execution card (design.md §37
+        primary section, previously missing): task completion rate/counts +
+        bar; below LOW_COMPLETION_THRESHOLD (50%) the bar turns danger and a
+        Reduce workload action routes to the Schedule workflow; carries its
+        own interpretation strip (P17-017 contract) and ChartMeta (P17-019)
+  - [x] each section drives action — all four mappings deterministic,
+        store now exposes task_completion read model
+- Verification:
+  - [x] E2E action-clicks land in related workflow — journey-j.spec.ts follows
+        every rendered section action (Review milestone → goals-view, recovery
+        → today-view, Reduce workload / Review schedule → schedule-draft-view),
+        chromium/firefox/webkit: 3 passed against the live stack
+  - [x] Unit: interpretExecution/executionIsLow cases + view tests for all
+        four actions incl. hidden-state assertions (balanced band, healthy
+        completion, no goal pressure); 68 files / 484 tests green
+  - [x] Gates: vue-tsc typecheck + vite build green
+  - [x] Regression: surface-qa/continuity/accessibility/feature-education/
+        journeys/login/core-loop = 81 passed; identical 9 pre-existing
+        failures as the P17-018/019 baseline (Ollama env blockers + Today
+        empty-state drift)
+- Evidence: commits TASK-P17-020; browser-e2e.md §11 action run
+- Notes: Execution section reads the existing task_completion read model —
+  no backend change; thresholds constant in interpretation.ts.
 
 ### TASK-P17-021 — Design System Information Hierarchy
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-021)
 - Priority: P1
 - Depends On: —
 - SRS: NFR
 - Files: design tokens, component spacing
 - Acceptance:
-  - [ ] shared hierarchy Hero/Primary/Secondary/Supporting/Metadata; not every
-        section is a card; open whitespace where appropriate (Neo-Brutalism ≠
-        everything boxed)
-- Verification: [ ] visual audit + screenshots
-- Notes: —
+  - [x] shared hierarchy Hero/Primary/Secondary/Supporting/Metadata — five
+        tokenized surface utilities in `app.css` `@layer components`
+        (.surface-hero/-primary/-secondary/-supporting/-metadata), documented
+        as design-tokens.md §4a with adoption rules (weight concentrates on
+        Hero/Primary; Supporting/Metadata stay open)
+  - [x] not every section is a card; open whitespace where appropriate —
+        Analytics adopted as reference surface: summary/goals/capacity/
+        execution = L2 Primary cards on theme-var borders (off-token gray
+        borders removed); pillars/heatmap/per-day DE-BOXED to L4 Supporting
+        (hairline + whitespace); section rhythm space-y-4 → space-y-6;
+        Neo-Brutalism ≠ everything boxed (closes UX-C4 "everything boxed"
+        for the analytics surface; other surfaces adopt incrementally)
+- Verification:
+  - [x] visual audit + screenshots — analytics-hierarchy.spec.ts asserts the
+        boxed/open split in real browsers and captures full-page screenshots
+        per browser × light/dark: 6 passed; artifacts under
+        test-results/screenshots/<browser>/p17-021-analytics-*.png
+  - [x] Unit: AnalyticsView hierarchy test (primary boxed / supporting open);
+        68 files green with the batch
+  - [x] Gates: vitest, vue-tsc typecheck, vite build green (see commit protocol)
+- Evidence: commits TASK-P17-021; browser-e2e.md §11 audit run; ui-audit.md
+  dated note
+- Notes: presentation-layer only; no behavior change. Interactive components
+  keep their width-2 doctrine (KButton et al.) — the L-system classifies
+  containers only.
 
 ### TASK-P17-022 — Feature Surface Inventory
 - Status: TODO

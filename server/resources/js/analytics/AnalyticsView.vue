@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useAnalyticsStore } from './store';
+import { executiveSignal, executionIsLow, interpretCapacity, interpretDays, interpretExecution, interpretGoals, interpretHeatmap, interpretPillars, interpretWorkLife, type Interpretation } from './interpretation';
 import type { DeadlineHealth, PillarKey } from './types';
 import type { ApiError } from '../api/types';
 import FeatureHelp from '../components/FeatureHelp.vue';
+import InterpretationStrip from '../components/InterpretationStrip.vue';
+import ChartMeta from '../components/ChartMeta.vue';
+import { useShellStore } from '../shell/store';
 
 const analytics = useAnalyticsStore();
+const shell = useShellStore();
 
 type RangePreset = '7d' | '30d' | 'week' | 'month';
 
@@ -130,6 +135,67 @@ const recommendationLabel = computed(() => {
     }
 });
 
+const workLifeInterpretation = computed<Interpretation>(() => interpretWorkLife({
+    workRatio: analytics.workRatio,
+    previous: analytics.previous,
+    band: analytics.band,
+}));
+
+const goalsInterpretation = computed<Interpretation>(() => interpretGoals({
+    completionRate: analytics.goalCompletionRate,
+    totalMilestones: analytics.goalTotalMilestones,
+    completedMilestones: analytics.goalCompletedMilestones,
+    overdue: analytics.goalDeadlineHealth.overdue,
+    atRisk: analytics.goalDeadlineHealth.at_risk,
+}));
+
+const capacityInterpretation = computed<Interpretation>(() => interpretCapacity({
+    realization: analytics.capacityRealization,
+    confidence: analytics.capacityConfidence,
+    recommendation: analytics.capacityRecommendation,
+    reason: analytics.capacityReason,
+    overloadedDays: analytics.capacityDays.filter((d) => d.status === 'overload').length,
+}));
+
+const pillarInterpretation = computed<Interpretation>(() => interpretPillars(
+    analytics.pillars.map((p) => ({ label: p.label, percent: p.percent })),
+));
+
+const heatmapInterpretation = computed<Interpretation>(() => interpretHeatmap({
+    totalProductiveMinutes: analytics.heatmapDays.reduce((sum, d) => sum + d.productive_minutes, 0),
+    activeDays: analytics.heatmapDays.filter((d) => d.intensity > 0).length,
+}));
+
+const daysInterpretation = computed<Interpretation>(() => interpretDays({
+    totalDays: analytics.days.length,
+}));
+
+const signal = computed(() => executiveSignal({
+    overdue: analytics.goalDeadlineHealth.overdue,
+    atRisk: analytics.goalDeadlineHealth.at_risk,
+    overloadedDays: analytics.capacityDays.filter((d) => d.status === 'overload').length,
+    band: analytics.band,
+}));
+
+const signalClass = computed(() => ({
+    danger: 'border-danger/40 text-danger',
+    warn: 'border-amber-500/40 text-amber-600 dark:text-amber-400',
+    ok: 'border-green-600/40 text-green-700 dark:text-green-400',
+}[signal.value.severity]));
+
+const periodLabel = computed(() => (analytics.from && analytics.to ? `${analytics.from} – ${analytics.to}` : ''));
+
+// TASK-P17-020 — every section drives an action.
+const goalPressure = computed(() => analytics.goalDeadlineHealth.overdue + analytics.goalDeadlineHealth.at_risk);
+const imbalanced = computed(() => analytics.band === 'work_leaning' || analytics.band === 'recharge_leaning');
+const executionInput = computed(() => ({
+    completionRate: analytics.taskCompletionRate,
+    completedTasks: analytics.taskCompleted,
+    totalTasks: analytics.taskTotal,
+}));
+const lowCompletion = computed(() => executionIsLow(executionInput.value));
+const executionInterpretation = computed<Interpretation>(() => interpretExecution(executionInput.value));
+
 function percentLabel(percent: number | null): string {
     if (percent === null) {
         return 'N/A';
@@ -215,7 +281,7 @@ function run(fn: () => Promise<void>): void {
 </script>
 
 <template>
-    <div class="space-y-4">
+    <div class="space-y-6">
         <div class="flex items-center gap-2" data-testid="analytics-presets">
             <button
                 v-for="preset in presets"
@@ -250,8 +316,37 @@ function run(fn: () => Promise<void>): void {
         </div>
 
         <template v-else>
-            <div class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-summary">
+            <div
+                class="flex flex-wrap items-center justify-between gap-3 border rounded-sm px-3 py-2"
+                :class="signalClass"
+                data-testid="analytics-executive-signal"
+            >
+                <div class="min-w-0">
+                    <div class="text-xs uppercase tracking-wide opacity-80">Signal</div>
+                    <p class="text-sm font-medium" data-testid="analytics-signal-headline">{{ signal.headline }}</p>
+                </div>
+                <button
+                    v-if="signal.action"
+                    type="button"
+                    class="shrink-0 text-sm underline underline-offset-2 hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-sm"
+                    data-testid="analytics-signal-action"
+                    @click="shell.setView(signal.action)"
+                >
+                    {{ signal.actionLabel }} →
+                </button>
+            </div>
+
+            <div class="surface-primary p-3" data-testid="analytics-summary">
                 <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Work-Life Ratio</div>
+                <ChartMeta
+                    id="summary"
+                    :period="periodLabel"
+                    unit="% of tracked time · minutes"
+                    :legend="[
+                        { swatch: 'bg-[#F53003]', label: 'Work' },
+                        { swatch: 'bg-green-600', label: 'Recharge' },
+                    ]"
+                />
                 <div class="text-lg font-semibold" data-testid="analytics-ratio">
                     Work {{ workPercent }}% · Recharge {{ rechargePercent }}%
                 </div>
@@ -291,10 +386,28 @@ function run(fn: () => Promise<void>): void {
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-disclaimer">
                     {{ analytics.disclaimer }}
                 </p>
+
+                <InterpretationStrip id="summary" :interpretation="workLifeInterpretation" />
+
+                <button
+                    v-if="imbalanced"
+                    type="button"
+                    class="mt-2 text-xs underline underline-offset-2 text-[var(--color-primary)] hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-sm"
+                    data-testid="analytics-recovery-action"
+                    @click="shell.setView('today')"
+                >
+                    {{ analytics.band === 'work_leaning' ? 'Plan a recharge block' : 'Plan a focus block' }} →
+                </button>
             </div>
 
-            <div v-if="analytics.hasGoals" class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-goals">
+            <div v-if="analytics.hasGoals" class="surface-primary p-3" data-testid="analytics-goals">
                 <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Goal progress</div>
+                <ChartMeta
+                    id="goals"
+                    :period="periodLabel"
+                    unit="% complete · milestones · tasks"
+                    :legend="[{ swatch: 'bg-[#F53003]', label: 'Progress' }]"
+                />
 
                 <div class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm" data-testid="analytics-goal-summary">
                     <span class="text-gray-600 dark:text-gray-400">
@@ -337,10 +450,31 @@ function run(fn: () => Promise<void>): void {
                         </li>
                     </ul>
                 </div>
+
+                <InterpretationStrip id="goals" :interpretation="goalsInterpretation" />
+
+                <button
+                    v-if="goalPressure > 0"
+                    type="button"
+                    class="mt-2 text-xs underline underline-offset-2 text-[var(--color-primary)] hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-sm"
+                    data-testid="analytics-review-milestone"
+                    @click="shell.setView('goals')"
+                >
+                    Review milestone →
+                </button>
             </div>
 
-            <div v-if="analytics.capacityDays.length > 0" class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-capacity">
+            <div v-if="analytics.capacityDays.length > 0" class="surface-primary p-3" data-testid="analytics-capacity">
                 <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Capacity</div>
+                <ChartMeta
+                    id="capacity"
+                    :period="periodLabel"
+                    unit="% of planned load realized · minutes"
+                    :legend="[
+                        { swatch: 'bg-[#F53003]', label: 'Scheduled' },
+                        { swatch: 'bg-red-500', label: 'Overload' },
+                    ]"
+                />
 
                 <div class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm" data-testid="analytics-capacity-summary">
                     <span class="text-gray-600 dark:text-gray-400">
@@ -384,10 +518,70 @@ function run(fn: () => Promise<void>): void {
                 <p v-if="analytics.capacityReason" class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-capacity-reason">
                     {{ analytics.capacityReason }}
                 </p>
+
+                <InterpretationStrip id="capacity" :interpretation="capacityInterpretation" />
+
+                <button
+                    type="button"
+                    class="mt-2 text-xs underline underline-offset-2 text-[var(--color-primary)] hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-sm"
+                    data-testid="analytics-review-schedule"
+                    @click="shell.setView('schedule')"
+                >
+                    Review schedule →
+                </button>
             </div>
 
-            <div v-if="analytics.pillars.length > 0" class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-pillars">
+            <div v-if="analytics.taskTotal > 0" class="surface-primary p-3" data-testid="analytics-execution">
+                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Execution</div>
+                <ChartMeta
+                    id="execution"
+                    :period="periodLabel"
+                    unit="% of scheduled tasks completed · counts"
+                    :legend="[{ swatch: 'bg-[#F53003]', label: 'Completion' }]"
+                />
+
+                <div class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm" data-testid="analytics-execution-summary">
+                    <span :class="lowCompletion ? 'text-danger' : 'text-gray-600 dark:text-gray-400'" data-testid="analytics-execution-rate">
+                        {{ Math.round(analytics.taskCompletionRate * 100) }}% complete
+                    </span>
+                    <span class="text-gray-500 dark:text-gray-400">
+                        {{ analytics.taskCompleted }}/{{ analytics.taskTotal }} tasks
+                    </span>
+                    <span class="text-gray-500 dark:text-gray-400">
+                        {{ analytics.taskCompletedInPeriod }} completed in period
+                    </span>
+                </div>
+
+                <div class="flex h-2.5 w-full overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
+                    <div
+                        class="h-full"
+                        :class="lowCompletion ? 'bg-red-500' : 'bg-[#F53003]'"
+                        :style="{ width: `${Math.min(100, Math.round(analytics.taskCompletionRate * 100))}%` }"
+                        data-testid="analytics-execution-bar"
+                    />
+                </div>
+
+                <InterpretationStrip id="execution" :interpretation="executionInterpretation" />
+
+                <button
+                    v-if="lowCompletion"
+                    type="button"
+                    class="mt-2 text-xs underline underline-offset-2 text-[var(--color-primary)] hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-sm"
+                    data-testid="analytics-reduce-workload"
+                    @click="shell.setView('schedule')"
+                >
+                    Reduce workload →
+                </button>
+            </div>
+
+            <div v-if="analytics.pillars.length > 0" class="surface-supporting" data-testid="analytics-pillars">
                 <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Life pillars</div>
+                <ChartMeta
+                    id="pillars"
+                    :period="periodLabel"
+                    unit="% of pillar target · minutes"
+                    :legend="[{ swatch: 'bg-[#F53003]', label: 'Realized' }]"
+                />
 
                 <ul class="space-y-2">
                     <li v-for="pillar in analytics.pillars" :key="pillar.key" class="text-sm" data-testid="analytics-pillar">
@@ -410,9 +604,11 @@ function run(fn: () => Promise<void>): void {
                         </div>
                     </li>
                 </ul>
+
+                <InterpretationStrip id="pillars" :interpretation="pillarInterpretation" />
             </div>
 
-            <div class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-heatmap">
+            <div class="surface-supporting" data-testid="analytics-heatmap">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <div class="flex items-center gap-2">
                         <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Activity heatmap</div>
@@ -491,11 +687,22 @@ function run(fn: () => Promise<void>): void {
                             {{ heatmapDayLabel(day) }}
                         </li>
                     </ul>
+
+                    <InterpretationStrip id="heatmap" :interpretation="heatmapInterpretation" />
                 </div>
             </div>
 
-            <div v-if="analytics.days.length > 0" class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-days">
+            <div v-if="analytics.days.length > 0" class="surface-supporting" data-testid="analytics-days">
                 <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Per day</div>
+                <ChartMeta
+                    id="days"
+                    :period="periodLabel"
+                    unit="minutes per day"
+                    :legend="[
+                        { swatch: 'bg-[#F53003]', label: 'Work' },
+                        { swatch: 'bg-green-600', label: 'Recharge' },
+                    ]"
+                />
                 <ul class="space-y-1">
                     <li
                         v-for="day in analytics.days"
@@ -513,6 +720,8 @@ function run(fn: () => Promise<void>): void {
                         </span>
                     </li>
                 </ul>
+
+                <InterpretationStrip id="days" :interpretation="daysInterpretation" />
             </div>
         </template>
     </div>

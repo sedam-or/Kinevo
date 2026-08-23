@@ -144,6 +144,33 @@ radius-3: 12px   large modal / workspace surfaces
 
 Avoid fully rounded controls except where semantics require it.
 
+### 4a. Information-hierarchy surfaces (TASK-P17-021)
+
+Five shared levels implement §4's border doctrine as utilities
+(`resources/css/app.css`, `@layer components`). Weight concentrates on
+Hero/Primary; Supporting and Metadata stay open — Neo-Brutalism is not
+"everything boxed". All levels derive from theme vars and follow light/dark
+automatically; never hard-code grays alongside them.
+
+```text
+L1 .surface-hero        hero / modal / important state   border-width-4 + radius-2 + raised bg + shadow-rest
+L2 .surface-primary     primary card / strong emphasis   border-width-3 + radius-1 + raised bg
+L3 .surface-secondary   grouped container                border-width-2 + radius-1 + raised bg
+L4 .surface-supporting  supporting group                 NO box — hairline top border + open whitespace above
+L5 .surface-metadata    metadata rows                    no chrome at all; rides on the enclosing surface
+```
+
+Rules:
+
+- A page leads with at most one Hero surface; Primary is for decision content.
+- Supporting groups separate major sections through whitespace (space-6+)
+  plus a hairline — not through additional boxes.
+- Interactive components keep their own width-2 borders (KButton et al.);
+  the L-system classifies containers only.
+- Reference adoption: Analytics (`AnalyticsView.vue`) — summary/goals/
+  capacity/execution are L2 Primary; pillars/heatmap/per-day are L4
+  Supporting. Other surfaces adopt incrementally; do not re-box open groups.
+
 ---
 
 ## 5. Shadow tokens (design.md §4.3, §49)

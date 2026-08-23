@@ -559,6 +559,70 @@ tests/e2e/tests/next-action.spec.ts  chromium/firefox/webkit
           it now wraps (design.md §58); journey-i mobile proofs re-green.
 ```
 
+### P17-017 — Connect Analytics to Decisions run (2026-08-23)
+```text
+tests/e2e/tests/journey-j.spec.ts  chromium/firefox/webkit
+  checks: seeded scheduled task + focus session drive Analytics data; the
+          Work-Life chart shows the What changed / Why it matters / What to do
+          strip; the capacity card shows the recommendation plus the
+          [Review schedule] action; clicking it lands in the Schedule workflow
+          (schedule-draft-view) — analytics → interpretation → action.
+  Result: 1 test × 3 browsers = 3 passed.
+  Note: every chart now carries the deterministic interpretation strip
+        (design.md §38/§104 P17-G); no chart stands alone.
+```
+
+### P17-018 — Analytics information hierarchy visual audit (2026-08-23)
+```text
+journey-j.spec.ts extended  chromium/firefox/webkit
+  checks: executive signal block renders FIRST in Analytics (before any
+          chart), then summary → goals → capacity → pillars → heatmap → days
+          by DOM top-offset, whatever sections rendered. Signal content is
+          priority-resolved (overdue > at-risk > overload > imbalance) with a
+          resolving action; unit tests additionally prove via
+          compareDocumentPosition that no chart precedes it.
+  Result: 3 passed (1 test × 3 browsers) against the live stack.
+  Closes ui-audit UX-C6 ("analytics shows 15 charts before signal") for the
+  analytics surface.
+```
+
+### P17-019 — Analytics chart requirements audit (2026-08-23)
+```text
+journey-j.spec.ts extended  chromium/firefox/webkit
+  checks: every chart exposes a meta header — period (resolved overview range
+          from–to), unit caption, and color legend swatches matching the bars
+          (Work/Recharge on summary & days, Scheduled/Overload on capacity).
+          No pie charts; all productivity visuals are bars/heatmap.
+  Result: 3 passed (1 test × 3 browsers) against the live stack.
+  Regression reported with §10/P17-018: 81 passed, 9 pre-existing failures
+  (golden-journeys AI/Ollama env blockers + canvas + feature-education Today).
+```
+
+### P17-020 — Analytics actionability run (2026-08-23)
+```text
+journey-j.spec.ts extended  chromium/firefox/webkit
+  checks: each section drives an action and clicking it lands in the related
+          workflow — Review milestone → goals-view (goal pressure), Plan a
+          recharge/focus block → today-view (work/recharge imbalance), Reduce
+          workload → schedule-draft-view (completion below 50%, new Execution
+          card), Review schedule → schedule-draft-view (capacity). Optional
+          actions are followed when the seeded state renders them.
+  Result: 3 passed (1 test × 3 browsers) against the live stack. Regression:
+          81 passed with the identical pre-existing failure set as P17-019.
+```
+
+### P17-021 — Design-system hierarchy visual audit (2026-08-23)
+```text
+tests/e2e/tests/analytics-hierarchy.spec.ts  chromium/firefox/webkit
+  checks: Analytics renders the shared surface system (design-tokens §4a) —
+          summary/goals/capacity/execution boxed as L2 .surface-primary;
+          pillars/heatmap/per-day OPEN as L4 .surface-supporting (hairline,
+          never boxed); section rhythm space-y-4 → space-y-6; light + dark
+          themes both audited via kinevo.theme override.
+  Result: 6 passed (2 tests × 3 browsers). Screenshots:
+          test-results/screenshots/<browser>/p17-021-analytics-{light,dark}.png
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.

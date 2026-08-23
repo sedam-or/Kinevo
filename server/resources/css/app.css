@@ -3,6 +3,46 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* Information-hierarchy surfaces (TASK-P17-021, docs/design-tokens.md §4a).
+   Five shared levels keep Neo-Brutalism from boxing everything: weight
+   concentrates on Hero/Primary; Supporting and Metadata stay open so the
+   page breathes. Colors derive from theme vars and follow light/dark
+   automatically — do not hard-code grays alongside these. */
+@layer components {
+    /* L1 Hero / modal / important state (border-width-4). */
+    .surface-hero {
+        border: 4px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-surface-raised);
+        box-shadow: var(--shadow-rest);
+    }
+
+    /* L2 Primary card / strong emphasis (border-width-3). */
+    .surface-primary {
+        border: 3px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface-raised);
+    }
+
+    /* L3 Secondary container (border-width-2). */
+    .surface-secondary {
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        background: var(--color-surface-raised);
+    }
+
+    /* L4 Supporting group: open whitespace + hairline, never a box. */
+    .surface-supporting {
+        border-top: 1px solid var(--color-border);
+        padding-top: 1rem;
+    }
+
+    /* L5 Metadata rides directly on the enclosing surface. */
+    .surface-metadata {
+        background: transparent;
+    }
+}
+
 /* Native controls follow the active theme (TASK-P17-013): date pickers,
    scrollbars and form chrome must stay readable in dark mode (design.md §5.4). */
 :root {

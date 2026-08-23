@@ -161,6 +161,19 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 > accessibility suite. No new visual noise: quiet variants stay flat.
 > Matrix flips: schedule draft/reschedule CTA hierarchy 🟡 → ✅ (UI-013
 > closed).
+>
+> 2026-08-23 (TASK-P17-021, UX-C4 shared hierarchy): the five-level surface
+> system (Hero/Primary/Secondary/Supporting/Metadata) landed as tokenized
+> utilities (`app.css` `@layer components`, design-tokens.md §4a) — weight
+> concentrates on Hero/Primary; Supporting groups are OPEN (hairline +
+> whitespace, never boxed). Analytics adopted as reference surface: summary/
+> goals/capacity/execution = L2 Primary; pillars/heatmap/per-day de-boxed to
+> L4; section rhythm space-4 → space-6. Off-token gray card borders replaced
+> by theme-var borders. Real-browser audit + light/dark screenshots:
+> `tests/e2e/tests/analytics-hierarchy.spec.ts` (6 passed, artifacts under
+> `tests/e2e/test-results/screenshots/<browser>/p17-021-analytics-*.png`).
+> UX-C4 "everything boxed" is closed for the analytics surface; remaining
+> surfaces adopt the L-system incrementally (no re-boxing of open groups).
 
 
 ¹ Canvas: audited 2026-08-23 (P17-010) — page-level chrome has no competing primaries; drawing tools are Excalidraw-owned (§104 external engine boundary).

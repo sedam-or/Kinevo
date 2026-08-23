@@ -40,6 +40,11 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     const capacityReason = ref('');
     const capacityConfidence = ref('');
 
+    const taskTotal = ref(0);
+    const taskCompleted = ref(0);
+    const taskCompletionRate = ref(0);
+    const taskCompletedInPeriod = ref(0);
+
     const pillars = ref<PillarRow[]>([]);
 
     const heatmapDays = ref<HeatmapDay[]>([]);
@@ -82,6 +87,11 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         capacityRecommendation.value = result.capacity.recommendation;
         capacityReason.value = result.capacity.reason;
         capacityConfidence.value = result.capacity.confidence;
+
+        taskTotal.value = result.task_completion.total_tasks;
+        taskCompleted.value = result.task_completion.completed_tasks;
+        taskCompletionRate.value = result.task_completion.completion_rate;
+        taskCompletedInPeriod.value = result.task_completion.completed_in_period;
 
         pillars.value = result.pillars.pillars;
 
@@ -142,6 +152,10 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         capacityRecommendation.value = '';
         capacityReason.value = '';
         capacityConfidence.value = '';
+        taskTotal.value = 0;
+        taskCompleted.value = 0;
+        taskCompletionRate.value = 0;
+        taskCompletedInPeriod.value = 0;
         pillars.value = [];
         heatmapDays.value = [];
         heatmapLegend.value = [];
@@ -179,6 +193,10 @@ export const useAnalyticsStore = defineStore('analytics', () => {
         capacityRecommendation,
         capacityReason,
         capacityConfidence,
+        taskTotal,
+        taskCompleted,
+        taskCompletionRate,
+        taskCompletedInPeriod,
         pillars,
         heatmapDays,
         heatmapLegend,
