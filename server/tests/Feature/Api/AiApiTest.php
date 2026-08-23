@@ -49,7 +49,8 @@ class AiApiTest extends TestCase
         $this->withToken($token)->getJson('/api/v1/ai/status')
             ->assertStatus(200)
             ->assertJsonPath('status.provider', 'mock')
-            ->assertJsonPath('status.available', true);
+            ->assertJsonPath('status.available', true)
+            ->assertJsonPath('status.state', 'connected');
     }
 
     public function test_disabled_provider_returns_503_with_canonical_code(): void
@@ -65,7 +66,8 @@ class AiApiTest extends TestCase
 
         $this->withToken($token)->getJson('/api/v1/ai/status')
             ->assertStatus(200)
-            ->assertJsonPath('status.available', false);
+            ->assertJsonPath('status.available', false)
+            ->assertJsonPath('status.state', 'disabled');
     }
 
     public function test_generate_validates_role_and_prompt(): void

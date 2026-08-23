@@ -24,7 +24,7 @@ const maskedConfig = {
     base_url: 'http://localhost:11434',
     has_api_key: false,
     api_key_hint: null,
-    status: { provider: 'ollama', model: 'llama3.1', available: false, latency_ms: null, error: 'AI provider is unreachable.' },
+    status: { provider: 'ollama', model: 'llama3.1', state: 'unavailable' as const, available: false, latency_ms: null, error: 'AI provider is unreachable.' },
     privacy_ok: true,
 };
 
@@ -124,6 +124,44 @@ describe('AiSettingsView (TASK-P17-006)', () => {
         await flushPromises();
 
         expect(wrapper.find('[data-testid="ai-test-result"]').text()).toContain('Connected to ollama');
+    });
+
+    it('renders the canonical status banner from the server state (P17-007)', async () => {
+        const cases: Array<{ state: string; label: string }> = [
+            { state: 'connected', label: 'Connected.' },
+            { state: 'degraded', label: 'Connected, but slow' },
+            { state: 'unavailable', label: 'Provider unreachable.' },
+            { state: 'disabled', label: 'AI is off.' },
+            { state: 'not_configured', label: 'Not configured' },
+        ];
+        for (const c of cases) {
+            vi.mocked(aiApi.config).mockResolvedValue({
+                config: {
+                    ...maskedConfig,
+                    status: { ...maskedConfig.status, state: c.state as typeof maskedConfig.status.state },
+                },
+            });
+            const wrapper = mountView();
+            await flushPromises();
+
+            const banner = wrapper.find('[data-testid="ai-status-banner"]');
+            expect(banner.exists()).toBe(true);
+            expect(banner.find('[data-testid="ai-status-state"]').text()).toBe(c.state.replaceAll('_', ' '));
+            expect(banner.text()).toContain(c.label);
+            wrapper.unmount();
+        }
+    });
+
+    it('distinguishes configured from available: enabled-but-down shows unavailable detail', async () => {
+        vi.mocked(aiApi.config).mockResolvedValue({ config: maskedConfig });
+        const wrapper = mountView();
+        await flushPromises();
+
+        // maskedConfig: enabled=true, available=false, state='unavailable'.
+        const banner = wrapper.find('[data-testid="ai-status-banner"]');
+        expect(banner.text()).toContain('Provider unreachable.');
+        expect(banner.text()).toContain('ollama');
+        expect(banner.text()).toContain('AI provider is unreachable.');
     });
 
     it('shows the privacy blurb', async () => {

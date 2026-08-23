@@ -38,9 +38,17 @@ final readonly class EloquentAiProviderConfigRepository implements AiProviderCon
         } else {
             $values['api_key'] = null;
         }
-        AiProviderConfigModel::query()->updateOrCreate(
-            ['id' => AiProviderConfigModel::SINGLETON_ID],
-            $values,
-        );
+        // Enforce the single-row contract explicitly. `id` is intentionally
+        // not fillable, so updateOrCreate(['id' => …]) cannot match on an
+        // empty table and would silently insert a sequence-assigned row
+        // instead of bootstrapping the singleton.
+        $model = AiProviderConfigModel::query()->firstOrNew();
+        if (! $model->exists) {
+            $model->id = AiProviderConfigModel::SINGLETON_ID;
+        }
+        foreach ($values as $key => $value) {
+            $model->{$key} = $value;
+        }
+        $model->save();
     }
 }

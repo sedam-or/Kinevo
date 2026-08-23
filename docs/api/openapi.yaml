@@ -4923,10 +4923,21 @@ components:
       properties:
         status:
           type: object
-          required: [provider, model, available]
+          required: [provider, model, state, enabled, available]
           properties:
             provider: {type: string}
             model: {type: string}
+            state:
+              type: string
+              enum: [disabled, not_configured, configured, testing, connected, degraded, unavailable]
+              description: |
+                Canonical status (TASK-P17-007). One source of truth — UI MUST
+                render from this. `disabled`: off by explicit user/deployment
+                decision; `not_configured`: enabled provider missing required
+                setup (e.g. OpenAI key); `testing`: client-transient only,
+                never returned by the server; `connected`/`degraded`/
+                `unavailable`: probe outcome while usable config exists.
+            enabled: {type: boolean}
             available: {type: boolean}
             latency_ms: {type: integer, nullable: true, minimum: 0}
             error: {type: string, nullable: true}
@@ -4955,14 +4966,8 @@ components:
             has_api_key: {type: boolean}
             api_key_hint: {type: string, nullable: true, description: 'Masked …last4 only'}
             status:
-              type: object
-              required: [provider, model, available]
-              properties:
-                provider: {type: string}
-                model: {type: string}
-                available: {type: boolean}
-                latency_ms: {type: integer, nullable: true}
-                error: {type: string, nullable: true}
+              allOf:
+                - $ref: '#/components/schemas/AiStatusResponse/properties/status'
             privacy_ok: {type: boolean}
     AiGenerateRequest:
       type: object

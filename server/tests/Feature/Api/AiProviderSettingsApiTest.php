@@ -6,6 +6,7 @@ use App\Models\AiProviderConfig as AiProviderConfigModel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class AiProviderSettingsApiTest extends TestCase
@@ -41,6 +42,53 @@ class AiProviderSettingsApiTest extends TestCase
         $response->assertJsonMissing(['config' => ['api_key' => 'sk-super-secret-1234']]);
         // The raw secret must not appear anywhere in the payload.
         $this->assertStringNotContainsString('sk-super-secret-1234', $response->getContent());
+    }
+
+    public function test_config_show_reports_canonical_state(): void
+    {
+        $token = $this->token();
+        // Seed through the singleton id exactly as the repository writes it;
+        // plain create() would burn sequence values that survive rollback.
+        AiProviderConfigModel::query()->updateOrCreate(
+            ['id' => AiProviderConfigModel::SINGLETON_ID],
+            [
+                'provider' => 'ollama',
+                'enabled' => true,
+                'model' => 'llama3.1',
+                'base_url' => 'http://localhost:11434',
+            ],
+        );
+        // Probe fails: configured ≠ available (TASK-P17-007).
+        Http::fake(['http://localhost:11434/api/tags' => Http::response('down', 500)]);
+
+        $this->withHeaders($this->authHeaders($token))->getJson('/api/v1/ai/config')
+            ->assertOk()
+            ->assertJsonPath('config.enabled', true)
+            ->assertJsonPath('config.status.state', 'unavailable')
+            ->assertJsonPath('config.status.available', false);
+
+        // Same mapper on /ai/status — one source of truth.
+        $this->withHeaders($this->authHeaders($token))->getJson('/api/v1/ai/status')
+            ->assertOk()
+            ->assertJsonPath('status.state', 'unavailable');
+    }
+
+    public function test_enabled_openai_without_key_maps_to_not_configured(): void
+    {
+        $token = $this->token();
+        AiProviderConfigModel::query()->updateOrCreate(
+            ['id' => AiProviderConfigModel::SINGLETON_ID],
+            [
+                'provider' => 'openai',
+                'enabled' => true,
+                'model' => 'gpt-4o-mini',
+                'base_url' => 'https://api.openai.com/v1',
+            ],
+        );
+
+        $this->withHeaders($this->authHeaders($token))->getJson('/api/v1/ai/status')
+            ->assertOk()
+            ->assertJsonPath('status.state', 'not_configured');
     }
 
     public function test_config_update_encrypts_and_never_echoes_the_key(): void
@@ -82,10 +130,9 @@ class AiProviderSettingsApiTest extends TestCase
             'provider' => 'openai',
             'api_key' => 'sk-second',
         ])->assertOk();
-        $this->assertSame(
-            'sk-second',
-            Crypt::decryptString(AiProviderConfigModel::query()->first()->getAttributes()['api_key']),
-        );
+        $stored = AiProviderConfigModel::query()->first();
+        $this->assertNotNull($stored);
+        $this->assertSame('sk-second', Crypt::decryptString($stored->getAttributes()['api_key']));
 
         // Remove-only.
         $this->withHeaders($this->authHeaders($token))->putJson('/api/v1/ai/config', [

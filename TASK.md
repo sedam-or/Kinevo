@@ -3807,17 +3807,30 @@ P17-G Analytics / Decision Support UX
 - Notes: documented architecture behavior → docs/ai-architecture.md.
 
 ### TASK-P17-007 — AI Status Consistency
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-007)
 - Priority: P1
 - Depends On: TASK-P17-006
 - SRS: FR-60
 - Files: server /api/v1/ai/status; AI settings UI
 - Acceptance:
-  - [ ] one source of truth for AI status; states Disabled / Not Configured /
+  - [x] one source of truth for AI status; states Disabled / Not Configured /
         Configured / Testing / Connected / Unavailable / Degraded
-  - [ ] UI distinguishes configured ≠ available
-- Verification: [ ] integration test status mapping; E2E state display
+        (`GetAiProviderStatusUseCase::stateFor` is the single mapper; both
+        `/ai/status` and `/ai/config` embed its canonical `state`; openapi
+        enum synced; `testing` reserved client-side)
+  - [x] UI distinguishes configured ≠ available
+        (AiSettingsView status banner renders `state`; enabled-but-down shows
+        unavailable with provider error detail)
+- Verification: [x] integration test status mapping (AiProviderStateMappingTest 8/8;
+        AiProviderSettingsApiTest +2: canonical state on both endpoints,
+        not_configured-without-key); E2E state display [x] component-level
+        (AiSettingsView.test.ts banner cases) — real-browser proof deferred to
+        TASK-P17-032/033 per rescue-phase browser-evidence rule
 - Notes: derive UI from GET /api/v1/ai/status, extend contract if needed.
+  Also fixed latent singleton bug found by the new tests:
+  `EloquentAiProviderConfigRepository::save()` relied on
+  updateOrCreate(['id'=>…]) but `id` is not fillable — empty tables got a
+  sequence-id row instead of bootstrapping SINGLETON_ID.
 
 ### TASK-P17-008 — Contextual Feature Explanation System
 - Status: TODO

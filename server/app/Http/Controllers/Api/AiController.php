@@ -55,7 +55,7 @@ final class AiController extends Controller
 
     public function status(): JsonResponse
     {
-        return response()->json(['status' => $this->providerStatus->__invoke()->toArray()]);
+        return response()->json(['status' => $this->providerStatus->__invoke()]);
     }
 
     public function configShow(): JsonResponse

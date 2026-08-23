@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useAiSettingsStore } from './store';
+import type { AiStatusState } from './api';
 import KButton from '../components/KButton.vue';
 
 const store = useAiSettingsStore();
@@ -22,6 +23,43 @@ const saved = ref(false);
 const saving = ref(false);
 const testResult = ref<null | { provider: string; available: boolean; error: string | null }>(null);
 const formError = ref<string | null>(null);
+
+// Single source of truth: render the server's canonical state (P17-007),
+// never re-derive availability from raw fields in components.
+const STATUS_VIEW: Record<AiStatusState, { tone: string; label: string }> = {
+    disabled: { tone: 'text-gray-600 dark:text-gray-400', label: 'AI is off.' },
+    not_configured: {
+        tone: 'text-warning dark:text-yellow-400',
+        label: 'Not configured — finish provider setup to use AI.',
+    },
+    configured: {
+        tone: 'text-gray-600 dark:text-gray-400',
+        label: 'Saved — not yet verified.',
+    },
+    testing: { tone: 'text-gray-600 dark:text-gray-400', label: 'Testing connection…' },
+    connected: { tone: 'text-green-700 dark:text-green-400', label: 'Connected.' },
+    degraded: {
+        tone: 'text-warning dark:text-yellow-400',
+        label: 'Connected, but slow — responses may lag.',
+    },
+    unavailable: { tone: 'text-danger', label: 'Provider unreachable.' },
+};
+const statusState = computed<AiStatusState>(() => store.config?.status.state ?? 'disabled');
+const statusView = computed(() => STATUS_VIEW[statusState.value]);
+const statusDetail = computed(() => {
+    const s = store.config?.status;
+    if (!s || statusState.value === 'disabled' || statusState.value === 'not_configured') {
+        return null;
+    }
+    const parts = [s.provider];
+    if (statusState.value !== 'configured' && s.latency_ms !== null) {
+        parts.push(`${s.latency_ms} ms`);
+    }
+    if (!s.available && s.error) {
+        parts.push(s.error);
+    }
+    return parts.join(' · ');
+});
 
 const apiKeyRequired = computed(() => form.provider === 'openai');
 const ollamaMode = computed(() => form.provider === 'ollama');
@@ -97,6 +135,11 @@ async function submit(): Promise<void> {
 
         <form v-else class="flex flex-col gap-4" @submit.prevent="submit" data-testid="ai-provider-form">
             <div v-if="formError" class="text-sm text-danger" role="alert" data-testid="ai-settings-error">{{ formError }}</div>
+            <p class="text-sm flex items-baseline gap-2" :class="statusView.tone" data-testid="ai-status-banner">
+                <span class="font-medium uppercase tracking-wide text-xs" data-testid="ai-status-state">{{ statusState.replaceAll('_', ' ') }}</span>
+                <span>{{ statusView.label }}</span>
+                <span v-if="statusDetail" class="text-xs opacity-80">{{ statusDetail }}</span>
+            </p>
             <div v-if="saved" class="text-sm text-green-700 dark:text-green-400" data-testid="ai-settings-saved">AI provider settings saved.</div>
 
             <label class="flex flex-col gap-1 text-sm">

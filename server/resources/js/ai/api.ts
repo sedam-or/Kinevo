@@ -1,5 +1,19 @@
 import { apiClient } from '../api/client';
 
+/**
+ * Canonical AI status states (TASK-P17-007) — server-derived via
+ * GET /api/v1/ai/status; the UI MUST render from this union, never re-guess
+ * from raw fields. `testing` is client-transient during a connection test.
+ */
+export type AiStatusState =
+    | 'disabled'
+    | 'not_configured'
+    | 'configured'
+    | 'testing'
+    | 'connected'
+    | 'degraded'
+    | 'unavailable';
+
 export interface AiProviderStatus {
     provider: string;
     model: string;
@@ -15,7 +29,7 @@ export interface AiProviderConfigPayload {
     base_url: string | null;
     has_api_key: boolean;
     api_key_hint: string | null;
-    status: AiProviderStatus & { state?: string };
+    status: AiProviderStatus & { state: AiStatusState };
     privacy_ok: boolean;
 }
 

@@ -21,7 +21,8 @@ final readonly class GetAiProviderConfigUseCase
     {
         $config = $this->configs->get() ?? AiProviderConfig::defaults();
         $status = $this->ai->status();
-
+        // Canonical state from the SAME mapper as /ai/status (TASK-P17-007):
+        // the two endpoints can never disagree.
         return [
             'provider' => $config->provider,
             'enabled' => $config->enabled,
@@ -29,7 +30,9 @@ final readonly class GetAiProviderConfigUseCase
             'base_url' => $config->baseUrl,
             'has_api_key' => $config->apiKey !== null,
             'api_key_hint' => $this->hint($config->apiKey),
-            'status' => $status->toArray(),
+            'status' => array_merge($status->toArray(), [
+                'state' => GetAiProviderStatusUseCase::stateFor($this->configs->get(), $status),
+            ]),
             'privacy_ok' => true,
         ];
     }

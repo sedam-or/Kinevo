@@ -11,9 +11,13 @@ version** (v1) are tracked separately in `docs/SRS.md` and
 Release governance: see `docs/release-management.md`.
 
 ## [Unreleased]
-
 ### Added
 
+- AI status is now a single source of truth (Phase 17, TASK-P17-007): the
+  status and config endpoints expose one canonical state (`disabled`,
+  `not_configured`, `configured`, `testing`, `connected`, `degraded`,
+  `unavailable`), and AI settings renders it live — distinguishing a saved
+  configuration from an actually reachable provider.
 - Breakdown is now invokable where the goal lives (Phase 17, TASK-P17-005):
   the goal detail header and the empty-milestone state both offer an explicit
   [Break Down with AI] action — no trip to Settings or another AI page. While
@@ -343,7 +347,6 @@ Release governance: see `docs/release-management.md`.
   persisted.
 
 ### Fixed
-
 - Canvases no longer silently lose edits made while offline: an autosave that
   failed because the device was offline is now retried automatically as soon
   as connectivity returns (offline-sync.md "sync on reconnect"), instead of
@@ -371,6 +374,9 @@ Release governance: see `docs/release-management.md`.
     restore flow failed.
 
 ### Fixed
+- Saving AI provider settings on an empty database no longer creates an extra
+  orphan record; the single global settings row bootstraps correctly
+  (regression found by P17-007 tests).
 - Analytics periods with a date-only `to` (YYYY-MM-DD) now include events
   that happen ON the end day. Previously `to=2026-08-23` cut off at
   00:00:00, so same-day activity silently disappeared from the overview —
