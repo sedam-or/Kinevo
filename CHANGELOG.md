@@ -13,6 +13,11 @@ Release governance: see `docs/release-management.md`.
 ## [Unreleased]
 ### Added
 
+- Actions now answer back (Phase 17, TASK-P17-011): completing a task
+  snaps the button, refreshes your progress, pops a confirmation and briefly
+  spotlights the next task; energy check-ins flash "Saved ✓"; goal AI
+  breakdowns narrate their stages instead of a bare spinner.
+
 - Every page now has exactly one obvious primary action (Phase 17,
   TASK-P17-010): on the goals list the "Create" and "Generate with AI"
   actions no longer compete — creating a goal hands the spotlight to the AI

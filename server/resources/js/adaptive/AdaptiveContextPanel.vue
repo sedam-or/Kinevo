@@ -3,6 +3,8 @@ import { onMounted, reactive, ref } from 'vue';
 import { useAdaptiveStore } from './store';
 import KButton from '../components/KButton.vue';
 import FeatureHelp from '../components/FeatureHelp.vue';
+import { useSaveState } from '../components/useSaveState';
+import { useToastStore } from '../components/toast';
 
 /**
  * Lightweight adaptive-context check-in (design.md §23, SRS FR-40).
@@ -35,18 +37,27 @@ function energyLabel(level: number): string {
     return 'High';
 }
 
+const { state: saveState, label: saveLabel, run: runSave } = useSaveState();
+const toast = useToastStore();
+
 async function submit(): Promise<void> {
     localError.value = null;
     if (form.energyLevel === null) {
         return;
     }
-    const saved = await adaptive.checkIn({
-        energy_level: form.energyLevel,
-        task_id: form.taskId ?? null,
-    });
-    if (saved === null) {
+    const ok = await runSave(() =>
+        adaptive.checkIn({
+            energy_level: form.energyLevel,
+            task_id: form.taskId ?? null,
+        }),
+    );
+    if (!ok) {
         localError.value = adaptive.error?.message ?? 'Could not record the check-in.';
+        return;
     }
+    toast.push('Check-in logged');
+    form.energyLevel = null;
+    form.taskId = null;
 }
 </script>
 
@@ -93,8 +104,8 @@ async function submit(): Promise<void> {
                 </span>
             </fieldset>
 
-            <KButton type="submit" variant="primary" :disabled="form.energyLevel === null || adaptive.saving" data-testid="adaptive-submit">
-                {{ adaptive.saving ? 'Saving…' : 'Log' }}
+            <KButton type="submit" variant="primary" :disabled="form.energyLevel === null || saveState === 'saving'" data-testid="adaptive-submit">
+                {{ saveLabel('Log') }}
             </KButton>
         </form>
     </section>

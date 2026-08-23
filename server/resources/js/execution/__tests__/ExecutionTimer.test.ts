@@ -126,6 +126,42 @@ describe('ExecutionTimer', () => {
         expect(wrapper.emitted('completed')).toBeTruthy();
     });
 
+    it('snaps the Complete button while the completion request runs (TASK-P17-011)', async () => {
+        let resolveComplete: () => void = () => {};
+        vi.mocked(executionApi.active).mockResolvedValue({ execution: running });
+        vi.mocked(executionApi.complete).mockReturnValue(
+            new Promise((resolve) => {
+                resolveComplete = () =>
+                    resolve({
+                        execution: { ...running, status: 'completed', accumulated_seconds: 2700, ended_at: '2026-08-19T09:45:00' },
+                        focus_session: { id: 1, user_id: 1, task_id: 10, started_at: '2026-08-19T09:00:00', ended_at: '2026-08-19T09:45:00', duration_minutes: 45 },
+                        task: { id: 10, status: 'completed', progress: 100, version: 2, title: 'Write report' },
+                        continuation: null,
+                    } as Awaited<ReturnType<typeof executionApi.complete>>);
+            }) as ReturnType<typeof executionApi.complete>,
+        );
+
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(ExecutionTimer, {
+            props: { taskId: 10 },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        const button = wrapper.find('[data-testid="execution-complete"]');
+        await button.trigger('click');
+        // Press registers instantly — snap class present while in flight.
+        expect(button.classes()).toContain('animate-snap');
+
+        resolveComplete();
+        await flushPromises();
+        // Completion swaps the controls out (Ready state) and notifies parent.
+        expect(wrapper.emitted('completed')).toBeTruthy();
+        expect(wrapper.find('[data-testid="execution-complete"]').exists()).toBe(false);
+    });
+
     it('shows an error when an action fails', async () => {
         vi.mocked(executionApi.active).mockResolvedValue({ execution: null });
         vi.mocked(executionApi.start).mockRejectedValue({ code: 'VALIDATION', status: 422, message: 'An execution timer is already running.', retryable: false });

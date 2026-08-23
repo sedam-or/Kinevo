@@ -4,6 +4,7 @@ import { useShellStore } from './store';
 import { isShellView, NAV_GROUPS, MOBILE_PRIMARY_KEYS, type ShellView } from './navigation';
 import { useFocusTrap } from './focus-trap';
 import SyncStatusPanel from './SyncStatusPanel.vue';
+import ToastHost from '../components/ToastHost.vue';
 import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel.vue';
 import NotificationCenter from '../notifications/NotificationCenter.vue';
 
@@ -149,6 +150,8 @@ function cycleTheme(): void {
                 <slot />
             </main>
         </div>
+
+        <ToastHost />
 
         <!-- Mobile bottom navigation (design.md §8.3): primary subset +
              "More" drawer so the fixed bar never becomes a scroller. -->

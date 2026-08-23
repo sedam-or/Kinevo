@@ -4,6 +4,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { adaptiveApi } from '../api';
 import { useAdaptiveStore } from '../store';
 import AdaptiveContextPanel from '../AdaptiveContextPanel.vue';
+import { useToastStore } from '../../components/toast';
 
 vi.mock('../api', () => ({
     adaptiveApi: {
@@ -86,5 +87,30 @@ describe('AdaptiveContextPanel', () => {
         await flushPromises();
 
         expect(adaptiveApi.checkIn).toHaveBeenCalledWith({ energy_level: 7, task_id: null });
+    });
+
+    it('confirms the save: Saved ✓ flash + activity toast (TASK-P17-011)', async () => {
+        vi.useFakeTimers();
+        vi.mocked(adaptiveApi.checkIn).mockResolvedValue({ observation });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const toast = useToastStore();
+        const wrapper = mount(AdaptiveContextPanel, { global: { plugins: [pinia] } });
+
+        await flushPromises();
+        const button = () => wrapper.find('[data-testid="adaptive-submit"]');
+        expect(button().text()).toBe('Log');
+
+        await wrapper.find('[data-testid="adaptive-energy-7"]').trigger('click');
+        await wrapper.find('form').trigger('submit');
+        expect(button().text()).toBe('Saving…');
+        await vi.advanceTimersByTimeAsync(0);
+        expect(button().text()).toBe('Saved ✓');
+        expect(toast.items.some((t) => t.message.includes('Check-in logged'))).toBe(true);
+
+        // Confirmation clears itself.
+        await vi.advanceTimersByTimeAsync(1500);
+        expect(button().text()).toBe('Log');
+        vi.useRealTimers();
     });
 });

@@ -64,6 +64,8 @@ vi.mock('../../recharge/api', () => ({
 import TodayView from '../TodayView.vue';
 import { todayApi } from '../api';
 import { useShellStore } from '../../shell/store';
+import { useToastStore } from '../../components/toast';
+import ExecutionTimer from '../../execution/ExecutionTimer.vue';
 import type { TodayResponse } from '../types';
 
 const response: TodayResponse = {
@@ -122,8 +124,7 @@ describe('TodayView', () => {
         expect(wrapper.find('[data-testid="today-timeline"]').exists()).toBe(true);
     });
 
-    it('shows the NOW card with task, lock, and timeline events', async () => {
-        vi.mocked(todayApi.today).mockResolvedValue(response);
+    it('shows the NOW card with task, lock, and timeline events', async () => {        vi.mocked(todayApi.today).mockResolvedValue(response);
         const pinia = createPinia();
         setActivePinia(pinia);
 
@@ -136,6 +137,50 @@ describe('TodayView', () => {
         expect(wrapper.find('[data-testid="timeline-event"]').exists()).toBe(true);
         expect(wrapper.find('[data-testid="timeline-landscape"]').exists()).toBe(true);
         expect(wrapper.find('[data-testid="timeline-empty"]').exists()).toBe(true);
+    });
+
+    it('completes with a full cascade: toast, progress reload, next-task emphasis (TASK-P17-011)', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2026-08-19T09:30:00'));
+        const cascadeResponse: TodayResponse = JSON.parse(JSON.stringify(response));
+        cascadeResponse.events.push({
+            assignment: { ...cascadeResponse.events[0].assignment, id: 2, start_at: '2026-08-19T11:00:00', end_at: '2026-08-19T12:00:00', locked: false },
+            locked: false,
+            conflict: false,
+            task: { ...cascadeResponse.events[0].task!, id: 11, title: 'Review notes', version: 1 },
+            program: null,
+            goal: null,
+            milestone: null,
+        });
+        vi.mocked(todayApi.today).mockResolvedValue(cascadeResponse);
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(TodayView, {
+            props: { date: '2026-08-19' },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        const nextCard = () => wrapper.find('[data-testid="next-card"]');
+        expect(nextCard().exists()).toBe(true);
+        expect(nextCard().classes()).not.toContain('ring-2');
+
+        wrapper.findComponent(ExecutionTimer).vm.$emit('completed');
+        await flushPromises();
+
+        // 1) activity toast answers "did my action work?"
+        const toast = useToastStore();
+        expect(toast.items.some((t) => t.message.includes('Task completed'))).toBe(true);
+        // today reloads → progress advance
+        expect(todayApi.today).toHaveBeenCalledTimes(2);
+        // 2) the upcoming task is spotlighted
+        expect(nextCard().classes()).toContain('ring-2');
+
+        // emphasis fades
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(nextCard().classes()).not.toContain('ring-2');
+        vi.useRealTimers();
     });
 
     it('renders the quick capture form', async () => {

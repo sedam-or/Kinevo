@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
+import { useToastStore } from '../components/toast';
 import { todayApi } from './api';
 import { useFocusTrap } from '../shell/focus-trap';
 import type { BoostSetupResponse, SetBoostTargetResponse } from './types';
@@ -73,6 +74,7 @@ async function save(): Promise<void> {
             start_date: props.startDate,
             end_date: props.endDate,
         });
+        useToastStore().push('Boost target saved');
         emit('saved', result);
     } catch (err) {
         error.value = (err as { message?: string }).message ?? 'Boost target could not be saved.';

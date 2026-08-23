@@ -139,8 +139,12 @@ test.describe('R1 core loop — LOGIN → TODAY → NOW → START → COMPLETE �
 
         // COMPLETE: finish the session through the UI; the timer resets.
         await page.getByTestId('execution-complete').click();
+        // Complete cascade (TASK-P17-011): activity toast answers
+        // "did my action work?" and the upcoming task gets a brief spotlight.
+        await expect(page.getByTestId('toast-host')).toContainText('Task completed', { timeout: 15_000 });
         await expect(page.getByTestId('today-view')).toBeVisible({ timeout: 30_000 });
         await expect(page.getByTestId('execution-status')).toHaveText('Ready', { timeout: 20_000 });
+        await expect(page.getByTestId('next-card')).toHaveClass(/ring-2/, { timeout: 10_000 });
         await expect(page.getByTestId('today-error')).not.toBeVisible();
     });
 });

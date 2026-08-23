@@ -3895,7 +3895,7 @@ P17-G Analytics / Decision Support UX
 - Notes: audit-first; fixes logged as findings.
 
 ### TASK-P17-011 — Micro-Interaction System
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-011)
 - Priority: P1
 - Depends On: —
 - SRS: NFR (feedback/state visibility)
@@ -3906,7 +3906,10 @@ P17-G Analytics / Decision Support UX
         Queued → Syncing → Synced); AI generation (Preparing → Generating →
         Validating → Proposal ready)
   - [ ] interactions answer: did my action work? what changed? what's available?
-- Verification: [ ] component tests + E2E state assertions
+- Verification: [x] component tests (toast, useSaveState,
+        useGenerationStages, ExecutionTimer snap, TodayView cascade,
+        AdaptiveContextPanel Saved ✓) + E2E cascade assertions green in
+        chromium/firefox/webkit core-loop
 - Notes: feedback, not decoration (§16).
 
 ### TASK-P17-012 — Neo-Brutalist Interaction Polish

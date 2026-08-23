@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import FeatureHelp from '../components/FeatureHelp.vue';
+import { useGenerationStages } from '../components/useGenerationStages';
 import { onMounted, reactive, ref } from 'vue';
 import { useGoalStore } from './store';
 import { GOAL_HORIZONS, PROGRAM_WORKLOAD_TYPES, type Goal } from './types';
@@ -30,7 +31,7 @@ const formError = ref<string | null>(null);
 
 /** The just-created goal waiting on a breakdown decision (P17-003). */
 const suggestionGoal = ref<Goal | null>(null);
-const generating = ref(false);
+const { running: generating, label: generationStage, start: startGeneration, stop: stopGeneration } = useGenerationStages();
 const suggestionError = ref<string | null>(null);
 const proposalReady = ref(false);
 
@@ -76,10 +77,10 @@ async function generateBreakdown(): Promise<void> {
     if (suggestionGoal.value === null) {
         return;
     }
-    generating.value = true;
+    startGeneration();
     suggestionError.value = null;
     const proposal = await goals.createBreakdownProposal(suggestionGoal.value.id);
-    generating.value = false;
+    stopGeneration();
     if (proposal === null) {
         suggestionError.value = goals.error?.message ?? 'Could not generate a breakdown.';
         return;
@@ -177,7 +178,7 @@ function workloadLabel(w: string): string {
             </div>
             <div class="flex gap-2 flex-wrap">
                 <KButton variant="primary" data-testid="goal-breakdown-ai" :disabled="generating" @click="generateBreakdown">
-                    {{ generating ? 'Generating…' : 'Generate with AI' }}
+                    {{ generating ? generationStage : 'Generate with AI' }}
                 </KButton>
                 <KButton data-testid="goal-breakdown-manual" @click="doItMyself">I'll do it myself</KButton>
                 <KButton variant="ghost" data-testid="goal-breakdown-later" @click="dismissSuggestion">Later</KButton>

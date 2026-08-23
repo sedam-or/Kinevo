@@ -121,13 +121,36 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 | Empty state (§11.2) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Error state (§11.3) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Offline (§11, §90) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Conflict / save state (§2.5, §34.4) | ⚪ | ⚪ | ⚪ | ⚪ | ✅ | ⚪ | ⚪ | ⚪ |
+| Conflict / save state (§2.5, §34.4) | ✅ | ✅ | ⚪ | ⚪ | ✅ | ✅ | ⚪ | ✅ |
 | Dark mode (§5.4) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Reduced motion (§47) | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 | ⚪ | 🟡 |
 | Primary action obvious (§2.3, §51) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅¹ | ✅ | ✅ |
 | No color-only state (§5.2) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Token usage (§65, design-tokens.md) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Component consolidation (§50, §80) | ✅ | ✅ | 🟡 | 🟡 | ✅ | ⚪ | ⚪ | ⚪ |
+>
+> 2026-08-23 (TASK-P17-011, micro-interaction system, design.md §104):
+> the four feedback cascades now exist and are tested:
+>
+> - **Task complete** — Complete button snaps while the request runs
+>   (`ExecutionTimer`), Today reloads (progress advance), an activity toast
+>   confirms ("Task completed · progress updated", polite live region), and
+>   the NEXT task gets a 2s ring spotlight. Proven in real browsers by
+>   `core-loop.spec.ts` (chromium/firefox/webkit).
+> - **Save** — shared `useSaveState` (Saving… → Saved ✓ → idle); wired into
+>   the adaptive check-in panel and Boost dialog (+toast). AI provider
+>   settings already had its saved confirmation.
+> - **Offline** — `sync-status.ts` bridge already maps offline/queued/
+>   syncing/saved with aria-live announcements; Journey E covers
+>   queued→synced end-to-end. No code change needed.
+> - **AI generation** — shared `useGenerationStages` cycles honest stage
+>   labels (Preparing context… → Generating… → Validating…) on GoalList and
+>   GoalDetail breakdown buttons; completion stays server-truth (proposal
+>   ready / error), never faked by the timer.
+>
+> Matrix flips: Shell + Settings "Conflict / save state" → ✅; Today → ✅
+> (complete cascade + Saved ✓ + toasts). Task/Goal/Knowledge per-form save
+> flashes remain ⚪/🟡 pending the P17-012 token pass.
 
 
 ¹ Canvas: audited 2026-08-23 (P17-010) — page-level chrome has no competing primaries; drawing tools are Excalidraw-owned (§104 external engine boundary).
@@ -145,7 +168,7 @@ Design-system components that MUST exist centrally (no per-page re-implementatio
 | Card / Panel | ⚪ | — |
 | Modal / Drawer | ⚪ | — |
 | Tabs / Tooltip / Dropdown | ⚪ | — |
-| Toast | ⚪ | — |
+| Toast | ✅ | `components/toast.ts` + `components/ToastHost.vue` (P17-011) |
 | ProgressBar | ⚪ | — |
 | Timeline / CalendarGrid | ⚪ | — |
 | EmptyState / ErrorState | ⚪ | — |

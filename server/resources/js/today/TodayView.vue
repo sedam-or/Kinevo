@@ -12,6 +12,7 @@ import BoostDialog from './BoostDialog.vue';
 import { taskStates } from '../visualstate/derive';
 import KButton from '../components/KButton.vue';
 import FeatureHelp from '../components/FeatureHelp.vue';
+import { useToastStore } from '../components/toast';
 import AdaptiveContextPanel from '../adaptive/AdaptiveContextPanel.vue';
 import type { EmptySlot, EmergencyPauseResponse, EndBreakResponse, EndBoostTargetResponse, HardLandscapeEvent, SetBoostTargetResponse, StartBreakResponse, TodayEvent } from './types';
 
@@ -175,7 +176,21 @@ async function quickCapture(): Promise<void> {
     }
 }
 
+const toast = useToastStore();
+const nextEmphasis = ref(false);
+let emphasisTimer: ReturnType<typeof setTimeout> | undefined;
+
 function onExecutionCompleted(): void {
+    // Complete cascade (TASK-P17-011): the data reloads below (progress
+    // advance); announce it and spotlight what's next.
+    toast.push('Task completed · progress updated');
+    nextEmphasis.value = true;
+    if (emphasisTimer) {
+        clearTimeout(emphasisTimer);
+    }
+    emphasisTimer = setTimeout(() => {
+        nextEmphasis.value = false;
+    }, 2000);
     // A completed timer may have changed the task status (completed/continued);
     // reload the day so the schedule, states, and NOW card reflect it.
     void today.load(props.date);
@@ -495,7 +510,7 @@ async function endBoostTarget(): Promise<void> {
         </section>
 
         <!-- NEXT -->
-        <section v-if="nextEvent" class="text-sm" data-testid="next-card">
+        <section v-if="nextEvent" class="text-sm rounded-sm transition-shadow" :class="nextEmphasis ? 'ring-2 ring-[var(--color-primary)] p-2' : 'p-2'" data-testid="next-card">
             <span class="uppercase text-xs text-gray-500 dark:text-gray-400 mr-2">Next</span>
             {{ nextEvent.task?.title ?? 'Untitled' }} at {{ formatTime(nextEvent.assignment.start_at) }}
         </section>

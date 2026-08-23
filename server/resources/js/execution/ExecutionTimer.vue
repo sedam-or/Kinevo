@@ -15,6 +15,7 @@ const emit = defineEmits<{
 const execution = useExecutionStore();
 
 const busy = ref(false);
+const snapping = ref(false);
 const actionError = ref<ApiError | null>(null);
 
 onMounted(() => {
@@ -79,10 +80,17 @@ function abandon(): Promise<void> {
 }
 
 async function complete(): Promise<void> {
-    await run(async () => {
-        await execution.complete();
-        emit('completed');
-    });
+    // Checkbox snap feedback (TASK-P17-011): press registers instantly,
+    // the request resolves in place.
+    snapping.value = true;
+    try {
+        await run(async () => {
+            await execution.complete();
+            emit('completed');
+        });
+    } finally {
+        snapping.value = false;
+    }
 }
 </script>
 
@@ -139,6 +147,7 @@ async function complete(): Promise<void> {
                 type="button"
                 class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
                 :disabled="busy"
+                :class="{ 'animate-snap': snapping }"
                 data-testid="execution-complete"
                 @click="complete"
             >
@@ -157,3 +166,19 @@ async function complete(): Promise<void> {
         </div>
     </div>
 </template>
+
+<style scoped>
+@keyframes snap {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.12) rotate(-4deg); }
+    100% { transform: scale(1); }
+}
+.animate-snap {
+    animation: snap 180ms ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+    .animate-snap {
+        animation: none;
+    }
+}
+</style>

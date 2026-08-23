@@ -5,6 +5,7 @@ import { MILESTONE_STATUSES, type Goal } from './types';
 import type { EntityLink } from '../components/EntityLinks.vue';
 import EntityLinks from '../components/EntityLinks.vue';
 import ProposalReviewCard from '../ai/ProposalReviewCard.vue';
+import { useGenerationStages } from '../components/useGenerationStages';
 
 const props = defineProps<{
     goalId: number;
@@ -24,14 +25,14 @@ const goals = useGoalStore();
  */
 const reviewCard = ref<InstanceType<typeof ProposalReviewCard> | null>(null);
 const hasPendingProposal = ref(false);
-const generating = ref(false);
+const { running: generating, label: generationStage, start: startGeneration, stop: stopGeneration } = useGenerationStages();
 const generateError = ref<string | null>(null);
 
 async function generateBreakdown(): Promise<void> {
     if (generating.value || hasPendingProposal.value) {
         return;
     }
-    generating.value = true;
+    startGeneration();
     generateError.value = null;
     const proposal = await goals.createBreakdownProposal(props.goalId);
     if (proposal === null) {
@@ -39,7 +40,7 @@ async function generateBreakdown(): Promise<void> {
     } else {
         await reviewCard.value?.load();
     }
-    generating.value = false;
+    stopGeneration();
 }
 
 const milestoneCount = computed(() => sortedMilestones().length);
@@ -156,7 +157,7 @@ function milestoneGlyphEmphasis(status: string): string {
                     data-testid="goal-detail-breakdown"
                     :disabled="generating"
                     @click="generateBreakdown"
-                >{{ generating ? 'Generating…' : 'Break Down with AI' }}</button>
+                >{{ generating ? generationStage : 'Break Down with AI' }}</button>
             </div>
         </header>
 
@@ -223,7 +224,7 @@ function milestoneGlyphEmphasis(status: string): string {
                         data-testid="milestones-empty-breakdown"
                         :disabled="generating"
                         @click="generateBreakdown"
-                    >{{ generating ? 'Generating…' : 'Break Down with AI' }}</button>
+                    >{{ generating ? generationStage : 'Break Down with AI' }}</button>
                 </div>
                 <form class="flex gap-2 mb-3" @submit.prevent="addMilestone">
                     <input v-model="milestoneForm.title" type="text" placeholder="Add milestone" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm flex-1" data-testid="milestone-title" />
