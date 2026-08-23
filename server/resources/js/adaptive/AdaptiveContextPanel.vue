@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useAdaptiveStore } from './store';
 import KButton from '../components/KButton.vue';
+import FeatureHelp from '../components/FeatureHelp.vue';
 
 /**
  * Lightweight adaptive-context check-in (design.md §23, SRS FR-40).
@@ -51,7 +52,10 @@ async function submit(): Promise<void> {
 
 <template>
     <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="adaptive-context">
-        <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Context check-in</div>
+        <div class="flex items-center gap-2 mb-2">
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Context check-in</div>
+            <FeatureHelp id="adaptive-context" title="Adaptive Context" body="A one-tap energy check-in. Kinevo uses it to bend today's plan around how you actually feel — and to warn you before burnout builds up." />
+        </div>
         <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
             How's your energy right now? One tap is enough — no questionnaire.
         </p>

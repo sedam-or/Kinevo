@@ -3833,18 +3833,25 @@ P17-G Analytics / Decision Support UX
   sequence-id row instead of bootstrapping SINGLETON_ID.
 
 ### TASK-P17-008 — Contextual Feature Explanation System
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-008)
 - Priority: P1
 - Depends On: —
 - SRS: no SRS change (UX education layer)
 - Files: resources/ components (FeatureIntro/FeatureHelp/InfoPopover/
        LearnMoreDrawer), docs/design.md §104
 - Acceptance:
-  - [ ] reusable explanation components exist; applied to Hard Landscape,
+  - [x] reusable explanation components exist; applied to Hard Landscape,
         Capacity, Adaptive Context, Progress Events, Dynamic Rescheduler,
-        AI Proposal
-  - [ ] dismissed preference stored locally; not repeated
-- Verification: [ ] component tests; E2E first-use callout
+        AI Proposal — one component covers all six surfaces
+        (`components/FeatureHelp.vue`: info trigger → short popover →
+        "Got it"); deliberately NOT four separate variants (YAGNI)
+  - [x] dismissed preference stored locally (`kinevo.feature-help.<id>` in
+        localStorage); never repeated on the device after dismissal
+- Verification: [x] component tests (FeatureHelp.test.ts 3/3: open, dismiss+
+        persist+remount-gone, escape-closes-without-dismissing); suite
+        421/421; [x] E2E first-use callout (tests/e2e/tests/
+        feature-education.spec.ts, chromium/firefox/webkit 6/6: first-use
+        visible → dismiss → reload still gone; default state non-blocking)
 - Notes: contextual education, not onboarding slides (§13).
 
 ### TASK-P17-009 — Contextual Education

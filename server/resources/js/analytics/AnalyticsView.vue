@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useAnalyticsStore } from './store';
 import type { DeadlineHealth, PillarKey } from './types';
 import type { ApiError } from '../api/types';
+import FeatureHelp from '../components/FeatureHelp.vue';
 
 const analytics = useAnalyticsStore();
 
@@ -407,7 +408,10 @@ function run(fn: () => Promise<void>): void {
 
             <div class="border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="analytics-heatmap">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-                    <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Activity heatmap</div>
+                    <div class="flex items-center gap-2">
+                        <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Activity heatmap</div>
+                        <FeatureHelp id="progress-events" title="Progress Events" body="Completions and focus sessions feed this view. Progress events show movement toward your goals — not just raw hours spent." />
+                    </div>
                     <div class="flex flex-wrap items-center gap-2 text-sm">
                         <div class="flex gap-1">
                             <button

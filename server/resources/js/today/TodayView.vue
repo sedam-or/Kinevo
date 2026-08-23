@@ -11,6 +11,7 @@ import BreakModeDialog from './BreakModeDialog.vue';
 import BoostDialog from './BoostDialog.vue';
 import { taskStates } from '../visualstate/derive';
 import KButton from '../components/KButton.vue';
+import FeatureHelp from '../components/FeatureHelp.vue';
 import AdaptiveContextPanel from '../adaptive/AdaptiveContextPanel.vue';
 import type { EmptySlot, EmergencyPauseResponse, EndBreakResponse, EndBoostTargetResponse, HardLandscapeEvent, SetBoostTargetResponse, StartBreakResponse, TodayEvent } from './types';
 
@@ -302,6 +303,7 @@ async function endBoostTarget(): Promise<void> {
             <!-- Capacity feedback (design.md §22): a load bar; click reveals details. -->
             <div class="flex flex-col items-end gap-1" data-testid="today-capacity" :class="{ 'cursor-pointer': today.capacity }" @click="today.capacity && (capacityRevealed = !capacityRevealed)">
                 <div class="flex items-center gap-2 text-sm">
+                    <FeatureHelp id="capacity" title="Capacity" body="How full today is compared with the time you actually have. Overload means the plan needs a cut before the day cuts it for you." />
                     <span :class="capacityStatus === 'overload' ? 'text-danger' : 'text-gray-600 dark:text-gray-300'">
                         {{ today.capacity ? `${capacityPercent}% of capacity used` : 'No capacity data' }}
                     </span>
@@ -494,7 +496,10 @@ async function endBoostTarget(): Promise<void> {
 
         <!-- Timeline -->
         <section class="relative border border-gray-300 dark:border-gray-600 rounded-sm p-4 min-h-32" data-testid="today-timeline">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Timeline</div>
+            <div class="flex items-center gap-2 mb-2">
+                <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Timeline</div>
+                <FeatureHelp id="hard-landscape" title="Hard Landscape" body="Fixed commitments — appointments, travel, sacred anchors — that block the timeline. Kinevo schedules around them; they never move on their own." />
+            </div>
 
             <!-- Hard Landscape -->
             <div

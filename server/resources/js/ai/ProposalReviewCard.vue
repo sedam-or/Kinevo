@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
+import FeatureHelp from '../components/FeatureHelp.vue';
 import { aiApi, type AiProposal, type AiProposalPayload, type BreakdownMilestone } from './api';
 
 /**
@@ -133,8 +134,9 @@ defineExpose({ load });
 <template>
     <section v-if="proposal" class="border border-[var(--color-primary)] rounded-sm p-4" data-testid="proposal-review">
         <div class="flex items-center justify-between mb-2">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400">
+            <div class="flex flex-wrap items-center gap-2 text-xs uppercase text-gray-500 dark:text-gray-400">
                 AI Breakdown Proposal
+                <FeatureHelp id="ai-proposal" title="AI Breakdown Proposal" class="normal-case" body="AI suggests, you decide. Nothing is applied until you accept — edit milestones freely before accepting." />
                 <span v-if="proposal.decision === 'edited'" class="ml-2 normal-case text-[var(--color-primary)]" data-testid="proposal-edited-badge">edited</span>
             </div>
             <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5">{{ proposal.payload.milestones.length }} milestones</span>

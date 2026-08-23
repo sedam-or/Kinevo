@@ -2,6 +2,7 @@
 import { reactive, ref } from 'vue';
 import { useScheduleDraftStore } from './store';
 import { formatDate, formatTime } from './date';
+import FeatureHelp from '../components/FeatureHelp.vue';
 
 const emit = defineEmits<{
     (e: 'back'): void;
@@ -62,6 +63,7 @@ function cancel(): void {
         <header class="flex items-center gap-2">
             <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="reschedule-back" @click="emit('back')">← Back</button>
             <h1 class="text-xl font-semibold">Dynamic Rescheduler</h1>
+            <FeatureHelp id="dynamic-rescheduler" title="Dynamic Rescheduler" body="Re-fits unfinished tasks into the rest of your week based on priorities and real capacity. Nothing changes until you review and accept the proposal." />
         </header>
 
         <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="reschedule-controls">

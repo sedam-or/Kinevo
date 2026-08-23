@@ -13,6 +13,11 @@ Release governance: see `docs/release-management.md`.
 ## [Unreleased]
 ### Added
 
+- Features now explain themselves in place (Phase 17, TASK-P17-008): a small
+  "What's this?" info control on Hard Landscape, Capacity, Context check-in,
+  the Activity heatmap, the Dynamic Rescheduler, and AI breakdown proposals
+  opens a short explanation. Dismissing it ("Got it") is remembered locally,
+  so each callout appears once per device.
 - AI status is now a single source of truth (Phase 17, TASK-P17-007): the
   status and config endpoints expose one canonical state (`disabled`,
   `not_configured`, `configured`, `testing`, `connected`, `degraded`,
