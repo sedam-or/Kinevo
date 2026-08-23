@@ -3512,3 +3512,45 @@ Theme persistence/dark mode are considered UNVERIFIED until real-browser proof: 
 ### Done criteria for P17
 
 P17 is not done because screens exist; it is done when the product feels like one coherent workflow and the golden journey above runs in a real browser. Task board: Phase 17 in `TASK.md` (TASK-P17-001…038); product gate PRODUCT COHESION READY (TASK-P17-038).
+
+### Appendix — Feature surface inventory (TASK-P17-022, UX contract)
+
+One row per feature surface. This matrix IS the UX contract: any new surface
+or changed action must update its row in the same change. Cells are
+telegraphic on purpose. Legend: **✅** behavior browser-proven by the cited
+spec under `tests/e2e/tests/`; **⚪** designed and implemented but not yet
+individually browser-proven. Sources of record: `shell/navigation.ts`
+(entry groups), `ui-audit.md` §3 CTA checklist (2026-08-23), P17-011
+micro-interaction cascades, `analytics/interpretation.ts` signal mapping,
+offline outbox (`offline/http-applier.ts`, entity-agnostic queue + LWW +
+service worker).
+
+| Surface | Purpose | Entry | Primary / Secondary | Explanation | Empty / Success / Failure | Offline | Analytics link | Downstream | Proven by |
+| ------- | ------- | ----- | ------------------- | ----------- | ------------------------- | ------- | -------------- | ---------- | --------- |
+| Today | Do the now-next task; capacity at a glance | Nav EXECUTE → Today (`nav-today`) | Start (state-driven) / Complete·Pause·Break | FeatureHelp block | empty: education block / success: checkbox snap → progress → toast → next-task spotlight / failure: error banner + retry | mutations queue with op UUID; Offline→Queued→Syncing→Synced announcements | capacity load bar feeds overload/imbalance signals | Tasks, Scheduling, Capacity, Adaptive Context, Next Action | core-loop ✅, feature-education ✅ |
+| Week | Read-only week planner | Nav EXECUTE → Week | — / day navigation | FeatureHelp ⚪ | empty: planner grid persists / success: n/a (read-only) / failure: load banner ⚪ | cached read ⚪ | daily distribution context for days/pillars charts | Scheduling, Calendar | journeys.spec ✅ |
+| Calendar (Hard Landscape) | Fixed commitments the scheduler must respect | Nav EXECUTE → Calendar | — / view controls | FeatureHelp ⚪ | empty: prompt to add landscape / success: block renders / failure: overlap flagged server-side (SRS) | read cache ⚪; create/edit queues ⚪ | excluded from flexible-capacity math | Scheduling (constraint input), Today | journeys.spec ✅ (view), overlap ⚪ |
+| Goals / Roadmap list | Long-horizon intent + progress | Nav PLAN → Goals (`nav-goals`) | Create ⇄ Generate with AI (staged) / manual breakdown option | FeatureHelp block | empty: education + single primary Create / success: goal card + progress bar / failure: generation stages honest, server-truth errors | goal create/update queue ⚪ | goal-pressure signal drives Review-milestone action | Milestones, Programs, Tasks, AI breakdown | golden-journeys G/H ✅, ui-audit CTA ✅ |
+| Goal detail | Milestone roadmap + program tree; accept AI proposal | Goal card → detail | Accept proposal / state action / inline milestone edit | ProposalReviewCard explains assumptions | empty: no-proposal guidance / success: accepted breakdown expands tree / failure: validation errors surfaced pre-acceptance (AI untrusted path) | proposal accept online-required (material mutation) ⚪ | falling-behind milestones signal | Programs, Milestones, Tasks, Scheduling | journey-c-e ✅ |
+| Tasks list | Backlog triage | Nav PLAN → Tasks (`nav-tasks`) | Add task / filter·status controls | FeatureHelp block | empty: education / success: row appears + Saved ✓ / failure: inline field errors | task CRUD queues (op UUID + LWW) ✅ | completion-rate source for Execution card | Task detail, Scheduling, Today | feature-education ✅, Journey E offline ✅ |
+| Task detail | One task: edit, transition, run | Tasks row → detail | Status transition (per state) / edit Save, secondary transitions | Field help text | empty: n/a / success: transition cascade + toasts / failure: conflict → stable 409 UX ⚪ | queued transitions ⚪ | execution minutes feed days chart | ExecutionTimer/focus, Today, Programs | ui-audit CTA ✅, core-loop ✅ |
+| Schedule draft | Generate/apply a deterministic plan | Nav PLAN → Schedule | Generate → Apply (staged, tactile) / Cancel, Dynamic Reschedule | Draft explainer | empty: generate prompt / success: slots persist + Applied ✓ / failure: constraint errors listed, draft never silently applied | apply online-required (transactional) ⚪ | scheduled-vs-capacity overload signal | Calendar constraints, Today, Tasks | ui-audit CTA ✅ (UI-013), journeys ✅ |
+| Reschedule | Move work without breaking the plan | Schedule draft → Reschedule | Propose → Apply (staged) / Back, Cancel | Diff explainer ⚪ | empty: nothing-to-move / success: new slots persisted / failure: conflicts rejected with reasons | propose online ⚪ | rebalance affects imbalance signal | Scheduling, Calendar | ui-audit CTA ✅ |
+| Quick Capture | Zero-friction inbox deposit anywhere | Global overlay from AppShell (keyboard) | Capture / dismiss | Hint placeholder | empty: n/a / success: item stored + toast / failure: queued when offline (quick_capture:create) | first-class queued op ✅ | captured items count toward workload later ⚪ | Tasks (triage target), Today | offline http-applier unit ✅, e2e ⚪ |
+| Knowledge desk (Notes) | Reference knowledge + links | Nav KNOWLEDGE → Knowledge (`nav-knowledge`) | New note / toolbar actions | Desk toolbar explainer (§31) | empty: education / success: Saving…→Saved ✓ / failure: save flash ⚪ pending token pass | note edits queue ⚪ | notes linked to entities enrich context panels ⚪ | Links, Attachments, Canvas embeds | ui-audit CTA ✅, accessibility ✅ |
+| Canvas | Free-form visual thinking | Nav KNOWLEDGE → Canvas (`nav-canvas`) | Excalidraw-owned tools / Kinevo shell chrome | External boundary notice (§104 rule) | empty: blank scene / success: scene autosaves ⚪ / failure: Excalidraw-owned | canvas ops queue ⚪ | none (deliberate boundary) | Notes (embeds), exports | canvas-hardening ✅, keyboard flow ✅ |
+| Analytics | Read the truth; choose next adaptation | Nav REVIEW → Analytics (`nav-analytics`) | — (read-only) / range·pillar filters, per-section actions | Executive-signal-first hierarchy; ChartMeta on every chart | empty: education block / success: signal → interpretation → action / failure: per-section error rows | read-only; safe on flaky network | IS the analytics surface: overload, imbalance, completion, goal pressure → routed actions | Every producer surface; routes into Goals/Today/Schedule | analytics-hierarchy ✅, journey-j ✅ |
+| Adaptive Context check-in | Daily energy/context calibration | Today panel | Check-in submit / skip | Panel microcopy | empty: gentle prompt / success: Saved ✓ + capacity adapts / failure: retry keeps answers ⚪ | check-in queues ⚪ | recalibrates capacity + recharge advice | Capacity, Recovery, Today | ui-audit ✅ (save cascade) |
+| Recovery (recharge blocks) | Protect rest inside the plan | Today imbalance action / schedule slots | Plan a recharge block / adjust | Why-rest explainer ⚪ | empty: suggestion only / success: block appears in plan / failure: slot-conflict error ⚪ | queued like tasks ⚪ | imbalance signal origin | Scheduling, Today, Capacity | journey-j action route ✅ |
+| AI & Providers settings | Own the AI runtime; configured ≠ available | Nav SYSTEM → AI & Providers (`nav-ai-settings`) | Save provider / Test connection, enable·disable | Privacy note; masked key rules (§104 contract) | empty: setup guidance / success: status chip Configured→Connected / failure: test-connection error surfaced verbatim-safe | settings require online (secrets never client-stored) ✅ | ai availability gates breakdown suggestions | Goal breakdown, proposal review | golden-journeys H ✅ |
+| Settings | Account, theme, data portability | Nav SYSTEM → Settings (`nav-settings`) | Save changes / theme Light·Dark·System, imports·exports | Section help text | empty: n/a / success: Saving…→Saved ✓ / failure: conflict/save-state shown ✅ | theme local-first; imports/exports online | n/a | Auth profile, Imports/Exports, Theme shell | golden-journeys H ✅, theme.spec ✅ |
+| Notification center | What changed while away | Topbar bell (`notifications-center`) | Open panel / mark-read, group filters Unread·Today·Earlier | Group labels self-explanatory | empty: "You're all caught up" / success: unread badge clears / failure: fetch error banner ⚪ | badge from last sync ⚪ | activity events mirror progress/analytics events | Activity log, Today spotlight | ui-audit R3 ✅ |
+
+Rules of maintenance:
+
+1. New surface ⇒ new row before merge (same PR).
+2. A row's Primary must obey §51/§2.3 ONE-primary-per-state.
+3. State cells name the FEEDBACK (§ micro-interaction rules), not just the outcome.
+4. Offline cell cites the queue op when one exists; "online-required" must
+   say why (material transaction / secrets).
+5. Proven-by links rot → re-run the named spec when touching the row.

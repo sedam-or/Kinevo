@@ -4196,18 +4196,27 @@ P17-G Analytics / Decision Support UX
   containers only.
 
 ### TASK-P17-022 — Feature Surface Inventory
-- Status: TODO
+- Status: DONE (2026-08-23)
 - Priority: P1
 - Depends On: —
 - SRS: NFR (contract completeness)
 - Files: docs/design.md §104 appendix; per-surface rows
 - Acceptance:
-  - [ ] matrix per feature: purpose, entry, primary/secondary action,
+  - [x] matrix per feature: purpose, entry, primary/secondary action,
         explanation, empty/success/failure/offline states, analytics
-        connection, downstream object (Goals/Milestones/Programs/Tasks/
-        Scheduling/Today/Hard Landscape/Quick Capture/Notes/Canvas/Analytics/
-        Capacity/Adaptive Context/Recovery/AI/Settings/Notifications)
-- Verification: [ ] audit rows recorded
+        connection, downstream object — 17 surfaces recorded as the §104
+        appendix table (Today, Week, Calendar/Hard Landscape, Goals list,
+        Goal detail, Tasks list, Task detail, Schedule draft, Reschedule,
+        Quick Capture, Knowledge desk, Canvas, Analytics, Adaptive Context,
+        Recovery, AI & Providers, Settings, Notification center), plus five
+        maintenance rules making each row a living contract
+- Verification:
+  - [x] audit rows recorded — cells sourced from verified records only:
+        ui-audit.md CTA checklist (2026-08-23), P17-011 micro-interaction
+        cascades, navigation.ts entry groups, offline http-applier queue ops,
+        analytics interpretation signal map; ✅/⚪ legend distinguishes
+        browser-proven from designed-pending with citing spec names
+- Evidence: docs/design.md §104 appendix; commit P17-022
 - Notes: this becomes the UX contract.
 
 ### TASK-P17-023 — End-to-End Product Journey
