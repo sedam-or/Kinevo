@@ -3875,16 +3875,23 @@ P17-G Analytics / Decision Support UX
 - Notes: —
 
 ### TASK-P17-010 — UX Hierarchy Audit
-- Status: TODO
+- Status: DONE (2026-08-23, commit P17-010)
 - Priority: P0
 - Depends On: —
 - SRS: NFR (usability)
 - Files: all major pages
 - Acceptance:
-  - [ ] each page has ONE primary CTA + optional one secondary; primary/secondary/
-        navigation/context/status/details hierarchy defined
-  - [ ] no five-equally-prominent-button pages
-- Verification: [ ] audit checklist recorded in docs/ui-audit.md §4 rows
+  - [x] each page has ONE primary CTA + optional one secondary; primary/secondary/
+        navigation/context/status/details hierarchy defined (per-page CTA
+        checklist in docs/ui-audit.md §4, 15 pages)
+  - [x] no five-equally-prominent-button pages — two violations found and
+        fixed: GoalListView staged its primaries (Create ⇄ Generate-with-AI,
+        program Add demoted), TaskDetailView edit-Save demoted so the state
+        transition stays the one primary (§19)
+- Verification: [x] audit checklist recorded in docs/ui-audit.md §4 rows
+        ("Primary action obvious" flipped to ✅ across Shell/Today/Task/Goal/
+        Knowledge/Canvas/Analytics/Settings); finding UI-013 opened for
+        scheduler pages' unstyled generate/apply buttons (P17-012)
 - Notes: audit-first; fixes logged as findings.
 
 ### TASK-P17-011 — Micro-Interaction System

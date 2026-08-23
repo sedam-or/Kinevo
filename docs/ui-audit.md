@@ -75,6 +75,43 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 > 375px smoke clean on all primary surfaces after UI-012 fixes. Screen-reader
 > live-region smoke green (save/sync states announced, bell named).
 
+> 2026-08-23 (TASK-P17-010, UX hierarchy audit): every major page audited for
+> the ONE-primary-CTA rule (design.md §2.3, §51). Violations fixed:
+>
+> - GoalListView showed up to THREE simultaneous primaries (Create goal,
+>   Generate-with-AI panel, Add program). Now stage-based: Create is primary
+>   until a goal is created; while the breakdown suggestion is open it becomes
+>   the single primary and Create demotes to secondary; program `Add` is
+>   secondary.
+> - TaskDetailView had two primaries (edit Save + status transition). The
+>   state transition stays the page's one primary (§19); edit Save demoted to
+>   secondary.
+>
+> Findings logged without code change (P17-012 polish territory): scheduler
+> draft/reschedule pages drive their main flow (generate/propose → apply)
+> through unstyled raw buttons — no visual primary at all on those pages;
+> Canvas delegates all CTAs to Excalidraw's own toolbar (accepted boundary).
+>
+> Per-page CTA checklist (primary / secondary / verdict):
+>
+> | Page | ONE primary | Secondary | Verdict |
+> | ---- | ----------- | --------- | ------- |
+> | Login/Register | Log in · Register | First-time link | ✅ |
+> | Today | Start (state-driven) | Complete/Pause/Break | ✅ |
+> | Week | — (read-only planner) | day navigation | ✅ no competing CTAs |
+> | Calendar | — (read-only) | view controls | ✅ |
+> | Goals list | Create ⇄ Generate with AI (staged) | manual-breakdown option | ✅ after fix |
+> | Goal detail | Accept proposal / state action | edit milestones inline | ✅ |
+> | Tasks list | Add task | filter/status controls | ✅ |
+> | Task detail | Status transition (per state) | edit form Save, secondary transitions | ✅ after fix |
+> | Schedule draft | — generate/apply unstyled | — | 🟡 finding UI-013 |
+> | Reschedule | — propose/apply unstyled | — | 🟡 finding UI-013 |
+> | Knowledge/Notes desk | New note | toolbar actions | ✅ |
+> | Canvas | Excalidraw-owned tools | Kinevo shell chrome | ✅ external boundary |
+> | Analytics | — (read-only) | range/pillar filters | ✅ |
+> | Settings / AI & Providers | Save provider | Test connection | ✅ |
+> | Imports / Exports | Run import / export | file pickers | ✅ |
+>
 | Dimension | Shell | Today | Task | Goal | Knowledge/Notes | Canvas | Analytics | Settings |
 | --------- | ----- | ----- | ---- | ---- | --------------- | ------ | --------- | -------- | -------- |
 | Visual consistency (§85) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
@@ -87,10 +124,13 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 | Conflict / save state (§2.5, §34.4) | ⚪ | ⚪ | ⚪ | ⚪ | ✅ | ⚪ | ⚪ | ⚪ |
 | Dark mode (§5.4) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Reduced motion (§47) | ✅ | ✅ | ✅ | ✅ | ✅ | 🟡 | ⚪ | 🟡 |
-| Primary action obvious (§2.3, §51) | ✅ | ✅ | ✅ | ✅ | ✅ | ⚪ | ⚪ | ⚪ |
+| Primary action obvious (§2.3, §51) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅¹ | ✅ | ✅ |
 | No color-only state (§5.2) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Token usage (§65, design-tokens.md) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Component consolidation (§50, §80) | ✅ | ✅ | 🟡 | 🟡 | ✅ | ⚪ | ⚪ | ⚪ |
+
+
+¹ Canvas: audited 2026-08-23 (P17-010) — page-level chrome has no competing primaries; drawing tools are Excalidraw-owned (§104 external engine boundary).
 
 ## 5. Component inventory checklist (design.md §50, §80)
 
@@ -306,6 +346,22 @@ accessibility tree; truncation is visual only).
 Evidence: tests/e2e/tests/release-gate.spec.ts — no horizontal overflow at
 375px on Today/Tasks/Goals/Knowledge/Canvas/Schedule + canvas workspace.
 Link: TASK-R7.
+```
+
+```
+UI-013 | 2026-08-23 | Schedule draft + Reschedule views (hierarchy §2.3, §51) | P2
+Found (TASK-P17-010): the scheduler's main flow buttons — draft-generate /
+draft-apply and reschedule-propose / reschedule-apply — are raw unstyled
+buttons. The pages have NO visual primary action at all: generate/propose
+and apply carry equal weight, so the eye gets no order for the page's most
+consequential operations.
+Expected: design.md §51 — exactly one primary per decision context; apply
+(a material mutation) should be unmistakably primary; generate/propose
+secondary.
+Severity: P2.
+Status: open — polish lands with TASK-P17-012 (token pass), not silently.
+Evidence: server/resources/js/schedulerdraft/{ScheduleDraftView,RescheduleView}.vue
+Link: TASK-P17-010, TASK-P17-012.
 ```
 
 No finding above is closed silently; each closes with concrete browser/test/visual

@@ -153,7 +153,7 @@ function workloadLabel(w: string): string {
                     Deadline
                     <input v-model="goalForm.targetDate" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="goal-create-date" />
                 </label>
-                <KButton type="submit" variant="primary" data-testid="goal-create-submit">Create</KButton>
+                <KButton type="submit" :variant="suggestionGoal ? 'secondary' : 'primary'" data-testid="goal-create-submit">Create</KButton>
             </form>
         </section>
 
@@ -241,7 +241,7 @@ function workloadLabel(w: string): string {
                         <option v-for="w in PROGRAM_WORKLOAD_TYPES" :key="w" :value="w">{{ workloadLabel(w) }}</option>
                     </select>
                 </label>
-                <KButton type="submit" variant="primary" data-testid="program-create-submit">Add</KButton>            </form>
+                <KButton type="submit" variant="secondary" data-testid="program-create-submit">Add</KButton>            </form>
         </section>
 
         <!-- Program list -->

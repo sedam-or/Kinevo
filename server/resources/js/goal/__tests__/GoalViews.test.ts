@@ -98,6 +98,12 @@ describe('GoalListView', () => {
         );
         // Suggestion appears; the goal itself is NOT mutated further.
         expect(wrapper.find('[data-testid="goal-breakdown-suggestion"]').exists()).toBe(true);
+        // Hierarchy (P17-010): while the suggestion is open it owns the ONE
+        // primary; Create demotes to secondary.
+        const createBtn = wrapper.find('[data-testid="goal-create-submit"]');
+        expect(createBtn.classes().join(' ')).not.toContain('border-2');
+        const aiBtn = wrapper.find('[data-testid="goal-breakdown-ai"]');
+        expect(aiBtn.classes().join(' ')).toContain('bg-primary');
         expect(wrapper.find('[data-testid="goal-breakdown-ai"]').exists()).toBe(true);
         expect(wrapper.find('[data-testid="goal-breakdown-manual"]').exists()).toBe(true);
         expect(wrapper.find('[data-testid="goal-breakdown-later"]').exists()).toBe(true);

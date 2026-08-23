@@ -215,7 +215,8 @@ const relatedLinks = computed<EntityLink[]>(() => {
                         <input v-model="editForm.dueAt" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-edit-due" />
                     </label>
                 </div>
-                <KButton type="submit" variant="primary" class="self-start" data-testid="task-edit-save">
+                <!-- Secondary: the page's ONE primary is the state transition (§19). -->
+                <KButton type="submit" variant="secondary" class="self-start" data-testid="task-edit-save">
                     Save
                 </KButton>
             </form>

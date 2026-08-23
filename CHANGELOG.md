@@ -13,6 +13,13 @@ Release governance: see `docs/release-management.md`.
 ## [Unreleased]
 ### Added
 
+- Every page now has exactly one obvious primary action (Phase 17,
+  TASK-P17-010): on the goals list the "Create" and "Generate with AI"
+  actions no longer compete — creating a goal hands the spotlight to the AI
+  breakdown offer; program forms and task editing were demoted to supporting
+  actions. A full page-by-page action-hierarchy audit is recorded in
+  docs/ui-audit.md.
+
 - Empty screens now teach (Phase 17, TASK-P17-009): when Today has nothing
   in progress, or Goals/Tasks/Analytics are still empty, a short in-place
   explanation shows what belongs there and what to do next. Dismissing any
