@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -127,7 +128,28 @@ class KrsImportApiTest extends TestCase
 
         $landscape = app(HardLandscapeRepository::class)->listForUser($user->id);
         $this->assertCount(2, $landscape);
-        $this->assertSame('Matematika Ruang A', $landscape[0]->title);
+
+        // Each row anchors at its NEXT occurrence (FR-24 weekly recurrence), so
+        // persistence order follows start_at and legitimately varies with the
+        // weekday the import is confirmed on. Assert the contract — both events
+        // weekly-recurring at their class times on the right weekdays — not a
+        // today-dependent ordering.
+        $byCourse = collect($landscape)->keyBy(fn ($event) => $event->title);
+
+        $math = $byCourse->get('Matematika Ruang A');
+        $this->assertNotNull($math);
+        $this->assertSame(CarbonImmutable::MONDAY, $math->startAt->dayOfWeek);
+        $this->assertSame('07:30', $math->startAt->format('H:i'));
+        $this->assertSame('09:00', $math->endAt->format('H:i'));
+        $this->assertTrue($math->endAt->isSameDay($math->startAt));
+        $this->assertSame('FREQ=WEEKLY', $math->recurrence);
+
+        $programming = $byCourse->get('Pemrograman Lab B');
+        $this->assertNotNull($programming);
+        $this->assertSame(CarbonImmutable::WEDNESDAY, $programming->startAt->dayOfWeek);
+        $this->assertSame('13:00', $programming->startAt->format('H:i'));
+        $this->assertSame('15:30', $programming->endAt->format('H:i'));
+        $this->assertSame('FREQ=WEEKLY', $programming->recurrence);
 
         // Already resolved — cannot confirm again.
         $this->withToken($token)->post("/api/v1/imports/{$importId}/confirm")
