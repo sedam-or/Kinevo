@@ -139,6 +139,10 @@ AI Goal breakdown UX flow (FR-52/61/62)  ✅ DONE (TASK-P17-004/005/026:
                                           goal → generate → inline proposal
                                           review/edit/accept — post-create panel
                                           reviews without leaving the page)
+AI settings discoverability (FR-60)      ✅ DONE (TASK-P17-028: unconfigured/off
+                                          AI actions show "AI is not configured."
+                                          + [Configure AI] → Settings;
+                                          golden-journeys I ×3 browsers)
 ```
 
 ### Evidence rule

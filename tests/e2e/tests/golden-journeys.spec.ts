@@ -205,3 +205,36 @@ test.describe('R17 golden journey G3 — Post-goal invocation entry points (P17-
         await expect(page.getByTestId('milestones-empty-breakdown')).toBeVisible();
     });
 });
+test.describe('R17 golden journey I — AI discoverability gate (P17-028)', () => {
+    // Runs last on purpose: it toggles the singleton provider off, then
+    // restores it so no earlier journey's state is affected.
+    test('unconfigured AI routes "Generate with AI" to Settings instead of erroring', async ({ page }) => {
+        await login(page);
+        // Force the canonical unconfigured/off state via Settings (§104).
+        await page.getByTestId('nav-ai-settings').click();
+        await expect(page.getByTestId('ai-settings-view')).toBeVisible();
+        await page.getByTestId('ai-enabled-toggle').uncheck();
+        await page.getByTestId('ai-save-button').click();
+        await expect(page.getByTestId('ai-settings-saved')).toBeVisible();
+
+        // Create a goal and try the AI path — must NOT fire a doomed request.
+        const name = unique('r17-i');
+        await page.getByTestId('nav-goals').click();
+        await expect(page.getByTestId('goals-view')).toBeVisible();
+        await page.getByTestId('goal-create-title').fill(name);
+        await page.getByTestId('goal-create-horizon').selectOption('Quarterly');
+        await page.getByTestId('goal-create-submit').click();
+        await expect(page.getByTestId('goal-breakdown-suggestion')).toBeVisible();
+        await page.getByTestId('goal-breakdown-ai').click();
+
+        // The gate: honest message + one-tap route to Settings → AI & Providers.
+        await expect(page.getByTestId('ai-not-configured')).toContainText('AI is not configured.');
+        await page.getByTestId('configure-ai').click();
+        await expect(page.getByTestId('ai-settings-view')).toBeVisible();
+
+        // Restore: leave AI enabled so later suites see the configured state.
+        await page.getByTestId('ai-enabled-toggle').check();
+        await page.getByTestId('ai-save-button').click();
+        await expect(page.getByTestId('ai-settings-saved')).toBeVisible();
+    });
+});

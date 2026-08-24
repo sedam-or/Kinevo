@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { aiApi, type AiProviderConfigPayload, type SaveAiProviderConfigInput } from './api';
 import type { ApiError } from '../api/types';
 
@@ -9,6 +9,26 @@ export const useAiSettingsStore = defineStore('ai-settings', () => {
     const saving = ref(false);
     const testing = ref(false);
     const error = ref<ApiError | null>(null);
+
+    /**
+     * TASK-P17-028: one lazy status read shared by every AI-dependent action.
+     * Generation is gated only on the canonical server states where AI cannot
+     * run at all (disabled / not_configured); unavailable/degraded still let
+     * the request through so the server-truth error surfaces (P17-007).
+     */
+    const generationReady = computed(() => {
+        const state = config.value?.status.state;
+        return state === 'configured' || state === 'connected';
+    });
+    let statusPromise: Promise<void> | null = null;
+
+    function ensureStatus(): Promise<void> {
+        if (config.value !== null) {
+            return Promise.resolve();
+        }
+        statusPromise ??= load();
+        return statusPromise;
+    }
 
     async function load(): Promise<void> {
         loading.value = true;
@@ -52,5 +72,5 @@ export const useAiSettingsStore = defineStore('ai-settings', () => {
         }
     }
 
-    return { config, loading, saving, testing, error, load, save, test };
+    return { config, loading, saving, testing, error, generationReady, ensureStatus, load, save, test };
 });

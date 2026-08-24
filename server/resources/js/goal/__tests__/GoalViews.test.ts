@@ -28,6 +28,7 @@ vi.mock('../../ai/api', async (importOriginal) => {
         ...actual,
         aiApi: {
             ...actual.aiApi,
+            config: vi.fn(),
             proposals: vi.fn(),
             updateProposal: vi.fn(),
             acceptProposal: vi.fn(),
@@ -87,6 +88,19 @@ beforeEach(() => {
     // Stable defaults so ordering cannot leak an implementation between tests.
     vi.mocked(aiApi.proposals).mockResolvedValue({ proposals: [] });
     vi.mocked(aiApi.acceptProposal).mockResolvedValue(undefined);
+    // TASK-P17-028 default: AI ready, so generation flows behave as before.
+    vi.mocked(aiApi.config).mockResolvedValue({
+        config: {
+            provider: 'ollama',
+            enabled: true,
+            model: 'llama3.1',
+            base_url: 'http://localhost:11434',
+            has_api_key: false,
+            api_key_hint: null,
+            status: { provider: 'ollama', model: 'llama3.1', available: true, latency_ms: 12, error: null, state: 'connected' },
+            privacy_ok: true,
+        },
+    });
     vi.mocked(aiApi.updateProposal).mockResolvedValue({
         proposal: { ...pendingProposal, decision: 'edited' },
     });
@@ -217,6 +231,43 @@ vi.mocked(aiApi.acceptProposal).mockResolvedValue(undefined);
         expect(wrapper.find('[data-testid="goal-breakdown-suggestion"]').exists()).toBe(true);
     });
 
+    it('routes to Settings when AI is not configured instead of generating (TASK-P17-028)', async () => {
+        vi.mocked(aiApi.config).mockResolvedValue({
+            config: {
+                provider: 'ollama',
+                enabled: false,
+                model: null,
+                base_url: null,
+                has_api_key: false,
+                api_key_hint: null,
+                status: { provider: 'none', model: '', available: false, latency_ms: null, error: null, state: 'not_configured' },
+                privacy_ok: true,
+            },
+        });
+        vi.mocked(goalApi.goals).mockResolvedValue({ goals: [] });
+        vi.mocked(goalApi.programs).mockResolvedValue({ programs: [] });
+        vi.mocked(goalApi.createGoal).mockResolvedValue({ goal });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(GoalListView, { global: { plugins: [pinia] } });
+        await flushPromises();
+
+        await wrapper.find('[data-testid="goal-create-title"]').setValue('Ship v1');
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+        await wrapper.find('[data-testid="goal-breakdown-ai"]').trigger('click');
+        await flushPromises();
+
+        expect(goalApi.breakdownProposal).not.toHaveBeenCalled();
+        const notice = wrapper.find('[data-testid="ai-not-configured"]');
+        expect(notice.exists()).toBe(true);
+        expect(notice.text()).toContain('AI is not configured.');
+
+        await wrapper.find('[data-testid="configure-ai"]').trigger('click');
+        expect(useShellStore().activeView).toBe('ai-settings');
+    });
+
     it('declining with "I\'ll do it myself" opens the goal directly (P17-003)', async () => {
         vi.mocked(goalApi.goals).mockResolvedValue({ goals: [] });
         vi.mocked(goalApi.programs).mockResolvedValue({ programs: [] });
@@ -324,5 +375,37 @@ describe('GoalDetailView', () => {
         await wrapper.find('[data-testid="goal-detail-breakdown"]').trigger('click');
         await flushPromises();
         expect(wrapper.find('[data-testid="goal-detail-generate-error"]').exists()).toBe(true);
+    });
+
+    it('shows "AI is not configured. [Configure AI]" when AI is off (TASK-P17-028)', async () => {
+        vi.mocked(aiApi.config).mockResolvedValue({
+            config: {
+                provider: 'ollama',
+                enabled: false,
+                model: null,
+                base_url: null,
+                has_api_key: false,
+                api_key_hint: null,
+                status: { provider: 'none', model: '', available: false, latency_ms: null, error: null, state: 'disabled' },
+                privacy_ok: true,
+            },
+        });
+        vi.mocked(goalApi.goal).mockResolvedValue({ goal });
+        vi.mocked(goalApi.milestones).mockResolvedValue({ milestones: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(GoalDetailView, { props: { goalId: 1 }, global: { plugins: [pinia] } });
+        await flushPromises();
+
+        await wrapper.find('[data-testid="goal-detail-breakdown"]').trigger('click');
+        await flushPromises();
+
+        expect(goalApi.breakdownProposal).not.toHaveBeenCalled();
+        const notice = wrapper.find('[data-testid="ai-not-configured"]');
+        expect(notice.exists()).toBe(true);
+        expect(notice.text()).toContain('AI is not configured.');
+
+        await wrapper.find('[data-testid="configure-ai"]').trigger('click');
+        expect(useShellStore().activeView).toBe('ai-settings');
     });
 });

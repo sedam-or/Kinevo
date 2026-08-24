@@ -4321,16 +4321,23 @@ P17-G Analytics / Decision Support UX
     payload fields.
 
 ### TASK-P17-028 — Settings Discoverability
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: TASK-P17-006
 - SRS: FR-60, NFR
 - Files: Settings + AI-dependent actions
+  - `server/resources/js/ai/AiNotConfiguredNotice.vue` (new)
+  - `server/resources/js/ai/store.ts` — `generationReady` + lazy shared `ensureStatus()`
+  - `server/resources/js/goal/GoalListView.vue`, `GoalDetailView.vue` — gate before generation
 - Acceptance:
-  - [ ] AI settings reachable at Settings → AI & Providers; if unconfigured,
-        AI-dependent actions show "AI is not configured. [Configure AI]"
-- Verification: [ ] E2E
-- Notes: no hidden configuration.
+  - [x] AI settings reachable at Settings → AI & Providers (`nav-ai-settings`,
+        golden-journeys H); if unconfigured/off, AI-dependent actions show
+        "AI is not configured. [Configure AI]" routing to ai-settings
+- Verification: [x] E2E journey I green ×3 browsers (browser-e2e §11 P17-028);
+  vitest 490 passed incl. GoalViews gate cases. H/G2 blocked by pre-existing
+  container→host Ollama connectivity gap (recorded, ADR-011 fix path).
+- Notes: no hidden configuration; canonical status states drive the gate
+  (disabled/not_configured only — unavailable/degraded still surface server truth).
 
 ### TASK-P17-029 — Global AI Entry Points
 - Status: TODO

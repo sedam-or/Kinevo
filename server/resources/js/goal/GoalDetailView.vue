@@ -5,6 +5,8 @@ import { MILESTONE_STATUSES, type Goal } from './types';
 import type { EntityLink } from '../components/EntityLinks.vue';
 import EntityLinks from '../components/EntityLinks.vue';
 import ProposalReviewCard from '../ai/ProposalReviewCard.vue';
+import AiNotConfiguredNotice from '../ai/AiNotConfiguredNotice.vue';
+import { useAiSettingsStore } from '../ai/store';
 import { useGenerationStages } from '../components/useGenerationStages';
 import NextActionBanner from '../components/NextActionBanner.vue';
 import { resolveGoalNextAction, type NextAction } from '../next-action';
@@ -29,12 +31,20 @@ const goals = useGoalStore();
 const reviewCard = ref<InstanceType<typeof ProposalReviewCard> | null>(null);
 const milestoneTitleInput = ref<HTMLInputElement | null>(null);
 const shell = useShellStore();
+const ai = useAiSettingsStore();
 const hasPendingProposal = ref(false);
+const aiGateShown = ref(false);
 const { running: generating, label: generationStage, start: startGeneration, stop: stopGeneration } = useGenerationStages();
 const generateError = ref<string | null>(null);
 
 async function generateBreakdown(): Promise<void> {
     if (generating.value || hasPendingProposal.value) {
+        return;
+    }
+    // TASK-P17-028: unconfigured AI routes to Settings instead of a 503.
+    await ai.ensureStatus();
+    aiGateShown.value = !ai.generationReady;
+    if (aiGateShown.value) {
         return;
     }
     startGeneration();
@@ -196,6 +206,8 @@ function milestoneGlyphEmphasis(status: string): string {
         <div v-if="goals.loading" class="text-sm text-gray-500" data-testid="goal-detail-loading">Loading…</div>
         <div v-if="goals.error" class="text-sm text-danger" role="alert" data-testid="goal-detail-error">{{ goals.error.message }}</div>
         <div v-if="generateError" class="text-sm text-danger" role="alert" data-testid="goal-detail-generate-error">{{ generateError }}</div>
+        <!-- TASK-P17-028: unconfigured AI routes to Settings, not an error. -->
+        <AiNotConfiguredNotice v-if="aiGateShown && !hasPendingProposal" class="mb-2" />
 
         <EntityLinks :links="downstreamLinks" />
 

@@ -12,7 +12,10 @@ Release governance: see `docs/release-management.md`.
 
 ## [Unreleased]
 ### Added
-
+- AI actions now guide instead of failing (Phase 17, TASK-P17-028): when AI
+  is off or not configured, "Generate with AI" / "Break Down with AI" show
+  "AI is not configured." with a one-tap [Configure AI] shortcut to
+  Settings → AI & Providers.
 - AI breakdowns are now explainable (Phase 17, TASK-P17-027): each proposal
   shows a concise decision summary plus the assumptions, the inputs it used
   (deadline, capacity, commitments), and the constraints it honoured — while
