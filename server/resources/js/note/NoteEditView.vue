@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useNoteStore } from './store';
 // Lazy: Tiptap + its deps are the heaviest bundle in the app. Splitting the
 // host splits the editor chunk out of the initial shell (§89).
@@ -9,6 +9,9 @@ import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
 import type { VisualStateValue } from '../visualstate/types';
 import LinkManager from '../knowledge/LinkManager.vue';
 import KButton from '../components/KButton.vue';
+import AiNotConfiguredNotice from '../ai/AiNotConfiguredNotice.vue';
+import { useAiSettingsStore } from '../ai/store';
+import { aiApi, type AiProposal } from '../ai/api';
 
 const props = withDefaults(
     defineProps<{
@@ -135,6 +138,90 @@ watch(
     },
     { immediate: true },
 );
+
+/**
+ * Contextual AI entry points (TASK-P17-029, FR-60): summarize and task
+ * extraction live where the note lives. Pending edits are flushed first so
+ * the AI always sees the latest content; proposals stay pending until the
+ * user accepts (FR-62) — extraction creates tasks only then.
+ */
+const ai = useAiSettingsStore();
+const aiGateShown = ref(false);
+const aiBusy = ref(false);
+const aiStage = ref('');
+const aiError = ref<string | null>(null);
+const summaryProposal = ref<AiProposal | null>(null);
+const extractionProposal = ref<AiProposal | null>(null);
+const extractedCount = ref<number | null>(null);
+
+const summaryView = computed(() =>
+    summaryProposal.value?.payload.type === 'summary_proposal' ? summaryProposal.value.payload : null,
+);
+const extractionView = computed(() =>
+    extractionProposal.value?.payload.type === 'task_extraction_proposal' ? extractionProposal.value.payload : null,
+);
+
+async function runNoteAi(kind: 'summary' | 'extract'): Promise<void> {
+    if (aiBusy.value || notes.current === null) {
+        return;
+    }
+    await flush();
+    await ai.ensureStatus();
+    aiGateShown.value = !ai.generationReady;
+    if (aiGateShown.value) {
+        return;
+    }
+    aiBusy.value = true;
+    aiStage.value = kind === 'summary' ? 'Summarizing…' : 'Extracting tasks…';
+    aiError.value = null;
+    try {
+        const { proposal } =
+            kind === 'summary'
+                ? await aiApi.summarizeNote(notes.current.id)
+                : await aiApi.extractTasks(notes.current.id);
+        if (kind === 'summary') {
+            summaryProposal.value = proposal;
+        } else {
+            extractionProposal.value = proposal;
+            extractedCount.value = null;
+        }
+    } catch (err) {
+        aiError.value = (err as { message?: string }).message ?? 'AI request failed.';
+    } finally {
+        aiBusy.value = false;
+        aiStage.value = '';
+    }
+}
+
+async function acceptExtraction(): Promise<void> {
+    if (extractionProposal.value === null || aiBusy.value) {
+        return;
+    }
+    aiBusy.value = true;
+    aiError.value = null;
+    try {
+        const result = await aiApi.acceptProposalWithResult(extractionProposal.value.id);
+        extractedCount.value = result.tasks?.length ?? 0;
+        extractionProposal.value = null;
+    } catch (err) {
+        aiError.value = (err as { message?: string }).message ?? 'Could not add tasks.';
+    } finally {
+        aiBusy.value = false;
+    }
+}
+
+async function rejectExtraction(): Promise<void> {
+    if (extractionProposal.value === null || aiBusy.value) {
+        return;
+    }
+    const proposalId = extractionProposal.value.id;
+    extractionProposal.value = null;
+    try {
+        await aiApi.rejectProposal(proposalId);
+    } catch {
+        // The panel is already dismissed; a stale pending proposal is harmless.
+    }
+}
 </script>
 
 <template>
@@ -181,5 +268,55 @@ watch(
                 <LinkManager :note-id="notes.current.id" />
             </aside>
         </div>
+
+        <!-- Contextual AI (TASK-P17-029): summarize / extract tasks where the
+             note lives — never an omnibus AI page; nothing applies without
+             explicit acceptance (FR-62). -->
+        <section v-if="notes.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="note-ai">
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">AI</div>
+            <AiNotConfiguredNotice v-if="aiGateShown" class="mb-3" />
+            <div v-if="aiError" class="text-sm text-danger mb-3" role="alert" data-testid="note-ai-error">{{ aiError }}</div>
+            <div v-if="extractedCount !== null" class="text-sm text-green-700 dark:text-green-400 mb-3" role="status" data-testid="note-ai-extract-done">
+                {{ extractedCount }} {{ extractedCount === 1 ? 'task' : 'tasks' }} added from this note.
+            </div>
+            <div class="flex gap-2 flex-wrap">
+                <KButton variant="secondary" :disabled="aiBusy" data-testid="note-ai-summarize" @click="runNoteAi('summary')">
+                    Summarize with AI
+                </KButton>
+                <KButton variant="secondary" :disabled="aiBusy" data-testid="note-ai-extract" @click="runNoteAi('extract')">
+                    Extract tasks with AI
+                </KButton>
+                <span v-if="aiBusy" class="text-sm text-gray-500 self-center" data-testid="note-ai-stage">{{ aiStage }}</span>
+            </div>
+
+            <div v-if="summaryView" class="mt-3 border border-gray-200 dark:border-gray-700 rounded-sm p-3" data-testid="note-ai-summary">
+                <p class="text-sm">{{ summaryView.summary }}</p>
+                <ul class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300 mt-2" data-testid="note-ai-summary-points">
+                    <li v-for="(point, i) in summaryView.key_points" :key="i">{{ point }}</li>
+                </ul>
+            </div>
+
+            <div v-if="extractionView" class="mt-3 border border-gray-200 dark:border-gray-700 rounded-sm p-3" data-testid="note-ai-extraction-proposal">
+                <ul class="list-disc list-inside text-sm" data-testid="note-ai-extraction-tasks">
+                    <li v-for="(task, i) in extractionView.tasks" :key="i">{{ task.title }}</li>
+                </ul>
+                <div class="flex gap-2 mt-3">
+                    <button
+                        type="button"
+                        class="text-sm border border-[var(--color-primary)] text-[var(--color-primary)] rounded-sm px-3 py-1 disabled:opacity-50"
+                        :disabled="aiBusy"
+                        data-testid="note-ai-extract-accept"
+                        @click="acceptExtraction"
+                    >Add {{ extractionView.tasks.length }} {{ extractionView.tasks.length === 1 ? 'task' : 'tasks' }}</button>
+                    <button
+                        type="button"
+                        class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 disabled:opacity-50"
+                        :disabled="aiBusy"
+                        data-testid="note-ai-extract-reject"
+                        @click="rejectExtraction"
+                    >Reject</button>
+                </div>
+            </div>
+        </section>
     </div>
 </template>

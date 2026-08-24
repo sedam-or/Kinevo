@@ -179,3 +179,59 @@ describe('TaskDetailView', () => {
         expect(wrapper.emitted('back')).toBeTruthy();
     });
 });
+
+vi.mock('../../ai/api', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../ai/api')>();
+    return {
+        ...actual,
+        aiApi: {
+            ...actual.aiApi,
+            config: vi.fn(),
+            generateText: vi.fn(),
+        },
+    };
+});
+
+import { aiApi } from '../../ai/api';
+
+describe('TaskDetailView clarify (TASK-P17-029)', () => {
+    function mountDetail() {
+        vi.mocked(taskApi.show).mockResolvedValue({ task });
+        vi.mocked(taskApi.subtasks).mockResolvedValue({ subtasks: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        return mount(TaskDetailView, { props: { taskId: 1 }, global: { plugins: [pinia] } });
+    }
+
+    it('clarifies the task in place — non-mutating explanation', async () => {
+        vi.mocked(aiApi.config).mockResolvedValue({
+            config: {
+                provider: 'ollama', enabled: true, model: 'llama3.1', base_url: 'http://localhost:11434',
+                has_api_key: false, api_key_hint: null,
+                status: { provider: 'ollama', model: 'llama3.1', available: true, latency_ms: 5, error: null, state: 'connected' },
+                privacy_ok: true,
+            },
+        } as never);
+        vi.mocked(aiApi.generateText).mockResolvedValue({ text: 'This task means drafting the quarterly report.', provider: 'ollama', model: 'llama3.1', latency_ms: 10 });
+        const wrapper = mountDetail();
+        await flushPromises();
+
+        await wrapper.find('[data-testid="task-detail-clarify"]').trigger('click');
+        await flushPromises();
+
+        expect(aiApi.generateText).toHaveBeenCalledWith('natural_language_explanation', expect.stringContaining('Write report'));
+        expect(wrapper.find('[data-testid="task-detail-clarify-result"]').text()).toContain('drafting the quarterly report');
+    });
+
+    it('routes to Settings when AI is off instead of calling the provider (P17-028 gate)', async () => {
+        vi.mocked(aiApi.config).mockResolvedValue({ config: { status: { state: 'disabled' } } } as never);
+        const wrapper = mountDetail();
+        await flushPromises();
+
+        await wrapper.find('[data-testid="task-detail-clarify"]').trigger('click');
+        await flushPromises();
+
+        expect(aiApi.generateText).not.toHaveBeenCalled();
+        expect(wrapper.find('[data-testid="ai-not-configured"]').exists()).toBe(true);
+    });
+});

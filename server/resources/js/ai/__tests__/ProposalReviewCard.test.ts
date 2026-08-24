@@ -16,7 +16,7 @@ vi.mock('../api', async (importOriginal) => {
 });
 
 import ProposalReviewCard from '../ProposalReviewCard.vue';
-import { aiApi, type AiProposal } from '../api';
+import { aiApi, type AiProposal, type AiProposalPayload } from '../api';
 
 const pendingProposal: AiProposal = {
     id: 7,
@@ -126,7 +126,7 @@ describe('ProposalReviewCard (TASK-P17-004)', () => {
                     assumptions: ['Stable team size', 'Quarterly deadline holds'],
                     inputs: ['Deadline 2026-12-31', 'Weekly capacity 20h'],
                     constraints: ['Hard landscape Monday 09:00', '30% recharge reserve'],
-                },
+                } as Extract<AiProposalPayload, { type: 'goal_breakdown_proposal' }>,
             }],
         });
         const wrapper = mountCard();

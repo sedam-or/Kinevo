@@ -12,6 +12,11 @@ Release governance: see `docs/release-management.md`.
 
 ## [Unreleased]
 ### Added
+- AI now lives where you work (Phase 17, TASK-P17-029): notes offer
+  "Summarize with AI" and "Extract tasks with AI" in the editor, the canvas
+  index suggests a board structure from a plain-language description, and
+  every task detail page can "Clarify task" — each proposal stays pending
+  until you accept, and unconfigured AI routes to Settings instead of failing.
 - AI actions now guide instead of failing (Phase 17, TASK-P17-028): when AI
   is off or not configured, "Generate with AI" / "Break Down with AI" show
   "AI is not configured." with a one-tap [Configure AI] shortcut to

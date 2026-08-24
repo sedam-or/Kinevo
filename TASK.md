@@ -4333,23 +4333,33 @@ P17-G Analytics / Decision Support UX
   - [x] AI settings reachable at Settings → AI & Providers (`nav-ai-settings`,
         golden-journeys H); if unconfigured/off, AI-dependent actions show
         "AI is not configured. [Configure AI]" routing to ai-settings
-- Verification: [x] E2E journey I green ×3 browsers (browser-e2e §11 P17-028);
+- Verification: [x] E2E journey H2 green ×3 browsers (browser-e2e §11 P17-028);
   vitest 490 passed incl. GoalViews gate cases. H/G2 blocked by pre-existing
   container→host Ollama connectivity gap (recorded, ADR-011 fix path).
 - Notes: no hidden configuration; canonical status states drive the gate
   (disabled/not_configured only — unavailable/degraded still surface server truth).
 
 ### TASK-P17-029 — Global AI Entry Points
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: TASK-P17-004, TASK-P17-026
 - SRS: FR-60 (contextual AI), no new AI authority
 - Files: Goal/Note/Canvas/Task surfaces
+  - `server/resources/js/ai/api.ts` — payload union + summarizeNote/
+    extractTasks/suggestCanvas/generateText/acceptProposalWithResult
+  - `note/NoteEditView.vue` — Summarize + Extract tasks (review → accept/reject)
+  - `task/TaskDetailView.vue` — Clarify task (non-mutating)
+  - `canvas/CanvasListView.vue` — Suggest structure (accept creates + opens)
 - Acceptance:
-  - [ ] contextual AI: Goal→Break down; Note→Summarize/Extract tasks; Canvas→
-        Suggest structure; Task→Clarify task; AI settings remain the control plane
-- Verification: [ ] E2E contextual entry-point smoke per surface
-- Notes: AI is contextual, not an omnibus "AI page".
+  - [x] contextual AI: Goal→Break down (P17-005); Note→Summarize/Extract
+        tasks; Canvas→Suggest structure; Task→Clarify task; AI settings
+        remain the control plane (P17-028 gate reused on every entry point)
+- Verification: [x] E2E golden-journeys K ×3 browsers (entry-point smoke per
+  surface + gate click-through); vitest 499 passed incl. note/task/canvas AI
+  cases; backend contracts already proven (NoteAiApiTest, CanvasAiApiTest,
+  AiGoldenFlowsTest) — no backend change needed.
+- Notes: AI is contextual, not an omnibus "AI page"; nothing applies without
+  acceptance (FR-62); clarify is non-mutating text generation.
 
 ### TASK-P17-030 — Micro-Copy Pass
 - Status: TODO

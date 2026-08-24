@@ -142,7 +142,11 @@ AI Goal breakdown UX flow (FR-52/61/62)  ✅ DONE (TASK-P17-004/005/026:
 AI settings discoverability (FR-60)      ✅ DONE (TASK-P17-028: unconfigured/off
                                           AI actions show "AI is not configured."
                                           + [Configure AI] → Settings;
-                                          golden-journeys I ×3 browsers)
+                                          golden-journeys H2 ×3 browsers)
+Contextual AI entry points (FR-60)       ✅ DONE (TASK-P17-029: Note→Summarize/
+                                          Extract, Canvas→Suggest structure,
+                                          Task→Clarify; proposals pending until
+                                          accepted; golden-journeys K ×3 browsers)
 ```
 
 ### Evidence rule
