@@ -685,8 +685,27 @@ golden-journeys.spec.ts — journey K added  chromium/firefox/webkit
           state restored at the end. Generation itself stays provider-gated
           (same posture as G3); API-level flows are proven by NoteAiApiTest,
           CanvasAiApiTest, AiGoldenFlowsTest.
-  Result: journey K green across all three browsers; H/G2 remain blocked by
-        the recorded environment gap above (unchanged).
+  Result: journey K green across all three browsers; H/G2 restored 2026-08-24
+        (see resolved environment note above).
+```
+
+### P17-023 — Canonical end-to-end product journey run (2026-08-24)
+```text
+tests/e2e/tests/canonical-journey.spec.ts  chromium/firefox/webkit
+  checks: ONE continuous session drives the whole product loop through the
+          live UI — login → goal create → real AI breakdown proposal → inline
+          edit + accept (FR-62 gate) → accepted milestones on the goal →
+          program created (flexible workload) → Quick Capture schedules a task
+          onto a future day linked to program+goal+milestone → clock installed
+          on the assigned slot renders it as TODAY's NOW card → START →
+          elapsed accrues from server timestamp → COMPLETE (toast) → progress
+          strip increments exactly one → ANALYTICS summary renders over the
+          seeded window → capacity [Review schedule] lands in Schedule draft.
+  Determinism: same contract as journeys I/J — future empty day always has
+          free capacity; single API read-back fetches the exact assignment
+          slot (capture panel shows locale-formatted time only).
+  Result: ✅ 3 passed (3 browsers). Real-provider generation exercised end to
+          end (qwen2.5-coder:7b via Ollama bridge).
 ```
 
 ## Maintenance

@@ -4220,16 +4220,18 @@ P17-G Analytics / Decision Support UX
 - Notes: this becomes the UX contract.
 
 ### TASK-P17-023 — End-to-End Product Journey
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P0
 - Depends On: core P17 flow tasks
 - SRS: FR-19, FR-52, FR-62, NFR
 - Files: tests/e2e golden journey
 - Acceptance:
-  - [ ] canonical journey (Login→Goal→AI→Milestones→Programs→Tasks→Schedule→
+  - [x] canonical journey (Login→Goal→AI→Milestones→Programs→Tasks→Schedule→
         Today→Start→Complete→Progress→Analytics→adaptation) executable in a
         real browser
-- Verification: [ ] Playwright chromium/firefox/webkit
+- Verification: [x] Playwright chromium/firefox/webkit — 3 passed
+        (tests/e2e/tests/canonical-journey.spec.ts; recorded in
+        docs/browser-e2e.md). Real-provider AI breakdown exercised end to end.
 - Notes: primary P17 success criterion.
 
 ### TASK-P17-024 — Feature Interconnectivity Audit
