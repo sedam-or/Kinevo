@@ -70,7 +70,16 @@ final readonly class CreateGoalBreakdownProposalUseCase
             return $instructions;
         }
 
-        return "Break down the goal \"{$goal->title}\" into milestones with target dates and estimated workload.";
+        // TASK-P17-027: request a concise decision summary + high-level
+        // assumptions, inputs used and constraints honoured. The schema forbids
+        // chain-of-thought exposure; this keeps the generator aligned.
+        return "Break down the goal \"{$goal->title}\" into milestones with target dates and estimated workload."
+            .' Explain the breakdown concisely: a decision summary, the key '
+            .'assumptions you made, the inputs you used (deadline, capacity, '
+            .'commitments), and the constraints you honoured.'
+            .' Do NOT include chain-of-thought.'
+            .' Return JSON matching the goal_breakdown_proposal schema.'
+            .' Type must be "goal_breakdown_proposal".';
     }
 
     private function generate(int $userId, int $goalId, string $prompt, ?string $systemPrompt): ValidatedAiProposal

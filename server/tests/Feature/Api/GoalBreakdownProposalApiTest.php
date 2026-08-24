@@ -54,6 +54,33 @@ class GoalBreakdownProposalApiTest extends TestCase
         ]);
     }
 
+    private function fakeOllamaGoalBreakdownWithExplanation(int $goalId): void
+    {
+        config([
+            'ai.driver' => 'ollama',
+            'ai.ollama.base_url' => 'http://localhost:11434',
+            'ai.ollama.model' => 'llama3.1',
+        ]);
+
+        Http::fake([
+            'http://localhost:11434/api/generate' => Http::response([
+                'response' => json_encode([
+                    'type' => 'goal_breakdown_proposal',
+                    'goal_id' => $goalId,
+                    'rationale' => 'Research before build reduces rework.',
+                    'assumptions' => ['Stable team size', 'Quarterly deadline holds'],
+                    'inputs' => ['Deadline 2026-12-31', 'Weekly capacity 20h'],
+                    'constraints' => ['Hard landscape Monday 09:00'],
+                    'risks' => ['Scope creep around integrations.'],
+                    'milestones' => [
+                        ['title' => 'Research', 'target_date' => '2026-09-01', 'estimated_minutes' => 600],
+                        ['title' => 'Build', 'estimated_minutes' => 1800],
+                    ],
+                ]),
+            ], 200),
+        ]);
+    }
+
     public function test_breakdown_requires_authentication_and_owned_goal(): void
     {
         [$user, $token, $goal] = $this->userWithGoal();
@@ -100,6 +127,26 @@ class GoalBreakdownProposalApiTest extends TestCase
             'user_id' => $user->id,
             'proposal_type' => 'goal_breakdown',
             'status' => 'success',
+        ]);
+    }
+
+    public function test_breakdown_carries_the_explanation_block(): void
+    {
+        [$user, $token, $goal] = $this->userWithGoal();
+        $this->fakeOllamaGoalBreakdownWithExplanation($goal->id);
+
+        $this->withToken($token)->postJson("/api/v1/goals/{$goal->id}/breakdown-proposals", [])
+            ->assertStatus(200)
+            ->assertJsonPath('proposal.payload.rationale', 'Research before build reduces rework.')
+            ->assertJsonPath('proposal.payload.assumptions', ['Stable team size', 'Quarterly deadline holds'])
+            ->assertJsonPath('proposal.payload.inputs', ['Deadline 2026-12-31', 'Weekly capacity 20h'])
+            ->assertJsonPath('proposal.payload.constraints', ['Hard landscape Monday 09:00'])
+            ->assertJsonPath('proposal.payload.risks', ['Scope creep around integrations.']);
+
+        $this->assertDatabaseHas('ai_proposals', [
+            'user_id' => $user->id,
+            'proposal_type' => 'goal_breakdown',
+            'decision' => 'pending',
         ]);
     }
 

@@ -154,6 +154,17 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
         const milestoneCount = await page.getByTestId('proposal-milestones').locator('li').count();
         expect(milestoneCount).toBeGreaterThan(0);
 
+        // P17-027: explanation content assertions — decision summary plus
+        // high-level assumptions/inputs/constraints render when the AI supplies
+        // them, and are never hidden raw JSON or chain-of-thought.
+        for (const explanation of ['proposal-rationale', 'proposal-assumptions', 'proposal-inputs', 'proposal-constraints']) {
+            const block = page.getByTestId(explanation);
+            if (await block.count()) {
+                await expect(block).toBeVisible();
+                await expect(block).not.toContainText('"goal_breakdown_proposal"');
+            }
+        }
+
         // Edit the first milestone title before accepting (FR-62 approval gate).
         await page.getByTestId('proposal-edit').click();
         const firstTitle = page.getByTestId('proposal-milestone-title-0');

@@ -52,6 +52,9 @@ export interface AiProposalPayload {
     type: 'goal_breakdown_proposal';
     goal_id: number;
     rationale?: string;
+    assumptions?: string[];
+    inputs?: string[];
+    constraints?: string[];
     risks?: string[];
     milestones: BreakdownMilestone[];
 }

@@ -40,7 +40,10 @@ Example:
 {
   "type": "goal_breakdown_proposal",
   "goal_id": "uuid",
-  "rationale": "why this decomposition (optional, FR-63)",
+  "rationale": "why this decomposition (optional, decision summary)",
+  "assumptions": ["what the plan assumes (optional)"],
+  "inputs": ["which inputs were used — deadline, capacity (optional)"],
+  "constraints": ["which constraints were honoured (optional)"],
   "risks": ["what could go wrong (optional)"],
   "milestones": [
     {
@@ -51,6 +54,10 @@ Example:
   ]
 }
 ```
+### Explainability boundary (TASK-P17-027)
+AI proposals MUST be explainable at a high level — decision summary,
+assumptions, inputs used, constraints honoured — and MUST never expose
+chain-of-thought or private reasoning (privacy §14/§15.4, design.md §44).
 
 ### Context selection
 AI context MUST be minimal and relevant. Do not send the entire database by default.

@@ -116,4 +116,35 @@ describe('ProposalReviewCard (TASK-P17-004)', () => {
         expect(wrapper.emitted('accepted')).toBeUndefined();
         expect(wrapper.find('[data-testid="proposal-review"]').exists()).toBe(false);
     });
+
+    it('renders the explanation block — summary, assumptions, inputs, constraints (TASK-P17-027)', async () => {
+        vi.mocked(aiApi.proposals).mockResolvedValue({
+            proposals: [{
+                ...pendingProposal,
+                payload: {
+                    ...pendingProposal.payload,
+                    assumptions: ['Stable team size', 'Quarterly deadline holds'],
+                    inputs: ['Deadline 2026-12-31', 'Weekly capacity 20h'],
+                    constraints: ['Hard landscape Monday 09:00', '30% recharge reserve'],
+                },
+            }],
+        });
+        const wrapper = mountCard();
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="proposal-rationale"]').text()).toContain('Research before build reduces rework.');
+        expect(wrapper.find('[data-testid="proposal-assumptions"]').text()).toContain('Stable team size');
+        expect(wrapper.find('[data-testid="proposal-inputs"]').text()).toContain('Weekly capacity 20h');
+        expect(wrapper.find('[data-testid="proposal-constraints"]').text()).toContain('30% recharge reserve');
+    });
+
+    it('hides explanation lists when the proposal has none', async () => {
+        vi.mocked(aiApi.proposals).mockResolvedValue({ proposals: [pendingProposal] });
+        const wrapper = mountCard();
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="proposal-assumptions"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="proposal-inputs"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="proposal-constraints"]').exists()).toBe(false);
+    });
 });

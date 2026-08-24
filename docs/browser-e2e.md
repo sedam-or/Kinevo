@@ -637,6 +637,18 @@ golden-journeys.spec.ts — journey G2 reworked  chromium/firefox/webkit
         + inline accept cases green (P17-026).
 ```
 
+### P17-027 — AI Explanation content assertions (2026-08-24)
+```text
+golden-journeys.spec.ts — journey G2 extended  chromium/firefox/webkit
+  checks: each explanation block the AI supplied renders with a label —
+          proposal-rationale (decision summary), proposal-assumptions,
+          proposal-inputs, proposal-constraints — and never shows raw JSON or
+          chain-of-thought. Blocks are tolerant (asserted only when present).
+  Unit/API evidence: StructuredAiOutputTest accepts the four explanation
+        groups; GoalBreakdownProposalApiTest asserts they persist through the
+        API; vitest renders/hides the four labelled blocks (P17-027).
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.

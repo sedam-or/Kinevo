@@ -3148,6 +3148,18 @@ paths:
                 type: { type: string, enum: [goal_breakdown_proposal] }
                 goal_id: { type: integer, minimum: 1 }
                 rationale: { type: string, maxLength: 2000 }
+                assumptions:
+                  type: array
+                  maxItems: 10
+                  items: { type: string, maxLength: 300 }
+                inputs:
+                  type: array
+                  maxItems: 10
+                  items: { type: string, maxLength: 300 }
+                constraints:
+                  type: array
+                  maxItems: 10
+                  items: { type: string, maxLength: 300 }
                 risks:
                   type: array
                   maxItems: 10

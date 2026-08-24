@@ -13,6 +13,11 @@ Release governance: see `docs/release-management.md`.
 ## [Unreleased]
 ### Added
 
+- AI breakdowns are now explainable (Phase 17, TASK-P17-027): each proposal
+  shows a concise decision summary plus the assumptions, the inputs it used
+  (deadline, capacity, commitments), and the constraints it honoured — while
+  keeping internal reasoning private.
+
 - Breakdown proposals can now be reviewed and accepted right where the goal
   was created (Phase 17, TASK-P17-026): after "Generate with AI" the proposal
   opens in place — edit milestones, accept, and stay put instead of being

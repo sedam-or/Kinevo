@@ -37,7 +37,26 @@ final class AiSchemaRegistry
             'fields' => [
                 'type' => ['required' => true, 'type' => 'string', 'enum' => ['goal_breakdown_proposal']],
                 'goal_id' => ['required' => true, 'type' => 'int', 'min' => 1],
+                // Explanation block (TASK-P17-027, design.md §44): a concise
+                // decision summary plus high-level assumptions, inputs used and
+                // constraints honoured. All optional so stored proposals stay
+                // valid; never expose chain-of-thought (privacy §14/§15.4).
                 'rationale' => ['type' => 'string', 'max_length' => 2000],
+                'assumptions' => [
+                    'type' => 'array',
+                    'max_items' => 10,
+                    'items' => ['type' => 'string', 'max_length' => 300],
+                ],
+                'inputs' => [
+                    'type' => 'array',
+                    'max_items' => 10,
+                    'items' => ['type' => 'string', 'max_length' => 300],
+                ],
+                'constraints' => [
+                    'type' => 'array',
+                    'max_items' => 10,
+                    'items' => ['type' => 'string', 'max_length' => 300],
+                ],
                 'risks' => [
                     'type' => 'array',
                     'max_items' => 10,

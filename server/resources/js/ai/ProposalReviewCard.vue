@@ -142,9 +142,12 @@ defineExpose({ load });
             <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5">{{ proposal.payload.milestones.length }} milestones</span>
         </div>
 
-        <p v-if="proposal.payload.rationale" class="text-sm text-gray-700 dark:text-gray-300 mb-3" data-testid="proposal-rationale">
-            {{ proposal.payload.rationale }}
-        </p>
+        <div v-if="proposal.payload.rationale" class="mb-3">
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Decision summary</div>
+            <p class="text-sm text-gray-700 dark:text-gray-300" data-testid="proposal-rationale">
+                {{ proposal.payload.rationale }}
+            </p>
+        </div>
 
         <ul class="space-y-2 mb-3" data-testid="proposal-milestones">
             <li v-for="(m, i) in editing ? draft : proposal.payload.milestones" :key="i" class="text-sm" :data-testid="`proposal-milestone-${i}`">
@@ -186,6 +189,27 @@ defineExpose({ load });
         <ul v-if="proposal.payload.risks && proposal.payload.risks.length > 0" class="list-disc ml-5 mb-3 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-risks">
             <li v-for="(risk, i) in proposal.payload.risks" :key="i">{{ risk }}</li>
         </ul>
+
+        <!-- Explainability (TASK-P17-027): high-level assumptions, inputs used
+             and constraints honoured — concise, never chain-of-thought. -->
+        <div v-if="proposal.payload.assumptions && proposal.payload.assumptions.length > 0" class="mb-3">
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Assumptions</div>
+            <ul class="list-disc ml-5 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-assumptions">
+                <li v-for="(item, i) in proposal.payload.assumptions" :key="i">{{ item }}</li>
+            </ul>
+        </div>
+        <div v-if="proposal.payload.inputs && proposal.payload.inputs.length > 0" class="mb-3">
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Inputs used</div>
+            <ul class="list-disc ml-5 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-inputs">
+                <li v-for="(item, i) in proposal.payload.inputs" :key="i">{{ item }}</li>
+            </ul>
+        </div>
+        <div v-if="proposal.payload.constraints && proposal.payload.constraints.length > 0" class="mb-3">
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Constraints honoured</div>
+            <ul class="list-disc ml-5 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-constraints">
+                <li v-for="(item, i) in proposal.payload.constraints" :key="i">{{ item }}</li>
+            </ul>
+        </div>
 
         <p v-if="error" class="text-sm text-danger mb-2" role="alert" data-testid="proposal-error">{{ error }}</p>
 

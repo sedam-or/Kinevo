@@ -4287,16 +4287,38 @@ P17-G Analytics / Decision Support UX
     documented Ollama bridge note in docs/browser-e2e.md §11.
 
 ### TASK-P17-027 — AI Explanation
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: TASK-P17-004
 - SRS: FR-27 (explainability), privacy §14; never expose chain-of-thought
 - Files: AI proposal view
 - Acceptance:
-  - [ ] proposal shows decision summary, assumptions, inputs, constraints;
+  - [x] proposal shows decision summary, assumptions, inputs, constraints;
         concise; no private chain-of-thought
-- Verification: [ ] E2E content assertions
-- Notes: —
+- Verification: [x] E2E content assertions; unit + API contract
+- Notes: explanation fields are optional schema additions (v1 stays valid).
+- Evidence:
+  - Schema v1 extended (backward-compatible, stored proposals stay valid) with
+    optional `assumptions`, `inputs`, `constraints` string arrays — each capped
+    at 10 items × 300 chars — alongside the existing `rationale` (decision
+    summary) and `risks`. Revalidated through the same `AiSchemaRules` path as
+    AI output, so nothing is persisted that did not pass FR-61.
+  - Default breakdown prompt (CreateGoalBreakdownProposalUseCase) now asks for a
+    concise decision summary, assumptions, inputs used, and constraints
+    honoured, and explicitly forbids chain-of-thought.
+  - `ProposalReviewCard` renders labelled explanation blocks — Decision summary
+    (rationale), Assumptions, Inputs used, Constraints honoured — shown only
+    when the payload carries them; raw JSON/private reasoning never surfaces.
+  - Tests: `StructuredAiOutputTest::goal_breakdown_accepts_explanation_fields`
+    (schema accepts the four explanation groups); `GoalBreakdownProposalApiTest`
+    +1 asserting the generated proposal carries rationale/assumptions/inputs/
+    constraints through the API; vitest `ProposalReviewCard` +2 (render labelled
+    blocks, hide when absent). E2E journey G2 gains content assertions for all
+    four explanation testids with a no-raw-JSON guard (run gated on a reachable
+    provider per the documented Ollama bridge note in docs/browser-e2e.md §11).
+  - Docs: design.md Goals row maps post-create review; implementation-status
+    tracks the FR-52/61/62 AI flow; openapi.yaml documents the four explanation
+    payload fields.
 
 ### TASK-P17-028 — Settings Discoverability
 - Status: TODO
