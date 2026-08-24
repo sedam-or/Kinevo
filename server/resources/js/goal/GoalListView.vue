@@ -6,6 +6,7 @@ import { useGoalStore } from './store';
 import { GOAL_HORIZONS, PROGRAM_WORKLOAD_TYPES, type Goal } from './types';
 import KButton from '../components/KButton.vue';
 import KInput from '../components/KInput.vue';
+import ProposalReviewCard from '../ai/ProposalReviewCard.vue';
 
 const emit = defineEmits<{
     (e: 'selectGoal', goalId: number): void;
@@ -34,6 +35,14 @@ const suggestionGoal = ref<Goal | null>(null);
 const { running: generating, label: generationStage, start: startGeneration, stop: stopGeneration } = useGenerationStages();
 const suggestionError = ref<string | null>(null);
 const proposalReady = ref(false);
+/**
+ * Inline review after generation (TASK-P17-026): the proposal is reviewed,
+ * edited and accepted right inside the post-create panel — no navigation to
+ * the goal detail page. Wiring mirrors GoalDetailView (TASK-P17-005).
+ */
+const hasPendingProposal = ref(false);
+const breakdownAccepted = ref(false);
+const reviewCard = ref<InstanceType<typeof ProposalReviewCard> | null>(null);
 
 onMounted(() => {
     void goals.loadAll();
@@ -86,8 +95,20 @@ async function generateBreakdown(): Promise<void> {
         return;
     }
     // The proposal is persisted server-side as pending — no milestones were
-    // created yet. Full review/edit/accept UX lands in TASK-P17-004.
+    // created yet. Full review/edit/accept happens INLINE below (P17-026).
     proposalReady.value = true;
+    breakdownAccepted.value = false;
+    await reviewCard.value?.load();
+}
+
+/**
+ * Inline accept (TASK-P17-026): the goal keeps milestones from the accepted
+ * proposal, so the list is refreshed to reflect the new state.
+ */
+async function onBreakdownAccepted(): Promise<void> {
+    breakdownAccepted.value = true;
+    hasPendingProposal.value = false;
+    await goals.loadAll();
 }
 
 function doItMyself(): void {
@@ -170,18 +191,34 @@ function workloadLabel(w: string): string {
                 “{{ suggestionGoal.title }}” is saved. Would you like Kinevo to break it down
                 into actionable milestones?
             </p>
-            <div v-if="proposalReady" class="text-sm text-[var(--color-primary)] mb-3" data-testid="goal-proposal-ready" role="status">
-                AI proposal generated. Open the goal to review, edit, and accept it.
+            <div v-if="proposalReady && !breakdownAccepted && hasPendingProposal" class="text-sm text-[var(--color-primary)] mb-3" data-testid="goal-proposal-ready" role="status">
+                AI proposal generated — review it right here.
             </div>
             <div v-if="suggestionError" class="text-sm text-danger mb-3" role="alert" data-testid="goal-proposal-error">
                 {{ suggestionError }}
             </div>
-            <div class="flex gap-2 flex-wrap">
+            <div v-if="breakdownAccepted" class="text-sm text-gray-700 dark:text-gray-300 mb-3" data-testid="goal-proposal-accepted" role="status">
+                Breakdown accepted — milestones were added to “{{ suggestionGoal.title }}”.
+            </div>
+            <!-- Inline review (TASK-P17-026): nothing is accepted without review,
+                 and reviewing does not leave the page. -->
+            <ProposalReviewCard
+                v-if="proposalReady && !breakdownAccepted"
+                ref="reviewCard"
+                :goal-id="suggestionGoal.id"
+                @accepted="onBreakdownAccepted"
+                @pending="hasPendingProposal = $event"
+            />
+            <div v-if="!hasPendingProposal && !breakdownAccepted" class="flex gap-2 flex-wrap">
                 <KButton variant="primary" data-testid="goal-breakdown-ai" :disabled="generating" @click="generateBreakdown">
                     {{ generating ? generationStage : 'Generate with AI' }}
                 </KButton>
                 <KButton data-testid="goal-breakdown-manual" @click="doItMyself">I'll do it myself</KButton>
                 <KButton variant="ghost" data-testid="goal-breakdown-later" @click="dismissSuggestion">Later</KButton>
+            </div>
+            <div v-else-if="breakdownAccepted" class="flex gap-2 flex-wrap">
+                <KButton data-testid="goal-breakdown-open" @click="doItMyself">Open goal</KButton>
+                <KButton variant="ghost" data-testid="goal-breakdown-close" @click="dismissSuggestion">Close</KButton>
             </div>
         </section>
 

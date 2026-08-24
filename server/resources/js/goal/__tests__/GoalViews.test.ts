@@ -22,9 +22,24 @@ vi.mock('../api', async (importOriginal) => {
     };
 });
 
+vi.mock('../../ai/api', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../ai/api')>();
+    return {
+        ...actual,
+        aiApi: {
+            ...actual.aiApi,
+            proposals: vi.fn(),
+            updateProposal: vi.fn(),
+            acceptProposal: vi.fn(),
+            rejectProposal: vi.fn(),
+        },
+    };
+});
+
 import GoalListView from '../GoalListView.vue';
 import GoalDetailView from '../GoalDetailView.vue';
 import { goalApi } from '../api';
+import { aiApi, type AiProposal } from '../../ai/api';
 import { useShellStore } from '../../shell/store';
 import type { Goal, Milestone, Program } from '../types';
 
@@ -46,9 +61,35 @@ const milestone: Milestone = {
     progress: 0, completed_at: null, version: 1,
 };
 
+const pendingProposal: AiProposal = {
+    id: 7,
+    user_id: 1,
+    proposal_type: 'goal_breakdown_proposal',
+    schema_version: 1,
+    payload: {
+        type: 'goal_breakdown_proposal',
+        goal_id: 1,
+        rationale: 'Research before build reduces rework.',
+        risks: ['Scope creep around integrations.'],
+        milestones: [
+            { title: 'Research', target_date: '2026-09-01', estimated_minutes: 600 },
+            { title: 'Build', estimated_minutes: 1800 },
+        ],
+    },
+    decision: 'pending',
+    operation_id: null,
+    created_at: '2026-08-22T00:00:00.000Z',
+};
+
 beforeEach(() => {
     setActivePinia(createPinia());
     vi.clearAllMocks();
+    // Stable defaults so ordering cannot leak an implementation between tests.
+    vi.mocked(aiApi.proposals).mockResolvedValue({ proposals: [] });
+    vi.mocked(aiApi.acceptProposal).mockResolvedValue(undefined);
+    vi.mocked(aiApi.updateProposal).mockResolvedValue({
+        proposal: { ...pendingProposal, decision: 'edited' },
+    });
 });
 
 describe('GoalListView', () => {
@@ -110,12 +151,49 @@ describe('GoalListView', () => {
 
         // Generate with AI hits the proposal backend (pending, non-mutating).
         vi.mocked(goalApi.breakdownProposal).mockResolvedValue({ proposal: { id: 11, status: 'pending' } });
+        vi.mocked(aiApi.proposals).mockResolvedValue({ proposals: [pendingProposal] });
         await wrapper.find('[data-testid="goal-breakdown-ai"]').trigger('click');
         await flushPromises();
         expect(goalApi.breakdownProposal).toHaveBeenCalledWith(1);
         expect(wrapper.find('[data-testid="goal-proposal-ready"]').exists()).toBe(true);
+        // P17-026: the proposal is reviewed INLINE in the post-create panel —
+        // no navigation to the goal detail page required.
+        expect(wrapper.find('[data-testid="proposal-review"]').exists()).toBe(true);
+        expect(wrapper.emitted('selectGoal')).toBeUndefined();
         // createMilestone was never called — no silent mutation.
         expect(goalApi.createMilestone).not.toHaveBeenCalled();
+    });
+
+    it('accepts the breakdown inline after generation — no page navigation (TASK-P17-026)', async () => {
+        vi.mocked(goalApi.goals).mockResolvedValue({ goals: [] });
+        vi.mocked(goalApi.programs).mockResolvedValue({ programs: [] });
+        vi.mocked(goalApi.createGoal).mockResolvedValue({ goal });
+        vi.mocked(goalApi.breakdownProposal).mockResolvedValue({ proposal: { id: 11, status: 'pending' } });
+        vi.mocked(aiApi.proposals).mockResolvedValue({ proposals: [pendingProposal] });
+vi.mocked(aiApi.acceptProposal).mockResolvedValue(undefined);
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(GoalListView, { global: { plugins: [pinia] } });
+        await flushPromises();
+
+        await wrapper.find('[data-testid="goal-create-title"]').setValue('Ship v1');
+        await wrapper.find('form').trigger('submit');
+        await flushPromises();
+        await wrapper.find('[data-testid="goal-breakdown-ai"]').trigger('click');
+        await flushPromises();
+
+        // Review is reachable in place.
+        expect(wrapper.find('[data-testid="proposal-review"]').exists()).toBe(true);
+
+        // Accept from the inline card; the goal list is refreshed to reflect
+        // the new milestones — and we never left the Goals surface.
+        await wrapper.find('[data-testid="proposal-accept"]').trigger('click');
+        await flushPromises();
+        expect(aiApi.acceptProposal).toHaveBeenCalled();
+        expect(goalApi.goals).toHaveBeenCalledTimes(2);
+        expect(wrapper.find('[data-testid="goal-proposal-accepted"]').exists()).toBe(true);
+        expect(wrapper.emitted('selectGoal')).toBeUndefined();
     });
 
     it('surfaces the AI breakdown error without navigating away (P17-003)', async () => {

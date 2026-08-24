@@ -132,8 +132,13 @@ Workflow Continuity Layer                    ✅ DONE (TASK-P17-002: shared
                                          Today NOW-card Goal link, clickable
                                          knowledge links, one-shot deep-open
                                          focus plumbing; E2E green ×3)
-AI Provider settings UI (FR-60)          🔴 NOT STARTED (TASK-P17-006)
-AI Goal breakdown UX flow (FR-52/61/62)  🔴 NOT STARTED (TASK-P17-004/005/026)
+AI Provider settings UI (FR-60)          ✅ DONE (TASK-P17-006: provider select,
+                                          status chip, masked key rules, test
+                                          connection, enable/disable)
+AI Goal breakdown UX flow (FR-52/61/62)  ✅ DONE (TASK-P17-004/005/026:
+                                          goal → generate → inline proposal
+                                          review/edit/accept — post-create panel
+                                          reviews without leaving the page)
 ```
 
 ### Evidence rule

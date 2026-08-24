@@ -302,8 +302,9 @@ LOGIN → PLAN (Goals) → New goal (Outcome/Description/Deadline)
 The goal-creation planning workflow: after submit the goal is stored and the
 product *offers* an AI breakdown; the goal/milestones are NEVER mutated without
 an explicit choice. "Generate with AI" creates a *pending* proposal via the
-validated proposal contract (SRS FR-52/FR-62); the full proposal review/accept
-UX is Journey F work (TASK-P17-004) and stays ⚪ here.
+validated proposal contract (SRS FR-52/FR-62); the full proposal review/edit/
+accept UX renders inline in the post-create panel (TASK-P17-026) — the user
+never has to leave the page to approve a breakdown.
 
 Result: ✅ P17-003 pass (chromium) — `golden-journeys.spec.ts` "golden journey G";
 suggestion renders with all three actions; "I'll do it myself" opens the goal
@@ -621,6 +622,19 @@ tests/e2e/tests/analytics-hierarchy.spec.ts  chromium/firefox/webkit
           themes both audited via kinevo.theme override.
   Result: 6 passed (2 tests × 3 browsers). Screenshots:
           test-results/screenshots/<browser>/p17-021-analytics-{light,dark}.png
+```
+
+### P17-026 — AI Goal Breakdown Quick Action spec (2026-08-24)
+```text
+golden-journeys.spec.ts — journey G2 reworked  chromium/firefox/webkit
+  checks: [Generate with AI] → proposal review/edit/accept happens INLINE in
+          the post-create panel — goal-detail is asserted NOT visible until the
+          user opts to open the goal; accept keeps the user on the Goals
+          surface and the goal list is refreshed; opening the goal then shows
+          the accepted milestones (edited title + milestone count).
+  Note: like all P17 AI-generation journeys this one needs a reachable AI
+        provider (journey H). Unit evidence: GoalViews.test.ts inline review
+        + inline accept cases green (P17-026).
 ```
 
 ## Maintenance

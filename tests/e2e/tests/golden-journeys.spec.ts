@@ -136,7 +136,7 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
     // Preconditions: a reachable AI provider is configured in Settings → AI &
     // Providers (journey H). Generation happens SERVER-side, so this journey
     // cannot be route-mocked in the browser; it skips loudly otherwise.
-    test('generates a breakdown, edits the proposal, accepts it — milestones appear', async ({ page }) => {
+    test('generates a breakdown, reviews/edits/accepts it inline — milestones appear (P17-026)', async ({ page }) => {
         await login(page);
         const name = unique('r17-g2');
         await page.getByTestId('nav-goals').click();
@@ -147,13 +147,10 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
         await expect(page.getByTestId('goal-breakdown-suggestion')).toBeVisible();
         await page.getByTestId('goal-breakdown-ai').click();
 
-        // Loading state → the goal list confirms the pending proposal exists.
-        await expect(page.getByTestId('goal-proposal-ready')).toBeVisible({ timeout: 30_000 });
-
-        // Open the goal: the review card renders the validated proposal.
-        await page.getByTestId('goal-list').getByText(name, { exact: false }).first().click();
-        await expect(page.getByTestId('goal-detail')).toBeVisible();
-        await expect(page.getByTestId('proposal-review')).toBeVisible({ timeout: 10_000 });
+        // P17-026: the proposal is reviewed right here — still on the Goals
+        // surface, no navigation to the goal detail page.
+        await expect(page.getByTestId('proposal-review')).toBeVisible({ timeout: 30_000 });
+        await expect(page.getByTestId('goal-detail')).not.toBeVisible();
         const milestoneCount = await page.getByTestId('proposal-milestones').locator('li').count();
         expect(milestoneCount).toBeGreaterThan(0);
 
@@ -165,8 +162,14 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
         await page.getByTestId('proposal-save-edits').click();
         await expect(page.getByTestId('proposal-edited-badge')).toBeVisible();
 
-        // Accept → milestones land on the goal through the accepted contract.
+        // Accept stays inline; the panel confirms the goal kept the milestones.
         await page.getByTestId('proposal-accept').click();
+        await expect(page.getByTestId('goal-proposal-accepted')).toBeVisible({ timeout: 15_000 });
+        await expect(page.getByTestId('goal-detail')).not.toBeVisible();
+
+        // Open the goal from the accepted panel — milestones are on the goal.
+        await page.getByTestId('goal-breakdown-open').click();
+        await expect(page.getByTestId('goal-detail')).toBeVisible();
         await expect(page.getByTestId('goal-milestones')).toContainText(`${originalTitle} (edited)`, { timeout: 15_000 });
         await expect(page.getByTestId('milestone-timeline').locator('[data-testid="milestone-item"]')).toHaveCount(milestoneCount);
     });

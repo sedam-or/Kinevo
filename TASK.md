@@ -4257,15 +4257,34 @@ P17-G Analytics / Decision Support UX
 - Notes: —
 
 ### TASK-P17-026 — AI Goal Breakdown Quick Action
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P0
 - Depends On: TASK-P17-004
 - SRS: FR-52
 - Files: goal detail + empty-milestone + post-create state
 - Acceptance:
-  - [ ] "Break down with AI" opens proposal generation without leaving the page
-- Verification: [ ] E2E in-page flow
+  - [x] "Break down with AI" opens proposal generation without leaving the page
+- Verification: [x] E2E in-page flow (journey G2 reworked); unit evidence
 - Notes: reuse TASK-P17-005 patterns.
+- Evidence:
+  - `GoalListView.vue` post-create suggestion panel now mounts
+    `ProposalReviewCard` inline the moment a pending proposal exists; the
+    proposal is reviewed, edited and accepted right there — no navigation to the
+    goal detail page (`goal-detail` is not rendered until the user opts in).
+  - Entry-point suppression mirrors GoalDetailView (TASK-P17-005): the
+    [Generate with AI] action hides while a pending proposal awaits a decision
+    (`@pending`), so duplicate proposals can't stack.
+  - After inline accept the panel shows `goal-proposal-accepted` and an
+    `Open goal` action; the goal list is reloaded so accepted milestones appear
+    without a manual refresh.
+  - Unit: `GoalViews.test.ts` +2 — inline review renders after generation with
+    no `selectGoal`/navigation, and inline accept reloads the list and stays on
+    the Goals surface (both using the same validated proposal contract).
+  - E2E: golden-journeys.spec.ts journey G2 reworked to generate → review →
+    edit → accept entirely on the Goals surface (asserts `goal-detail` NOT
+    visible before the user opens the goal), then opens the goal to show the
+    accepted milestones. Needs a reachable AI provider (journey H), per the
+    documented Ollama bridge note in docs/browser-e2e.md §11.
 
 ### TASK-P17-027 — AI Explanation
 - Status: TODO

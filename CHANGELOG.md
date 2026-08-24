@@ -13,6 +13,11 @@ Release governance: see `docs/release-management.md`.
 ## [Unreleased]
 ### Added
 
+- Breakdown proposals can now be reviewed and accepted right where the goal
+  was created (Phase 17, TASK-P17-026): after "Generate with AI" the proposal
+  opens in place — edit milestones, accept, and stay put instead of being
+  sent to another page.
+
 - Every object now suggests its next step (Phase 17, TASK-P17-016): an
   empty goal asks for its first milestone, a backlog task asks to be
   scheduled, a missed task asks to be recovered, and an offline drawing board
