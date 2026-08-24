@@ -415,6 +415,23 @@ Evidence: tests/e2e/tests/tactile-language.spec.ts asserts computed
 box-shadow 4px→6px(hover)→2px(press) on draft-generate in chromium+firefox;
 surface-qa + accessibility suites green in all three browsers.
 Link: TASK-P17-010, TASK-P17-012.
+
+UI-014 | 2026-08-24 | Schedule draft + Notes list + Canvas list (micro-copy, TASK-P17-030) | P2
+Found: developer terminology leaked into user-facing copy. Draft reasoning
+note said "This deterministic draft … Applying it bumps the schedule version;
+stale applies return 409" — jargon ("deterministic", "bumps the version") plus
+a raw HTTP code. Notes/Canvas lists exposed the internal revision counter as a
+"v3"-style chip — meaningless to users.
+Expected: TASK-P17-030 acceptance — no developer terminology, HTTP codes, or
+implementation jargon; conflict safety explained in plain language.
+Severity: P2.
+Status: fixed (2026-08-24, TASK-P17-030) — reasoning note now reads as a plain
+promise about what the plan respects and what happens if things changed while
+reviewing; notes list shows "Updated <date>"; canvas v-chip removed.
+Full-copy sweep found no guilt phrasing, pseudo-science, vague "Optimize" CTAs,
+or other HTTP codes in user-facing strings (sync explanations already human).
+Evidence: vitest 29 passed on affected suites; full gates re-run at commit.
+Link: TASK-P17-030.
 ```
 
 No finding above is closed silently; each closes with concrete browser/test/visual

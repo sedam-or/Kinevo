@@ -79,8 +79,8 @@ async function createNote(): Promise<void> {
                 <button type="button" class="font-medium text-left" data-testid="note-open" @click="emit('select', note.id)">
                     {{ note.title }}
                 </button>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
-                    v{{ note.version }} · updated {{ note.updated_at?.slice(0, 10) }}
+                <div v-if="note.updated_at" class="text-xs text-gray-500 dark:text-gray-400">
+                    Updated {{ note.updated_at.slice(0, 10) }}
                 </div>
             </article>
         </section>

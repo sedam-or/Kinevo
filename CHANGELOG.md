@@ -11,6 +11,10 @@ version** (v1) are tracked separately in `docs/SRS.md` and
 Release governance: see `docs/release-management.md`.
 
 ## [Unreleased]
+### Changed
+- Clearer words everywhere (Phase 17, TASK-P17-030): the schedule draft
+  explains itself in plain language instead of developer terms, and note and
+  canvas lists no longer show internal revision counters.
 ### Added
 - AI now lives where you work (Phase 17, TASK-P17-029): notes offer
   "Summarize with AI" and "Extract tasks with AI" in the editor, the canvas

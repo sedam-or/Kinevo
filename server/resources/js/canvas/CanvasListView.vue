@@ -180,9 +180,6 @@ async function rejectSuggestion(): Promise<void> {
                 <button type="button" class="font-medium text-left" data-testid="canvas-open" @click="emit('select', item.id)">
                     {{ item.title }}
                 </button>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
-                    v{{ item.version }}
-                </div>
             </article>
         </section>
     </div>

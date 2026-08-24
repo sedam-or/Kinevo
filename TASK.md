@@ -4362,17 +4362,24 @@ P17-G Analytics / Decision Support UX
   acceptance (FR-62); clarify is non-mutating text generation.
 
 ### TASK-P17-030 — Micro-Copy Pass
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P2
 - Depends On: —
 - SRS: NFR (clear copy)
 - Files: all user-facing copy
+  - `schedulerdraft/ScheduleDraftView.vue` — reasoning note de-jargoned
+    (no "deterministic"/"version"/"409")
+  - `note/NotesListView.vue` — internal version chip → "Updated <date>"
+  - `canvas/CanvasListView.vue` — internal version chip removed
 - Acceptance:
-  - [ ] no developer terminology, HTTP codes, implementation jargon, guilt,
-        pseudo-science, vague "Optimize"; prefer "Review schedule" over
-        "Execute optimization"
-- Verification: [ ] copy audit checklist
-- Notes: —
+  - [x] no developer terminology, HTTP codes, implementation jargon, guilt,
+        pseudo-science, vague "Optimize"; concrete CTAs throughout
+        (checklist sweep across all .vue templates, store fallbacks and sync
+        explanations — findings recorded as UI-014 in ui-audit §6.1)
+- Verification: [x] vitest suites on affected surfaces green; full pre-commit
+  gates green at commit
+- Notes: FR-63 scheduler reason codes stay (spec'd) — they render with human
+  labels.
 
 ### TASK-P17-031 — UI/UX Bug Triage Extension
 - Status: TODO
