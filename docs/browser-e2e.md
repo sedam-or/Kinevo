@@ -708,6 +708,19 @@ tests/e2e/tests/canonical-journey.spec.ts  chromium/firefox/webkit
           end (qwen2.5-coder:7b via Ollama bridge).
 ```
 
+### P17-033 — Theme real-browser proof closure run (2026-08-24)
+```text
+tests/e2e/tests/theme.spec.ts  chromium/firefox/webkit
+  checks: re-run of the P17-013 hardening suite as current evidence for the
+          TASK-P17-033 gate — unauth gate toggle; light→reload→light and
+          dark→reload→dark persisted with a pre-hydration class snapshot (no
+          flash); color-scheme flips for native controls; system mode follows
+          live OS switches; keyboard operable (focus + Enter); Excalidraw
+          island re-themes live across navigation (.theme--dark present/gone);
+          mobile 375px reachable.
+  Result: ✅ 6 tests × 3 browsers = 18 passed.
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.

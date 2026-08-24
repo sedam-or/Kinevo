@@ -4423,15 +4423,17 @@ P17-G Analytics / Decision Support UX
         raised to 300 (cold local 7B exceeds a 30s default).
 
 ### TASK-P17-033 — Theme Real-Browser Proof
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P0
 - Depends On: TASK-P17-013
 - SRS: NFR
 - Files: tests/e2e theme spec
 - Acceptance:
-  - [ ] light/dark/system + reload + nav + mobile proven; not considered DONE
+  - [x] light/dark/system + reload + nav + mobile proven; not considered DONE
         from unit tests alone
-- Verification: [ ] Playwright matrix
+- Verification: [x] Playwright matrix — theme.spec.ts 18 passed
+        (6 tests × chromium/firefox/webkit) on 2026-08-24; recorded in
+        docs/browser-e2e.md §P17-033.
 - Notes: —
 
 ### TASK-P17-034 — Mobile UX Re-Audit
