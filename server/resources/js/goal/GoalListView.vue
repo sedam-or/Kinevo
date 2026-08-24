@@ -7,12 +7,16 @@ import { GOAL_HORIZONS, PROGRAM_WORKLOAD_TYPES, type Goal } from './types';
 import KButton from '../components/KButton.vue';
 import KInput from '../components/KInput.vue';
 import ProposalReviewCard from '../ai/ProposalReviewCard.vue';
+import AiNotConfiguredNotice from '../ai/AiNotConfiguredNotice.vue';
+import { useAiSettingsStore } from '../ai/store';
 
 const emit = defineEmits<{
     (e: 'selectGoal', goalId: number): void;
 }>();
 
 const goals = useGoalStore();
+const ai = useAiSettingsStore();
+const aiGateShown = ref(false);
 
 const goalForm = reactive({
     title: '',
@@ -84,6 +88,12 @@ async function createGoal(): Promise<void> {
 
 async function generateBreakdown(): Promise<void> {
     if (suggestionGoal.value === null) {
+        return;
+    }
+    // TASK-P17-028: never fire a doomed request — route to Settings instead.
+    await ai.ensureStatus();
+    aiGateShown.value = !ai.generationReady;
+    if (aiGateShown.value) {
         return;
     }
     startGeneration();
@@ -197,6 +207,8 @@ function workloadLabel(w: string): string {
             <div v-if="suggestionError" class="text-sm text-danger mb-3" role="alert" data-testid="goal-proposal-error">
                 {{ suggestionError }}
             </div>
+            <!-- TASK-P17-028: unconfigured AI routes to Settings, not an error. -->
+            <AiNotConfiguredNotice v-if="aiGateShown && !hasPendingProposal" class="mb-3" />
             <div v-if="breakdownAccepted" class="text-sm text-gray-700 dark:text-gray-300 mb-3" data-testid="goal-proposal-accepted" role="status">
                 Breakdown accepted — milestones were added to “{{ suggestionGoal.title }}”.
             </div>

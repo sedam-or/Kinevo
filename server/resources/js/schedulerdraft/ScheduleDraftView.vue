@@ -121,8 +121,8 @@ function reasonLabel(reason: string): string {
 
             <!-- Reasoning note -->
             <p class="text-xs text-gray-500 dark:text-gray-400" data-testid="draft-reasoning">
-                This deterministic draft respects Hard Landscape, locked tasks, deadlines, and the 30% safety reserve.
-                Applying it bumps the schedule version; stale applies return 409.
+                This plan fits around your Hard Landscape events, locked tasks, deadlines, and your 30% safety reserve.
+                If your schedule changed while you were reviewing, you'll be asked to check the latest plan first.
             </p>
 
             <!-- Scheduler explanation reason codes (FR-63) -->

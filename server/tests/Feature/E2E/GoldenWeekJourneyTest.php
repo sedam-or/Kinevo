@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\E2E;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,21 +18,21 @@ use Tests\TestCase;
  * Every assertion is made against user-visible API responses — the same
  * payloads the UI renders. Database-only assertions are deliberately not
  * used (TASK-150: "Database-only assertions are insufficient").
+ *
+ * The walked week is the CURRENT week (Monday-based), discovered at runtime:
+ * analytics/activity events are recorded at "now", so a hardcoded window
+ * silently broke the moment the calendar left it.
  */
 final class GoldenWeekJourneyTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const WEEK_START = '2026-08-17';
-
-    private const WEEK_END = '2026-08-23';
-
-    private const NEXT_WEEK_START = '2026-08-24';
-
-    private const NEXT_WEEK_END = '2026-08-30';
-
     public function test_golden_one_week_journey(): void
     {
+        $weekStart = CarbonImmutable::now()->startOfWeek()->toDateString();
+        $weekEnd = CarbonImmutable::now()->startOfWeek()->addDays(6)->toDateString();
+        $nextWeekStart = CarbonImmutable::now()->startOfWeek()->addDays(7)->toDateString();
+        $nextWeekEnd = CarbonImmutable::now()->startOfWeek()->addDays(13)->toDateString();
         // ── Login ────────────────────────────────────────────────────────
         // First setup registers the single owner account; login issues the
         // session token used for every subsequent step.
@@ -59,7 +60,7 @@ final class GoldenWeekJourneyTest extends TestCase
         $goal = $auth->postJson('/api/v1/goals', [
             'title' => 'Finish the thesis',
             'horizon' => 'quarterly',
-            'target_date' => '2026-11-30',
+            'target_date' => CarbonImmutable::now()->addMonths(2)->toDateString(),
         ])->assertStatus(201)
             ->assertJsonPath('goal.title', 'Finish the thesis')
             ->assertJsonPath('goal.status', 'draft')
@@ -69,7 +70,7 @@ final class GoldenWeekJourneyTest extends TestCase
         // ── Milestone ────────────────────────────────────────────────────
         $milestone = $auth->postJson("/api/v1/goals/{$goal['id']}/milestones", [
             'title' => 'Complete literature review',
-            'target_date' => '2026-09-30',
+            'target_date' => CarbonImmutable::now()->addMonths(1)->toDateString(),
             'estimated_minutes' => 600,
         ])->assertStatus(201)
             ->assertJsonPath('milestone.goal_id', $goal['id'])
@@ -92,7 +93,7 @@ final class GoldenWeekJourneyTest extends TestCase
             'title' => 'Draft chapter 3',
             'priority_tier' => 1,
             'estimated_minutes' => 60,
-            'due_at' => self::WEEK_END.'T17:00:00',
+            'due_at' => $weekEnd.'T17:00:00',
             'goal_id' => $goal['id'],
             'milestone_id' => $milestone['id'],
             'program_id' => $program['id'],
@@ -104,8 +105,8 @@ final class GoldenWeekJourneyTest extends TestCase
 
         // ── Schedule (auto-schedule draft over the golden week) ──────────
         $draftResponse = $auth->postJson('/api/v1/schedule/draft', [
-            'from' => self::WEEK_START,
-            'to' => self::WEEK_END,
+            'from' => $weekStart,
+            'to' => $weekEnd,
         ])->assertStatus(200)
             ->assertJsonPath('base_version', 1);
 
@@ -125,10 +126,10 @@ final class GoldenWeekJourneyTest extends TestCase
         $this->assertGreaterThanOrEqual(1, count($applied->json('assignments')));
 
         // The scheduled day is discovered from the user-visible schedule view.
-        $range = $auth->getJson('/api/v1/schedule?from='.self::WEEK_START.'&to='.self::WEEK_END)
+        $range = $auth->getJson('/api/v1/schedule?from='.$weekStart.'&to='.$weekEnd)
             ->assertStatus(200)
-            ->assertJsonPath('from', self::WEEK_START)
-            ->assertJsonPath('to', self::WEEK_END)
+            ->assertJsonPath('from', $weekStart)
+            ->assertJsonPath('to', $weekEnd)
             ->json();
 
         $this->assertNotEmpty($range['events']);
@@ -196,7 +197,7 @@ final class GoldenWeekJourneyTest extends TestCase
         $this->assertTrue(collect($progressEvents)->contains('event_type', 'experiment_recorded'));
 
         // ── Analytics + Capacity ─────────────────────────────────────────
-        $overview = $auth->getJson('/api/v1/analytics/overview?from='.self::WEEK_START.'&to='.self::WEEK_END)
+        $overview = $auth->getJson('/api/v1/analytics/overview?from='.$weekStart.'&to='.$weekEnd)
             ->assertStatus(200)
             ->json();
 
@@ -228,8 +229,8 @@ final class GoldenWeekJourneyTest extends TestCase
             ->json('task');
 
         $futureDraft = $auth->postJson('/api/v1/schedule/draft', [
-            'from' => self::NEXT_WEEK_START,
-            'to' => self::NEXT_WEEK_END,
+            'from' => $nextWeekStart,
+            'to' => $nextWeekEnd,
         ])->assertStatus(200)->json();
 
         $auth->postJson('/api/v1/schedule/draft/apply', [
@@ -238,7 +239,7 @@ final class GoldenWeekJourneyTest extends TestCase
         ])->assertStatus(200)
             ->assertJsonPath('applied', true);
 
-        $future = $auth->getJson('/api/v1/schedule?from='.self::NEXT_WEEK_START.'&to='.self::NEXT_WEEK_END)
+        $future = $auth->getJson('/api/v1/schedule?from='.$nextWeekStart.'&to='.$nextWeekEnd)
             ->assertStatus(200)
             ->json();
 
@@ -248,7 +249,7 @@ final class GoldenWeekJourneyTest extends TestCase
             $future['events'][0]['task']['title'],
         );
         $this->assertGreaterThanOrEqual(
-            strtotime(self::NEXT_WEEK_START),
+            strtotime($nextWeekStart),
             strtotime($future['events'][0]['assignment']['date']),
         );
     }

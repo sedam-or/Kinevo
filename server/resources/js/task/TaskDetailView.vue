@@ -10,6 +10,9 @@ import NextActionBanner from '../components/NextActionBanner.vue';
 import { resolveTaskNextAction, type NextAction } from '../next-action';
 import { useShellStore } from '../shell/store';
 import KInput from '../components/KInput.vue';
+import AiNotConfiguredNotice from '../ai/AiNotConfiguredNotice.vue';
+import { useAiSettingsStore } from '../ai/store';
+import { aiApi } from '../ai/api';
 
 const props = defineProps<{
     taskId: number;
@@ -169,6 +172,50 @@ function onTaskNextAction(id: NextAction['id']): void {
     shell.setView('schedule');
 }
 
+/**
+ * Contextual AI (TASK-P17-029, FR-60): "Clarify task" explains the task in
+ * place — non-mutating text generation, no proposal, no persistence. The
+ * P17-028 gate routes to Settings when AI is off/unconfigured.
+ */
+const ai = useAiSettingsStore();
+const clarifyGateShown = ref(false);
+const clarifying = ref(false);
+const clarifyText = ref<string | null>(null);
+const clarifyError = ref<string | null>(null);
+
+async function clarifyTask(): Promise<void> {
+    if (clarifying.value || tasks.current === null) {
+        return;
+    }
+    await ai.ensureStatus();
+    clarifyGateShown.value = !ai.generationReady;
+    if (clarifyGateShown.value) {
+        return;
+    }
+    const task = tasks.current;
+    clarifying.value = true;
+    clarifyError.value = null;
+    clarifyText.value = null;
+    try {
+        const prompt = [
+            `Clarify this task for the person who owns it.`,
+            `Title: ${task.title}`,
+            task.description ? `Description: ${task.description}` : null,
+            `Status: ${task.status}`,
+            task.due_at ? `Due: ${task.due_at.slice(0, 10)}` : null,
+            'Answer with: what this task concretely involves, how to know it is done, and one suggested first step. Be concise.',
+        ]
+            .filter((line) => line !== null)
+            .join('\n');
+        const { text } = await aiApi.generateText('natural_language_explanation', prompt);
+        clarifyText.value = text;
+    } catch (err) {
+        clarifyError.value = (err as { message?: string }).message ?? 'AI request failed.';
+    } finally {
+        clarifying.value = false;
+    }
+}
+
 const relatedLinks = computed<EntityLink[]>(() => {
     const task = tasks.current;
     const links: EntityLink[] = [];
@@ -191,10 +238,25 @@ const relatedLinks = computed<EntityLink[]>(() => {
                 <KButton variant="ghost" data-testid="task-detail-back" @click="emit('back')">← Back</KButton>
                 <h1 class="text-xl font-semibold" data-testid="task-detail-title">{{ tasks.current?.title ?? 'Task' }}</h1>
             </div>
-            <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5" data-testid="task-detail-status">
-                {{ tasks.current ? statusLabel(tasks.current.status) : '' }}
-            </span>
+            <div class="flex items-center gap-2">
+                <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5" data-testid="task-detail-status">
+                    {{ tasks.current ? statusLabel(tasks.current.status) : '' }}
+                </span>
+                <button
+                    type="button"
+                    class="text-sm border border-[var(--color-primary)] text-[var(--color-primary)] rounded-sm px-3 py-1 disabled:opacity-50"
+                    :disabled="clarifying"
+                    data-testid="task-detail-clarify"
+                    @click="clarifyTask"
+                >{{ clarifying ? 'Clarifying…' : 'Clarify task' }}</button>
+            </div>
         </header>
+        <!-- TASK-P17-029: non-mutating clarification, shown in place. -->
+        <AiNotConfiguredNotice v-if="clarifyGateShown" />
+        <div v-if="clarifyError" class="text-sm text-danger" role="alert" data-testid="task-detail-clarify-error">{{ clarifyError }}</div>
+        <section v-if="clarifyText" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4 text-sm whitespace-pre-line" data-testid="task-detail-clarify-result">
+            {{ clarifyText }}
+        </section>
         <NextActionBanner
             v-if="nextAction"
             :action="nextAction"

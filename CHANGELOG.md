@@ -11,7 +11,24 @@ version** (v1) are tracked separately in `docs/SRS.md` and
 Release governance: see `docs/release-management.md`.
 
 ## [Unreleased]
+### Changed
+- Clearer words everywhere (Phase 17, TASK-P17-030): the schedule draft
+  explains itself in plain language instead of developer terms, and note and
+  canvas lists no longer show internal revision counters.
 ### Added
+- AI now lives where you work (Phase 17, TASK-P17-029): notes offer
+  "Summarize with AI" and "Extract tasks with AI" in the editor, the canvas
+  index suggests a board structure from a plain-language description, and
+  every task detail page can "Clarify task" — each proposal stays pending
+  until you accept, and unconfigured AI routes to Settings instead of failing.
+- AI actions now guide instead of failing (Phase 17, TASK-P17-028): when AI
+  is off or not configured, "Generate with AI" / "Break Down with AI" show
+  "AI is not configured." with a one-tap [Configure AI] shortcut to
+  Settings → AI & Providers.
+- AI breakdowns are now explainable (Phase 17, TASK-P17-027): each proposal
+  shows a concise decision summary plus the assumptions, the inputs it used
+  (deadline, capacity, commitments), and the constraints it honoured — while
+  keeping internal reasoning private.
 
 - Breakdown proposals can now be reviewed and accepted right where the goal
   was created (Phase 17, TASK-P17-026): after "Generate with AI" the proposal

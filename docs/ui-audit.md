@@ -209,7 +209,7 @@ Known partial baseline (from repository inventory, to be re-verified in R2):
 ## 6. Finding record format
 
 ```text
-UI-nnn | @date | <surface> | P#
+UI-nnn | @date | <surface> | <class>
 Title
 Observed behavior
 Expected (design.md §...)
@@ -219,8 +219,14 @@ Status (open / fixed / triaged / accepted)
 Link (test, PR, screenshot, issue)
 ```
 
+`<class>` is the §3 taxonomy value: a software-bug class (`P0`–`P3`) or,
+since TASK-P17-031, a product-experience class (`UX-C1`–`UX-C6`). A finding
+may carry both when a code defect causes an experience problem — record the
+experience class too so the fix is verified as UX, not just as code.
+
 No finding is closed silently; closing requires evidence (test, browser run,
-visual baseline).
+visual baseline). UX-C findings flow through this same record and close with
+the same evidence rules.
 
 ### 6.1 Active findings (rescue R1 baseline)
 
@@ -415,6 +421,23 @@ Evidence: tests/e2e/tests/tactile-language.spec.ts asserts computed
 box-shadow 4px→6px(hover)→2px(press) on draft-generate in chromium+firefox;
 surface-qa + accessibility suites green in all three browsers.
 Link: TASK-P17-010, TASK-P17-012.
+
+UI-014 | 2026-08-24 | Schedule draft + Notes list + Canvas list (micro-copy, TASK-P17-030) | P2
+Found: developer terminology leaked into user-facing copy. Draft reasoning
+note said "This deterministic draft … Applying it bumps the schedule version;
+stale applies return 409" — jargon ("deterministic", "bumps the version") plus
+a raw HTTP code. Notes/Canvas lists exposed the internal revision counter as a
+"v3"-style chip — meaningless to users.
+Expected: TASK-P17-030 acceptance — no developer terminology, HTTP codes, or
+implementation jargon; conflict safety explained in plain language.
+Severity: P2.
+Status: fixed (2026-08-24, TASK-P17-030) — reasoning note now reads as a plain
+promise about what the plan respects and what happens if things changed while
+reviewing; notes list shows "Updated <date>"; canvas v-chip removed.
+Full-copy sweep found no guilt phrasing, pseudo-science, vague "Optimize" CTAs,
+or other HTTP codes in user-facing strings (sync explanations already human).
+Evidence: vitest 29 passed on affected suites; full gates re-run at commit.
+Link: TASK-P17-030.
 ```
 
 No finding above is closed silently; each closes with concrete browser/test/visual

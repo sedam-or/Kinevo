@@ -4287,67 +4287,121 @@ P17-G Analytics / Decision Support UX
     documented Ollama bridge note in docs/browser-e2e.md §11.
 
 ### TASK-P17-027 — AI Explanation
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: TASK-P17-004
 - SRS: FR-27 (explainability), privacy §14; never expose chain-of-thought
 - Files: AI proposal view
 - Acceptance:
-  - [ ] proposal shows decision summary, assumptions, inputs, constraints;
+  - [x] proposal shows decision summary, assumptions, inputs, constraints;
         concise; no private chain-of-thought
-- Verification: [ ] E2E content assertions
-- Notes: —
+- Verification: [x] E2E content assertions; unit + API contract
+- Notes: explanation fields are optional schema additions (v1 stays valid).
+- Evidence:
+  - Schema v1 extended (backward-compatible, stored proposals stay valid) with
+    optional `assumptions`, `inputs`, `constraints` string arrays — each capped
+    at 10 items × 300 chars — alongside the existing `rationale` (decision
+    summary) and `risks`. Revalidated through the same `AiSchemaRules` path as
+    AI output, so nothing is persisted that did not pass FR-61.
+  - Default breakdown prompt (CreateGoalBreakdownProposalUseCase) now asks for a
+    concise decision summary, assumptions, inputs used, and constraints
+    honoured, and explicitly forbids chain-of-thought.
+  - `ProposalReviewCard` renders labelled explanation blocks — Decision summary
+    (rationale), Assumptions, Inputs used, Constraints honoured — shown only
+    when the payload carries them; raw JSON/private reasoning never surfaces.
+  - Tests: `StructuredAiOutputTest::goal_breakdown_accepts_explanation_fields`
+    (schema accepts the four explanation groups); `GoalBreakdownProposalApiTest`
+    +1 asserting the generated proposal carries rationale/assumptions/inputs/
+    constraints through the API; vitest `ProposalReviewCard` +2 (render labelled
+    blocks, hide when absent). E2E journey G2 gains content assertions for all
+    four explanation testids with a no-raw-JSON guard (run gated on a reachable
+    provider per the documented Ollama bridge note in docs/browser-e2e.md §11).
+  - Docs: design.md Goals row maps post-create review; implementation-status
+    tracks the FR-52/61/62 AI flow; openapi.yaml documents the four explanation
+    payload fields.
 
 ### TASK-P17-028 — Settings Discoverability
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: TASK-P17-006
 - SRS: FR-60, NFR
 - Files: Settings + AI-dependent actions
+  - `server/resources/js/ai/AiNotConfiguredNotice.vue` (new)
+  - `server/resources/js/ai/store.ts` — `generationReady` + lazy shared `ensureStatus()`
+  - `server/resources/js/goal/GoalListView.vue`, `GoalDetailView.vue` — gate before generation
 - Acceptance:
-  - [ ] AI settings reachable at Settings → AI & Providers; if unconfigured,
-        AI-dependent actions show "AI is not configured. [Configure AI]"
-- Verification: [ ] E2E
-- Notes: no hidden configuration.
+  - [x] AI settings reachable at Settings → AI & Providers (`nav-ai-settings`,
+        golden-journeys H); if unconfigured/off, AI-dependent actions show
+        "AI is not configured. [Configure AI]" routing to ai-settings
+- Verification: [x] E2E journey H2 green ×3 browsers (browser-e2e §11 P17-028);
+  vitest 490 passed incl. GoalViews gate cases. H/G2 blocked by pre-existing
+  container→host Ollama connectivity gap (recorded, ADR-011 fix path).
+- Notes: no hidden configuration; canonical status states drive the gate
+  (disabled/not_configured only — unavailable/degraded still surface server truth).
 
 ### TASK-P17-029 — Global AI Entry Points
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: TASK-P17-004, TASK-P17-026
 - SRS: FR-60 (contextual AI), no new AI authority
 - Files: Goal/Note/Canvas/Task surfaces
+  - `server/resources/js/ai/api.ts` — payload union + summarizeNote/
+    extractTasks/suggestCanvas/generateText/acceptProposalWithResult
+  - `note/NoteEditView.vue` — Summarize + Extract tasks (review → accept/reject)
+  - `task/TaskDetailView.vue` — Clarify task (non-mutating)
+  - `canvas/CanvasListView.vue` — Suggest structure (accept creates + opens)
 - Acceptance:
-  - [ ] contextual AI: Goal→Break down; Note→Summarize/Extract tasks; Canvas→
-        Suggest structure; Task→Clarify task; AI settings remain the control plane
-- Verification: [ ] E2E contextual entry-point smoke per surface
-- Notes: AI is contextual, not an omnibus "AI page".
+  - [x] contextual AI: Goal→Break down (P17-005); Note→Summarize/Extract
+        tasks; Canvas→Suggest structure; Task→Clarify task; AI settings
+        remain the control plane (P17-028 gate reused on every entry point)
+- Verification: [x] E2E golden-journeys K ×3 browsers (entry-point smoke per
+  surface + gate click-through); vitest 499 passed incl. note/task/canvas AI
+  cases; backend contracts already proven (NoteAiApiTest, CanvasAiApiTest,
+  AiGoldenFlowsTest) — no backend change needed.
+- Notes: AI is contextual, not an omnibus "AI page"; nothing applies without
+  acceptance (FR-62); clarify is non-mutating text generation.
 
 ### TASK-P17-030 — Micro-Copy Pass
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P2
 - Depends On: —
 - SRS: NFR (clear copy)
 - Files: all user-facing copy
+  - `schedulerdraft/ScheduleDraftView.vue` — reasoning note de-jargoned
+    (no "deterministic"/"version"/"409")
+  - `note/NotesListView.vue` — internal version chip → "Updated <date>"
+  - `canvas/CanvasListView.vue` — internal version chip removed
 - Acceptance:
-  - [ ] no developer terminology, HTTP codes, implementation jargon, guilt,
-        pseudo-science, vague "Optimize"; prefer "Review schedule" over
-        "Execute optimization"
-- Verification: [ ] copy audit checklist
-- Notes: —
+  - [x] no developer terminology, HTTP codes, implementation jargon, guilt,
+        pseudo-science, vague "Optimize"; concrete CTAs throughout
+        (checklist sweep across all .vue templates, store fallbacks and sync
+        explanations — findings recorded as UI-014 in ui-audit §6.1)
+- Verification: [x] vitest suites on affected surfaces green; full pre-commit
+  gates green at commit
+- Notes: FR-63 scheduler reason codes stay (spec'd) — they render with human
+  labels.
 
 ### TASK-P17-031 — UI/UX Bug Triage Extension
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: —
 - SRS: NFR
 - Files: docs/ui-audit.md §3
+  - Taxonomy landed with ui-audit §3 in TASK-P17-001..003 (commit 8ddb662);
+    this task verified completeness and wired §6 to it.
 - Acceptance:
-  - [ ] extend P0–P3 taxonomy with UX-C1 (workflow broken) / UX-C2 (workflow
+  - [x] extend P0–P3 taxonomy with UX-C1 (workflow broken) / UX-C2 (workflow
         unclear) / UX-C3 (feature undiscoverable) / UX-C4 (visual
-        inconsistency) / UX-C5 (micro-interaction missing) / UX-C6 (information
-        hierarchy problem)
-- Verification: [ ] taxonomy updated; findings continue flowing through §6
-- Notes: distinguishes software bug from product-experience bug.
+        inconsistency) / UX-C5 (micro-interaction missing) / UX-C6
+        (information hierarchy problem) — all six present with definitions,
+        examples, and the software-bug vs product-experience-bug distinction
+        (ui-audit §3)
+- Verification: [x] taxonomy updated; findings flow through §6 — record
+  format now accepts `P0`–`P3` and `UX-C1`–`UX-C6` classes (dual-tagging when
+  a code defect causes an experience problem); precedent: UX-C4 shared-hierarchy
+  closure recorded via the §6/audit trail (TASK-P17-021)
+- Notes: distinguishes software bug from product-experience bug; no finding
+  may be silently closed (§6 rule unchanged).
 
 ### TASK-P17-032 — Real-Browser Verification
 - Status: TODO

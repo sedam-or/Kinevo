@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import FeatureHelp from '../components/FeatureHelp.vue';
-import { aiApi, type AiProposal, type AiProposalPayload, type BreakdownMilestone } from './api';
+import { aiApi, type AiProposal, type BreakdownMilestone } from './api';
 
 /**
  * Review surface for a pending goal-breakdown proposal (TASK-P17-004).
@@ -24,6 +24,11 @@ const error = ref<string | null>(null);
 const editing = ref(false);
 const draft = ref<BreakdownMilestone[]>([]);
 
+/** This card renders only goal-breakdown payloads (TASK-P17-029 union). */
+const breakdown = computed(() =>
+    proposal.value?.payload.type === 'goal_breakdown_proposal' ? proposal.value.payload : null,
+);
+
 async function load(): Promise<void> {
     if (!Number.isFinite(props.goalId) || props.goalId <= 0) {
         return;
@@ -43,10 +48,10 @@ async function load(): Promise<void> {
 }
 
 function startEditing(): void {
-    if (!proposal.value) {
+    if (!breakdown.value) {
         return;
     }
-    draft.value = proposal.value.payload.milestones.map((m) => ({ ...m }));
+    draft.value = breakdown.value.milestones.map((m) => ({ ...m }));
     editing.value = true;
 }
 
@@ -55,13 +60,13 @@ function cancelEditing(): void {
 }
 
 async function saveEdits(): Promise<void> {
-    if (!proposal.value) {
+    if (!proposal.value || !breakdown.value) {
         return;
     }
     busy.value = true;
     error.value = null;
     try {
-        const payload: AiProposalPayload = { ...proposal.value.payload, milestones: draft.value };
+        const payload = { ...breakdown.value, milestones: draft.value };
         const { proposal: updated } = await aiApi.updateProposal(proposal.value.id, payload);
         proposal.value = updated;
         editing.value = false;
@@ -132,22 +137,25 @@ defineExpose({ load });
 </script>
 
 <template>
-    <section v-if="proposal" class="border border-[var(--color-primary)] rounded-sm p-4" data-testid="proposal-review">
+    <section v-if="breakdown" class="border border-[var(--color-primary)] rounded-sm p-4" data-testid="proposal-review">
         <div class="flex items-center justify-between mb-2">
             <div class="flex flex-wrap items-center gap-2 text-xs uppercase text-gray-500 dark:text-gray-400">
                 AI Breakdown Proposal
                 <FeatureHelp id="ai-proposal" title="AI Breakdown Proposal" class="normal-case" body="AI suggests, you decide. Nothing is applied until you accept — edit milestones freely before accepting." />
-                <span v-if="proposal.decision === 'edited'" class="ml-2 normal-case text-[var(--color-primary)]" data-testid="proposal-edited-badge">edited</span>
+                <span v-if="proposal?.decision === 'edited'" class="ml-2 normal-case text-[var(--color-primary)]" data-testid="proposal-edited-badge">edited</span>
             </div>
-            <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5">{{ proposal.payload.milestones.length }} milestones</span>
+            <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5">{{ breakdown.milestones.length }} milestones</span>
         </div>
 
-        <p v-if="proposal.payload.rationale" class="text-sm text-gray-700 dark:text-gray-300 mb-3" data-testid="proposal-rationale">
-            {{ proposal.payload.rationale }}
-        </p>
+        <div v-if="breakdown.rationale" class="mb-3">
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Decision summary</div>
+            <p class="text-sm text-gray-700 dark:text-gray-300" data-testid="proposal-rationale">
+                {{ breakdown.rationale }}
+            </p>
+        </div>
 
         <ul class="space-y-2 mb-3" data-testid="proposal-milestones">
-            <li v-for="(m, i) in editing ? draft : proposal.payload.milestones" :key="i" class="text-sm" :data-testid="`proposal-milestone-${i}`">
+            <li v-for="(m, i) in editing ? draft : breakdown.milestones" :key="i" class="text-sm" :data-testid="`proposal-milestone-${i}`">
                 <div v-if="editing" class="flex gap-2 flex-wrap items-center">
                     <input
                         v-model="m.title"
@@ -183,9 +191,30 @@ defineExpose({ load });
             </li>
         </ul>
 
-        <ul v-if="proposal.payload.risks && proposal.payload.risks.length > 0" class="list-disc ml-5 mb-3 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-risks">
-            <li v-for="(risk, i) in proposal.payload.risks" :key="i">{{ risk }}</li>
+        <ul v-if="breakdown.risks && breakdown.risks.length > 0" class="list-disc ml-5 mb-3 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-risks">
+            <li v-for="(risk, i) in breakdown.risks" :key="i">{{ risk }}</li>
         </ul>
+
+        <!-- Explainability (TASK-P17-027): high-level assumptions, inputs used
+             and constraints honoured — concise, never chain-of-thought. -->
+        <div v-if="breakdown.assumptions && breakdown.assumptions.length > 0" class="mb-3">
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Assumptions</div>
+            <ul class="list-disc ml-5 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-assumptions">
+                <li v-for="(item, i) in breakdown.assumptions" :key="i">{{ item }}</li>
+            </ul>
+        </div>
+        <div v-if="breakdown.inputs && breakdown.inputs.length > 0" class="mb-3">
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Inputs used</div>
+            <ul class="list-disc ml-5 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-inputs">
+                <li v-for="(item, i) in breakdown.inputs" :key="i">{{ item }}</li>
+            </ul>
+        </div>
+        <div v-if="breakdown.constraints && breakdown.constraints.length > 0" class="mb-3">
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Constraints honoured</div>
+            <ul class="list-disc ml-5 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-constraints">
+                <li v-for="(item, i) in breakdown.constraints" :key="i">{{ item }}</li>
+            </ul>
+        </div>
 
         <p v-if="error" class="text-sm text-danger mb-2" role="alert" data-testid="proposal-error">{{ error }}</p>
 

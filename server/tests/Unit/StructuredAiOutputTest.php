@@ -134,6 +134,28 @@ class StructuredAiOutputTest extends TestCase
     }
 
     #[Test]
+    public function goal_breakdown_accepts_explanation_fields(): void
+    {
+        $proposal = $this->parser->parse(new AiProposalType('goal_breakdown'), json_encode([
+            'type' => 'goal_breakdown_proposal',
+            'goal_id' => 7,
+            'rationale' => 'Research before build reduces rework.',
+            'assumptions' => ['Stable team size', 'Quarterly deadline holds'],
+            'inputs' => ['Deadline 2026-12-31', 'Weekly capacity 20h'],
+            'constraints' => ['Hard landscape Monday 09:00', '30% recharge reserve'],
+            'risks' => ['Scope creep around integrations.'],
+            'milestones' => [
+                ['title' => 'Research', 'target_date' => '2026-09-01', 'estimated_minutes' => 600],
+                ['title' => 'Build'],
+            ],
+        ]));
+        $this->assertSame('Research before build reduces rework.', $proposal->payload['rationale']);
+        $this->assertSame(['Stable team size', 'Quarterly deadline holds'], $proposal->payload['assumptions']);
+        $this->assertSame(['Deadline 2026-12-31', 'Weekly capacity 20h'], $proposal->payload['inputs']);
+        $this->assertSame(['Hard landscape Monday 09:00', '30% recharge reserve'], $proposal->payload['constraints']);
+    }
+
+    #[Test]
     public function summary_key_points_are_scalar_strings(): void
     {
         $proposal = $this->parser->parse(new AiProposalType('summary'), json_encode([

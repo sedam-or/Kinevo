@@ -637,6 +637,53 @@ golden-journeys.spec.ts — journey G2 reworked  chromium/firefox/webkit
         + inline accept cases green (P17-026).
 ```
 
+### P17-027 — AI Explanation content assertions (2026-08-24)
+```text
+golden-journeys.spec.ts — journey G2 extended  chromium/firefox/webkit
+  checks: each explanation block the AI supplied renders with a label —
+          proposal-rationale (decision summary), proposal-assumptions,
+          proposal-inputs, proposal-constraints — and never shows raw JSON or
+          chain-of-thought. Blocks are tolerant (asserted only when present).
+  Unit/API evidence: StructuredAiOutputTest accepts the four explanation
+        groups; GoalBreakdownProposalApiTest asserts they persist through the
+        API; vitest renders/hides the four labelled blocks (P17-027).
+```
+
+### P17-028 — AI discoverability gate run (2026-08-24)
+```text
+golden-journeys.spec.ts — journey H2 added  chromium/firefox/webkit
+  checks: AI disabled via Settings → create goal → [Generate with AI] shows
+          "AI is not configured." with a [Configure AI] button that lands on
+          ai-settings-view; no doomed generation request is fired; the test
+          re-enables the provider afterwards so other suites see prior state.
+  Result: journey H2 green across all three browsers.
+  Pre-existing environment gap (not a P17-028 regression): journeys H/G2 fail
+        in this dev environment because the Laravel app container cannot reach
+        host-loopback Ollama (127.0.0.1:11434) — server-side connectivity,
+        reproducible with `curl` inside infrastructure-app-1. Documented fix
+        path per ADR-011/deployment.md: run the compose ai profile
+        (`docker compose -f infrastructure/docker-compose.yml --profile ai up
+        -d ollama`) and point provider base_url at http://ollama:11434. Blocked
+        today only by the ollama image pull (Docker Hub connection resets).
+  Unit evidence: GoalViews.test.ts gate cases for GoalListView + GoalDetailView
+        green; full vitest suite 490 passed (P17-028).
+```
+
+### P17-029 — Contextual AI entry points run (2026-08-24)
+```text
+golden-journeys.spec.ts — journey K added  chromium/firefox/webkit
+  checks: every surface exposes its contextual AI action where the object
+          lives — Goal→Break down (post-create), Note→Summarize/Extract tasks
+          (editor), Canvas→Suggest structure (boards index), Task→Clarify task
+          (detail). With AI disabled via Settings, clicking Summarize shows the
+          P17-028 gate and [Configure AI] lands on ai-settings-view; provider
+          state restored at the end. Generation itself stays provider-gated
+          (same posture as G3); API-level flows are proven by NoteAiApiTest,
+          CanvasAiApiTest, AiGoldenFlowsTest.
+  Result: journey K green across all three browsers; H/G2 remain blocked by
+        the recorded environment gap above (unchanged).
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.

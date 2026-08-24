@@ -176,3 +176,139 @@ describe('NoteEditView', () => {
         expect(wrapper.find('[data-testid="note-save-state"]').text()).toContain('Saved');
     });
 });
+
+vi.mock('../../ai/api', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../ai/api')>();
+    return {
+        ...actual,
+        aiApi: {
+            ...actual.aiApi,
+            config: vi.fn(),
+            summarizeNote: vi.fn(),
+            extractTasks: vi.fn(),
+            acceptProposalWithResult: vi.fn(),
+            rejectProposal: vi.fn(),
+        },
+    };
+});
+
+import { aiApi, type AiProposal } from '../../ai/api';
+
+function aiReadyConfig(): unknown {
+    return {
+        config: {
+            provider: 'ollama',
+            enabled: true,
+            model: 'llama3.1',
+            base_url: 'http://localhost:11434',
+            has_api_key: false,
+            api_key_hint: null,
+            status: { provider: 'ollama', model: 'llama3.1', available: true, latency_ms: 5, error: null, state: 'connected' },
+            privacy_ok: true,
+        },
+    };
+}
+
+const summaryProposal: AiProposal = {
+    id: 21,
+    user_id: 1,
+    proposal_type: 'summary',
+    schema_version: 1,
+    payload: { type: 'summary_proposal', summary: 'Research plan for Q3.', key_points: ['interview users', 'read papers'] },
+    decision: 'pending',
+    operation_id: null,
+    created_at: '2026-08-24T00:00:00Z',
+};
+
+const extractionProposal: AiProposal = {
+    id: 22,
+    user_id: 1,
+    proposal_type: 'task_extraction',
+    schema_version: 1,
+    payload: { type: 'task_extraction_proposal', tasks: [{ title: 'Interview users', estimated_minutes: 60 }, { title: 'Read papers' }] },
+    decision: 'pending',
+    operation_id: null,
+    created_at: '2026-08-24T00:00:00Z',
+};
+
+describe('NoteEditView AI (TASK-P17-029)', () => {
+    function mountEditor() {
+        vi.mocked(noteApi.show).mockResolvedValue({ note });
+        vi.mocked(noteApi.links).mockResolvedValue({ links: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        return mount(NoteEditView, {
+            props: { noteId: 1, adapterFactory: adapterFactory() },
+            global: {
+                plugins: [pinia],
+                stubs: {
+                    LinkManager: { props: ['noteId'], template: '<div data-testid="link-manager-stub">LinkManager</div>' },
+                },
+            },
+        });
+    }
+
+    it('routes to Settings when AI is not configured instead of generating (P17-028 gate)', async () => {
+        vi.mocked(aiApi.config).mockResolvedValue({ config: { status: { state: 'not_configured' } } } as never);
+        const wrapper = mountEditor();
+        await flushPromises();
+
+        await wrapper.find('[data-testid="note-ai-summarize"]').trigger('click');
+        await flushPromises();
+
+        expect(aiApi.summarizeNote).not.toHaveBeenCalled();
+        expect(wrapper.find('[data-testid="note-ai-error"]').exists()).toBe(false);
+    });
+
+    it('summarizes in place — summary text plus key points', async () => {
+        vi.mocked(aiApi.config).mockResolvedValue(aiReadyConfig() as never);
+        vi.mocked(aiApi.summarizeNote).mockResolvedValue({ proposal: summaryProposal });
+        const wrapper = mountEditor();
+        await flushPromises();
+
+        await wrapper.find('[data-testid="note-ai-summarize"]').trigger('click');
+        await flushPromises();
+
+        expect(aiApi.summarizeNote).toHaveBeenCalledWith(1);
+        expect(wrapper.find('[data-testid="note-ai-summary"]').text()).toContain('Research plan for Q3.');
+        expect(wrapper.find('[data-testid="note-ai-summary-points"]').text()).toContain('interview users');
+    });
+
+    it('extracts tasks and adds them only after acceptance (FR-62)', async () => {
+        vi.mocked(aiApi.config).mockResolvedValue(aiReadyConfig() as never);
+        vi.mocked(aiApi.extractTasks).mockResolvedValue({ proposal: extractionProposal });
+        vi.mocked(aiApi.acceptProposalWithResult).mockResolvedValue({ tasks: [{ id: 5, title: 'Interview users' }, { id: 6, title: 'Read papers' }] });
+        const wrapper = mountEditor();
+        await flushPromises();
+
+        await wrapper.find('[data-testid="note-ai-extract"]').trigger('click');
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="note-ai-extraction-tasks"]').text()).toContain('Interview users');
+        // No task exists before acceptance.
+        expect(wrapper.find('[data-testid="note-ai-extract-done"]').exists()).toBe(false);
+
+        await wrapper.find('[data-testid="note-ai-extract-accept"]').trigger('click');
+        await flushPromises();
+
+        expect(aiApi.acceptProposalWithResult).toHaveBeenCalledWith(22);
+        expect(wrapper.find('[data-testid="note-ai-extract-done"]').text()).toContain('2 tasks added');
+        expect(wrapper.find('[data-testid="note-ai-extraction-proposal"]').exists()).toBe(false);
+    });
+
+    it('rejecting the extraction posts reject and dismisses the panel', async () => {
+        vi.mocked(aiApi.config).mockResolvedValue(aiReadyConfig() as never);
+        vi.mocked(aiApi.extractTasks).mockResolvedValue({ proposal: extractionProposal });
+        vi.mocked(aiApi.rejectProposal).mockResolvedValue(undefined);
+        const wrapper = mountEditor();
+        await flushPromises();
+
+        await wrapper.find('[data-testid="note-ai-extract"]').trigger('click');
+        await flushPromises();
+        await wrapper.find('[data-testid="note-ai-extract-reject"]').trigger('click');
+        await flushPromises();
+
+        expect(aiApi.rejectProposal).toHaveBeenCalledWith(22);
+        expect(wrapper.find('[data-testid="note-ai-extraction-proposal"]').exists()).toBe(false);
+    });
+});

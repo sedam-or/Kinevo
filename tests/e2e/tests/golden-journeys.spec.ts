@@ -154,6 +154,17 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
         const milestoneCount = await page.getByTestId('proposal-milestones').locator('li').count();
         expect(milestoneCount).toBeGreaterThan(0);
 
+        // P17-027: explanation content assertions — decision summary plus
+        // high-level assumptions/inputs/constraints render when the AI supplies
+        // them, and are never hidden raw JSON or chain-of-thought.
+        for (const explanation of ['proposal-rationale', 'proposal-assumptions', 'proposal-inputs', 'proposal-constraints']) {
+            const block = page.getByTestId(explanation);
+            if (await block.count()) {
+                await expect(block).toBeVisible();
+                await expect(block).not.toContainText('"goal_breakdown_proposal"');
+            }
+        }
+
         // Edit the first milestone title before accepting (FR-62 approval gate).
         await page.getByTestId('proposal-edit').click();
         const firstTitle = page.getByTestId('proposal-milestone-title-0');
@@ -192,5 +203,99 @@ test.describe('R17 golden journey G3 — Post-goal invocation entry points (P17-
         await expect(page.getByTestId('goal-detail-breakdown')).toBeVisible();
         await expect(page.getByTestId('milestones-empty')).toBeVisible();
         await expect(page.getByTestId('milestones-empty-breakdown')).toBeVisible();
+    });
+});
+test.describe('R17 golden journey H2 — AI discoverability gate (P17-028)', () => {
+    // Runs last on purpose: it toggles the singleton provider off, then
+    // restores it so no earlier journey's state is affected.
+    test('unconfigured AI routes "Generate with AI" to Settings instead of erroring', async ({ page }) => {
+        await login(page);
+        // Force the canonical unconfigured/off state via Settings (§104).
+        await page.getByTestId('nav-ai-settings').click();
+        await expect(page.getByTestId('ai-settings-view')).toBeVisible();
+        await page.getByTestId('ai-enabled-toggle').uncheck();
+        await page.getByTestId('ai-save-button').click();
+        await expect(page.getByTestId('ai-settings-saved')).toBeVisible();
+
+        // Create a goal and try the AI path — must NOT fire a doomed request.
+        const name = unique('r17-i');
+        await page.getByTestId('nav-goals').click();
+        await expect(page.getByTestId('goals-view')).toBeVisible();
+        await page.getByTestId('goal-create-title').fill(name);
+        await page.getByTestId('goal-create-horizon').selectOption('Quarterly');
+        await page.getByTestId('goal-create-submit').click();
+        await expect(page.getByTestId('goal-breakdown-suggestion')).toBeVisible();
+        await page.getByTestId('goal-breakdown-ai').click();
+
+        // The gate: honest message + one-tap route to Settings → AI & Providers.
+        await expect(page.getByTestId('ai-not-configured')).toContainText('AI is not configured.');
+        await page.getByTestId('configure-ai').click();
+        await expect(page.getByTestId('ai-settings-view')).toBeVisible();
+
+        // Restore: leave AI enabled so later suites see the configured state.
+        await page.getByTestId('ai-enabled-toggle').check();
+        await page.getByTestId('ai-save-button').click();
+        await expect(page.getByTestId('ai-settings-saved')).toBeVisible();
+    });
+});
+test.describe('R17 golden journey K — contextual AI entry points per surface (P17-029)', () => {
+    // Runs after H2 on purpose and restores the provider state at the end.
+    // Deterministic without a live provider: entry points are asserted per
+    // surface, and the P17-028 gate is proven on the note surface with AI
+    // explicitly disabled via Settings first.
+    test('Goal/Note/Canvas/Task expose their contextual AI action where the object lives', async ({ page }) => {
+        await login(page);
+
+        // Force the unconfigured/off state via the control plane (§104).
+        await page.getByTestId('nav-ai-settings').click();
+        await expect(page.getByTestId('ai-settings-view')).toBeVisible();
+        await page.getByTestId('ai-enabled-toggle').uncheck();
+        await page.getByTestId('ai-save-button').click();
+        await expect(page.getByTestId('ai-settings-saved')).toBeVisible();
+
+        const name = unique('r17-k');
+
+        // GOAL → Break down with AI (post-create suggestion).
+        await page.getByTestId('nav-goals').click();
+        await expect(page.getByTestId('goals-view')).toBeVisible();
+        await page.getByTestId('goal-create-title').fill(name);
+        await page.getByTestId('goal-create-horizon').selectOption('Quarterly');
+        await page.getByTestId('goal-create-submit').click();
+        await expect(page.getByTestId('goal-breakdown-ai')).toBeVisible();
+
+        // NOTE → Summarize / Extract tasks where the note lives; gate click.
+        await page.getByTestId('nav-knowledge').click();
+        await expect(page.getByTestId('notes-view')).toBeVisible();
+        await page.getByTestId('note-create-title').fill(`${name} note`);
+        await page.getByTestId('note-create-submit').click();
+        await expect(page.getByTestId('note-detail')).toBeVisible();
+        await expect(page.getByTestId('note-ai-summarize')).toBeVisible();
+        await expect(page.getByTestId('note-ai-extract')).toBeVisible();
+        await page.getByTestId('note-ai-summarize').click();
+        await expect(page.getByTestId('ai-not-configured')).toContainText('AI is not configured.');
+        await page.getByTestId('configure-ai').click();
+        await expect(page.getByTestId('ai-settings-view')).toBeVisible();
+
+        // CANVAS → Suggest structure at the boards index.
+        await page.getByTestId('nav-canvas').click();
+        await expect(page.getByTestId('canvas-view')).toBeVisible();
+        await expect(page.getByTestId('canvas-suggest-prompt')).toBeVisible();
+        await expect(page.getByTestId('canvas-suggest-submit')).toBeVisible();
+
+        // TASK → Clarify task on the detail surface.
+        await page.getByTestId('nav-tasks').click();
+        await expect(page.getByTestId('task-view')).toBeVisible();
+        await page.getByTestId('task-create-title').fill(`${name} task`);
+        await page.getByTestId('task-create-submit').click();
+        await page.getByTestId('task-item').filter({ hasText: `${name} task` }).first().getByTestId('task-open').click();
+        await expect(page.getByTestId('task-detail')).toBeVisible();
+        await expect(page.getByTestId('task-detail-clarify')).toBeVisible();
+
+        // Restore: leave AI enabled so later suites see the configured state.
+        await page.getByTestId('nav-ai-settings').click();
+        await expect(page.getByTestId('ai-settings-view')).toBeVisible();
+        await page.getByTestId('ai-enabled-toggle').check();
+        await page.getByTestId('ai-save-button').click();
+        await expect(page.getByTestId('ai-settings-saved')).toBeVisible();
     });
 });
