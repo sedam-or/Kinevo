@@ -109,10 +109,13 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
         await page.getByTestId('nav-ai-settings').click();
         await expect(page.getByTestId('ai-settings-view')).toBeVisible();
 
-        // Local Ollama path — no API key required (§104).
+        // Local Ollama path — no API key required (§104). The endpoint is
+        // environment-dependent (compose service vs host bridge); default is
+        // the documented desktop URL, override with E2E_OLLAMA_URL.
+        const ollamaUrl = process.env.E2E_OLLAMA_URL ?? 'http://localhost:11434';
         await page.getByTestId('ai-provider-select').selectOption('ollama');
         await page.getByTestId('ai-model-input').fill('qwen2.5-coder:7b');
-        await page.getByTestId('ai-base-url-input').fill('http://localhost:11434');
+        await page.getByTestId('ai-base-url-input').fill(ollamaUrl);
         await expect(page.getByTestId('ai-ollama-no-key')).toContainText('does not require an API key');
 
         // Test BEFORE saving: candidate settings ping without persisting.
@@ -137,6 +140,10 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
     // Providers (journey H). Generation happens SERVER-side, so this journey
     // cannot be route-mocked in the browser; it skips loudly otherwise.
     test('generates a breakdown, reviews/edits/accepts it inline — milestones appear (P17-026)', async ({ page }) => {
+        // Real generation on a local 7B model: the first request may pay a
+        // cold model load (keep-alive expiry between browsers), so this test
+        // gets tripled budget (test.slow → 3× the global timeout).
+        test.slow();
         await login(page);
         const name = unique('r17-g2');
         await page.getByTestId('nav-goals').click();
@@ -148,8 +155,9 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
         await page.getByTestId('goal-breakdown-ai').click();
 
         // P17-026: the proposal is reviewed right here — still on the Goals
-        // surface, no navigation to the goal detail page.
-        await expect(page.getByTestId('proposal-review')).toBeVisible({ timeout: 30_000 });
+        // surface, no navigation to the goal detail page. Generous timeout:
+        // the first generation may pay a cold model load on the provider.
+        await expect(page.getByTestId('proposal-review')).toBeVisible({ timeout: 120_000 });
         await expect(page.getByTestId('goal-detail')).not.toBeVisible();
         const milestoneCount = await page.getByTestId('proposal-milestones').locator('li').count();
         expect(milestoneCount).toBeGreaterThan(0);

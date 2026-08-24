@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class AiApiTest extends TestCase
@@ -39,6 +40,36 @@ class AiApiTest extends TestCase
             ->assertJsonPath('provider', 'mock')
             ->assertJsonPath('model', 'mock-1')
             ->assertJsonPath('text', 'Mock AI response [task_extraction]: Extract tasks from this text');
+    }
+
+    public function test_ollama_generate_encodes_empty_options_as_object(): void
+    {
+        // Regression (TASK-P17-032 real-provider verification): json_encode([])
+        // emits a JSON array, but Ollama requires options to be a map and
+        // rejects the array with HTTP 400 — breaking every generation that
+        // carries no explicit temperature/max_tokens.
+        config([
+            'ai.driver' => 'ollama',
+            'ai.ollama.base_url' => 'http://localhost:11434',
+            'ai.ollama.model' => 'llama3.1',
+        ]);
+        [$user, $token] = $this->userWithToken();
+
+        $captured = null;
+        Http::fake(function ($request) use (&$captured) {
+            $captured = $request->body();
+
+            return Http::response(['response' => 'ok'], 200);
+        });
+
+        $this->withToken($token)->postJson('/api/v1/ai/generate', [
+            'role' => 'natural_language_explanation',
+            'prompt' => 'Explain this.',
+        ])->assertStatus(200);
+
+        $this->assertNotNull($captured);
+        $this->assertStringContainsString('"options":{}', $captured);
+        $this->assertStringNotContainsString('"options":[]', $captured);
     }
 
     public function test_mock_provider_reports_status(): void

@@ -47,13 +47,18 @@ final readonly class OllamaProvider implements AiProvider
     {
         $started = hrtime(true);
 
+        // json_encode([]) produces a JSON array, but Ollama requires options
+        // to be a map — an empty list is rejected with HTTP 400 (found during
+        // TASK-P17-032 real-provider verification; fakes never validated it).
+        $options = $this->options($request);
+
         try {
             $response = Http::timeout($this->timeoutSeconds)
                 ->post($this->baseUrl.'/api/generate', [
                     'model' => $this->model,
                     'prompt' => $this->composePrompt($request),
                     'stream' => false,
-                    'options' => $this->options($request),
+                    'options' => $options === [] ? new \stdClass : $options,
                 ]);
         } catch (ConnectionException) {
             throw AiProviderException::unavailable('Ollama is unreachable.');

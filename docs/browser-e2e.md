@@ -517,12 +517,17 @@ tests/e2e/tests/theme.spec.ts  chromium/firefox/webkit
           canvas-hardening, navigation, continuity, core-loop, surface-qa,
           accessibility, tactile-language green across browsers.
 ```
-Environment note (not product debt): `golden-journeys.spec.ts` journeys H and
-G2 currently fail with "Ollama is unreachable" — the host Ollama binds
-127.0.0.1 while the app runs in the compose bridge network, so server-side
-provider pings cannot reach it. Journeys were green on 2026-08-22 (P17-002
-record); restore an Ollama endpoint reachable from the app container
-(e.g. OLLAMA_HOST=0.0.0.0 + compose extra_hosts) to re-run them.
+Environment note (resolved 2026-08-24): `golden-journeys.spec.ts` journeys H,
+G2/I/IJ require a reachable Ollama endpoint. Verify with
+```
+E2E_BASE_URL=http://127.0.0.1:8000 E2E_OLLAMA_URL=http://172.18.0.1:11434 \
+npx playwright test golden-journeys journey-i journey-j
+```
+(host Ollama on the compose bridge; override the base URL with `E2E_OLLAMA_URL`
+defaulting to `http://localhost:11434`). The app HTTP budget for provider
+calls must exceed a 30s default — a cold local 7B can take minutes
+(`AI_TIMEOUT_SECONDS` in `server/.env` and `infrastructure/docker-compose.yml`).
+Run: 42 passed (3 browsers) on 2026-08-24.
 
 ### P17-014 — Today control-center run (2026-08-23)
 ```text

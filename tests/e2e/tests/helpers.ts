@@ -13,9 +13,19 @@ export function unique(prefix: string): string {
 /**
  * Log into the SPA through the real login form and wait for the Today
  * surface to render (the primary authenticated landing view).
+ *
+ * Tolerates an existing session: an in-test `page.reload()` keeps the
+ * stored token, so the shell renders directly without a login form
+ * (golden journey H).
  */
 export async function login(page: Page): Promise<void> {
     await page.goto('/app');
+    try {
+        await page.getByTestId('today-view').waitFor({ state: 'visible', timeout: 5_000 });
+        return;
+    } catch {
+        // Not authenticated yet — take the real login path below.
+    }
     await page.getByTestId('login-form').waitFor({ state: 'visible' });
     await page.getByTestId('login-email').fill(OWNER_EMAIL);
     await page.getByTestId('login-password').fill(OWNER_PASSWORD);

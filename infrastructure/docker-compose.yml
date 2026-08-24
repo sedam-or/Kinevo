@@ -17,6 +17,9 @@ services:
       DB_USERNAME: kinevo
       DB_PASSWORD: secret
       DB_SSLMODE: disable
+      # Local models load on demand (ADR-011): a cold 7B can take minutes,
+      # so the provider HTTP budget must exceed any 30s-style default.
+      AI_TIMEOUT_SECONDS: 300
     depends_on:
       postgres:
         condition: service_healthy

@@ -73,13 +73,17 @@ final readonly class CreateGoalBreakdownProposalUseCase
         // TASK-P17-027: request a concise decision summary + high-level
         // assumptions, inputs used and constraints honoured. The schema forbids
         // chain-of-thought exposure; this keeps the generator aligned.
-        return "Break down the goal \"{$goal->title}\" into milestones with target dates and estimated workload."
-            .' Explain the breakdown concisely: a decision summary, the key '
-            .'assumptions you made, the inputs you used (deadline, capacity, '
-            .'commitments), and the constraints you honoured.'
-            .' Do NOT include chain-of-thought.'
-            .' Return JSON matching the goal_breakdown_proposal schema.'
-            .' Type must be "goal_breakdown_proposal".';
+        // The goal id MUST be supplied so the model can echo it: the schema
+        // requires goal_id in the payload and the use case verifies it matches
+        // the requested goal (cross-goal guard, FR-52). A real provider can
+        // never satisfy that check if it is never told the id.
+        return "Break down the goal \"{$goal->title}\" (goal id: {$goal->id}) into between 2 and 5 milestones with target dates (YYYY-MM-DD) and estimated workload in minutes."
+            .' Response MUST be a single JSON object with EXACTLY these keys:'
+            .' {"type":"goal_breakdown_proposal","goal_id":'.$goal->id.',"rationale":"short decision summary string",'
+            .' "assumptions":["string"],"inputs":["string"],"constraints":["string"],"risks":["string"],'
+            .' "milestones":[{"title":"string","target_date":"YYYY-MM-DD","estimated_minutes":number}]}.'
+            .' Use ONLY those key names; omit empty optional arrays. Do NOT add keys.'
+            .' Do NOT include chain-of-thought or any text outside the JSON object.';
     }
 
     private function generate(int $userId, int $goalId, string $prompt, ?string $systemPrompt): ValidatedAiProposal

@@ -4404,16 +4404,21 @@ P17-G Analytics / Decision Support UX
   may be silently closed (§6 rule unchanged).
 
 ### TASK-P17-032 — Real-Browser Verification
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P0
 - Depends On: P17 flow tasks
 - SRS: NFR, FR-52/60/62
 - Files: tests/e2e
 - Acceptance:
-  - [ ] Journeys G (goal AI breakdown), H (provider setup), I (task→Today→
+  - [x] Journeys G (goal AI breakdown), H (provider setup), I (task→Today→
         progress), J (analytics→action) green on chromium/firefox/webkit
-- Verification: [ ] Playwright matrix recorded in docs/browser-e2e.md
-- Notes: no browser proof, no P17 DONE.
+- Verification: [x] Playwright matrix recorded in docs/browser-e2e.md
+- Notes: 42 passed (golden-journeys + journey-i + journey-j, 3 browsers)
+        2026-08-24. Real-provider fixes landed: goal_id injected into the
+        breakdown prompt (schema cross-goal check was unsatisfiable by any real
+        model), exact JSON skeleton in the prompt (7B ignored abstract schema
+        names), Ollama options sent as a map not array, and `AI_TIMEOUT_SECONDS`
+        raised to 300 (cold local 7B exceeds a 30s default).
 
 ### TASK-P17-033 — Theme Real-Browser Proof
 - Status: TODO
