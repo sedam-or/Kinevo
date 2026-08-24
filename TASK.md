@@ -4235,16 +4235,20 @@ P17-G Analytics / Decision Support UX
 - Notes: primary P17 success criterion.
 
 ### TASK-P17-024 — Feature Interconnectivity Audit
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: TASK-P17-002
 - SRS: NFR
-- Files: per-surface links
+- Files: per-surface links, tests/e2e/tests/connectivity.spec.ts
 - Acceptance:
-  - [ ] can navigate to related object; understand relationship; perform next
-        meaningful action; return; missing links created
-- Verification: [ ] E2E connectivity walk
-- Notes: —
+  - [x] can navigate to related object; understand relationship; perform next
+        meaningful action; return; missing links created — audit found none
+        missing (Milestone/Program intentionally route through their owning
+        Goal; goal detail carries them inline)
+- Verification: [x] E2E connectivity walk — 9 passed (3 tests ×
+        chromium/firefox/webkit); recorded in docs/browser-e2e.md §P17-024.
+        Closes the previously unit-only linked-task deep-open and the
+        knowledge-link graph walk.
 
 ### TASK-P17-025 — AI Action Surface Audit
 - Status: TODO

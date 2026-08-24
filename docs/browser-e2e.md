@@ -721,6 +721,25 @@ tests/e2e/tests/theme.spec.ts  chromium/firefox/webkit
   Result: ✅ 6 tests × 3 browsers = 18 passed.
 ```
 
+### P17-024 — Feature interconnectivity walk (2026-08-24)
+```text
+tests/e2e/tests/connectivity.spec.ts  chromium/firefox/webkit
+  checks: per §104 Downstream column, each walked pair proves navigate →
+          understand → act → return. (1) LINKED task (Quick Capture with goal)
+          shows the Goal chip, deep-opens THAT goal's detail (title match),
+          plans a milestone on it, returns via back+nav and reopens intact —
+          upstream deep-open was unit-only before. (2) Goal detail → Tasks chip
+          → creates a task on the target surface → returns to the same goal.
+          (3) Note ↔ Goal knowledge link: LinkManager creates related_to,
+          link-open deep-opens the goal, return to note keeps the link listed.
+  Audit: no missing links created — Milestone/Program have no dedicated shell
+          surfaces by design (owning Goal is the single upstream entry,
+          P17-002 decision); Goal detail carries milestones/program inline.
+  Determinism: far-future day (11–24 out) for capture placement — near days
+          saturate as the shared dev owner accumulates fixtures across runs.
+  Result: ✅ 3 tests × 3 browsers = 9 passed.
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.
