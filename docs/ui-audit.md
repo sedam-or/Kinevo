@@ -209,7 +209,7 @@ Known partial baseline (from repository inventory, to be re-verified in R2):
 ## 6. Finding record format
 
 ```text
-UI-nnn | @date | <surface> | P#
+UI-nnn | @date | <surface> | <class>
 Title
 Observed behavior
 Expected (design.md §...)
@@ -219,8 +219,14 @@ Status (open / fixed / triaged / accepted)
 Link (test, PR, screenshot, issue)
 ```
 
+`<class>` is the §3 taxonomy value: a software-bug class (`P0`–`P3`) or,
+since TASK-P17-031, a product-experience class (`UX-C1`–`UX-C6`). A finding
+may carry both when a code defect causes an experience problem — record the
+experience class too so the fix is verified as UX, not just as code.
+
 No finding is closed silently; closing requires evidence (test, browser run,
-visual baseline).
+visual baseline). UX-C findings flow through this same record and close with
+the same evidence rules.
 
 ### 6.1 Active findings (rescue R1 baseline)
 

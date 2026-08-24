@@ -4382,18 +4382,26 @@ P17-G Analytics / Decision Support UX
   labels.
 
 ### TASK-P17-031 — UI/UX Bug Triage Extension
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: —
 - SRS: NFR
 - Files: docs/ui-audit.md §3
+  - Taxonomy landed with ui-audit §3 in TASK-P17-001..003 (commit 8ddb662);
+    this task verified completeness and wired §6 to it.
 - Acceptance:
-  - [ ] extend P0–P3 taxonomy with UX-C1 (workflow broken) / UX-C2 (workflow
+  - [x] extend P0–P3 taxonomy with UX-C1 (workflow broken) / UX-C2 (workflow
         unclear) / UX-C3 (feature undiscoverable) / UX-C4 (visual
-        inconsistency) / UX-C5 (micro-interaction missing) / UX-C6 (information
-        hierarchy problem)
-- Verification: [ ] taxonomy updated; findings continue flowing through §6
-- Notes: distinguishes software bug from product-experience bug.
+        inconsistency) / UX-C5 (micro-interaction missing) / UX-C6
+        (information hierarchy problem) — all six present with definitions,
+        examples, and the software-bug vs product-experience-bug distinction
+        (ui-audit §3)
+- Verification: [x] taxonomy updated; findings flow through §6 — record
+  format now accepts `P0`–`P3` and `UX-C1`–`UX-C6` classes (dual-tagging when
+  a code defect causes an experience problem); precedent: UX-C4 shared-hierarchy
+  closure recorded via the §6/audit trail (TASK-P17-021)
+- Notes: distinguishes software bug from product-experience bug; no finding
+  may be silently closed (§6 rule unchanged).
 
 ### TASK-P17-032 — Real-Browser Verification
 - Status: TODO
