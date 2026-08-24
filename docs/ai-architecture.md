@@ -119,5 +119,31 @@ If AI is unavailable:
 - deterministic scheduling remains functional;
 - manual goal/task/knowledge workflows remain available.
 
+### AI action surface audit matrix (TASK-P17-025)
+
+Every AI capability answers the same six questions. Entry points live where
+the object lives (P17-029); every mutation proposal is pending until an
+explicit accept (FR-62); failures surface server-truth, never silent magic.
+
+| Capability | Where invoked | Context sent | What changes on accept | Can edit | Can reject | Failure handling |
+| ---------- | ------------- | ------------ | ---------------------- | -------- | ---------- | ---------------- |
+| Goal breakdown | Goals list post-create suggestion; goal detail header; empty-milestone state (`goal-breakdown-ai` / `goal-detail-breakdown` / `milestones-empty-breakdown`) | Goal title + id; schema-constrained JSON prompt (no chain-of-thought) | Creates the proposed milestones on the goal | Yes — inline milestone edits revalidated through the same schema before acceptance (`proposal-edit`) | Yes — `proposal-reject`; nothing applied | Gate `ai-not-configured` for disabled/not_configured/unavailable states (server-truth state, P17-007/028); generation errors surface verbatim-safe (`goal-detail-generate-error`, suggestion error) |
+| Note summarize | Note editor toolbar (`note-ai-summarize`) | Note content | Nothing — read-only summary panel (`note-ai-summary`); no domain mutation | n/a (display-only by design) | n/a — dismissing the panel changes nothing | Gate as above; request errors in `note-ai-error` |
+| Note task extraction | Note editor toolbar (`note-ai-extract`) | Note content | Pending extraction review (`note-ai-extraction-proposal`); accepting creates Tasks only then (`note-ai-extract-accept`) | Yes — proposed tasks listed before accept | Yes — `note-ai-extract-reject` | Gate as above; errors in `note-ai-error` |
+| Canvas structure suggestion | Canvas boards index (`canvas-suggest-prompt` / `canvas-suggest-submit`) | User prompt + canvas semantics | Pending sections proposal (`canvas-suggest-proposal`); accept creates the Canvas (`canvas-suggest-accept`) | Yes — sections reviewed pre-accept | Yes — `canvas-suggest-reject` | Gate as above; errors in `canvas-suggest-error` |
+| Task clarify | Task detail (`task-detail-clarify`) | Task fields | Nothing — explanatory text only (`task-detail-clarify-result`) | n/a (display-only) | n/a — no mutation offered | Gate as above; errors in `task-detail-clarify-error` |
+
+Audit notes:
+- The shared gate intentionally treats `unavailable` like not-ready: one lazy
+  status read gates every action (`generationReady = configured|connected`),
+  so a dead provider never fires doomed requests (TASK-P17-028 posture).
+  The notice routes to Settings where Test connection reveals the precise
+  server-truth state.
+- Display-only capabilities (summarize, clarify) are deliberately
+  non-mutating: there is nothing to edit or reject because nothing is applied.
+- Browser evidence: failure walk + reject path in
+  `tests/e2e/tests/ai-action-audit.spec.ts`; success paths per row are proven
+  by golden-journeys G2 (goal), NoteAiApiTest/CanvasAiApiTest (API level).
+
 ---
 

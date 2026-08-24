@@ -4251,15 +4251,24 @@ P17-G Analytics / Decision Support UX
         knowledge-link graph walk.
 
 ### TASK-P17-025 — AI Action Surface Audit
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: TASK-P17-026
 - SRS: FR-61, FR-62 (no hidden AI)
-- Files: per-AI-entry-point surfaces
+- Files: per-AI-entry-point surfaces, docs/ai-architecture.md,
+        tests/e2e/tests/ai-action-audit.spec.ts
 - Acceptance:
-  - [ ] every AI capability answers: where invoked, what context, what changes,
-        can edit, can reject, failure handling; no mysterious magic
-- Verification: [ ] audit matrix + E2E failure-state
+  - [x] every AI capability answers: where invoked, what context, what
+        changes, can edit, can reject, failure handling; no mysterious magic —
+        matrix recorded in docs/ai-architecture.md ("AI action surface audit
+        matrix"); display-only capabilities (summarize/clarify) documented as
+        deliberately non-mutating
+- Verification: [x] audit matrix + E2E failure-state — 6 passed (2 tests ×
+        chromium/firefox/webkit, run twice): enabled-unreachable walk gates
+        all five surfaces with zero mutations; real-provider reject path
+        applies nothing. Recorded in docs/browser-e2e.md §P17-025.
+- Notes: shared global provider row is re-pinned before each gated click;
+        restores converge via state polling (matrix-race hardening).
 - Notes: —
 
 ### TASK-P17-026 — AI Goal Breakdown Quick Action

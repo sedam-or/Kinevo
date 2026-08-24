@@ -740,6 +740,23 @@ tests/e2e/tests/connectivity.spec.ts  chromium/firefox/webkit
   Result: ✅ 3 tests × 3 browsers = 9 passed.
 ```
 
+### P17-025 — AI action surface audit run (2026-08-24)
+```text
+tests/e2e/tests/ai-action-audit.spec.ts  chromium/firefox/webkit
+  checks: (1) FAILURE WALK — provider ENABLED but unreachable (dead port):
+          every capability surface gates honestly via the shared lazy status
+          read (`ai-not-configured`), fires no doomed request and mutates
+          nothing — goal breakdown suggestion, note summarize, note extract,
+          canvas suggest, task clarify; config re-pinned before each click to
+          defuse the shared-row race between matrix browsers, final restore
+          polls to `connected`. (2) REJECT PATH — first browser proof of FR-62
+          rejection on a real generated breakdown (qwen2.5-coder:7b): card
+          unmounts, reopened goal shows zero milestones. Matrix of all five
+          capabilities × where/context/changes/edit/reject/failure documented
+          in docs/ai-architecture.md ("AI action surface audit matrix").
+  Result: ✅ 2 tests × 3 browsers = 6 passed, twice consecutively.
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.
