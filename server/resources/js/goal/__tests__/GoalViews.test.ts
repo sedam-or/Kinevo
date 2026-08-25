@@ -92,6 +92,11 @@ beforeEach(() => {
     vi.mocked(aiApi.config).mockResolvedValue({
         config: {
             provider: 'ollama',
+            protocol: 'ollama',
+            configured: true,
+            last_verified_at: null,
+            last_status: null,
+            last_error_code: null,
             enabled: true,
             model: 'llama3.1',
             base_url: 'http://localhost:11434',
@@ -235,6 +240,11 @@ vi.mocked(aiApi.acceptProposal).mockResolvedValue(undefined);
         vi.mocked(aiApi.config).mockResolvedValue({
             config: {
                 provider: 'ollama',
+                protocol: 'ollama',
+                configured: true,
+                last_verified_at: null,
+                last_status: null,
+                last_error_code: null,
                 enabled: false,
                 model: null,
                 base_url: null,
@@ -381,6 +391,11 @@ describe('GoalDetailView', () => {
         vi.mocked(aiApi.config).mockResolvedValue({
             config: {
                 provider: 'ollama',
+                protocol: 'ollama',
+                configured: true,
+                last_verified_at: null,
+                last_status: null,
+                last_error_code: null,
                 enabled: false,
                 model: null,
                 base_url: null,

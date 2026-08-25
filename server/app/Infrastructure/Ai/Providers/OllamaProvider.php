@@ -60,14 +60,14 @@ final readonly class OllamaProvider implements AiProvider
                     'stream' => false,
                     'options' => $options === [] ? new \stdClass : $options,
                 ]);
-        } catch (ConnectionException) {
-            throw AiProviderException::unavailable('Ollama is unreachable.');
+        } catch (ConnectionException $e) {
+            throw self::isTimeout($e)
+                ? AiProviderException::timeout()
+                : AiProviderException::unavailable('Ollama is unreachable.');
         }
 
         if (! $response->successful()) {
-            throw AiProviderException::unavailable(
-                "Ollama returned HTTP {$response->status()}."
-            );
+            throw $this->failure($response);
         }
 
         $text = trim((string) ($response->json('response') ?? ''));
@@ -83,6 +83,26 @@ final readonly class OllamaProvider implements AiProvider
             $response->json('prompt_eval_count'),
             $response->json('eval_count'),
         );
+    }
+
+    private function failure(HttpResponse $response): AiProviderException
+    {
+        return match ($response->status()) {
+            403 => AiProviderException::authFailed(),
+            404 => AiProviderException::modelNotFound('The configured model is not available on this Ollama instance.'),
+            429 => AiProviderException::rateLimited(),
+            default => AiProviderException::unavailable(
+                "Ollama returned HTTP {$response->status()}."
+            ),
+        };
+    }
+
+    private static function isTimeout(ConnectionException $e): bool
+    {
+        $message = strtolower($e->getMessage());
+
+        return str_contains($message, 'timed out') || str_contains($message, 'timeout')
+            || str_contains($message, 'error 28');
     }
 
     public function status(): AiProviderStatus

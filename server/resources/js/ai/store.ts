@@ -62,8 +62,10 @@ export const useAiSettingsStore = defineStore('ai-settings', () => {
         testing.value = true;
         error.value = null;
         try {
-            const { status } = await aiApi.test(input);
-            return { provider: status.provider, available: status.available, error: status.error };
+            const result = await aiApi.test(input);
+            // Verification metadata may have advanced server-side.
+            void load();
+            return { provider: result.status.provider, available: result.status.available, error: result.ok ? null : (result.code ?? result.status.error) };
         } catch (err) {
             error.value = err as ApiError;
             return null;
@@ -72,5 +74,51 @@ export const useAiSettingsStore = defineStore('ai-settings', () => {
         }
     }
 
-    return { config, loading, saving, testing, error, generationReady, ensureStatus, load, save, test };
+    /** Credential-only rotation (TASK-P18-022); response is already masked. */
+    async function setCredential(apiKey: string): Promise<boolean> {
+        saving.value = true;
+        error.value = null;
+        try {
+            const { config: c } = await aiApi.setCredential(apiKey);
+            config.value = c;
+            return true;
+        } catch (err) {
+            error.value = err as ApiError;
+            return false;
+        } finally {
+            saving.value = false;
+        }
+    }
+
+    async function removeCredential(): Promise<boolean> {
+        saving.value = true;
+        error.value = null;
+        try {
+            const { config: c } = await aiApi.removeCredential();
+            config.value = c;
+            return true;
+        } catch (err) {
+            error.value = err as ApiError;
+            return false;
+        } finally {
+            saving.value = false;
+        }
+    }
+
+    async function setEnabled(enabled: boolean): Promise<boolean> {
+        error.value = null;
+        try {
+            const { config: c } = await (enabled ? aiApi.enable() : aiApi.disable());
+            config.value = c;
+            return true;
+        } catch (err) {
+            error.value = err as ApiError;
+            return false;
+        }
+    }
+
+    return {
+        config, loading, saving, testing, error, generationReady,
+        ensureStatus, load, save, test, setCredential, removeCredential, setEnabled,
+    };
 });

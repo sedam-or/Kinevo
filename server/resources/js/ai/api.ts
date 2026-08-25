@@ -24,13 +24,39 @@ export interface AiProviderStatus {
 
 export interface AiProviderConfigPayload {
     provider: string;
+    protocol: string;
     enabled: boolean;
     model: string | null;
     base_url: string | null;
+    configured: boolean;
     has_api_key: boolean;
     api_key_hint: string | null;
+    last_verified_at: string | null;
+    last_status: 'connected' | 'failed' | null;
+    last_error_code: string | null;
     status: AiProviderStatus & { state: AiStatusState };
     privacy_ok: boolean;
+}
+
+/** Provider capability fact (TASK-P18-012) — the UI derives fields from this. */
+export interface AiProviderCatalogEntry {
+    id: string;
+    protocols: string[];
+    default_protocol: string;
+    requires_api_key: boolean;
+    requires_base_url: boolean;
+    requires_model: boolean;
+    supports_local: boolean;
+    supports_remote: boolean;
+    supports_connection_test: boolean;
+}
+
+/** Stable connection-test outcome (TASK-P18-008) — safe codes only. */
+export interface AiConnectionTestResult {
+    status: AiProviderStatus;
+    ok: boolean;
+    code: string | null;
+    message: string;
 }
 
 export interface SaveAiProviderConfigInput {
@@ -105,18 +131,44 @@ export interface AiAcceptResult {
 
 export const aiApi = {
     async config(): Promise<{ config: AiProviderConfigPayload }> {
-        return apiClient.request<{ config: AiProviderConfigPayload }>('/ai/config');
+        return apiClient.request<{ config: AiProviderConfigPayload }>('/ai/settings');
     },
 
     async save(input: SaveAiProviderConfigInput): Promise<{ config: AiProviderConfigPayload }> {
-        return apiClient.request<{ config: AiProviderConfigPayload }>('/ai/config', {
-            method: 'PUT',
+        return apiClient.request<{ config: AiProviderConfigPayload }>('/ai/settings', {
+            method: 'PATCH',
             body: JSON.stringify(input),
         });
     },
 
-    async test(input: SaveAiProviderConfigInput): Promise<{ status: AiProviderStatus }> {
-        return apiClient.request<{ status: AiProviderStatus }>('/ai/config/test', {
+    /** Credential-only rotation (TASK-P18-022) — never returns the secret. */
+    async setCredential(apiKey: string): Promise<{ config: AiProviderConfigPayload }> {
+        return apiClient.request<{ config: AiProviderConfigPayload }>('/ai/settings/credential', {
+            method: 'POST',
+            body: JSON.stringify({ api_key: apiKey }),
+        });
+    },
+
+    async removeCredential(): Promise<{ config: AiProviderConfigPayload }> {
+        return apiClient.request<{ config: AiProviderConfigPayload }>('/ai/settings/credential', {
+            method: 'DELETE',
+        });
+    },
+
+    async enable(): Promise<{ config: AiProviderConfigPayload }> {
+        return apiClient.request<{ config: AiProviderConfigPayload }>('/ai/settings/enable', { method: 'POST' });
+    },
+
+    async disable(): Promise<{ config: AiProviderConfigPayload }> {
+        return apiClient.request<{ config: AiProviderConfigPayload }>('/ai/settings/disable', { method: 'POST' });
+    },
+
+    async providers(): Promise<{ providers: AiProviderCatalogEntry[] }> {
+        return apiClient.request<{ providers: AiProviderCatalogEntry[] }>('/ai/providers');
+    },
+
+    async test(input: Partial<SaveAiProviderConfigInput>): Promise<AiConnectionTestResult> {
+        return apiClient.request<AiConnectionTestResult>('/ai/settings/test', {
             method: 'POST',
             body: JSON.stringify(input),
         });

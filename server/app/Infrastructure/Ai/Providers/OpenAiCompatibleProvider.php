@@ -66,14 +66,14 @@ final readonly class OpenAiCompatibleProvider implements AiProvider
                 ->withToken($this->apiKey)
                 ->acceptJson()
                 ->post($this->baseUrl.'/chat/completions', $payload);
-        } catch (ConnectionException) {
-            throw AiProviderException::unavailable('AI provider is unreachable.');
+        } catch (ConnectionException $e) {
+            throw self::isTimeout($e)
+                ? AiProviderException::timeout()
+                : AiProviderException::unavailable('AI provider is unreachable.');
         }
 
         if (! $response->successful()) {
-            throw AiProviderException::unavailable(
-                "AI provider returned HTTP {$response->status()}."
-            );
+            throw $this->failure($response);
         }
 
         $text = trim((string) ($response->json('choices.0.message.content') ?? ''));
@@ -101,9 +101,9 @@ final readonly class OpenAiCompatibleProvider implements AiProvider
             $ping = $this->ping();
             $available = $ping->successful();
             $error = $available ? null : "AI provider returned HTTP {$ping->status()}.";
-        } catch (ConnectionException) {
+        } catch (ConnectionException $e) {
             $available = false;
-            $error = 'AI provider is unreachable.';
+            $error = self::isTimeout($e) ? 'AI provider did not respond in time.' : 'AI provider is unreachable.';
         }
 
         return new AiProviderStatus(
@@ -113,6 +113,33 @@ final readonly class OpenAiCompatibleProvider implements AiProvider
             (int) ((hrtime(true) - $started) / 1_000_000),
             $error,
         );
+    }
+
+    /**
+     * Stable, safe error mapping (TASK-P18-008): upstream HTTP states become
+     * the AI_PROVIDER_* family; the raw body is never surfaced.
+     */
+    private function failure(HttpResponse $response): AiProviderException
+    {
+        return match (true) {
+            $response->status() === 401 || $response->status() === 403 => AiProviderException::authFailed(),
+            $response->status() === 404 => AiProviderException::modelNotFound(),
+            $response->status() === 429 => AiProviderException::rateLimited(),
+            $response->status() === 422 => AiProviderException::badConfiguration(
+                'AI provider rejected the request configuration (HTTP 422).'
+            ),
+            default => AiProviderException::unavailable(
+                "AI provider returned HTTP {$response->status()}."
+            ),
+        };
+    }
+
+    private static function isTimeout(ConnectionException $e): bool
+    {
+        $message = strtolower($e->getMessage());
+
+        return str_contains($message, 'timed out') || str_contains($message, 'timeout')
+            || str_contains($message, 'error 28');
     }
 
     /**

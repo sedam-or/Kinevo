@@ -14,8 +14,12 @@ use App\Application\Ai\GetAiProviderConfigUseCase;
 use App\Application\Ai\GetAiProviderStatusUseCase;
 use App\Application\Ai\ListAiProposalsUseCase;
 use App\Application\Ai\ListAiRunsUseCase;
+use App\Application\Ai\ListAvailableAiProvidersUseCase;
 use App\Application\Ai\RejectAiProposalUseCase;
+use App\Application\Ai\RemoveAiProviderCredentialUseCase;
 use App\Application\Ai\SaveAiProviderConfigUseCase;
+use App\Application\Ai\SetAiProviderCredentialUseCase;
+use App\Application\Ai\SetAiProviderEnabledUseCase;
 use App\Application\Ai\TestAiProviderConnectionUseCase;
 use App\Application\Ai\UpdateAiProposalUseCase;
 use App\Domain\Ai\AiOutputException;
@@ -41,6 +45,10 @@ final class AiController extends Controller
         private readonly GetAiProviderStatusUseCase $providerStatus,
         private readonly GetAiProviderConfigUseCase $providerConfig,
         private readonly SaveAiProviderConfigUseCase $saveProviderConfig,
+        private readonly SetAiProviderCredentialUseCase $setCredential,
+        private readonly RemoveAiProviderCredentialUseCase $removeCredential,
+        private readonly SetAiProviderEnabledUseCase $setEnabled,
+        private readonly ListAvailableAiProvidersUseCase $listProviders,
         private readonly TestAiProviderConnectionUseCase $testProviderConnection,
         private readonly ListAiRunsUseCase $listRuns,
         private readonly ListAiProposalsUseCase $listProposals,
@@ -90,7 +98,7 @@ final class AiController extends Controller
     public function configTest(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'provider' => ['required', 'string'],
+            'provider' => ['nullable', 'string'],
             'base_url' => ['nullable', 'string', 'max:255'],
             'model' => ['nullable', 'string', 'max:128'],
             'api_key' => ['nullable', 'string', 'max:4096'],
@@ -107,6 +115,95 @@ final class AiController extends Controller
         }
 
         return response()->json($status);
+    }
+
+    /**
+     * TASK-P18-006 — canonical AI settings surface. The legacy /ai/config
+     * endpoints delegate to the exact same use cases; no second source of
+     * truth exists.
+     */
+    public function settingsShow(): JsonResponse
+    {
+        return $this->configShow();
+    }
+
+    public function settingsUpdate(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'provider' => ['nullable', 'string'],
+            'protocol' => ['nullable', 'string', 'max:32'],
+            'enabled' => ['nullable', 'boolean'],
+            'model' => ['nullable', 'string', 'max:128'],
+            'base_url' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $config = $this->saveProviderConfig->__invoke($validator->validated());
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['config' => $config]);
+    }
+
+    public function credentialSet(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'api_key' => ['required', 'string', 'max:4096'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $config = $this->setCredential->__invoke($validator->validated());
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['config' => $config]);
+    }
+
+    public function credentialRemove(): JsonResponse
+    {
+        return response()->json(['config' => $this->removeCredential->__invoke()]);
+    }
+
+    public function settingsTest(Request $request): JsonResponse
+    {
+        return $this->configTest($request);
+    }
+
+    public function settingsEnable(): JsonResponse
+    {
+        try {
+            $config = ($this->setEnabled)(true);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['config' => $config]);
+    }
+
+    public function settingsDisable(): JsonResponse
+    {
+        try {
+            $config = ($this->setEnabled)(false);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['config' => $config]);
+    }
+
+    public function providersIndex(): JsonResponse
+    {
+        return response()->json($this->listProviders->__invoke());
     }
 
     public function generate(Request $request): JsonResponse

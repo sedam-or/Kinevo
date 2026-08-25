@@ -148,6 +148,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/ai/config', [AiController::class, 'configShow']);
     Route::put('/ai/config', [AiController::class, 'configUpdate']);
     Route::post('/ai/config/test', [AiController::class, 'configTest']);
+    // TASK-P18-006 — canonical AI settings control-plane endpoints.
+    Route::get('/ai/settings', [AiController::class, 'settingsShow']);
+    Route::match(['patch', 'put'], '/ai/settings', [AiController::class, 'settingsUpdate']);
+    Route::post('/ai/settings/credential', [AiController::class, 'credentialSet']);
+    Route::delete('/ai/settings/credential', [AiController::class, 'credentialRemove']);
+    Route::post('/ai/settings/test', [AiController::class, 'settingsTest']);
+    Route::post('/ai/settings/enable', [AiController::class, 'settingsEnable']);
+    Route::post('/ai/settings/disable', [AiController::class, 'settingsDisable']);
+    Route::get('/ai/providers', [AiController::class, 'providersIndex']);
     Route::post('/ai/generate', [AiController::class, 'generate']);
     Route::post('/ai/proposals', [AiController::class, 'proposals']);
     Route::get('/ai/proposals', [AiController::class, 'proposalsIndex']);

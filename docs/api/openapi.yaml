@@ -3006,6 +3006,202 @@ paths:
         '401': { description: Unauthorized }
         '422': { description: Invalid payload }
 
+  # ---------------------------------------------------------------
+  # TASK-P18-006 — canonical AI provider control plane (settings).
+  # The legacy /ai/config endpoints remain and delegate to the same
+  # use cases; there is no second source of truth.
+  # ---------------------------------------------------------------
+  /ai/settings:
+    get:
+      tags: [AI]
+      summary: Safe AI settings snapshot (TASK-P18-007)
+      description: >-
+        Canonical masked settings for Settings → AI & Providers. Allowed:
+        provider, protocol, base_url, model, enabled, configured, a masked
+        hint, verification metadata and the canonical status. Forbidden by
+        construction: raw key, ciphertext, authorization header.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiProviderConfigResponse'
+        '401': { description: Unauthorized }
+    patch:
+      tags: [AI]
+      summary: Update AI provider settings (partial)
+      description: >-
+        PATCH semantics: omitted fields keep their stored values (provider,
+        enabled). Credential rotation does NOT travel here — use
+        POST/DELETE /ai/settings/credential.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider: {type: string, enum: [disabled, ollama, openai]}
+                protocol: {type: string, maxLength: 32}
+                enabled: {type: boolean}
+                model: {type: string, maxLength: 128}
+                base_url: {type: string, maxLength: 255}
+      responses:
+        '200':
+          description: Saved (masked response)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiProviderConfigResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid payload }
+
+  /ai/settings/credential:
+    post:
+      tags: [AI]
+      summary: Store or rotate the encrypted API key (TASK-P18-002/P18-022)
+      description: >-
+        Rotation is atomic — the previous credential stops existing when the
+        new one is saved. Usable even when the active provider needs no key.
+        Never returns the secret or its ciphertext.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [api_key]
+              properties:
+                api_key: {type: string, minLength: 1, maxLength: 4096}
+      responses:
+        '200':
+          description: Stored (masked response)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiProviderConfigResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Invalid payload }
+    delete:
+      tags: [AI]
+      summary: Remove the stored credential
+      description: >-
+        Clears only the secret and its hint; provider/model/base URL/enabled
+        configuration is preserved.
+      responses:
+        '200':
+          description: Removed (masked response)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiProviderConfigResponse'
+        '401': { description: Unauthorized }
+
+  /ai/settings/test:
+    post:
+      tags: [AI]
+      summary: Verify the connection with minimal non-mutating inference (TASK-P18-008)
+      description: >-
+        A valid test verifies authentication, protocol compatibility and model
+        usability through a fixed synthetic probe (never user content); a bare
+        TCP/ping is not sufficient. With no body it tests the SAVED settings
+        and records last_verified_at/last_status/last_error_code. Candidate
+        overrides are allowed without persisting anything. Failures map to
+        stable codes: AI_PROVIDER_UNAVAILABLE | AUTH_FAILED | BAD_CONFIGURATION |
+        MODEL_NOT_FOUND | TIMEOUT | RATE_LIMITED | UNSUPPORTED.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider: {type: string, enum: [ollama, openai]}
+                base_url: {type: string, maxLength: 255}
+                model: {type: string, maxLength: 128}
+                api_key: {type: string, maxLength: 4096}
+      responses:
+        '200':
+          description: Test result (ok may be false; safe codes only)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, ok, message]
+                properties:
+                  status:
+                    allOf:
+                      - $ref: '#/components/schemas/AiStatusResponse/properties/status'
+                  ok: {type: boolean}
+                  code: {type: string, nullable: true}
+                  message: {type: string}
+        '401': { description: Unauthorized }
+        '422': { description: Invalid payload }
+
+  /ai/settings/enable:
+    post:
+      tags: [AI]
+      summary: Enable the persisted provider
+      description: >-
+        First-class disabled state preserved configuration. Enabling requires
+        a real provider AND a stored credential when its family needs one;
+        otherwise 422.
+      responses:
+        '200':
+          description: Enabled (masked response)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiProviderConfigResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Provider not configured }
+
+  /ai/settings/disable:
+    post:
+      tags: [AI]
+      summary: Disable the persisted provider (configuration kept)
+      responses:
+        '200':
+          description: Disabled (masked response)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiProviderConfigResponse'
+        '401': { description: Unauthorized }
+
+  /ai/providers:
+    get:
+      tags: [AI]
+      summary: Available provider catalog with capability facts (TASK-P18-012)
+      description: >-
+        Static capability matrix driving the settings UI fields: required
+        inputs per family, local/remote support, protocols.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [providers]
+                properties:
+                  providers:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, protocols, default_protocol]
+                      properties:
+                        id: {type: string, enum: [mock, ollama, openai]}
+                        protocols: {type: array, items: {type: string}}
+                        default_protocol: {type: string}
+                        requires_api_key: {type: boolean}
+                        requires_base_url: {type: boolean}
+                        requires_model: {type: boolean}
+                        supports_local: {type: boolean}
+                        supports_remote: {type: boolean}
+                        supports_connection_test: {type: boolean}
+        '401': { description: Unauthorized }
+
   /ai/generate:
     post:
       tags: [AI]
@@ -4969,14 +5165,19 @@ components:
       properties:
         config:
           type: object
-          required: [provider, enabled, has_api_key, status]
+          required: [provider, protocol, enabled, configured, has_api_key, status]
           properties:
             provider: {type: string}
+            protocol: {type: string, description: 'Wire protocol (TASK-P18-021): openai-chat | ollama | mock | none'}
             enabled: {type: boolean}
             model: {type: string, nullable: true}
             base_url: {type: string, nullable: true}
+            configured: {type: boolean, description: 'True when the selected provider has everything it requires'}
             has_api_key: {type: boolean}
             api_key_hint: {type: string, nullable: true, description: 'Masked …last4 only'}
+            last_verified_at: {type: string, format: date-time, nullable: true}
+            last_status: {type: string, enum: [connected, failed], nullable: true}
+            last_error_code: {type: string, nullable: true, description: 'Stable AI_PROVIDER_* code; never a raw upstream payload'}
             status:
               allOf:
                 - $ref: '#/components/schemas/AiStatusResponse/properties/status'

@@ -5,6 +5,7 @@ namespace App\Infrastructure\Ai;
 use App\Domain\Ai\Contracts\AiProviderConfigRepository;
 use App\Domain\Ai\Entities\AiProviderConfig;
 use App\Models\AiProviderConfig as AiProviderConfigModel;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 
 final readonly class EloquentAiProviderConfigRepository implements AiProviderConfigRepository
@@ -22,6 +23,12 @@ final readonly class EloquentAiProviderConfigRepository implements AiProviderCon
             $model->model,
             $model->base_url,
             $model->freshApiKey(),
+            $model->user_id,
+            $model->protocol,
+            $model->credential_hint,
+            $model->last_verified_at?->toISOString(),
+            $model->last_status,
+            $model->last_error_code,
         );
     }
 
@@ -32,6 +39,12 @@ final readonly class EloquentAiProviderConfigRepository implements AiProviderCon
             'enabled' => $config->enabled,
             'model' => $config->model,
             'base_url' => $config->baseUrl,
+            'user_id' => $config->userId,
+            'protocol' => $config->protocol,
+            'credential_hint' => $config->credentialHint,
+            'last_verified_at' => $config->lastVerifiedAt !== null ? Carbon::parse($config->lastVerifiedAt) : null,
+            'last_status' => $config->lastStatus,
+            'last_error_code' => $config->lastErrorCode,
         ];
         if ($config->apiKey !== null) {
             // Encrypted server-side; never stored in plaintext (design §104).

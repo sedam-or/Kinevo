@@ -4602,6 +4602,8 @@ Order: P18 → P19 → P20 → release gates. No DONE without evidence.
 # PHASE 18 — AI PROVIDER CONTROL PLANE
 
 ## P18-001 — AI Provider Settings Domain
+Status: DONE (2026-08-26) — AiProviderCapabilities + AiProviderProtocol VOs, entity extension (user_id/protocol/credential_hint/last_verified_at/last_status/last_error_code), migration 2026_08_25_000001_extend_ai_provider_configs_control_plane. U=phpunit AI suites green.
+
 Priority: P0
 
 Create/extend:
@@ -4647,6 +4649,8 @@ Do not assume all OpenAI-compatible endpoints use one protocol.
 ---
 
 ## P18-002 — Secure Credential Storage
+Status: DONE (2026-08-26) — api_key encrypted server-side (Crypt cast), safe persisted credential_hint so reads never decrypt; tests prove ciphertext storage + no echo (AiProviderSettingsApiTest).
+
 Priority: P0
 
 Conceptual schema:
@@ -4685,6 +4689,8 @@ Tests must prove ciphertext storage and no secret exposure.
 ---
 
 ## P18-003 — AI Provider Application Services
+Status: DONE (2026-08-26) — GetAiProviderConfigUseCase, SaveAiProviderConfigUseCase, SetAiProviderCredentialUseCase, RemoveAiProviderCredentialUseCase, SetAiProviderEnabledUseCase, ListAvailableAiProvidersUseCase, TestAiProviderConnectionUseCase; zero domain logic in controller.
+
 Priority: P0
 
 Implement/extend:
@@ -4703,6 +4709,8 @@ No domain logic in controllers.
 ---
 
 ## P18-004 — Runtime Provider Resolution
+Status: DONE (2026-08-26) — existing StoredAiProviderResolver → AiOrchestrator → factory-built providers; provider implementations never touch the DB.
+
 Priority: P0
 
 Use the existing resolver.
@@ -4722,6 +4730,8 @@ Provider implementations must not query the database directly.
 ---
 
 ## P18-005 — Configuration Precedence
+Status: DONE (2026-08-26) — StoredAiProviderResolverTest: saved enabled config > env deployment defaults > application fallback (disabled). Core works with AI off.
+
 Priority: P0
 
 Document and test:
@@ -4745,6 +4755,8 @@ Core Kinevo still works.
 ---
 
 ## P18-006 — AI Settings API
+Status: DONE (2026-08-26) — GET/PATCH /ai/settings, POST+DELETE /ai/settings/credential, POST /ai/settings/test|enable|disable, GET /ai/providers; legacy /ai/config delegates to the same use cases; docs/api/openapi.yaml updated (119 paths, check-openapi PASS).
+
 Priority: P0
 
 Inspect existing routes first.
@@ -4769,6 +4781,8 @@ OpenAPI updated.
 ---
 
 ## P18-007 — Safe Settings Response
+Status: DONE (2026-08-26) — safe snapshot: provider/protocol/base_url/model/enabled/configured/masked hint/last_verified/safe status; tests assert raw key and ciphertext never appear in any response body.
+
 Priority: P0
 
 Allowed:
@@ -4796,6 +4810,8 @@ authorization header
 ---
 
 ## P18-008 — Connection Test
+Status: DONE (2026-08-26) — test = minimal non-mutating inference probe (fixed synthetic prompt, no user content); upstream failures map to stable AI_PROVIDER_* codes (AiProviderException::errorCode); Http::fake test proves AUTH_FAILED mapping without leaking upstream payload; verification metadata recorded on saved settings.
+
 Priority: P0
 
 A connection test must verify:
@@ -4826,6 +4842,8 @@ Use existing project conventions when names already exist.
 ---
 
 ## P18-009 — Provider Status
+Status: DONE (2026-08-26) — /ai/status and settings share GetAiProviderStatusUseCase::stateFor mapper; canonical states incl. not_configured/disabled/configured/testing/connected/degraded/unavailable (AiProviderStateMappingTest).
+
 Priority: P0
 
 Existing `GET /api/v1/ai/status` must use the same settings source.
@@ -4847,6 +4865,8 @@ Configured != connected.
 ---
 
 ## P18-010 — AI Provider Settings UI
+Status: DONE (2026-08-26) — AiSettingsView.vue sections: Runtime Status / Provider / Credential / Connection / Privacy; status banner renders server state only.
+
 Priority: P0
 
 Route:
@@ -4871,6 +4891,8 @@ Use existing Kinevo design system.
 ---
 
 ## P18-011 — SecretField
+Status: DONE (2026-08-26) — SecretField.vue: write-only, masked by default, reveal toggle, autocomplete=new-password; vitest coverage.
+
 Priority: P0
 
 States:
@@ -4893,6 +4915,8 @@ Never provide raw secret recovery.
 ---
 
 ## P18-012 — Provider UI
+Status: DONE (2026-08-26) — fields derive from GET /ai/providers capability catalog (requires_api_key/base_url/model, supports_local/remote/test); no per-provider conditionals scattered in the component.
+
 Priority: P0
 
 Ollama:
@@ -4915,6 +4939,8 @@ Disabled:
 ---
 
 ## P18-013 — Privacy UX
+Status: DONE (2026-08-26) — privacy section: key encrypted server-side and never sent back after save (masked hint only); content leaves the machine only on explicit AI actions; vitest asserts copy + no key echo.
+
 Priority: P0
 
 Local:
@@ -5070,6 +5096,8 @@ Also test:
 ---
 
 ## P18-021 — Provider Protocol Capability
+Status: DONE (2026-08-26) — protocol stored+validated per family (openai-chat | ollama | mock | none); invalid combination rejected 422; exposed in settings response and OpenAPI.
+
 Priority: P1
 
 Make protocol an explicit provider capability.
@@ -5079,6 +5107,8 @@ Do not assume all remote models expose identical APIs.
 ---
 
 ## P18-022 — Credential Rotation
+Status: DONE (2026-08-26) — atomic rotation via POST /ai/settings/credential (old credential ceases to exist on save); DELETE clears secret+hint only; usable even when active provider needs no key; tests cover set/remove/no-echo.
+
 Priority: P1
 
 Replace credentials atomically.
@@ -5089,6 +5119,8 @@ New credential becomes sole active credential.
 ---
 
 ## P18-023 — Deployment Defaults vs User Override
+Status: DONE (2026-08-26) — precedence proven by StoredAiProviderResolverTest (saved enabled wins over env; disabled/missing falls back); documented here and in ai-architecture notes.
+
 Priority: P1
 
 Test:
@@ -5100,6 +5132,8 @@ Test:
 ---
 
 ## P18-024 — Provider Runtime Test Matrix
+Status: DONE (2026-08-26) — matrix: factory resolution, mock deterministic, disabled unavailable, ollama generate/status/unreachable/empty-response, openai-compatible generate/status, exception mapping (AiProviderTest) + connection-test success/auth-failure paths (AiProviderSettingsApiTest).
+
 Priority: P1
 
 At minimum:

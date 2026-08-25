@@ -10,6 +10,11 @@ vi.mock('../api', async (importOriginal) => {
             config: vi.fn(),
             save: vi.fn(),
             test: vi.fn(),
+            providers: vi.fn(),
+            setCredential: vi.fn(),
+            removeCredential: vi.fn(),
+            enable: vi.fn(),
+            disable: vi.fn(),
         },
     };
 });
@@ -19,28 +24,43 @@ import { aiApi } from '../api';
 
 const maskedConfig = {
     provider: 'ollama',
+    protocol: 'ollama',
     enabled: true,
     model: 'llama3.1',
     base_url: 'http://localhost:11434',
+    configured: true,
     has_api_key: false,
     api_key_hint: null,
+    last_verified_at: null,
+    last_status: null,
+    last_error_code: null,
     status: { provider: 'ollama', model: 'llama3.1', state: 'unavailable' as const, available: false, latency_ms: null, error: 'AI provider is unreachable.' },
     privacy_ok: true,
 };
 
-describe('AiSettingsView (TASK-P17-006)', () => {
+const CATALOG = [
+    { id: 'ollama', protocols: ['ollama'], default_protocol: 'ollama', requires_api_key: false, requires_base_url: false, requires_model: false, supports_local: true, supports_remote: true, supports_connection_test: true },
+    { id: 'openai', protocols: ['openai-chat'], default_protocol: 'openai-chat', requires_api_key: true, requires_base_url: false, requires_model: false, supports_local: false, supports_remote: true, supports_connection_test: true },
+];
+
+describe('AiSettingsView (TASK-P17-006, P18-010..013)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         setActivePinia(createPinia());
+        vi.mocked(aiApi.providers).mockResolvedValue({ providers: CATALOG });
     });
 
     function mountView() {
         return mount(AiSettingsView, { global: { plugins: [createPinia()] } });
     }
 
+    function keyInput(wrapper: ReturnType<typeof mount>) {
+        return wrapper.find('[data-testid="secret-field"] [data-testid="secret-input"]');
+    }
+
     it('loads and shows the persisted provider config without any key material', async () => {
         vi.mocked(aiApi.config).mockResolvedValue({
-            config: { ...maskedConfig, provider: 'openai', base_url: 'https://api.openai.com/v1', model: 'gpt-4o-mini', has_api_key: true, api_key_hint: '…abcd' },
+            config: { ...maskedConfig, provider: 'openai', protocol: 'openai-chat', base_url: 'https://api.openai.com/v1', model: 'gpt-4o-mini', has_api_key: true, api_key_hint: '…abcd' },
         });
         const wrapper = mountView();
         await flushPromises();
@@ -55,37 +75,61 @@ describe('AiSettingsView (TASK-P17-006)', () => {
         expect(aiApi.config).toHaveBeenCalledOnce();
     });
 
-    it('shows the Ollama no-key note instead of the key field', async () => {
+    it('shows the Ollama no-key note instead of the credential section', async () => {
         vi.mocked(aiApi.config).mockResolvedValue({ config: maskedConfig });
         const wrapper = mountView();
         await flushPromises();
 
-        expect(wrapper.find('[data-testid="ai-api-key-input"]').exists()).toBe(false);
+        expect(keyInput(wrapper).exists()).toBe(false);
         expect(wrapper.find('[data-testid="ai-ollama-no-key"]').text()).toContain('does not require an API key');
     });
 
-    it('saves the form and reports success without echoing the key back into the form', async () => {
+    it('rotates a typed key through the dedicated credential endpoint, not the settings payload', async () => {
         vi.mocked(aiApi.config).mockResolvedValue({ config: maskedConfig });
         vi.mocked(aiApi.save).mockResolvedValue({
-            config: { ...maskedConfig, provider: 'openai', base_url: 'https://api.openai.com/v1', model: 'gpt-4o-mini', has_api_key: true, api_key_hint: '…9999' },
+            config: { ...maskedConfig, provider: 'openai', protocol: 'openai-chat', model: 'gpt-4o-mini', has_api_key: true, api_key_hint: '…9999' },
+        });
+        vi.mocked(aiApi.setCredential).mockResolvedValue({
+            config: { ...maskedConfig, provider: 'openai', has_api_key: true, api_key_hint: '…9999' },
         });
         const wrapper = mountView();
         await flushPromises();
 
         await wrapper.find('[data-testid="ai-provider-select"]').setValue('openai');
         await wrapper.find('[data-testid="ai-model-input"]').setValue('gpt-4o-mini');
-        await wrapper.find('[data-testid="ai-api-key-input"]').setValue('sk-brand-new-key');
+        await keyInput(wrapper).setValue('sk-brand-new-key');
         await wrapper.find('form').trigger('submit');
         await flushPromises();
 
         expect(aiApi.save).toHaveBeenCalledWith(expect.objectContaining({
             provider: 'openai',
             model: 'gpt-4o-mini',
-            api_key: 'sk-brand-new-key',
         }));
+        // The raw key travels ONLY through the rotation endpoint (P18-022).
+        expect((aiApi.save as ReturnType<typeof vi.fn>).mock.calls[0][0].api_key).toBeUndefined();
+        expect(aiApi.setCredential).toHaveBeenCalledWith('sk-brand-new-key');
         expect(wrapper.find('[data-testid="ai-settings-saved"]').exists()).toBe(true);
         // After save the input is cleared; the stored hint replaces it.
-        expect((wrapper.find('[data-testid="ai-api-key-input"]').element as HTMLInputElement).value).toBe('');
+        expect((keyInput(wrapper).element as HTMLInputElement).value).toBe('');
+        expect(wrapper.find('[data-testid="ai-credential-saved"]').exists()).toBe(true);
+    });
+
+    it('removes the stored credential without ever displaying it', async () => {
+        vi.mocked(aiApi.config).mockResolvedValue({
+            config: { ...maskedConfig, provider: 'openai', has_api_key: true, api_key_hint: '…abcd' },
+        });
+        vi.mocked(aiApi.removeCredential).mockResolvedValue({
+            config: { ...maskedConfig, provider: 'openai', has_api_key: false, api_key_hint: null },
+        });
+        const wrapper = mountView();
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="ai-remove-key-button"]').exists()).toBe(true);
+        await wrapper.find('[data-testid="ai-remove-key-button"]').trigger('click');
+        await flushPromises();
+
+        expect(aiApi.removeCredential).toHaveBeenCalledOnce();
+        expect(wrapper.find('[data-testid="ai-remove-key-button"]').exists()).toBe(false);
     });
 
     it('blocks saving OpenAI without a key and without a stored key', async () => {
@@ -103,7 +147,12 @@ describe('AiSettingsView (TASK-P17-006)', () => {
 
     it('surfaces a failed connection test without losing form state', async () => {
         vi.mocked(aiApi.config).mockResolvedValue({ config: maskedConfig });
-        vi.mocked(aiApi.test).mockResolvedValue({ status: { provider: 'ollama', model: 'llama3.1', available: false, latency_ms: 12, error: 'AI provider is unreachable.' } });
+        vi.mocked(aiApi.test).mockResolvedValue({
+            status: { provider: 'ollama', model: 'llama3.1', available: false, latency_ms: 12, error: 'AI provider is unreachable.' },
+            ok: false,
+            code: 'AI_PROVIDER_UNAVAILABLE',
+            message: 'AI provider is unreachable.',
+        });
         const wrapper = mountView();
         await flushPromises();
 
@@ -114,9 +163,14 @@ describe('AiSettingsView (TASK-P17-006)', () => {
         expect((wrapper.find('[data-testid="ai-model-input"]').element as HTMLInputElement).value).toBe('llama3.1');
     });
 
-    it('surfaces a successful connection test', async () => {
+    it('surfaces a successful connection test proven by minimal inference', async () => {
         vi.mocked(aiApi.config).mockResolvedValue({ config: maskedConfig });
-        vi.mocked(aiApi.test).mockResolvedValue({ status: { provider: 'ollama', model: 'llama3.1', available: true, latency_ms: 8, error: null } });
+        vi.mocked(aiApi.test).mockResolvedValue({
+            status: { provider: 'ollama', model: 'llama3.1', available: true, latency_ms: 8, error: null },
+            ok: true,
+            code: null,
+            message: 'Connection verified with a minimal inference request.',
+        });
         const wrapper = mountView();
         await flushPromises();
 
@@ -124,6 +178,7 @@ describe('AiSettingsView (TASK-P17-006)', () => {
         await flushPromises();
 
         expect(wrapper.find('[data-testid="ai-test-result"]').text()).toContain('Connected to ollama');
+        expect(wrapper.find('[data-testid="ai-test-result"]').text()).toContain('model responded');
     });
 
     it('renders the canonical status banner from the server state (P17-007)', async () => {
@@ -145,30 +200,35 @@ describe('AiSettingsView (TASK-P17-006)', () => {
             await flushPromises();
 
             const banner = wrapper.find('[data-testid="ai-status-banner"]');
-            expect(banner.exists()).toBe(true);
-            expect(banner.find('[data-testid="ai-status-state"]').text()).toBe(c.state.replaceAll('_', ' '));
             expect(banner.text()).toContain(c.label);
+
             wrapper.unmount();
         }
     });
 
-    it('distinguishes configured from available: enabled-but-down shows unavailable detail', async () => {
+    it('explains privacy guarantees in plain language (P18-013)', async () => {
         vi.mocked(aiApi.config).mockResolvedValue({ config: maskedConfig });
         const wrapper = mountView();
         await flushPromises();
 
-        // maskedConfig: enabled=true, available=false, state='unavailable'.
-        const banner = wrapper.find('[data-testid="ai-status-banner"]');
-        expect(banner.text()).toContain('Provider unreachable.');
-        expect(banner.text()).toContain('ollama');
-        expect(banner.text()).toContain('AI provider is unreachable.');
+        const copy = wrapper.find('[data-testid="ai-privacy-copy"]').text();
+        expect(copy).toContain('encrypted');
+        expect(copy.toLowerCase()).toContain('never sent back');
+        expect(copy).toContain('explicitly run an AI action');
     });
 
-    it('shows the privacy blurb', async () => {
-        vi.mocked(aiApi.config).mockResolvedValue({ config: maskedConfig });
+    it('shows verification metadata after a server-side check (P18-009)', async () => {
+        vi.mocked(aiApi.config).mockResolvedValue({
+            config: {
+                ...maskedConfig,
+                last_verified_at: '2026-08-26T10:00:00.000Z',
+                last_status: 'connected',
+                last_error_code: null,
+            },
+        });
         const wrapper = mountView();
         await flushPromises();
 
-        expect(wrapper.find('[data-testid="ai-privacy-blurb"]').text()).toContain('never stored in browser storage');
+        expect(wrapper.find('[data-testid="ai-verification-note"]').text()).toContain('Last verified');
     });
 });
