@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sedam-or.github.io/Kinevo/sitemap.xml
