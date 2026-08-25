@@ -55,7 +55,9 @@ final readonly class QuickCapturePlacementUseCase
         ?int $programId = null,
         ?int $goalId = null,
         ?CarbonImmutable $date = null,
+        mixed $workspaceId = null,
     ): QuickCaptureResult {
+        // TASK-P19-024 — explicit parent context > active workspace.
         $duration = $this->resolveDuration($size, $durationMinutes);
         $task = $this->createTask->__invoke(
             $userId,
@@ -66,6 +68,8 @@ final readonly class QuickCapturePlacementUseCase
             null,
             $priorityTier,
             $duration,
+            null,
+            $workspaceId,
         );
 
         $targetDate = $date ?? CarbonImmutable::today();

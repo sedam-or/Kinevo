@@ -32,6 +32,7 @@ final class Goal
         public readonly int $priorityTier,
         public readonly string $progressMode,
         public readonly int $progress,
+        public readonly ?int $workspaceId = null,
     ) {}
 
     /**
@@ -273,6 +274,25 @@ final class Goal
         return (int) $reference->diffInDays($this->targetDate->startOfDay(), false);
     }
 
+    public function withWorkspace(int $workspaceId): self
+    {
+        return new self(
+            $this->id,
+            $this->userId,
+            $this->title,
+            $this->description,
+            $this->horizon,
+            $this->startDate,
+            $this->targetDate,
+            $this->targetMetric,
+            $this->status,
+            $this->priorityTier,
+            $this->progressMode,
+            $this->progress,
+            $workspaceId,
+        );
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -291,6 +311,7 @@ final class Goal
             'priority_tier' => $this->priorityTier,
             'progress_mode' => $this->progressMode,
             'progress' => $this->progress,
+            'workspace_id' => $this->workspaceId,
         ];
     }
 }

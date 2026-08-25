@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $markdown_cache
  * @property string|null $plain_text_cache
  * @property int $version
+ * @property int|null $workspace_id
  */
 #[Fillable([
     'user_id',
@@ -24,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'markdown_cache',
     'plain_text_cache',
     'version',
+    'workspace_id',
 ])]
 class Note extends Model
 {

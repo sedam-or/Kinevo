@@ -15,10 +15,16 @@ final readonly class ListProgramsUseCase
     ) {}
 
     /**
+     * TASK-P19-012 — workspace filter; null = global view.
+     *
      * @return array<int, Program>
      */
-    public function __invoke(int $userId): array
+    public function __invoke(int $userId, ?int $workspaceId = null): array
     {
+        if ($workspaceId !== null) {
+            return $this->programs->listForUserInWorkspace($userId, $workspaceId);
+        }
+
         return $this->programs->listForUser($userId);
     }
 }

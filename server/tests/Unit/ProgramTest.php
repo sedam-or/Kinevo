@@ -174,6 +174,7 @@ class ProgramTest extends TestCase
             'status' => 'active',
             'priority_tier' => 3,
             'version' => 1,
+            'workspace_id' => null,
         ], $program->toArray());
     }
 }

@@ -14,8 +14,13 @@ final class ListNotesUseCase
     /**
      * @return array<int, Note>
      */
-    public function __invoke(int $userId): array
+    public function __invoke(int $userId, ?int $workspaceId = null): array
     {
+        // TASK-P19-014 — workspace filter; null = global view.
+        if ($workspaceId !== null) {
+            return $this->repository->listForUserInWorkspace($userId, $workspaceId);
+        }
+
         return $this->repository->listForUser($userId);
     }
 }

@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Note;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -71,10 +72,24 @@ class WorkspaceApiTest extends TestCase
     {
         [$user, $token] = $this->userWithToken();
 
-        $fixtures = $this->createFixtureData($user->id, $token);
+        // Simulate PRE-WORKSPACE legacy rows: raw inserts with no assignment,
+        // created before the first provisioning read (P19-003 semantics).
+        $goalId = (int) DB::table('goals')->insertGetId([
+            'user_id' => $user->id, 'title' => 'Legacy goal', 'horizon' => 'yearly',
+        ]);
+        $taskId = (int) DB::table('tasks')->insertGetId([
+            'user_id' => $user->id, 'title' => 'Legacy task',
+        ]);
+        $programId = (int) DB::table('programs')->insertGetId([
+            'user_id' => $user->id, 'name' => 'Legacy program', 'workload_type' => 'structured',
+        ]);
+        $noteId = (int) DB::table('notes')->insertGetId([
+            'user_id' => $user->id, 'title' => 'Legacy note', 'version' => 1,
+        ]);
+
         $defaultId = (int) ($this->withToken($token)->getJson('/api/v1/workspaces')->json('default_workspace_id'));
 
-        foreach (['goals' => $fixtures['goal'], 'tasks' => $fixtures['task'], 'programs' => $fixtures['program'], 'notes' => $fixtures['note']] as $table => $id) {
+        foreach (['goals' => $goalId, 'tasks' => $taskId, 'programs' => $programId, 'notes' => $noteId] as $table => $id) {
             $this->assertDatabaseHas($table, ['id' => $id, 'workspace_id' => $defaultId]);
         }
     }

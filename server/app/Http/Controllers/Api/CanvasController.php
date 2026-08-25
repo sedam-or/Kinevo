@@ -10,6 +10,7 @@ use App\Application\Canvas\ListCanvasesUseCase;
 use App\Application\Canvas\ListCanvasFilesUseCase;
 use App\Application\Canvas\RenameCanvasUseCase;
 use App\Application\Canvas\SaveCanvasUseCase;
+use App\Application\Workspaces\ResolveWorkspaceContext;
 use App\Domain\Canvas\CanvasVersionConflict;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,7 @@ final class CanvasController extends Controller
     public function __construct(
         private readonly CreateCanvasUseCase $createCanvasUseCase,
         private readonly ListCanvasesUseCase $listCanvasesUseCase,
+        private readonly ResolveWorkspaceContext $workspaceContext,
         private readonly GetCanvasUseCase $getCanvasUseCase,
         private readonly SaveCanvasUseCase $saveCanvasUseCase,
         private readonly RenameCanvasUseCase $renameCanvasUseCase,
@@ -32,7 +34,14 @@ final class CanvasController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $canvases = $this->listCanvasesUseCase->__invoke($request->user()->id);
+        try {
+            // TASK-P19-017 — explicit workspace filter; absent = global view.
+            $workspaceId = $this->workspaceContext->forList($request->user()->id, $request->query('workspace_id'));
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+
+        $canvases = $this->listCanvasesUseCase->__invoke($request->user()->id, $workspaceId);
 
         return response()->json([
             'canvases' => array_map(fn ($canvas) => $canvas->toArray(), $canvases),
@@ -47,6 +56,7 @@ final class CanvasController extends Controller
             'milestone_id' => ['nullable', 'integer', 'min:1'],
             'program_id' => ['nullable', 'integer', 'min:1'],
             'task_id' => ['nullable', 'integer', 'min:1'],
+            'workspace_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         if ($validator->fails()) {
@@ -55,6 +65,14 @@ final class CanvasController extends Controller
 
         $data = $validator->validated();
 
+        try {
+            // TASK-P19-017 — workspace context; task-linked canvases may
+            // inherit via the client passing the resolved id explicitly.
+            $workspaceId = $this->workspaceContext->forWrite($request->user()->id, $data['workspace_id'] ?? null);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
         $canvas = $this->createCanvasUseCase->__invoke(
             $request->user()->id,
             $data['title'],
@@ -62,6 +80,7 @@ final class CanvasController extends Controller
             $data['milestone_id'] ?? null,
             $data['program_id'] ?? null,
             $data['task_id'] ?? null,
+            $workspaceId,
         );
 
         return response()->json(['canvas' => $canvas->toArray()], 201);

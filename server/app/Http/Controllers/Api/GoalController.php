@@ -8,6 +8,7 @@ use App\Application\Goals\GetGoalUseCase;
 use App\Application\Goals\ListGoalsUseCase;
 use App\Application\Goals\SetGoalStatusUseCase;
 use App\Application\Goals\UpdateGoalUseCase;
+use App\Application\Workspaces\ResolveWorkspaceContext;
 use App\Domain\Ai\AiOutputException;
 use App\Domain\Ai\AiProviderException;
 use App\Domain\Goals\ValueObjects\GoalHorizon;
@@ -28,13 +29,21 @@ final class GoalController extends Controller
         private readonly UpdateGoalUseCase $updateGoalUseCase,
         private readonly SetGoalStatusUseCase $setGoalStatusUseCase,
         private readonly CreateGoalBreakdownProposalUseCase $createBreakdownProposalUseCase,
+        private readonly ResolveWorkspaceContext $workspaceContext,
     ) {}
 
     public function index(Request $request): JsonResponse
     {
+        try {
+            // TASK-P19-011 — explicit workspace filter; absent = global view.
+            $workspaceId = $this->workspaceContext->forList($request->user()->id, $request->query('workspace_id'));
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+
         $goals = array_map(
             fn ($goal) => $goal->toArray(),
-            $this->listGoalsUseCase->__invoke($request->user()->id),
+            $this->listGoalsUseCase->__invoke($request->user()->id, $workspaceId),
         );
 
         return response()->json(['goals' => $goals]);
@@ -61,6 +70,7 @@ final class GoalController extends Controller
             'target_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'target_metric' => ['nullable', 'string', 'max:100'],
             'priority_tier' => ['sometimes', 'integer', 'between:1,3'],
+            'workspace_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         if ($validator->fails()) {
@@ -70,6 +80,8 @@ final class GoalController extends Controller
         $data = $validator->validated();
 
         try {
+            // TASK-P19-011 — explicit context wins; absent → default workspace.
+            $workspaceId = $this->workspaceContext->forWrite($request->user()->id, $data['workspace_id'] ?? null);
             $goal = $this->createGoalUseCase->__invoke(
                 $request->user()->id,
                 $data['title'],
@@ -79,6 +91,7 @@ final class GoalController extends Controller
                 isset($data['target_date']) ? CarbonImmutable::parse($data['target_date']) : null,
                 $data['target_metric'] ?? null,
                 $data['priority_tier'] ?? 3,
+                $workspaceId,
             );
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);

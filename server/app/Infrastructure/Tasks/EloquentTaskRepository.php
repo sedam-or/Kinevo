@@ -30,6 +30,20 @@ final class EloquentTaskRepository implements TaskRepository
             ->all();
     }
 
+    public function listForUserInWorkspace(int $userId, int $workspaceId): array
+    {
+        return TaskModel::query()
+            ->where('user_id', $userId)
+            ->where('workspace_id', $workspaceId)
+            ->orderByDesc('created_at')
+            // Stable tiebreaker: rows created within the same timestamp
+            // precision must keep one deterministic order.
+            ->orderByDesc('id')
+            ->get()
+            ->map($this->toDomain(...))
+            ->all();
+    }
+
     public function listAll(): array
     {
         return TaskModel::query()
@@ -87,6 +101,7 @@ final class EloquentTaskRepository implements TaskRepository
             $model->progress_mode ?? 'derived',
             $model->progress,
             $model->version,
+            $model->workspace_id,
         );
     }
 }

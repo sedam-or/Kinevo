@@ -6,6 +6,7 @@ use App\Application\Knowledge\CreateNoteUseCase;
 use App\Application\Knowledge\GetNoteUseCase;
 use App\Application\Knowledge\ListNotesUseCase;
 use App\Application\Knowledge\UpdateNoteUseCase;
+use App\Application\Workspaces\ResolveWorkspaceContext;
 use App\Domain\Knowledge\NoteVersionConflict;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -18,15 +19,23 @@ final class NoteController extends Controller
     public function __construct(
         private readonly CreateNoteUseCase $createNoteUseCase,
         private readonly ListNotesUseCase $listNotesUseCase,
+        private readonly ResolveWorkspaceContext $workspaceContext,
         private readonly GetNoteUseCase $getNoteUseCase,
         private readonly UpdateNoteUseCase $updateNoteUseCase,
     ) {}
 
     public function index(Request $request): JsonResponse
     {
+        try {
+            // TASK-P19-014 — explicit workspace filter; absent = global view.
+            $workspaceId = $this->workspaceContext->forList($request->user()->id, $request->query('workspace_id'));
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+
         $notes = array_map(
             fn ($note) => $note->toArray(),
-            $this->listNotesUseCase->__invoke($request->user()->id),
+            $this->listNotesUseCase->__invoke($request->user()->id, $workspaceId),
         );
 
         return response()->json(['notes' => $notes]);
@@ -39,6 +48,7 @@ final class NoteController extends Controller
             'document_json' => ['nullable', 'array'],
             'markdown_cache' => ['nullable', 'string'],
             'plain_text_cache' => ['nullable', 'string'],
+            'workspace_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         if ($validator->fails()) {
@@ -47,12 +57,20 @@ final class NoteController extends Controller
 
         $data = $validator->validated();
 
+        try {
+            // TASK-P19-014 — default context = active workspace (client-declared).
+            $workspaceId = $this->workspaceContext->forWrite($request->user()->id, $data['workspace_id'] ?? null);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
         $note = $this->createNoteUseCase->__invoke(
             $request->user()->id,
             $data['title'],
             $data['document_json'] ?? null,
             $data['markdown_cache'] ?? null,
             $data['plain_text_cache'] ?? null,
+            $workspaceId,
         );
 
         return response()->json(['note' => $note->toArray()], 201);

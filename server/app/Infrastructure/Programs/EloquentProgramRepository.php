@@ -27,6 +27,17 @@ final class EloquentProgramRepository implements ProgramRepository
             ->all();
     }
 
+    public function listForUserInWorkspace(int $userId, int $workspaceId): array
+    {
+        return ProgramModel::query()
+            ->where('user_id', $userId)
+            ->where('workspace_id', $workspaceId)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map($this->toDomain(...))
+            ->all();
+    }
+
     public function create(int $userId, Program $program): Program
     {
         $model = ProgramModel::query()->create([
@@ -61,6 +72,7 @@ final class EloquentProgramRepository implements ProgramRepository
             new ProgramStatus($model->status),
             $model->priority_tier,
             $model->version,
+            $model->workspace_id,
         );
     }
 }

@@ -25,6 +25,7 @@ final readonly class CreateProgramUseCase
         ?int $minWeeklyMinutes = null,
         ?int $maxWeeklyMinutes = null,
         int $priorityTier = 3,
+        ?int $workspaceId = null,
     ): Program {
         $program = Program::create(
             $userId,
@@ -37,6 +38,10 @@ final readonly class CreateProgramUseCase
             $maxWeeklyMinutes,
             $priorityTier,
         );
+
+        if ($workspaceId !== null) {
+            $program = $program->withWorkspace($workspaceId);
+        }
 
         return $this->programs->create($userId, $program);
     }

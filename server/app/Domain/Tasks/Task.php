@@ -30,6 +30,7 @@ final class Task
         public readonly string $progressMode,
         public readonly int $progress,
         public readonly int $version,
+        public readonly ?int $workspaceId = null,
     ) {}
 
     public static function create(
@@ -175,6 +176,7 @@ final class Task
             'progress_mode' => $this->progressMode,
             'progress' => $this->progress,
             'version' => $this->version,
+            'workspace_id' => $this->workspaceId,
         ];
     }
 
@@ -198,6 +200,7 @@ final class Task
             'progressMode' => $this->progressMode,
             'progress' => $this->progress,
             'version' => $this->version,
+            'workspaceId' => $this->workspaceId,
         ], $props);
 
         return new self(
@@ -215,6 +218,13 @@ final class Task
             $merged['progressMode'],
             $merged['progress'],
             $merged['version'],
+            $merged['workspaceId'],
         );
+    }
+
+    /** TASK-P19-013 — workspace context reference. */
+    public function withWorkspace(int $workspaceId): self
+    {
+        return $this->reborn(['workspaceId' => $workspaceId]);
     }
 }

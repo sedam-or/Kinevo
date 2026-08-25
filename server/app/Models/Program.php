@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $status
  * @property int $priority_tier
  * @property int $version
+ * @property int|null $workspace_id
  */
 #[Fillable([
     'user_id',
@@ -32,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'status',
     'priority_tier',
     'version',
+    'workspace_id',
 ])]
 class Program extends Model
 {

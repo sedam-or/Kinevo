@@ -5404,6 +5404,8 @@ No teams/RBAC/organizations.
 ---
 
 ## P19-011 — Goal Workspace Scoping
+Status: DONE (2026-08-26) — POST /goals accepts workspace_id (validated owned+active; absent → owner default via ResolveWorkspaceContext); GET /goals?workspace_id= filters, ?workspace=all explicit global; foreign id → 404. I=WorkspaceScopingApiTest.
+
 Priority: P0
 
 Goal context:
@@ -5417,6 +5419,8 @@ Goal lists scope to active workspace unless Global explicitly selected.
 ---
 
 ## P19-012 — Program Workspace Scoping
+Status: DONE (2026-08-26) — programs follow the same contract (explicit > default; filter + global view); no entity is ever silently moved between workspaces.
+
 Priority: P0
 
 Program context follows explicit parent or active workspace.
@@ -5428,6 +5432,8 @@ Never silently move entities.
 ---
 
 ## P19-013 — Task Workspace Scoping
+Status: DONE (2026-08-26) — tasks inherit the linked Goal's workspace; explicit conflicting workspace → 422 server-side; list filter + global; quick capture forwards raw context through the same precedence chain.
+
 Priority: P0
 
 Task context:
@@ -5443,6 +5449,8 @@ Server validates consistency.
 ---
 
 ## P19-014 — Note Workspace Scoping
+Status: DONE (2026-08-26) — notes remain first-class: create accepts workspace_id (default fallback), list filters per declared active workspace.
+
 Priority: P0
 
 Notes remain first-class.
@@ -5475,6 +5483,8 @@ No repeated workspace selection.
 ---
 
 ## P19-016 — Knowledge Link Preservation
+Status: DONE (2026-08-26) — knowledge_links untouched and authoritative; workspace adds context only (no direct FKs replacing links).
+
 Priority: P0
 
 Existing `knowledge_links` remains authoritative.
@@ -5487,6 +5497,8 @@ Do not replace links with arbitrary direct FKs.
 ---
 
 ## P19-017 — Canvas Workspace Scoping
+Status: DONE (2026-08-26) — canvas keeps Excalidraw/adapter/autosave/versioning/offline untouched; workspace_id is additive context with validated writes + filtered lists.
+
 Priority: P0
 
 Canvas remains:
@@ -5579,6 +5591,8 @@ Do not build a WorkspaceScheduler.
 ---
 
 ## P19-024 — Workspace Quick Capture
+Status: DONE (2026-08-26) — POST /quick-capture forwards raw workspace context into CreateTaskUseCase precedence (explicit parent > explicit workspace > owner default); placed and unplaced results carry the workspace.
+
 Priority: P0
 
 Quick Capture:

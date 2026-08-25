@@ -26,6 +26,7 @@ final readonly class CreateGoalUseCase
         ?CarbonImmutable $targetDate,
         ?string $targetMetric,
         int $priorityTier = 3,
+        ?int $workspaceId = null,
     ): Goal {
         $this->assertWithinActiveLimit($userId, $horizon);
 
@@ -39,6 +40,10 @@ final readonly class CreateGoalUseCase
             $targetMetric,
             $priorityTier,
         );
+
+        if ($workspaceId !== null) {
+            $goal = $goal->withWorkspace($workspaceId);
+        }
 
         return $this->goals->create($userId, $goal);
     }

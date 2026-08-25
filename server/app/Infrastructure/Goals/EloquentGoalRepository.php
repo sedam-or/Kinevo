@@ -28,6 +28,17 @@ final class EloquentGoalRepository implements GoalRepository
             ->all();
     }
 
+    public function listForUserInWorkspace(int $userId, int $workspaceId): array
+    {
+        return GoalModel::query()
+            ->where('user_id', $userId)
+            ->where('workspace_id', $workspaceId)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map($this->toDomain(...))
+            ->all();
+    }
+
     public function create(int $userId, Goal $goal): Goal
     {
         $model = GoalModel::query()->create([
@@ -71,6 +82,7 @@ final class EloquentGoalRepository implements GoalRepository
             $model->priority_tier,
             $model->progress_mode,
             $model->progress,
+            $model->workspace_id,
         );
     }
 }

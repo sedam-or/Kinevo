@@ -14,6 +14,7 @@ use App\Application\Tasks\SetTaskStatusUseCase;
 use App\Application\Tasks\ToggleSubtaskUseCase;
 use App\Application\Tasks\UpdateSubtaskUseCase;
 use App\Application\Tasks\UpdateTaskUseCase;
+use App\Application\Workspaces\ResolveWorkspaceContext;
 use App\Domain\Tasks\Contracts\SubtaskRepository;
 use App\Domain\Tasks\ValueObjects\TaskStatus;
 use App\Http\Controllers\Controller;
@@ -28,6 +29,7 @@ final class TaskController extends Controller
     public function __construct(
         private readonly CreateTaskUseCase $createTaskUseCase,
         private readonly ListTasksUseCase $listTasksUseCase,
+        private readonly ResolveWorkspaceContext $workspaceContext,
         private readonly GetTaskUseCase $getTaskUseCase,
         private readonly UpdateTaskUseCase $updateTaskUseCase,
         private readonly SetTaskStatusUseCase $setTaskStatusUseCase,
@@ -43,9 +45,16 @@ final class TaskController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        try {
+            // TASK-P19-013 — explicit workspace filter; absent = global view.
+            $workspaceId = $this->workspaceContext->forList($request->user()->id, $request->query('workspace_id'));
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+
         $tasks = array_map(
             fn ($task) => $task->toArray(),
-            $this->listTasksUseCase->__invoke($request->user()->id),
+            $this->listTasksUseCase->__invoke($request->user()->id, $workspaceId),
         );
 
         return response()->json(['tasks' => $tasks]);
@@ -61,6 +70,7 @@ final class TaskController extends Controller
             'program_id' => ['nullable', 'integer'],
             'goal_id' => ['nullable', 'integer'],
             'date' => ['nullable', 'date'],
+            'workspace_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         if ($validator->fails()) {
@@ -79,6 +89,8 @@ final class TaskController extends Controller
                 $data['program_id'] ?? null,
                 $data['goal_id'] ?? null,
                 isset($data['date']) ? CarbonImmutable::parse($data['date']) : null,
+                // TASK-P19-024 — raw context; precedence owned by the use case.
+                $data['workspace_id'] ?? null,
             );
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
@@ -142,6 +154,7 @@ final class TaskController extends Controller
             'priority_tier' => ['sometimes', 'integer', 'between:1,3'],
             'estimated_minutes' => ['nullable', 'integer', 'min:1'],
             'due_at' => ['nullable', 'date'],
+            'workspace_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         if ($validator->fails()) {
@@ -161,6 +174,9 @@ final class TaskController extends Controller
                 $data['priority_tier'] ?? 3,
                 $data['estimated_minutes'] ?? null,
                 isset($data['due_at']) ? CarbonImmutable::parse($data['due_at']) : null,
+                // TASK-P19-013/024 — raw context; the use case owns the
+                // precedence rules (explicit > inherited > default).
+                $data['workspace_id'] ?? null,
             );
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);

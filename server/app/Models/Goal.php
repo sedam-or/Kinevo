@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $priority_tier
  * @property string $progress_mode
  * @property int $progress
+ * @property int|null $workspace_id
  */
 #[Fillable([
     'user_id',
@@ -32,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'priority_tier',
     'progress_mode',
     'progress',
+    'workspace_id',
 ])]
 class Goal extends Model
 {

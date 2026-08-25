@@ -14,6 +14,13 @@ interface GoalRepository
      */
     public function listForUser(int $userId): array;
 
+    /**
+     * TASK-P19-011 — workspace-scoped listing.
+     *
+     * @return array<int, Goal>
+     */
+    public function listForUserInWorkspace(int $userId, int $workspaceId): array;
+
     public function create(int $userId, Goal $goal): Goal;
 
     public function update(Goal $goal): Goal;

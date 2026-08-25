@@ -7,6 +7,7 @@ use App\Application\Programs\GetProgramUseCase;
 use App\Application\Programs\ListProgramsUseCase;
 use App\Application\Programs\SetProgramStatusUseCase;
 use App\Application\Programs\UpdateProgramUseCase;
+use App\Application\Workspaces\ResolveWorkspaceContext;
 use App\Domain\Programs\ValueObjects\ProgramStatus;
 use App\Domain\Programs\ValueObjects\ProgramWorkloadType;
 use App\Http\Controllers\Controller;
@@ -23,13 +24,21 @@ final class ProgramController extends Controller
         private readonly GetProgramUseCase $getProgramUseCase,
         private readonly UpdateProgramUseCase $updateProgramUseCase,
         private readonly SetProgramStatusUseCase $setProgramStatusUseCase,
+        private readonly ResolveWorkspaceContext $workspaceContext,
     ) {}
 
     public function index(Request $request): JsonResponse
     {
+        try {
+            // TASK-P19-012 — explicit workspace filter; absent = global view.
+            $workspaceId = $this->workspaceContext->forList($request->user()->id, $request->query('workspace_id'));
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
+
         $programs = array_map(
             fn ($program) => $program->toArray(),
-            $this->listProgramsUseCase->__invoke($request->user()->id),
+            $this->listProgramsUseCase->__invoke($request->user()->id, $workspaceId),
         );
 
         return response()->json(['programs' => $programs]);
@@ -57,6 +66,7 @@ final class ProgramController extends Controller
             'min_weekly_minutes' => ['nullable', 'integer', 'min:0'],
             'max_weekly_minutes' => ['nullable', 'integer', 'min:0'],
             'priority_tier' => ['sometimes', 'integer', 'between:1,3'],
+            'workspace_id' => ['nullable', 'integer', 'min:1'],
         ]);
 
         if ($validator->fails()) {
@@ -76,6 +86,7 @@ final class ProgramController extends Controller
                 $data['min_weekly_minutes'] ?? null,
                 $data['max_weekly_minutes'] ?? null,
                 $data['priority_tier'] ?? 3,
+                $this->workspaceContext->forWrite($request->user()->id, $data['workspace_id'] ?? null),
             );
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);

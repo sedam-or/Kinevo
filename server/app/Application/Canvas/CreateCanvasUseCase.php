@@ -18,6 +18,7 @@ final class CreateCanvasUseCase
         ?int $milestoneId = null,
         ?int $programId = null,
         ?int $taskId = null,
+        ?int $workspaceId = null,
     ): Canvas {
         $canvas = Canvas::create(
             $userId,
@@ -27,6 +28,10 @@ final class CreateCanvasUseCase
             $programId,
             $taskId,
         );
+
+        if ($workspaceId !== null) {
+            $canvas = $canvas->withWorkspace($workspaceId);
+        }
 
         return $this->repository->create($userId, $canvas);
     }

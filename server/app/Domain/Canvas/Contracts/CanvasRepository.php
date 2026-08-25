@@ -14,6 +14,13 @@ interface CanvasRepository
 
     public function listForUser(int $userId): array;
 
+    /**
+     * TASK-P19-017 — workspace-scoped listing.
+     *
+     * @return array<int, Canvas>
+     */
+    public function listForUserInWorkspace(int $userId, int $workspaceId): array;
+
     public function create(int $userId, Canvas $canvas): Canvas;
 
     public function update(Canvas $canvas): Canvas;

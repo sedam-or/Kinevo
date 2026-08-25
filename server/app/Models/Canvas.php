@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property int|null $task_id
  * @property int $version
  * @property string|null $archived_at
+ * @property int|null $workspace_id
  */
 #[Fillable([
     'user_id',
@@ -29,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'task_id',
     'version',
     'archived_at',
+    'workspace_id',
 ])]
 class Canvas extends Model
 {

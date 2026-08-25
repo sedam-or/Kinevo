@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $due_at
  * @property int $progress
  * @property int $version
+ * @property int|null $workspace_id
  */
 #[Fillable([
     'user_id',
@@ -35,6 +36,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'due_at',
     'progress',
     'version',
+    'workspace_id',
 ])]
 class Task extends Model
 {

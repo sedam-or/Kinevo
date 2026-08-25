@@ -72,6 +72,7 @@ class CanvasTest extends TestCase
             'task_id' => null,
             'version' => 1,
             'archived_at' => null,
+            'workspace_id' => null,
         ], $canvas->toArray());
     }
 

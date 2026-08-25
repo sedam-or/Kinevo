@@ -160,6 +160,7 @@ class TaskTest extends TestCase
             'progress_mode' => 'derived',
             'progress' => 0,
             'version' => 1,
+            'workspace_id' => null,
         ], $task->toArray());
     }
 }

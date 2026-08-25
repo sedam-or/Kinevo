@@ -27,6 +27,17 @@ final class EloquentNoteRepository implements NoteRepository
             ->all();
     }
 
+    public function listForUserInWorkspace(int $userId, int $workspaceId): array
+    {
+        return NoteModel::query()
+            ->where('user_id', $userId)
+            ->where('workspace_id', $workspaceId)
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map($this->toDomain(...))
+            ->all();
+    }
+
     public function create(int $userId, Note $note): Note
     {
         $model = NoteModel::query()->create([
@@ -36,6 +47,7 @@ final class EloquentNoteRepository implements NoteRepository
             'markdown_cache' => $note->markdownCache,
             'plain_text_cache' => $note->plainTextCache,
             'version' => 1,
+            'workspace_id' => $note->workspaceId,
         ]);
 
         return $this->toDomain($model);
@@ -115,6 +127,7 @@ final class EloquentNoteRepository implements NoteRepository
             $model->markdown_cache,
             $model->plain_text_cache,
             $model->version,
+            $model->workspace_id,
         );
     }
 }

@@ -17,8 +17,13 @@ final readonly class ListTasksUseCase
     /**
      * @return array<int, Task>
      */
-    public function __invoke(int $userId): array
+    public function __invoke(int $userId, ?int $workspaceId = null): array
     {
+        // TASK-P19-013 — workspace filter; null = global view.
+        if ($workspaceId !== null) {
+            return $this->tasks->listForUserInWorkspace($userId, $workspaceId);
+        }
+
         return $this->tasks->listForUser($userId);
     }
 }

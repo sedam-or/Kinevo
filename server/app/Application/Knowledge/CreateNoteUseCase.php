@@ -17,9 +17,13 @@ final class CreateNoteUseCase
         ?array $documentJson = null,
         ?string $markdownCache = null,
         ?string $plainTextCache = null,
+        ?int $workspaceId = null,
     ): Note {
-        $note = Note::create($userId, $title, $documentJson, $markdownCache, $plainTextCache);
+        // TASK-P19-014 — notes default to the active workspace context.
+        if ($workspaceId !== null) {
+            return $this->repository->create($userId, Note::create($userId, $title, $documentJson, $markdownCache, $plainTextCache)->withWorkspace($workspaceId));
+        }
 
-        return $this->repository->create($userId, $note);
+        return $this->repository->create($userId, Note::create($userId, $title, $documentJson, $markdownCache, $plainTextCache));
     }
 }

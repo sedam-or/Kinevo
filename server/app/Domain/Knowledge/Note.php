@@ -19,6 +19,7 @@ final class Note
         public readonly ?string $markdownCache,
         public readonly ?string $plainTextCache,
         public readonly int $version,
+        public readonly ?int $workspaceId = null,
     ) {}
 
     public static function create(
@@ -102,6 +103,17 @@ final class Note
             'markdown_cache' => $this->markdownCache,
             'plain_text_cache' => $this->plainTextCache,
             'version' => $this->version,
+            'workspace_id' => $this->workspaceId,
         ];
+    }
+
+    /** TASK-P19-014 — workspace context reference. */
+    public function withWorkspace(int $workspaceId): self
+    {
+        return new self(
+            $this->id, $this->userId, $this->title, $this->documentJson,
+            $this->markdownCache, $this->plainTextCache, $this->version,
+            $workspaceId,
+        );
     }
 }

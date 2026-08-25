@@ -17,7 +17,18 @@ final class Canvas
         public readonly ?int $taskId,
         public readonly int $version,
         public readonly ?DateTimeImmutable $archivedAt = null,
+        public readonly ?int $workspaceId = null,
     ) {}
+
+    /** TASK-P19-017 — workspace context reference. */
+    public function withWorkspace(int $workspaceId): self
+    {
+        return new self(
+            $this->id, $this->userId, $this->title, $this->goalId,
+            $this->milestoneId, $this->programId, $this->taskId,
+            $this->version, $this->archivedAt, $workspaceId,
+        );
+    }
 
     public static function create(
         int $userId,
@@ -158,6 +169,7 @@ final class Canvas
             'task_id' => $this->taskId,
             'version' => $this->version,
             'archived_at' => $this->archivedAt?->format('Y-m-d H:i:s'),
+            'workspace_id' => $this->workspaceId,
         ];
     }
 }

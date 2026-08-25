@@ -14,6 +14,13 @@ interface TaskRepository
     public function listForUser(int $userId): array;
 
     /**
+     * TASK-P19-013 — workspace-scoped listing.
+     *
+     * @return array<int, Task>
+     */
+    public function listForUserInWorkspace(int $userId, int $workspaceId): array;
+
+    /**
      * List all tasks regardless of user (scheduled jobs, single-owner product).
      *
      * @return array<int, Task>

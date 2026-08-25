@@ -25,7 +25,18 @@ final class Program
         public readonly ProgramStatus $status,
         public readonly int $priorityTier,
         public readonly int $version,
+        public readonly ?int $workspaceId = null,
     ) {}
+
+    public function withWorkspace(int $workspaceId): self
+    {
+        return new self(
+            $this->id, $this->userId, $this->name, $this->description, $this->category,
+            $this->workloadType, $this->weeklyTargetMinutes, $this->minWeeklyMinutes,
+            $this->maxWeeklyMinutes, $this->status, $this->priorityTier, $this->version,
+            $workspaceId,
+        );
+    }
 
     /**
      * FR-26: valid name/category required; Structured uses weekly_target_minutes,
@@ -155,6 +166,7 @@ final class Program
             'status' => $this->status->value,
             'priority_tier' => $this->priorityTier,
             'version' => $this->version,
+            'workspace_id' => $this->workspaceId,
         ];
     }
 
