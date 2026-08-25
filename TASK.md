@@ -4450,16 +4450,20 @@ P17-G Analytics / Decision Support UX
 - Notes: —
 
 ### TASK-P17-034 — Mobile UX Re-Audit
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: —
 - SRS: NFR
-- Files: responsive surfaces
+- Files: responsive surfaces, tests/e2e/tests/mobile-sweep.spec.ts
 - Acceptance:
-  - [ ] audit at 375/390/412/768/1024/1440; CTA/nav/Today/Goal/Task/Knowledge/
-        Settings/AI/Analytics; no horizontal overflow
-- Verification: [ ] Playwright width sweep
-- Notes: —
+  - [x] audit at 375/390/412/768/1024/1440; CTA/nav/Today/Goal/Task/Knowledge/
+        Settings/AI/Analytics; no horizontal overflow — one defect found and
+        fixed (note editor header bled up to 68px at 375w; now wraps/shrinks)
+- Verification: [x] Playwright width sweep — 18 passed (6 widths × 3
+        browsers) after the fix; vitest 499 green. Recorded in
+        docs/browser-e2e.md §P17-034.
+- Notes: navigation exercises the real width-aware shell model (bottom bar +
+        More drawer below lg), not force-clicked hidden links.
 
 ### TASK-P17-035 — Visual Regression Update
 - Status: TODO

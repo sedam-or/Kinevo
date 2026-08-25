@@ -22,6 +22,9 @@ final class EloquentTaskRepository implements TaskRepository
         return TaskModel::query()
             ->where('user_id', $userId)
             ->orderByDesc('created_at')
+            // Stable tiebreaker: rows created within the same timestamp
+            // precision must keep one deterministic order.
+            ->orderByDesc('id')
             ->get()
             ->map($this->toDomain(...))
             ->all();
@@ -31,6 +34,7 @@ final class EloquentTaskRepository implements TaskRepository
     {
         return TaskModel::query()
             ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->get()
             ->map($this->toDomain(...))
             ->all();

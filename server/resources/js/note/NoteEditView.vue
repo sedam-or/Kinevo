@@ -226,13 +226,13 @@ async function rejectExtraction(): Promise<void> {
 
 <template>
     <div class="flex flex-col gap-4" data-testid="note-detail">
-        <header class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
+        <header class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2 min-w-0 flex-1">
                 <KButton variant="ghost" data-testid="note-back" @click="emit('back')">← Back</KButton>
                 <input
                     v-model="title"
                     type="text"
-                    class="text-xl font-semibold bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-600 rounded-sm px-2 py-1"
+                    class="text-xl font-semibold bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-600 rounded-sm px-2 py-1 min-w-0 flex-1"
                     data-testid="note-title-input"
                 />
             </div>

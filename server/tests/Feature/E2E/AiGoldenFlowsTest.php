@@ -155,8 +155,10 @@ final class AiGoldenFlowsTest extends TestCase
         $api->getJson('/api/v1/tasks')
             ->assertStatus(200)
             ->assertJsonCount(2, 'tasks')
-            ->assertJsonPath('tasks.0.title', 'Buy milk')
-            ->assertJsonPath('tasks.1.title', 'Write report');
+            // Task list is deterministic newest-first (created_at desc, id
+            // desc tiebreaker — TASK-P17-034 sweep run exposed the flake).
+            ->assertJsonPath('tasks.0.title', 'Write report')
+            ->assertJsonPath('tasks.1.title', 'Buy milk');
     }
 
     public function test_ai_unavailable_core_app_still_works(): void

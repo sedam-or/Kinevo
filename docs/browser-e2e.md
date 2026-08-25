@@ -757,6 +757,24 @@ tests/e2e/tests/ai-action-audit.spec.ts  chromium/firefox/webkit
   Result: ✅ 2 tests × 3 browsers = 6 passed, twice consecutively.
 ```
 
+### P17-034 — Mobile UX width-sweep run (2026-08-24)
+```text
+tests/e2e/tests/mobile-sweep.spec.ts  chromium/firefox/webkit
+  checks: NO horizontal document overflow (design.md §88) at
+          375/390/412/768/1024/1440 across Today, Week, Calendar, Goals list,
+          Goal detail, Tasks list, Task detail, Schedule draft, Knowledge
+          desk, Note editor, Canvas boards, Analytics, Settings, AI &
+          Providers — shell CTA/nav included. Navigation uses the real
+          width-aware model (sidebar ≥lg; mobile bottom bar + More drawer
+          below lg), never force-clicking hidden links.
+  Fix landed from the proof: the note editor header (Back + text-xl title
+          input + save badge) did not wrap or shrink — it bled 68/53/31px at
+          375/390/412w; the row now wraps and the input flexes
+          (min-w-0 flex-1). Frontend units unaffected: vitest 68 files /
+          499 tests green after the change.
+  Result: ✅ 6 widths × 3 browsers = 18 passed.
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.
