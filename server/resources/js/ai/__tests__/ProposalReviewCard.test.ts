@@ -66,6 +66,15 @@ describe('ProposalReviewCard (TASK-P17-004)', () => {
         expect(wrapper.find('[data-testid="proposal-milestones"]').findAll('li').length).toBe(2);
     });
 
+    it('marks the proposal as AI GENERATED and NOT YET COMMITTED (TASK-P18-016)', async () => {
+        vi.mocked(aiApi.proposals).mockResolvedValue({ proposals: [pendingProposal] });
+        const wrapper = mountCard();
+        await flushPromises();
+
+        expect(wrapper.find('[data-testid="proposal-ai-generated-badge"]').text()).toBe('AI GENERATED');
+        expect(wrapper.find('[data-testid="proposal-not-committed-badge"]').text()).toBe('NOT YET COMMITTED');
+    });
+
     it('edits a milestone and saves through the validated contract, marking the proposal edited', async () => {
         vi.mocked(aiApi.proposals).mockResolvedValue({ proposals: [pendingProposal] });
         vi.mocked(aiApi.updateProposal).mockResolvedValue({

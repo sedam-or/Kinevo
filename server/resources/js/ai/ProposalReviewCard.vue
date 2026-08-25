@@ -141,6 +141,8 @@ defineExpose({ load });
         <div class="flex items-center justify-between mb-2">
             <div class="flex flex-wrap items-center gap-2 text-xs uppercase text-gray-500 dark:text-gray-400">
                 AI Breakdown Proposal
+                <span class="ml-2 rounded-sm bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-1.5 py-0.5 normal-case font-medium" data-testid="proposal-ai-generated-badge">AI GENERATED</span>
+                <span class="rounded-sm bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 normal-case" data-testid="proposal-not-committed-badge">NOT YET COMMITTED</span>
                 <FeatureHelp id="ai-proposal" title="AI Breakdown Proposal" class="normal-case" body="AI suggests, you decide. Nothing is applied until you accept — edit milestones freely before accepting." />
                 <span v-if="proposal?.decision === 'edited'" class="ml-2 normal-case text-[var(--color-primary)]" data-testid="proposal-edited-badge">edited</span>
             </div>
