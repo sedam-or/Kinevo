@@ -4520,6 +4520,41 @@ P17-G Analytics / Decision Support UX
 - Evidence: this Phase 17 section
 - Notes: statuses above will move to READY/IN_PROGRESS as dependency gates open.
 
+### TASK-P17-039 — Full-Gate Stabilization (fixture-accumulation class)
+- Status: DONE (2026-08-25)
+- Priority: P0
+- Depends On: P17 browser suites existing
+- SRS: NFR (test determinism); no functional SRS change
+- Files: Makefile, tests/e2e/scripts/seed-journey-c.sh,
+        tests/e2e/tests/helpers.ts, tests/e2e/tests/analytics-hierarchy.spec.ts,
+        tests/e2e/tests/canonical-journey.spec.ts, tests/e2e/README.md,
+        server/resources/js/analytics/AnalyticsView.vue,
+        docs/browser-e2e.md, CHANGELOG.md
+- Acceptance:
+  - [x] Root-caused the recurring moving-failure gate set to shared-owner
+        fixture accumulation; sandbox reset (`make e2e-clean`) wired into
+        `make e2e`
+  - [x] Analytics goal list bounded in product (8 rows + "+N more") — page
+        height no longer unbounded; vitest green
+  - [x] analytics-hierarchy self-seeds (focus session + goal) — no leftover
+        dependency; 6/6 across browsers
+  - [x] Journey C seed deterministic (invokes eod:reconcile deadline phase,
+        fails hard if state machine does not produce `missed`); automated in
+        `make e2e`
+  - [x] canonical-journey seeds focus session on captured day (completion
+        sessions are real-time-stamped; faked window was structurally empty)
+        and retries schema-rejected LLM generations instead of single-shot
+- Verification: [x] full `make e2e` matrix 253 passed / 0 failed /
+        5 skipped (35.0m, chromium/firefox/webkit); phpstan clean;
+        composer test 890 passed / 2952 assertions; vitest 68 files /
+        499 tests; typecheck/build clean; npm audit 0 vulnerabilities
+- Evidence: /gate7 interim 252/1/5 with canonical flake diagnosed via trace +
+        error-context; gate8 fully green after fixes; run record in
+        docs/browser-e2e.md §Full-gate stabilization run (2026-08-25)
+- Notes: AI output remains untrusted — the malformed-milestone case is a
+        correct server-side schema rejection; only the journey's tolerance
+        changed. No validation was weakened.
+
 ### TASK-P17-038 — Product Readiness Gate
 - Status: TODO
 - Priority: P0

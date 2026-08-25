@@ -233,10 +233,10 @@ const relatedLinks = computed<EntityLink[]>(() => {
 
 <template>
     <div class="flex flex-col gap-4" data-testid="task-detail">
-        <header class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
+        <header class="flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2 min-w-0 flex-1">
                 <KButton variant="ghost" data-testid="task-detail-back" @click="emit('back')">← Back</KButton>
-                <h1 class="text-xl font-semibold" data-testid="task-detail-title">{{ tasks.current?.title ?? 'Task' }}</h1>
+                <h1 class="text-xl font-semibold min-w-0 flex-1 break-words" data-testid="task-detail-title">{{ tasks.current?.title ?? 'Task' }}</h1>
             </div>
             <div class="flex items-center gap-2">
                 <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5" data-testid="task-detail-status">

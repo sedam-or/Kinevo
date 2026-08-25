@@ -49,29 +49,55 @@ function dateStamp(offsetDays: number): string {
  * then installs the client clock on that day so the Analytics default
  * 7-day window covers both seeds.
  */
-async function seedAnalytics(page: Page): Promise<Date> {
-    const offsetDays = 4 + (Date.now() % 10);
-    const day = dateStamp(offsetDays);
-
-    // A scheduled task on that day creates a ScheduleAssignment → capacity days.
-    const captured = (await apiFetch(page, `${API}/quick-capture`, {
-        method: 'POST',
-        body: JSON.stringify({ title: unique('jJ-cap'), priority_tier: 3, duration_minutes: 45, date: day }),
-    })) as { placed?: boolean };
-    if (captured.placed !== true) {
-        throw new Error(`journey-J capture not placed: ${JSON.stringify(captured)}`);
+async function captureViaApi(page: Page, body: Record<string, unknown>): Promise<{ placed: boolean; assignment?: { start_at?: string; end_at?: string } | null }> {
+    const token = await page.evaluate(() => window.localStorage.getItem('kinevo.auth.token'));
+    const res = await page.evaluate(
+        async ({ path, body, token }) => {
+            const response = await fetch(path, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(body),
+            });
+            return { status: response.status, text: await response.text() };
+        },
+        { path: '/api/v1/quick-capture', body, token },
+    );
+    if (res.status !== 201 && res.status !== 200) {
+        throw new Error(`quick-capture ${res.status}: ${res.text}`);
     }
+    return JSON.parse(res.text);
+}
 
-    // A completed focus session on that day → Work-Life productive minutes.
-    const noon = new Date(`${day}T12:00:00`);
-    await apiFetch(page, `${API}/focus-sessions`, {
-        method: 'POST',
-        body: JSON.stringify({
-            started_at: new Date(noon.getTime() - 45 * 60 * 1000).toISOString(),
-            ended_at: noon.toISOString(),
-        }),
-    });
-    return new Date(noon.getTime() + 60_000);
+/**
+ * Walk forward to the first day with free capacity (fixed days saturate as
+ * the shared owner accumulates fixtures across runs), then seed a focus
+ * session on that day so the Analytics 7-day window covers both.
+ */
+async function seedAnalytics(page: Page): Promise<Date> {
+    const title = unique('jJ-cap');
+    for (let offset = 11; offset < 41; offset++) {
+        const probe = new Date();
+        probe.setDate(probe.getDate() + offset);
+        const day = `${probe.getFullYear()}-${String(probe.getMonth() + 1).padStart(2, '0')}-${String(probe.getDate()).padStart(2, '0')}`;
+        const captured = await captureViaApi(page, { title, priority_tier: 3, duration_minutes: 45, date: day });
+        if (!captured.placed) {
+            continue;
+        }
+        const noon = new Date(`${day}T12:00:00`);
+        await apiFetch(page, `${API}/focus-sessions`, {
+            method: 'POST',
+            body: JSON.stringify({
+                started_at: new Date(noon.getTime() - 45 * 60 * 1000).toISOString(),
+                ended_at: noon.toISOString(),
+            }),
+        });
+        return new Date(noon.getTime() + 60_000);
+    }
+    throw new Error('no free day for journey-J capture within 30 offsets');
 }
 
 test.describe('Journey J — Analytics → Action (TASK-P17-017)', () => {

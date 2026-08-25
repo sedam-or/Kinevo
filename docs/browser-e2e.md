@@ -809,6 +809,53 @@ tests/e2e/tests/mobile-sweep.spec.ts  chromium/firefox/webkit
   Result: ✅ 6 widths × 3 browsers = 18 passed.
 ```
 
+### Full-gate stabilization run (2026-08-25)
+```text
+make e2e (full Playwright matrix, workers=1)  chromium/firefox/webkit
+  Trigger: gate runs degraded to a recurring 7-failure set that moved between
+          engines between runs (gate4 → gate5). Root cause for every failure:
+          the shared E2E owner account accumulates fixtures forever, so
+          data-dependent surfaces grew without bound and tests silently
+          depended on whatever leftovers earlier suites happened to leave.
+
+  Root causes + fixes landed:
+    1. Fixture accumulation (671 goals / 786 tasks / 267 notes) pushed the
+       Analytics surface past the browser hard cap of 32767px per screenshot
+       (P17-021 failed on firefox/webkit; fullPage capture only).
+       Fix A (product): AnalyticsView caps the Goal progress list at 8 rows
+       with an explicit "+N more goals" line (design-tokens §4a — charts
+       summarize; raw dumps are not Primary-surface content). Frontend units
+       green (AnalyticsView.test.ts 23/23; vitest 499/499).
+       Fix B (harness): `make e2e-clean` truncates the sandbox domain tables;
+       `make e2e` now resets the sandbox before every gate. users/profiles/
+       provider configs survive.
+    2. analytics-hierarchy.spec.ts silently required leftover fixtures: with
+       a clean sandbox the dashboard renders its analytics-empty state
+       (hasData === false needs tracked minutes in-window). The spec now
+       seeds one focus session (today) + one goal via the API before
+       auditing (helpers.apiFetch exported for this).
+    3. Journey C depended on a manually-run seed script plus cron timing for
+       eod:reconcile to flip the seeded task to `missed` (gate5 caught it
+       mid-flip: item visible, status still `scheduled`). seed-journey-c.sh
+       now invokes `eod:reconcile --phase=deadline` itself and FAILS if the
+       state machine did not produce `missed`; wired into `make e2e`.
+    4. canonical-journey's analytics leg fakes the client clock onto the
+       captured future day, but completion focus sessions are stamped with
+       REAL server time (ExecutionController CarbonImmutable::now()) — the
+       requested [D-6..D] window was structurally empty without leftovers.
+       The spec now seeds a focus session on the captured day D.
+    5. Same spec: single-shot AI generation is nondeterministic on a local
+       model — a malformed LLM milestone date is schema-rejected server-side
+       (correct per the AI rule), surfacing as goal-proposal-error. The
+       journey now retries generation up to 3× instead of asserting against
+       a coin flip (test.setTimeout raised to cover retries).
+
+  Result: ✅ pre-fix verification — analytics-hierarchy 6/6, canonical-journey
+          3/3, journey-c 2/2, sweep-412 ×3, connectivity downstream ×3 green;
+          gate7 interim full run 252 passed / 1 failed (the canonical flake
+          above) / 5 skipped. Final stabilized gate: see TASK-P17-039.
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.

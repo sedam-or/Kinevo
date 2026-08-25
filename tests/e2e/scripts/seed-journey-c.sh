@@ -1,10 +1,14 @@
 #!/usr/bin/env sh
 # TASK-R7 — seeds the missed-task state required by browser-e2e.md Journey C
-# (Recover). Run BEFORE `npx playwright test journey-c-e.spec.ts`:
+# (Recover). Run BEFORE `npx playwright test journey-c-e.spec.ts` — `make e2e`
+# does this automatically right after its sandbox reset.
 #
-#   docker compose -p infrastructure exec -T app sh < tests/e2e/scripts/seed-journey-c.sh
+#   docker compose -f infrastructure/docker-compose.yml exec -T app sh < tests/e2e/scripts/seed-journey-c.sh
 #
-# Idempotent: removes previous Journey C rows first.
+# Idempotent: removes previous Journey C rows first, then drives the real
+# 23:59 deadline reconciliation (FR-47) instead of waiting for a cron hit —
+# the seeded task reaches `missed` through the actual domain path, so the
+# journey does not depend on scheduler timing.
 php artisan tinker <<'PHP'
 // Tinker resolves App\* models from the root namespace already.
 
@@ -40,5 +44,13 @@ App\Models\TaskAssignment::create([
     'version' => 1,
 ]);
 
-echo "JourneyC seeded: task #{$task->id} with yesterday assignment\n";
+\Artisan::call('eod:reconcile', ['--phase' => 'deadline']);
+
+$task->refresh();
+if ((string) $task->status !== 'missed') {
+    echo "JourneyC seed FAILED: task #{$task->id} status={$task->status} (deadline reconciliation did not flip it)\n";
+    exit(1);
+}
+
+echo "JourneyC seeded: task #{$task->id} missed with yesterday assignment\n";
 PHP

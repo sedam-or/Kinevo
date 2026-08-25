@@ -44,30 +44,48 @@ async function apiFetch(page: Page, path: string, init: RequestInit = {}): Promi
     return res.body ? JSON.parse(res.body as string) : {};
 }
 
+async function captureViaApi(page: Page, body: Record<string, unknown>): Promise<{ placed: boolean; assignment?: { start_at?: string; end_at?: string } | null }> {
+    const token = await page.evaluate(() => window.localStorage.getItem('kinevo.auth.token'));
+    const res = await page.evaluate(
+        async ({ path, body, token }) => {
+            const response = await fetch(path, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(body),
+            });
+            return { status: response.status, text: await response.text() };
+        },
+        { path: '/api/v1/quick-capture', body, token },
+    );
+    if (res.status !== 201 && res.status !== 200) {
+        throw new Error(`quick-capture ${res.status}: ${res.text}`);
+    }
+    return JSON.parse(res.text);
+}
+
 async function seedTodayPair(page: Page): Promise<{ nowTitle: string; nextTitle: string; nowStart: Date }> {
-    // A future day always has free capacity (the shared dev owner's "today"
-    // accumulates fixtures across runs); the client clock is then installed
-    // on that day so it renders as Today.
-    const date = isoDate(4 + (Date.now() % 10));
+    // Walk forward until one free day fits the NOW/NEXT pair (fixed days
+    // saturate as the shared owner accumulates fixtures across runs).
     const nowTitle = unique('jI-now');
     const nextTitle = unique('jI-next');
-
-    const r1 = (await apiFetch(page, `${API}/quick-capture`, {
-        method: 'POST',
-        body: JSON.stringify({ title: nowTitle, priority_tier: 3, duration_minutes: 45, date }),
-    })) as { placed?: boolean; assignment?: { start_at?: string } };
-    const r2 = (await apiFetch(page, `${API}/quick-capture`, {
-        method: 'POST',
-        body: JSON.stringify({ title: nextTitle, priority_tier: 3, duration_minutes: 45, date }),
-    })) as { placed?: boolean };
-
-    if (r1.placed !== true || !r1.assignment?.start_at) {
-        throw new Error(`journey-I first capture not placed: ${JSON.stringify(r1)}`);
+    for (let offset = 11; offset < 41; offset++) {
+        const probe = new Date();
+        probe.setDate(probe.getDate() + offset);
+        const date = `${probe.getFullYear()}-${String(probe.getMonth() + 1).padStart(2, '0')}-${String(probe.getDate()).padStart(2, '0')}`;
+        const first = await captureViaApi(page, { title: nowTitle, priority_tier: 3, duration_minutes: 45, date });
+        if (!first.placed) {
+            continue;
+        }
+        const second = await captureViaApi(page, { title: nextTitle, priority_tier: 3, duration_minutes: 45, date });
+        if (second.placed) {
+            return { nowTitle, nextTitle, nowStart: new Date(first.assignment!.start_at as string) };
+        }
     }
-    if (r2.placed !== true) {
-        throw new Error(`journey-I second capture not placed: ${JSON.stringify(r2)}`);
-    }
-    return { nowTitle, nextTitle, nowStart: new Date(r1.assignment.start_at as string) };
+    throw new Error('no free day fits the journey-I pair within 30 offsets');
 }
 
 test.describe('Journey I — Task → Today → Progress (TASK-P17-014)', () => {

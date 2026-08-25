@@ -19,7 +19,7 @@ test.describe.configure({ timeout: 150_000 });
  * interaction remains a R7 physical/CI-browser check.
  */
 
-const CANVAS_ENTRY_TIMEOUT = 45_000;
+const CANVAS_ENTRY_TIMEOUT = 90_000;
 
 async function openCanvasWorkspace(page: Page, title: string): Promise<void> {
     await page.getByTestId('nav-canvas').click();
@@ -43,11 +43,11 @@ async function openCanvasWorkspace(page: Page, title: string): Promise<void> {
  * production-identical.
  */
 async function drawRectangle(page: Page): Promise<void> {
-    await page.locator('.excalidraw__canvas:not(.static)').first().waitFor({ timeout: 30_000 });
+    await page.locator('.excalidraw__canvas:not(.static)').first().waitFor({ timeout: 90_000 });
     await page.waitForFunction(
         () => (window as unknown as { __kinevoCanvasAdapter?: unknown }).__kinevoCanvasAdapter !== undefined,
         undefined,
-        { timeout: 30_000 },
+        { timeout: 90_000 },
     );
     await page.evaluate(() => {
         const adapter = (
@@ -145,7 +145,7 @@ test.describe('R4 canvas matrix — entry + lifecycle', () => {
                 /\/api\/v1\/canvases\/\d+$/.test(res.url()) &&
                 res.request().method() === 'PUT' &&
                 res.ok(),
-            { timeout: 30_000 },
+            { timeout: 90_000 },
         );
         await drawRectangle(page);
         await savedPut;

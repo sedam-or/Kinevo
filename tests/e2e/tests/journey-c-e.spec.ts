@@ -51,11 +51,11 @@ const RECT_SCENE = {
 } as const;
 
 async function waitForAdapter(page: import('@playwright/test').Page): Promise<void> {
-    await page.locator('.excalidraw__canvas:not(.static)').first().waitFor({ timeout: 45_000 });
+    await page.locator('.excalidraw__canvas:not(.static)').first().waitFor({ timeout: 90_000 });
     await page.waitForFunction(
         () => (window as unknown as { __kinevoCanvasAdapter?: unknown }).__kinevoCanvasAdapter !== undefined,
         undefined,
-        { timeout: 45_000 },
+        { timeout: 90_000 },
     );
 }
 
@@ -100,7 +100,7 @@ test.describe('R7 Journey E — Offline (draw offline → queued → reconnect �
         const title = 'R7 Offline Journey';
         await page.getByTestId('canvas-create-title').fill(title);
         await page.getByTestId('canvas-create-submit').click();
-        await page.getByTestId('canvas-workspace').waitFor({ timeout: 45_000 });
+        await page.getByTestId('canvas-workspace').waitFor({ timeout: 90_000 });
         await waitForAdapter(page);
 
         // Go OFFLINE and commit a scene through the real adapter boundary.

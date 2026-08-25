@@ -109,6 +109,12 @@ const goalHealthLabel = computed(() => {
         .join(' · ');
 });
 
+// Bounded render: the goal list summarizes — it never dumps every goal
+// (unbounded rows broke mobile layout + full-page captures at scale).
+const GOAL_LIST_LIMIT = 8;
+const visibleGoals = computed(() => analytics.goals.slice(0, GOAL_LIST_LIMIT));
+const hiddenGoalCount = computed(() => Math.max(0, analytics.goals.length - GOAL_LIST_LIMIT));
+
 function deadlineLabel(health: DeadlineHealth, daysRemaining: number | null): string {
     switch (health) {
         case 'completed':
@@ -423,7 +429,7 @@ function run(fn: () => Promise<void>): void {
                 </div>
 
                 <ul class="space-y-2">
-                    <li v-for="goal in analytics.goals" :key="goal.id" class="text-sm" data-testid="analytics-goal">
+                    <li v-for="goal in visibleGoals" :key="goal.id" class="text-sm" data-testid="analytics-goal">
                         <div class="flex items-center justify-between gap-2">
                             <span class="truncate text-gray-700 dark:text-gray-300">{{ goal.title }}</span>
                             <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-goal-deadline">
@@ -438,6 +444,9 @@ function run(fn: () => Promise<void>): void {
                         </div>
                     </li>
                 </ul>
+                <div v-if="hiddenGoalCount > 0" class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-goals-more">
+                    +{{ hiddenGoalCount }} more goals
+                </div>
 
                 <div v-if="analytics.programs.length > 0" class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-2">
                     <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Programs</div>

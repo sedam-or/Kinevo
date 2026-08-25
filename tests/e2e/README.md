@@ -25,7 +25,12 @@ make e2e
 ```
 
 The runner attaches to the host network so `E2E_BASE_URL=http://127.0.0.1:8000`
-reaches the running dev SPA.
+reaches the running dev SPA. `make e2e` resets the sandbox database first
+(`make e2e-clean`): the shared owner account accumulates fixtures from every
+run, and unbounded growth breaks layout-dependent checks (P17-021 — 671
+accumulated goals pushed Analytics past the browser's 32767px full-page
+screenshot cap). Run `make e2e-clean` manually any time the sandbox feels
+polluted; it truncates domain tables only (users/profiles/configs survive).
 
 ## Specs
 

@@ -181,7 +181,15 @@ e2e-build:
 # drive the __kinevoCanvasAdapter seam (§82), which plain production builds
 # dead-code-eliminate. Without this, a plain `npm run build` silently disarms
 # the canvas matrix (TASK-R6 incident).
-e2e: e2e-assets
+# Reset the dev E2E sandbox database to an empty-domain baseline. Every row in
+# this database originates from browser tests/probes; unbounded fixture
+# accumulation broke layout-dependent gates (P17-021: 671 accumulated goals
+# pushed the Analytics surface past the 32767px full-page capture cap).
+e2e-clean:
+	$(COMPOSE) exec -T postgres psql -U kinevo -d kinevo -c "TRUNCATE goals, milestones, subtasks, tasks, task_assignments, notes, knowledge_links, attachments, programs, progress_events, focus_sessions, execution_sessions, boost_targets, break_periods, pause_events, recharge_sessions, schedule_overrides, scheduler_runs, hard_landscape_events, adaptive_context, ai_proposals, ai_runs, canvas_documents, canvas_files, canvases, imports, activity_logs CASCADE"
+
+e2e: e2e-clean e2e-assets
+	$(COMPOSE) exec -T app sh < tests/e2e/scripts/seed-journey-c.sh
 	docker run --rm --network host -e E2E_BASE_URL=http://127.0.0.1:8000 \
 		-v "$(CURDIR)/tests/e2e:/e2e" -w /e2e kinevo-e2e npx playwright test
 

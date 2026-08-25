@@ -12,6 +12,9 @@ Release governance: see `docs/release-management.md`.
 
 ## [Unreleased]
 ### Changed
+- Analytics "Goal progress" now summarizes (2026-08-25): the chart lists the
+  first 8 goals with an explicit "+N more goals" line instead of rendering
+  every goal, keeping the surface readable and fast as goal counts grow.
 - Clearer words everywhere (Phase 17, TASK-P17-030): the schedule draft
   explains itself in plain language instead of developer terms, and note and
   canvas lists no longer show internal revision counters.

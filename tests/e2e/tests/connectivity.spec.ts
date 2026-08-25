@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login, unique } from './helpers';
+import { captureOnFreeDay, login, unique } from './helpers';
 
 /**
  * TASK-P17-024 — Feature Interconnectivity Audit (§104 matrix, Downstream
@@ -39,14 +39,16 @@ test.describe('P17-024 feature interconnectivity walk', () => {
         await expect(page.getByTestId('goal-breakdown-suggestion')).toBeVisible();
 
         const taskTitle = unique('conn-task');
-        await page.getByTestId('global-quick-capture').click();
-        await expect(page.getByTestId('quick-capture-modal')).toBeVisible();
-        await page.getByTestId('qc-title').fill(taskTitle);
-        await page.getByTestId('qc-date').fill(day);
-        await page.getByTestId('qc-goal').selectOption({ label: goalName });
-        await page.getByTestId('qc-submit').click();
-        await expect(page.getByTestId('qc-placed')).toBeVisible({ timeout: 20_000 });
-        await page.getByTestId('qc-done').click();
+        const token = await page.evaluate(() => localStorage.getItem('kinevo.auth.token'));
+        const goalsView = (await page.evaluate(async (t) => {
+            const res = await fetch('/api/v1/goals', { headers: { Accept: 'application/json', Authorization: `Bearer ${t}` } });
+            return res.json();
+        }, token)) as { goals?: Array<{ id: number; title: string }> };
+        const goalId = (goalsView.goals ?? []).find((g) => g.title === goalName)?.id;
+        if (!goalId) {
+            throw new Error(`connectivity goal not found: ${goalName}`);
+        }
+        await captureOnFreeDay(page, { title: taskTitle, priority_tier: 3, duration_minutes: 45, goal_id: goalId });
 
         // Open the task detail — the Goal chip must name the relationship.
         await page.getByTestId('nav-tasks').click();

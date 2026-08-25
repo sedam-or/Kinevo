@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { OWNER_EMAIL, OWNER_PASSWORD, unique } from './helpers';
+import { captureOnFreeDay, OWNER_EMAIL, OWNER_PASSWORD, unique } from './helpers';
 
 /**
  * R1 core loop (design.md §99 — highest priority) driven through the REAL
@@ -66,40 +66,61 @@ async function loginOnly(page: Page): Promise<void> {
  * Quick-capture two tasks onto a future empty day and return the assigned
  * slot times plus titles. The scheduler places them deterministically.
  */
-async function seedFutureDay(page: Page, daysFromNow: number): Promise<{
+async function captureViaApi(page: Page, body: Record<string, unknown>): Promise<{ placed: boolean; assignment?: { start_at?: string; end_at?: string } | null }> {
+    const token = await page.evaluate(() => window.localStorage.getItem('kinevo.auth.token'));
+    const res = await page.evaluate(
+        async ({ path, body, token }) => {
+            const response = await fetch(path, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(body),
+            });
+            return { status: response.status, text: await response.text() };
+        },
+        { path: '/api/v1/quick-capture', body, token },
+    );
+    if (res.status !== 201 && res.status !== 200) {
+        throw new Error(`quick-capture ${res.status}: ${res.text}`);
+    }
+    return JSON.parse(res.text);
+}
+
+async function seedFutureDay(page: Page): Promise<{
     date: string;
     now: { title: string; startAt: Date; endAt: Date };
     next: { title: string };
 }> {
-    const date = isoDate(daysFromNow);
+    // Pair both tasks onto the SAME free day: walk forward until a day fits
+    // the pair (TASK-P17-038 gate hardening — fixed days saturate as the
+    // shared owner accumulates fixtures across runs).
     const titleNow = unique('coreloop-now');
     const titleNext = unique('coreloop-next');
-
-    const r1 = (await apiFetch(page, `${API}/quick-capture`, {
-        method: 'POST',
-        body: JSON.stringify({ title: titleNow, priority_tier: 3, duration_minutes: 45, date }),
-    })) as { placed?: boolean; assignment?: { start_at?: string; end_at?: string } };
-    const r2 = (await apiFetch(page, `${API}/quick-capture`, {
-        method: 'POST',
-        body: JSON.stringify({ title: titleNext, priority_tier: 3, duration_minutes: 45, date }),
-    })) as { placed?: boolean };
-
-    if (r1.placed !== true || !r1.assignment?.start_at) {
-        throw new Error(`first quick-capture not placed: ${JSON.stringify(r1)}`);
+    for (let offset = 11; offset < 41; offset++) {
+        const probe = new Date();
+        probe.setDate(probe.getDate() + offset);
+        const date = `${probe.getFullYear()}-${String(probe.getMonth() + 1).padStart(2, '0')}-${String(probe.getDate()).padStart(2, '0')}`;
+        const first = await captureViaApi(page, { title: titleNow, priority_tier: 3, duration_minutes: 45, date });
+        if (!first.placed) {
+            continue;
+        }
+        const second = await captureViaApi(page, { title: titleNext, priority_tier: 3, duration_minutes: 45, date });
+        if (second.placed) {
+            return {
+                date,
+                now: {
+                    title: titleNow,
+                    startAt: new Date(first.assignment!.start_at as string),
+                    endAt: new Date(first.assignment!.end_at as string),
+                },
+                next: { title: titleNext },
+            };
+        }
     }
-    if (r2.placed !== true) {
-        throw new Error(`second quick-capture not placed: ${JSON.stringify(r2)}`);
-    }
-
-    return {
-        date,
-        now: {
-            title: titleNow,
-            startAt: new Date(r1.assignment.start_at as string),
-            endAt: new Date(r1.assignment.end_at as string),
-        },
-        next: { title: titleNext },
-    };
+    throw new Error('no free day fits the core-loop pair within 30 offsets');
 }
 
 test.describe('R1 core loop — LOGIN → TODAY → NOW → START → COMPLETE → NEXT (real browser)', () => {
@@ -109,7 +130,7 @@ test.describe('R1 core loop — LOGIN → TODAY → NOW → START → COMPLETE �
         // Seed two tasks on a future day; the product assigns slots there (a
         // future day is always within the safety reserve). The offset varies
         // per run so repeated executions spread across days.
-        const seeded = await seedFutureDay(page, 5 + (Date.now() % 10));
+        const seeded = await seedFutureDay(page);
 
         // Install the browser clock at the midpoint of the NOW task's slot.
         // The today view derives its date from the client clock, so it renders
