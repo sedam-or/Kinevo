@@ -12,30 +12,65 @@ import { login } from './helpers';
  * against design.md §81–§87; see docs/browser-e2e.md §9.
  */
 
-const BASELINE = {
-    today: async (page: import('@playwright/test').Page) => {
-        await page.goto('/app');
-        await page.getByTestId('today-view').waitFor({ state: 'visible' });
+const BASELINE: Record<string, { setup: (page: import('@playwright/test').Page) => Promise<void>; fullPage: boolean }> = {
+    // fullPage only where the surface is bounded; the shared dev owner's
+    // lists accumulate fixtures across runs, so unbounded lists are captured
+    // as the reviewable above-the-fold viewport instead of a 1×N sliver.
+    today: {
+        fullPage: true,
+        setup: async (page) => {
+            await page.goto('/app');
+            await page.getByTestId('today-view').waitFor({ state: 'visible' });
+        },
     },
-    task: async (page: import('@playwright/test').Page) => {
-        await page.getByTestId('nav-tasks').click();
-        await page.getByTestId('task-view').waitFor({ state: 'visible' });
+    task: {
+        fullPage: false,
+        setup: async (page) => {
+            await page.getByTestId('nav-tasks').click();
+            await page.getByTestId('task-view').waitFor({ state: 'visible' });
+        },
     },
-    goals: async (page: import('@playwright/test').Page) => {
-        await page.getByTestId('nav-goals').click();
-        await page.getByTestId('goals-view').waitFor({ state: 'visible' });
+    goals: {
+        fullPage: false,
+        setup: async (page) => {
+            await page.getByTestId('nav-goals').click();
+            await page.getByTestId('goals-view').waitFor({ state: 'visible' });
+        },
     },
-    notes: async (page: import('@playwright/test').Page) => {
-        await page.getByTestId('nav-knowledge').click();
-        await page.getByTestId('notes-view').waitFor({ state: 'visible' });
+    notes: {
+        fullPage: false,
+        setup: async (page) => {
+            await page.getByTestId('nav-knowledge').click();
+            await page.getByTestId('notes-view').waitFor({ state: 'visible' });
+        },
     },
-    canvas: async (page: import('@playwright/test').Page) => {
-        await page.getByTestId('nav-canvas').click();
-        await page.getByTestId('canvas-view').waitFor({ state: 'visible' });
+    canvas: {
+        fullPage: false,
+        setup: async (page) => {
+            await page.getByTestId('nav-canvas').click();
+            await page.getByTestId('canvas-view').waitFor({ state: 'visible' });
+        },
     },
-    analytics: async (page: import('@playwright/test').Page) => {
-        await page.getByTestId('nav-analytics').click();
-        await page.getByTestId('analytics-presets').waitFor({ state: 'visible' });
+    analytics: {
+        fullPage: false,
+        setup: async (page) => {
+            await page.getByTestId('nav-analytics').click();
+            await page.getByTestId('analytics-presets').waitFor({ state: 'visible' });
+        },
+    },
+    aiSettings: {
+        fullPage: true,
+        setup: async (page) => {
+            await page.getByTestId('nav-ai-settings').click();
+            await page.getByTestId('ai-settings-view').waitFor({ state: 'visible' });
+        },
+    },
+    quickCapture: {
+        fullPage: false,
+        setup: async (page) => {
+            await page.getByTestId('global-quick-capture').click();
+            await page.getByTestId('quick-capture-modal').waitFor({ state: 'visible' });
+        },
     },
 } as const;
 
@@ -47,10 +82,10 @@ test.describe('R6 visual-regression baseline (manual review artifacts)', () => {
     for (const name of SURFACES) {
         test(`captures ${name} surface baseline`, async ({ page }, testInfo) => {
             await login(page);
-            await BASELINE[name as keyof typeof BASELINE](page);
+            await BASELINE[name]!.setup(page);
             // Let the surface settle (lazy chunks, autosave indicators).
             await page.waitForTimeout(400);
-            const shot = await page.screenshot({ fullPage: true });
+            const shot = await page.screenshot({ fullPage: BASELINE[name]!.fullPage });
             const outDir = join('test-results', 'screenshots', testInfo.project.name);
             mkdirSync(outDir, { recursive: true });
             writeFileSync(join(outDir, `${name}.png`), shot);

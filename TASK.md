@@ -4466,16 +4466,25 @@ P17-G Analytics / Decision Support UX
         More drawer below lg), not force-clicked hidden links.
 
 ### TASK-P17-035 — Visual Regression Update
-- Status: TODO
+- Status: DONE (2026-08-25)
 - Priority: P2
 - Depends On: P17 redesign
-- SRS: NFR
-- Files: visual baselines (docs/browser-e2e.md §9)
+- SRS: no SRS change
+- Files: visual baselines (docs/browser-e2e.md §9),
+        tests/e2e/tests/visual-baseline.spec.ts
 - Acceptance:
-  - [ ] baselines updated for Today/Goal/Task/Knowledge/Canvas shell/Analytics/
-        Settings AI/Quick Capture; no blind updates
-- Verification: [ ] visual regression suite green
-- Notes: —
+  - [x] baselines updated for Today/Goal/Task/Knowledge/Canvas shell/
+        Analytics/Settings AI/Quick Capture; no blind updates — every
+        artifact image inspected directly; per-surface review notes recorded
+        in §9 (two cosmetic follow-ups logged: breadcrumb/H1 echo, modal
+        Capture raw button)
+- Verification: [x] visual regression suite green — 8 passed (Chromium
+        project per §9 protocol); capture semantics fixed (fullPage only for
+        bounded surfaces; viewport for unbounded lists)
+- Notes: environment migrated to the compose `ai` profile Ollama
+        (`http://ollama:11434`) after a host reboot dropped the host daemon's
+        0.0.0.0 bind; specs default to the compose URL (E2E_OLLAMA_URL still
+        honored).
 
 ### TASK-P17-036 — Documentation
 - Status: DONE (2026-08-24)

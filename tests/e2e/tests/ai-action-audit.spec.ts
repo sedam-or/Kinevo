@@ -18,7 +18,7 @@ import { login, unique } from './helpers';
  */
 
 const API = '/api/v1';
-const GOOD_OLLAMA = process.env.E2E_OLLAMA_URL ?? 'http://172.18.0.1:11434';
+const GOOD_OLLAMA = process.env.E2E_OLLAMA_URL ?? 'http://ollama:11434';
 const DEAD_OLLAMA = 'http://127.0.0.1:9';
 
 async function apiFetch(

@@ -110,9 +110,10 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
         await expect(page.getByTestId('ai-settings-view')).toBeVisible();
 
         // Local Ollama path — no API key required (§104). The endpoint is
-        // environment-dependent (compose service vs host bridge); default is
-        // the documented desktop URL, override with E2E_OLLAMA_URL.
-        const ollamaUrl = process.env.E2E_OLLAMA_URL ?? 'http://localhost:11434';
+        // environment-dependent; default is the compose ai-profile service
+        // (reboot-proof, reachable from the app container), override with
+        // E2E_OLLAMA_URL.
+        const ollamaUrl = process.env.E2E_OLLAMA_URL ?? 'http://ollama:11434';
         await page.getByTestId('ai-provider-select').selectOption('ollama');
         await page.getByTestId('ai-model-input').fill('qwen2.5-coder:7b');
         await page.getByTestId('ai-base-url-input').fill(ollamaUrl);

@@ -417,29 +417,60 @@ Release gate (R7)       2026-08-22  Playwright chromium  dev DB
 ```
 ## 9. Visual regression (design.md §87)
 
-Screens with baseline snapshots:
+Screens with baseline snapshots (TASK-P17-035 set, 2026-08-25):
 
 ```text
-Today
-Task detail
-Goals
-Notes
-Canvas shell
-Analytics
+Today            (full page — bounded surface)
+Goals            (viewport — unbounded, fixture-accumulating list)
+Tasks            (viewport)
+Knowledge        (viewport)
+Canvas shell     (viewport — boards index)
+Analytics        (viewport)
+AI & Providers   (full page — bounded form)
+Quick Capture    (viewport — open modal over Today)
 ```
 
-R6 baseline artifacts: `tests/e2e/test-results/screenshots/<browser>/`
-(e.g. `chromium/today.png`, `chromium/task.png`, `chromium/goals.png`,
-`chromium/notes.png`, `chromium/canvas.png`, `chromium/analytics.png`).
-Captured by `tests/e2e/tests/visual-baseline.spec.ts` per matrix browser on
-2026-08-21 (commit evidence in §4).
+P17-035 baseline artifacts: `tests/e2e/test-results/screenshots/chromium/`
+(`today.png`, `goals.png`, `task.png`, `notes.png`, `canvas.png`,
+`analytics.png`, `aiSettings.png`, `quickCapture.png`). Captured by
+`tests/e2e/tests/visual-baseline.spec.ts` (Chromium project). Capture
+semantics: full page only for bounded surfaces — unbounded lists are shot as
+the reviewable above-the-fold viewport (a full-page capture of the shared dev
+owner's accumulated lists is a 1×N sliver, useless for review).
 
-Snapshots are reviewed intentionally — never accepted automatically. R6
-reviewer note: the artifact PNGs are stored for human review; the agent-level
-model cannot inspect pixels, so this run records the machine-checkable
-invariants instead (no uncaught page errors, no horizontal overflow, no
-persistent spinner — see `surface-qa.spec.ts`) plus the raw snapshots for a
-human pair-of-eyes before R7. No snapshot was auto-accepted.
+Intentional review — never auto-accepted. P17-035 review notes (2026-08-25,
+vision-assisted against design.md §81–§87 / §104):
+
+```text
+today        ✅ §99 hierarchy (education → timeline → check-in → capture),
+             one primary (Capture) in the correct --color-primary token
+             (#DE3005, WCAG AA per TASK-R5); capacity bar present.
+goals        ✅ create form + cards (draft badge, progress bar, horizon);
+             NOTE minor: breadcrumb echoes the H1 verbatim ("Goals / Roadmap"
+             twice) — established shell pattern, cosmetic follow-up only.
+task         ✅ add form, status chips, four secondary transitions per card
+             (list primary stays Add); no false Goal chip on unlinked rows.
+notes        ✅ create + search + minimal rows; H1 + section subtitle
+             hierarchy reads correctly.
+canvas       ✅ Suggest-structure-with-AI featured per §104 (primary-tinted
+             outline), Create demoted secondary; NOTE: the modal Capture
+             submit in quickCapture uses a raw <button> instead of KButton
+             primary — consistency follow-up candidate (ui-audit).
+analytics    ✅ executive SIGNAL first, presets, ChartMeta (period/unit/
+             legend), interpretation What-changed/Why — P17-017/018/019 hold.
+aiSettings   ✅ CONNECTED chip (ollama·6ms), masked-key rules, privacy note,
+             Test connection + Save primary; verbatim-safe error rendering
+             proven earlier the same day (unavailable state captured during
+             triage).
+quickCapture ✅ modal semantics (role=dialog, labelled, backdrop, Close);
+             milestone select appears only after a goal is chosen.
+```
+
+Snapshots are reviewed intentionally — never accepted automatically. The R6
+note that the agent cannot inspect pixels is superseded as of 2026-08-25:
+the reviewer above inspected each artifact image directly. Machine-checkable
+invariants remain in `surface-qa.spec.ts` (no page errors, no overflow, no
+persistent spinner).
 
 ## 10. Readiness gate
 
@@ -517,17 +548,20 @@ tests/e2e/tests/theme.spec.ts  chromium/firefox/webkit
           canvas-hardening, navigation, continuity, core-loop, surface-qa,
           accessibility, tactile-language green across browsers.
 ```
-Environment note (resolved 2026-08-24): `golden-journeys.spec.ts` journeys H,
-G2/I/IJ require a reachable Ollama endpoint. Verify with
+Environment note (updated 2026-08-25): AI journeys need a reachable Ollama.
+The canonical dev endpoint is the compose `ai` profile service — `make
+ollama-up`, then the app reaches it at `http://ollama:11434` (reboot-proof,
+bind-proof; the host daemon lost its 0.0.0.0 bind after a machine reboot on
+2026-08-25, which is why the compose service is now the source of truth).
+One-time model load into the named volume:
+`docker exec infrastructure-ollama-1 ollama pull qwen2.5-coder:7b`.
+Journey specs default to `http://ollama:11434` and honor `E2E_OLLAMA_URL`.
+The provider HTTP budget must exceed a 30s default — a cold local 7B can
+take minutes (`AI_TIMEOUT_SECONDS=300` in `server/.env` and
+`infrastructure/docker-compose.yml`). Run:
 ```
-E2E_BASE_URL=http://127.0.0.1:8000 E2E_OLLAMA_URL=http://172.18.0.1:11434 \
-npx playwright test golden-journeys journey-i journey-j
+E2E_BASE_URL=http://127.0.0.1:8000 npx playwright test golden-journeys journey-i journey-j
 ```
-(host Ollama on the compose bridge; override the base URL with `E2E_OLLAMA_URL`
-defaulting to `http://localhost:11434`). The app HTTP budget for provider
-calls must exceed a 30s default — a cold local 7B can take minutes
-(`AI_TIMEOUT_SECONDS` in `server/.env` and `infrastructure/docker-compose.yml`).
-Run: 42 passed (3 browsers) on 2026-08-24.
 
 ### P17-014 — Today control-center run (2026-08-23)
 ```text
