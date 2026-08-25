@@ -4520,6 +4520,39 @@ P17-G Analytics / Decision Support UX
 - Evidence: this Phase 17 section
 - Notes: statuses above will move to READY/IN_PROGRESS as dependency gates open.
 
+
+### TASK-P17-038 — Product Readiness Gate
+- Status: DONE (2026-08-25)
+- Priority: P0
+- Depends On: all P17 flow tasks
+- SRS: NFR
+- Files: docs/design.md §104 acceptance + docs/browser-e2e.md
+- Acceptance:
+  - [x] PRODUCT COHESION READY gate (evidence per criterion, full-gate run
+        253 passed / 0 failed / 5 skipped on chromium/firefox/webkit — see
+        TASK-P17-039 and docs/browser-e2e.md §Full-gate stabilization run):
+        goal→AI breakdown→milestones→tasks→schedule→Today→execution→progress→
+        analytics→action proven in real browser (canonical-journey 3/3, all
+        three engines); AI settings accessible (golden-journeys H +
+        mobile-sweep visits AI & Providers at every width); credentials secure
+        (AiProviderSettingsApiTest: config masked, raw key never in payload,
+        encrypted at rest; browser reload shows masked value); theme works
+        (theme.spec light/dark/system with reload); explanations exist
+        (P17-027 content assertions + interpretation units); primary CTAs
+        obvious (ui-audit §3 CTA checklist + UI-013 fix); micro-interactions
+        communicate state (core-loop / journey-i complete→progress→toast
+        cascades); no isolated module disconnected (P17-024 connectivity walk
+        3/3); mobile passes (mobile-sweep 18/18); dark mode works (theme.spec
+        dark + analytics-hierarchy dark variants ×3 engines); accessibility
+        passes (accessibility.spec axe WCAG 2.2 A/AA scans green).
+        Stale rescue-era audit rows closed against this evidence:
+        UI-001/002/003/005 (docs/ui-audit.md §6.1).
+- Verification: [x] Playwright matrix (gate: 253/0/5) + audit rows
+        (ui-audit §6.1 all findings fixed/closed; UI-004 token migration
+        carry-forward remains documented as non-blocking visual-churn debt)
+- Notes: gate not passed on unit-test counts alone — every criterion cites a
+        real-browser artifact from the same code state as HEAD.
+
 ### TASK-P17-039 — Full-Gate Stabilization (fixture-accumulation class)
 - Status: DONE (2026-08-25)
 - Priority: P0
@@ -4554,23 +4587,6 @@ P17-G Analytics / Decision Support UX
 - Notes: AI output remains untrusted — the malformed-milestone case is a
         correct server-side schema rejection; only the journey's tolerance
         changed. No validation was weakened.
-
-### TASK-P17-038 — Product Readiness Gate
-- Status: TODO
-- Priority: P0
-- Depends On: all P17 flow tasks
-- SRS: NFR
-- Files: docs/design.md §104 acceptance + docs/browser-e2e.md
-- Acceptance:
-  - [ ] PRODUCT COHESION READY gate: goal→AI breakdown→milestones→tasks→
-        schedule→Today→execution→progress→analytics→action all proven in real
-        browser; AI settings accessible; credentials secure; theme works;
-        explanations exist; primary CTAs obvious; micro-interactions communicate
-        state; no isolated module feels disconnected; mobile passes; dark mode
-        works; accessibility passes
-- Verification: [ ] Playwright matrix + audit rows
-- Notes: gate cannot pass on unit-test counts alone.
 ---
 
 ---
-

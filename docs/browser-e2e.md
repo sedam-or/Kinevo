@@ -853,7 +853,9 @@ make e2e (full Playwright matrix, workers=1)  chromium/firefox/webkit
   Result: ✅ pre-fix verification — analytics-hierarchy 6/6, canonical-journey
           3/3, journey-c 2/2, sweep-412 ×3, connectivity downstream ×3 green;
           gate7 interim full run 252 passed / 1 failed (the canonical flake
-          above) / 5 skipped. Final stabilized gate: see TASK-P17-039.
+          above) / 5 skipped. Final stabilized gate (gate8, 2026-08-25):
+          253 passed / 0 failed / 5 skipped (35.0m) — the PRODUCT COHESION
+          READY evidence run for TASK-P17-038.
 ```
 
 ## Maintenance

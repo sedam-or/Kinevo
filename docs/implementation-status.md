@@ -118,10 +118,14 @@ UI/UX rescue R0–R7 (stabilization)       ✅ DONE (Phase 16, closed 2026-08-22
                                          design.md §102 gate ticked, commit
                                          `bb08441`; Journey F / AI UI gap
                                          recorded and triaged to Phase 17)
-Phase 17 — Product Cohesion & Intelligence  🟡 IN PROGRESS (TASK-P17-001…038;
-                                         goal → AI breakdown → milestone →
-                                         task → schedule → Today → progress →
-                                         analytics; AI & Providers settings;
+Phase 17 — Product Cohesion & Intelligence  ✅ DONE (2026-08-25, TASK-P17-001…039;
+                                         PRODUCT COHESION READY gate closed —
+                                         full browser matrix 253/0/5 across
+                                         chromium/firefox/webkit; golden
+                                         journey goal → AI breakdown →
+                                         milestone → task → schedule → Today →
+                                         progress → analytics proven in all
+                                         three engines; AI & Providers settings;
                                          contextual feature education)
 Product Information Architecture            ✅ DONE (TASK-P17-001: nav groups
                                          EXECUTE/PLAN/KNOWLEDGE/REVIEW/SYSTEM,

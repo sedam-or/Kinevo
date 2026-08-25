@@ -255,8 +255,11 @@ Gap: no browser run covers go-offline → capture/edit → reconnect → sync.
 Expected: design.md §11, §32, §34.6, §90; docs/browser-e2e.md §7 Journey E.
 Repro: R1 E2E has no offline scenario.
 Severity: P2 (offline is in scope; browser proof pending).
-Status: open (extends into TASK-R2 component work and R3/R4).
-Link: docs/browser-e2e.md §7 (Journey E) ⚪.
+Status: closed (2026-08-25) — journey-c-e.spec.ts Journey E drives
+go-offline → draw → queued → reconnect → synced through the real adapter
+boundary; offline http-applier queue/LWW units green; green across all three
+browser projects in the full gate.
+Link: docs/browser-e2e.md §7 (Journey E).
 
 UI-003 | 2026-08-21 | Task / Goal / Note (workspaces) | P2
 Deep create/edit flows unverified in a real browser
@@ -265,7 +268,11 @@ edit, link, and schedule-side effects are unproven in-browser.
 Expected: design.md §19–§21, §30–§33; golden journeys A/C/D.
 Repro: R1 E2E navigation assertions only.
 Severity: P2.
-Status: open (extends into TASK-R3 UI refinement).
+Status: closed (2026-08-25) — deep create/edit/transition flows are
+browser-proven by core-loop (LOGIN→NOW→START→COMPLETE), canonical-journey
+(goal→AI breakdown→accept→program→task→schedule→today→analytics),
+connectivity walk, and golden journeys; green across chromium/firefox/webkit
+in the full gate.
 Link: tests/e2e/tests/journeys.spec.ts.
 
 UI-004 | 2026-08-21 | Visual system (global) | P2
@@ -291,7 +298,9 @@ Gap: R1 runner projects Chromium only.
 Expected: design.md §71; docs/browser-e2e.md §4 (Firefox/WebKit ⚪).
 Repro: R1 E2E Chromium-only.
 Severity: P2.
-Status: open (R1 completion item).
+Status: closed (2026-08-25) — playwright.config.ts defines chromium/firefox/
+webkit projects; the full gate matrix runs all three (253 passed / 0 failed /
+5 skipped, TASK-P17-039 record in docs/browser-e2e.md).
 Link: TASK-R1, tests/e2e/playwright.config.ts.
 
 UI-006 | 2026-08-21 | Diagnostics | P2
