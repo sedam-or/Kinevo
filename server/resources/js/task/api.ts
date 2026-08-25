@@ -13,8 +13,10 @@ import type {
 } from './types';
 
 export const taskApi = {
-    list(): Promise<TaskListResponse> {
-        return apiClient.request<TaskListResponse>('/tasks');
+    list(workspaceId?: number | null): Promise<TaskListResponse> {
+        // TASK-P19-013 — declared active workspace; null = global view.
+        const query = workspaceId ? `?workspace_id=${workspaceId}` : '';
+        return apiClient.request<TaskListResponse>(`/tasks${query}`);
     },
 
     create(payload: CreateTaskPayload): Promise<TaskResponse> {

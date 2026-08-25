@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { useWorkspaceStore } from '../workspace/store';
 import { ref } from 'vue';
 import { noteApi } from './api';
 import { useApiStore } from '../api/store';
@@ -22,7 +23,9 @@ export const useNoteStore = defineStore('note', () => {
         loading.value = true;
         error.value = null;
         try {
-            const { notes: list } = await noteApi.list();
+            // TASK-P19-014 — scope to the declared active workspace.
+            const wid = useWorkspaceStore().activeWorkspaceId;
+            const { notes: list } = await noteApi.list(wid);
             notes.value = list;
         } catch (err) {
             error.value = err as ApiError;

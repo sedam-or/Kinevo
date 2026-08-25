@@ -82,6 +82,7 @@ export interface CreateGoalPayload {
     target_date?: string | null;
     target_metric?: string | null;
     priority_tier?: number;
+    workspace_id?: number;
 }
 
 export interface CreateMilestonePayload {

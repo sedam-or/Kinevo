@@ -7,6 +7,8 @@ import SyncStatusPanel from './SyncStatusPanel.vue';
 import ToastHost from '../components/ToastHost.vue';
 import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel.vue';
 import NotificationCenter from '../notifications/NotificationCenter.vue';
+import WorkspaceSwitcher from '../workspace/WorkspaceSwitcher.vue';
+import WorkspaceManager from '../workspace/WorkspaceManager.vue';
 
 const shell = useShellStore();
 
@@ -21,6 +23,7 @@ const currentSection = computed(() => {
 
 /** Mobile "More" drawer state. */
 const mobileMoreOpen = ref(false);
+const showWorkspaceManager = ref(false);
 const moreRoot = ref<HTMLElement | null>(null);
 
 const mobileMoreGroups = computed(() =>
@@ -89,14 +92,27 @@ function selectView(view: ShellView): void {
                 </span>
                 <span class="shrink-0"><NotificationCenter /></span>
             </div>
-            <button
-                type="button"
-                class="shrink-0 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1"
-                @click="shell.cycleTheme()"
-                data-testid="theme-toggle"
-            >
-                <span class="hidden sm:inline">Theme: </span>{{ shell.theme }}
-            </button>
+            <div class="flex items-center gap-2 shrink-0">
+                <!-- TASK-P19-005 — the single reusable workspace switcher. -->
+                <WorkspaceSwitcher>
+                    <template #footer>
+                        <button
+                            type="button"
+                            class="text-left text-sm underline px-3 py-2 min-h-[44px] text-gray-600 dark:text-gray-300"
+                            data-testid="workspace-manage-button"
+                            @click="showWorkspaceManager = true"
+                        >Manage workspaces…</button>
+                    </template>
+                </WorkspaceSwitcher>
+                <button
+                    type="button"
+                    class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1"
+                    @click="shell.cycleTheme()"
+                    data-testid="theme-toggle"
+                >
+                    <span class="hidden sm:inline">Theme: </span>{{ shell.theme }}
+                </button>
+            </div>
         </header>
 
         <!-- Error boundary / banner -->
@@ -220,6 +236,8 @@ function selectView(view: ShellView): void {
                 </div>
             </div>
         </div>
+
+        <WorkspaceManager v-if="showWorkspaceManager" @close="showWorkspaceManager = false" />
 
         <!-- Dev-only runtime diagnostics (TASK-R2; dropped in production builds) -->
         <DiagnosticsPanel />

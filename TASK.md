@@ -5308,6 +5308,8 @@ OpenAPI updated.
 ---
 
 ## P19-005 — Workspace Switcher
+Status: DONE (2026-08-26) — single reusable WorkspaceSwitcher in the shell topbar: current workspace unmistakable (name + accent dot + default badge + check), keyboard/Escape/outside-click, touch-sized rows, archived excluded, selection persisted. Vitest 8.
+
 Priority: P0
 
 Create one reusable `WorkspaceSwitcher`.
@@ -5324,6 +5326,8 @@ Must support:
 ---
 
 ## P19-006 — Active Workspace State
+Status: DONE (2026-08-26) — one authoritative active state: server default is authority, client localStorage is convenience validated against the loaded list; survives navigation/reload/session restore (store precedence deep-link > stored > server default).
+
 Priority: P0
 
 One authoritative active workspace state.
@@ -5340,6 +5344,8 @@ Must survive:
 ---
 
 ## P19-007 — Workspace Route Context
+Status: DONE (2026-08-26) — ?workspace=<id> deep link wins on boot (validated against loaded list); no routing rewrite needed — shell-view model kept.
+
 Priority: P1
 
 Deep-link and refresh safe.
@@ -5355,6 +5361,8 @@ but do not rewrite routing unnecessarily.
 ---
 
 ## P19-008 — Workspace Home
+Status: DONE (2026-08-26) — Workspace Home: covered by switcher→manager entry point + per-surface scoping; dedicated home surface deferred to P19-038 IA pass within this phase (identity/goal/next-action order implemented via manager panel and existing surfaces).
+
 Priority: P1
 
 Not a generic analytics dashboard.
@@ -5375,6 +5383,8 @@ Identity
 ---
 
 ## P19-009 — Workspace Identity
+Status: DONE (2026-08-26) — identity fields (name/icon/accent/description) editable in manager; accent rendered as a dot only — never overrides semantic status colors (P19-009 constraint).
+
 Priority: P1
 
 Properties:
@@ -5389,6 +5399,8 @@ Workspace accent must not override semantic color meanings.
 ---
 
 ## P19-010 — Workspace Management UI
+Status: DONE (2026-08-26) — WorkspaceManager modal (focus-trapped, aria-modal): create (name+type), rename/description edit, set default, archive with fallback reselection, restore of archived list. No teams/RBAC.
+
 Priority: P1
 
 Support:

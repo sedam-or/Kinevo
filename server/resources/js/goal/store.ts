@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { useWorkspaceStore } from '../workspace/store';
 import { ref } from 'vue';
 import { goalApi } from './api';
 import type { ApiError } from '../api/types';
@@ -16,7 +17,9 @@ export const useGoalStore = defineStore('goal', () => {
         loading.value = true;
         error.value = null;
         try {
-            const [g, p] = await Promise.all([goalApi.goals(), goalApi.programs()]);
+            // TASK-P19-011 — scope lists to the declared active workspace.
+            const wid = useWorkspaceStore().activeWorkspaceId;
+            const [g, p] = await Promise.all([goalApi.goals(wid), goalApi.programs()]);
             goals.value = g.goals;
             programs.value = p.programs;
         } catch (err) {

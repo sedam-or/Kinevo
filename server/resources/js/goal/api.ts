@@ -12,8 +12,10 @@ import type {
 } from './types';
 
 export const goalApi = {
-    goals(): Promise<GoalListResponse> {
-        return apiClient.request<GoalListResponse>('/goals');
+    goals(workspaceId?: number | null): Promise<GoalListResponse> {
+        // TASK-P19-011 — declared active workspace; null = global view.
+        const query = workspaceId ? `?workspace_id=${workspaceId}` : '';
+        return apiClient.request<GoalListResponse>(`/goals${query}`);
     },
 
     goal(goalId: number): Promise<GoalResponse> {

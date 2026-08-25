@@ -114,6 +114,7 @@ export interface QuickCapturePayload {
     program_id?: number | null;
     goal_id?: number | null;
     date?: string | null;
+    workspace_id?: number;
 }
 
 export interface QuickCaptureResponse {

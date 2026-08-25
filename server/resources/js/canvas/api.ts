@@ -9,8 +9,10 @@ import type {
 } from './api-types';
 
 export const canvasApi = {
-    list(): Promise<CanvasListResponse> {
-        return apiClient.request<CanvasListResponse>('/canvases');
+    list(workspaceId?: number | null): Promise<CanvasListResponse> {
+        // TASK-P19-017 — declared active workspace; null = global view.
+        const query = workspaceId ? `?workspace_id=${workspaceId}` : '';
+        return apiClient.request<CanvasListResponse>(`/canvases${query}`);
     },
 
     show(canvasId: number): Promise<CanvasWithDocumentResponse> {

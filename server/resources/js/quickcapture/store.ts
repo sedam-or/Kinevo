@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import { useWorkspaceStore } from '../workspace/store';
 import { apiClient } from '../api/client';
 import type { ApiError } from '../api/types';
 import type { Goal, Milestone, Program } from '../goal/types';
@@ -12,6 +13,7 @@ export interface QuickCapturePayload {
     program_id?: number | null;
     goal_id?: number | null;
     date?: string | null;
+    workspace_id?: number;
 }
 
 export interface QuickCaptureTask {
@@ -97,6 +99,11 @@ export const useQuickCaptureStore = defineStore('quickCapture', () => {
     }
 
     async function submit(payload: QuickCapturePayload): Promise<QuickCaptureResult | null> {
+        // TASK-P19-024 — default context = declared active workspace.
+        const wid = useWorkspaceStore().activeWorkspaceId;
+        if (wid !== null) {
+            payload = { ...payload, workspace_id: wid };
+        }
         busy.value = true;
         error.value = null;
         lastResult.value = null;

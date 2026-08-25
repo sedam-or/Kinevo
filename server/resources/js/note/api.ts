@@ -9,8 +9,10 @@ import type {
 } from './types';
 
 export const noteApi = {
-    list(): Promise<NoteListResponse> {
-        return apiClient.request<NoteListResponse>('/notes');
+    list(workspaceId?: number | null): Promise<NoteListResponse> {
+        // TASK-P19-014 — declared active workspace; null = global view.
+        const query = workspaceId ? `?workspace_id=${workspaceId}` : '';
+        return apiClient.request<NoteListResponse>(`/notes${query}`);
     },
 
     show(noteId: number): Promise<NoteResponse> {

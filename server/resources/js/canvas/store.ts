@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { useWorkspaceStore } from '../workspace/store';
 import { ref } from 'vue';
 import { canvasApi } from './api';
 import type { ApiError } from '../api/types';
@@ -19,7 +20,9 @@ export const useCanvasStore = defineStore('canvas', () => {
         loading.value = true;
         error.value = null;
         try {
-            const { canvases: list } = await canvasApi.list();
+            // TASK-P19-017 — scope to the declared active workspace.
+            const wid = useWorkspaceStore().activeWorkspaceId;
+            const { canvases: list } = await canvasApi.list(wid);
             canvases.value = list;
         } catch (err) {
             error.value = err as ApiError;

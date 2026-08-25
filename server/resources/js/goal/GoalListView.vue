@@ -3,6 +3,7 @@ import FeatureHelp from '../components/FeatureHelp.vue';
 import { useGenerationStages } from '../components/useGenerationStages';
 import { onMounted, reactive, ref } from 'vue';
 import { useGoalStore } from './store';
+import { useWorkspaceStore } from '../workspace/store';
 import { GOAL_HORIZONS, PROGRAM_WORKLOAD_TYPES, type Goal } from './types';
 import KButton from '../components/KButton.vue';
 import KInput from '../components/KInput.vue';
@@ -70,6 +71,7 @@ async function createGoal(): Promise<void> {
         description: goalForm.description.trim() === '' ? null : goalForm.description.trim(),
         horizon: goalForm.horizon,
         target_date: goalForm.targetDate === '' ? null : goalForm.targetDate,
+        workspace_id: useWorkspaceStore().activeWorkspaceId ?? undefined,
         priority_tier: goalForm.priorityTier,
     });
     if (goal === null) {
