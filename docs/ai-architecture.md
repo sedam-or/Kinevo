@@ -98,6 +98,50 @@ return only `has_api_key` plus a `…last4` hint, and POST
 enabled, non-disabled configuration takes precedence over environment
 defaults (`ConfigAiProviderResolver`).
 
+### Runtime control plane & resolution order (Phase 18 / TASK-P18-001..024)
+Two distinct "AIs" exist in this project and MUST NOT be confused:
+- **Coding-agent AI** — the local/remote model driving development (see
+  AGENTS.md "Local developer tooling"). Never part of the product.
+- **Kinevo runtime AI** — the provider configured at `Settings → AI &
+  Providers`, used by product features (goal breakdown, explanations) under
+  the rules in this document.
+
+Canonical control-plane endpoints (legacy `/ai/config` delegates to the same
+use cases; no second source of truth):
+```text
+GET   /api/v1/ai/settings            safe snapshot (masked, no secrets)
+PATCH /api/v1/ai/settings            partial update; may precede credentials
+POST  /api/v1/ai/settings/credential store/rotate encrypted key (atomic)
+DELETE/api/v1/ai/settings/credential remove key only
+POST  /api/v1/ai/settings/test       minimal non-mutating INFERENCE probe
+POST  /api/v1/ai/settings/enable     requires configured+credentialed provider
+POST  /api/v1/ai/settings/disable    first-class off state; config preserved
+GET   /api/v1/ai/providers           capability catalog driving the UI fields
+```
+
+Credential flow: the key is encrypted server-side on write, a safe
+non-reversible hint (`…last4`) is persisted so reads never decrypt, rotation
+replaces the old credential atomically, and every response is masked.
+Connection verification is NOT a ping: it runs one fixed synthetic probe
+(never user content) through generate(); failures map to stable
+`AI_PROVIDER_*` codes (UNAVAILABLE | AUTH_FAILED | BAD_CONFIGURATION |
+MODEL_NOT_FOUND | TIMEOUT | RATE_LIMITED | UNSUPPORTED); transient upstream
+errors are retried once inside the probe.
+
+Resolution precedence (same inputs → same provider):
+1. persisted single-row settings (saved enabled config wins);
+2. environment deployment defaults (`AI_PROVIDER`, `AI_PROVIDER_BASE_URL`,
+   `AI_PROVIDER_MODEL`, `AI_PROVIDER_API_KEY`);
+3. application fallback: disabled — core works with AI off (FR-60).
+
+Remote runtime without Ollama: any OpenAI-compatible endpoint works (e.g. an
+LLM gateway). The dev stack reaches host gateways via the Docker bridge IP;
+Ollama remains opt-in through compose profile `ai` (`make ollama-up`);
+`make up/test/ci/e2e` never require it. Evidence:
+`scripts/smoke-remote-runtime.sh` (injected `KINEVO_SMOKE_AI_API_KEY`,
+nothing hardcoded) proves Browser/HTTP → Laravel → remote endpoint → model
+call with Ollama stopped.
+
 ### Development models
 Development tooling MAY use a high-context reasoning model such as Qwythos 9B Q6_K or a coding-specialized model. This is not part of runtime requirements.
 

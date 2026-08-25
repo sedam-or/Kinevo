@@ -26,8 +26,13 @@ final readonly class SaveAiProviderConfigUseCase
 
     /**
      * @param  array<string, mixed>  $input
+     * @param  bool  $allowIncomplete  Canonical control-plane PATCH (P18-006)
+     *                                 may persist a provider whose credential has not been stored yet —
+     *                                 the credential endpoints complete it afterwards and `configured`/
+     *                                 `not_configured` state report the gap. The legacy full-save path
+     *                                 keeps its strict "OpenAI requires a stored key" contract.
      */
-    public function __invoke(array $input): array
+    public function __invoke(array $input, bool $allowIncomplete = false): array
     {
         $existing = $this->configs->get() ?? AiProviderConfig::defaults();
 
@@ -62,7 +67,8 @@ final readonly class SaveAiProviderConfigUseCase
             $apiKey = trim($input['api_key']);
         }
 
-        if ($capabilities->requiresApiKey && $apiKey === null && ($input['remove_api_key'] ?? false) !== true) {
+        if (! $allowIncomplete && $capabilities->requiresApiKey && $apiKey === null
+            && ($input['remove_api_key'] ?? false) !== true) {
             throw new InvalidArgumentException('This provider requires an API key.');
         }
 
@@ -72,11 +78,20 @@ final readonly class SaveAiProviderConfigUseCase
         // stored"; on a fresh save the legacy default stays enabled=true.
         $hasStored = $this->configs->get() !== null;
 
+        // PATCH semantics: omitted fields keep their persisted values; an
+        // explicit empty string clears them.
+        $model = array_key_exists('model', $input) && is_string($input['model']) && trim($input['model']) !== ''
+            ? trim((string) $input['model'])
+            : (array_key_exists('model', $input) ? null : $existing->model);
+        $baseUrl = array_key_exists('base_url', $input) && is_string($input['base_url']) && trim($input['base_url']) !== ''
+            ? rtrim(trim((string) $input['base_url']), '/')
+            : (array_key_exists('base_url', $input) ? null : $existing->baseUrl);
+
         $config = new AiProviderConfig(
             provider: $provider,
             enabled: array_key_exists('enabled', $input) ? (bool) $input['enabled'] : ($hasStored ? $existing->enabled : true),
-            model: isset($input['model']) && trim((string) $input['model']) !== '' ? trim((string) $input['model']) : null,
-            baseUrl: isset($input['base_url']) && trim((string) $input['base_url']) !== '' ? rtrim(trim((string) $input['base_url']), '/') : null,
+            model: $model,
+            baseUrl: $baseUrl,
             apiKey: $apiKey,
             userId: $existing->userId,
             protocol: $protocol,

@@ -133,8 +133,9 @@ test.describe('R17 golden journey H — Settings → AI & Providers (P17-006)', 
         await page.getByTestId('nav-ai-settings').click();
         await expect(page.getByTestId('ai-provider-select')).toHaveValue('ollama');
         await expect(page.getByTestId('ai-model-input')).toHaveValue('qwen2.5-coder:7b');
-        // Privacy blurb is always present on this surface (§104 contract).
-        await expect(page.getByTestId('ai-privacy-blurb')).toContainText('never stored in browser storage');
+        // Privacy blurb is always present on this surface (§104 contract,
+        // P18-013 copy: encrypted server-side, never echoed back).
+        await expect(page.getByTestId('ai-privacy-copy')).toContainText('encrypted on the Kinevo server');
     });
 });test.describe('R17 golden journey G2 — Breakdown proposal: review → edit → accept (P17-004)', () => {
     // Preconditions: a reachable AI provider is configured in Settings → AI &

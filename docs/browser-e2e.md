@@ -858,6 +858,26 @@ make e2e (full Playwright matrix, workers=1)  chromium/firefox/webkit
           READY evidence run for TASK-P17-038.
 ```
 
+### P18-020 — AI remote runtime journey (2026-08-26)
+```text
+tests/e2e/tests/ai-remote-journey.spec.ts   chromium/firefox/webkit  3/3 PASS
+  Chain proven with Ollama NOT running (remote OpenAI-compatible gateway,
+  credentials injected via E2E_AI_API_KEY; nothing committed):
+    Settings sections → provider openai + model + base URL →
+    SecretField (write-only, password-masked, reveal toggle) →
+    save + credential rotation (dedicated endpoint) → masked …last4 hint,
+    raw key never in DOM after save/reload → connection test = real
+    minimal inference ("Connected to", ≤180s budget incl. free-tier
+    router retries) → reload persists config server-side →
+    post-goal "break down with AI" entry point → proposal review shows
+    AI GENERATED / NOT YET COMMITTED badges → accept commits milestones
+    (goals list success dialog → Open goal → milestone items visible).
+  Runtime evidence: chromium 47.9s, firefox 57.5s, webkit 36.1s.
+  Companion API-level smoke: scripts/smoke-remote-runtime.sh
+  (TASK-P18-017: HTTP → Laravel → remote endpoint → model call while
+  Ollama is stopped; PASS 2026-08-26).
+```
+
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.

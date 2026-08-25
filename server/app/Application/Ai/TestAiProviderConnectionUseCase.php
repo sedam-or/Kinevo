@@ -6,6 +6,7 @@ use App\Domain\Ai\AiProviderException;
 use App\Domain\Ai\Contracts\AiProviderConfigRepository;
 use App\Domain\Ai\Entities\AiProviderConfig;
 use App\Domain\Ai\ValueObjects\AiRequest;
+use App\Domain\Ai\ValueObjects\AiResponse;
 use App\Domain\Ai\ValueObjects\AiRole;
 use App\Infrastructure\Ai\AiProviderFactory;
 use App\Infrastructure\Ai\Providers\DisabledProvider;
@@ -83,14 +84,28 @@ final readonly class TestAiProviderConnectionUseCase
             $providerName === AiProviderConfig::PROVIDER_OPENAI ? $apiKey : null,
         );
 
+        // Bounded retry: remote routers occasionally rotate through a dead
+        // upstream (HTTP 503/429). A transient hiccup must not read as "bad
+        // credentials" in the UI, so the probe retries once after a short
+        // pause. Auth/model errors are terminal and never retried.
+        $probe = fn (): AiResponse => $provider->generate(new AiRequest(
+            new AiRole(AiRole::NATURAL_LANGUAGE_EXPLANATION),
+            self::PROBE_PROMPT,
+            null,
+            0.0,
+            16,
+        ));
+
         try {
-            $response = $provider->generate(new AiRequest(
-                new AiRole(AiRole::NATURAL_LANGUAGE_EXPLANATION),
-                self::PROBE_PROMPT,
-                null,
-                0.0,
-                16,
-            ));
+            try {
+                $response = $probe();
+            } catch (AiProviderException $transient) {
+                if (! in_array($transient->errorCode(), [AiProviderException::CODE_UNAVAILABLE, AiProviderException::CODE_RATE_LIMITED, AiProviderException::CODE_TIMEOUT], true)) {
+                    throw $transient;
+                }
+                usleep(750_000);
+                $response = $probe();
+            }
             if (trim($response->text) === '') {
                 throw AiProviderException::unavailable('AI provider returned an empty completion.');
             }

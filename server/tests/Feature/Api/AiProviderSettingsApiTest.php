@@ -292,6 +292,42 @@ class AiProviderSettingsApiTest extends TestCase
             ->postJson('/api/v1/ai/settings/enable')->assertStatus(422);
     }
 
+    public function test_settings_patch_allows_openai_before_credential_exists(): void
+    {
+        $token = $this->token();
+
+        $response = $this->withHeaders($this->authHeaders($token))
+            ->patchJson('/api/v1/ai/settings', [
+                'provider' => 'openai',
+                'enabled' => true,
+                'model' => 'gpt-4o-mini',
+            ])->assertOk()
+            ->assertJsonPath('config.provider', 'openai')
+            ->assertJsonPath('config.has_api_key', false)
+            ->assertJsonPath('config.configured', false)
+            ->assertJsonPath('config.status.state', 'not_configured');
+
+        $stored = AiProviderConfigModel::query()->first();
+        $this->assertSame('openai', $stored->provider);
+    }
+
+    public function test_settings_patch_keeps_stored_base_url_when_only_model_is_sent(): void
+    {
+        $token = $this->token();
+        AiProviderConfigModel::query()->create([
+            'provider' => 'openai',
+            'enabled' => true,
+            'model' => 'gpt-4o-mini',
+            'base_url' => 'http://172.17.0.1:20128/v1',
+        ]);
+
+        $this->withHeaders($this->authHeaders($token))
+            ->patchJson('/api/v1/ai/settings', ['model' => 'auto/best-free'])
+            ->assertOk()
+            ->assertJsonPath('config.base_url', 'http://172.17.0.1:20128/v1')
+            ->assertJsonPath('config.model', 'auto/best-free');
+    }
+
     public function test_providers_catalog_lists_capabilities_and_protocols(): void
     {
         $token = $this->token();

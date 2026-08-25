@@ -142,7 +142,9 @@ final class AiController extends Controller
         }
 
         try {
-            $config = $this->saveProviderConfig->__invoke($validator->validated());
+            // Canonical PATCH may land before a credential exists; the
+            // credential endpoints complete the setup (TASK-P18-006).
+            $config = $this->saveProviderConfig->__invoke($validator->validated(), allowIncomplete: true);
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         }

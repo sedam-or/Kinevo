@@ -4956,6 +4956,8 @@ Do not invent retention guarantees.
 ---
 
 ## P18-014 — Goal Breakdown Runtime Flow
+Status: DONE (2026-08-26) — Goal → Break down with AI → validate → proposal → review → accept/edit/reject → commit re-proven with the REMOTE provider; no silent mutations (accept gates every mutation, ProposalReviewCard contract tests).
+
 Priority: P0
 
 Required:
@@ -4975,6 +4977,8 @@ No silent mutations.
 ---
 
 ## P18-015 — Goal Breakdown Entry Points
+Status: DONE (2026-08-26) — entry points: post-goal creation suggestion (goal-breakdown-ai), goal detail breakdown button, empty-milestone state (milestones-empty-breakdown), goal action menu (review-proposal); AiNotConfiguredNotice + [Configure AI] when unconfigured.
+
 Priority: P0
 
 Expose:
@@ -4994,6 +4998,8 @@ AI isn't configured.
 ---
 
 ## P18-016 — AI Proposal UX
+Status: DONE (2026-08-26) — proposal shows milestones/effort/deadline considerations/assumptions/constraints + explicit AI GENERATED and NOT YET COMMITTED badges (unit-tested); browser-proven in P18-020 journey.
+
 Priority: P1
 
 Show:
@@ -5014,6 +5020,8 @@ NOT YET COMMITTED
 ---
 
 ## P18-017 — Remote Runtime Smoke Test
+Status: DONE (2026-08-26) — scripts/smoke-remote-runtime.sh PASS: HTTP → Laravel → OmniRoute remote endpoint → successful model call while Ollama container STOPPED; credential injected via KINEVO_SMOKE_AI_API_KEY (nothing hardcoded); masked responses verified.
+
 Priority: P0
 
 Prove:
@@ -5032,6 +5040,8 @@ Use secure injected test credentials.
 ---
 
 ## P18-018 — Ollama Isolation
+Status: DONE (2026-08-26) — compose keeps ollama behind opt-in profile 'ai' (make ollama-up/down only); make test run green (901 passed) with ollama stopped; make ci/e2e targets contain no ollama dependency.
+
 Priority: P0
 
 Verify:
@@ -5052,6 +5062,8 @@ make ollama-up
 ---
 
 ## P18-019 — Agent/Runtime Documentation
+Status: DONE (2026-08-26) — docs/ai-architecture.md 'Runtime control plane & resolution order' section: agent AI vs runtime AI, canonical endpoints, credential flow, stable error codes, precedence chain, remote runtime without Ollama, smoke evidence pointer.
+
 Priority: P1
 
 Document:
@@ -5067,6 +5079,8 @@ Document:
 ---
 
 ## P18-020 — AI Browser E2E
+Status: DONE (2026-08-26) — tests/e2e/tests/ai-remote-journey.spec.ts 3/3 browsers PASS (settings→credential→masked→inference test→breakdown→accept), recorded in docs/browser-e2e.md P18-020 section.
+
 Priority: P0
 
 Journey:
