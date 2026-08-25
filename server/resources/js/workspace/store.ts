@@ -36,24 +36,32 @@ export const useWorkspaceStore = defineStore('workspaces', () => {
             ?? null,
     );
 
-    function readDeepLink(): number | null {
+    function readDeepLink(): number | 'all' | null {
         if (typeof window === 'undefined') return null;
         const raw = new URLSearchParams(window.location.search).get('workspace');
+        if (raw === 'all' || raw === 'global') return 'all';
         const id = raw !== null && /^\d+$/.test(raw) ? Number(raw) : null;
         return id !== null && id > 0 ? id : null;
     }
 
-    function readStored(): number | null {
+    /**
+     * Stored selection: a workspace id, or the explicit 'all' sentinel
+     * (TASK-P19-028). Removing the key entirely would make an explicit
+     * global choice indistinguishable from "never chosen" after a reload.
+     */
+    function readStored(): number | 'all' | null {
         try {
             const raw = window.localStorage.getItem(STORAGE_KEY);
+            if (raw === 'all') return 'all';
             const id = raw !== null && /^\d+$/.test(raw) ? Number(raw) : null;
+
             return id !== null && id > 0 ? id : null;
         } catch {
             return null;
         }
     }
 
-    function persist(id: number | null): void {
+    function persist(id: number | 'all' | null): void {
         try {
             if (id === null) {
                 window.localStorage.removeItem(STORAGE_KEY);
@@ -69,13 +77,38 @@ export const useWorkspaceStore = defineStore('workspaces', () => {
         loading.value = true;
         error.value = null;
         try {
-            const response = await workspaceApi.list();
+            // Apply the URL context SYNCHRONOUSLY before any network await:
+            // sibling views may read activeWorkspaceId during this load.
+            const pendingDeepLink = readDeepLink();
+            if (pendingDeepLink === 'all') {
+                activeWorkspaceId.value = null;
+                persist('all');
+            } else if (pendingDeepLink !== null) {
+                activeWorkspaceId.value = pendingDeepLink;
+                persist(pendingDeepLink);
+            }
+
+            // Both lists: the switcher renders active rows only, while the
+            // manager needs the archived section (P19-030 restore path).
+            const response = await workspaceApi.list(true);
             workspaces.value = response.workspaces.filter((w) => w.status === 'active');
             archived.value = response.workspaces.filter((w) => w.status === 'archived');
             serverDefaultId.value = response.default_workspace_id;
 
-            // Precedence: deep link > stored convenience > server default.
-            const candidates = [readDeepLink(), readStored(), response.default_workspace_id];
+            // Precedence: explicit global deep link > specific deep link >
+            // stored convenience > server default. The deep link was applied
+            // synchronously above; validate it still exists post-fetch.
+            const stored = pendingDeepLink ?? readStored();
+            if (stored === 'all') {
+                // Explicit global view wins and must survive hydration
+                // (TASK-P19-028) — no default/stored fallback may override it.
+                activeWorkspaceId.value = null;
+                persist('all');
+                active.value = true;
+
+                return;
+            }
+            const candidates = [typeof stored === 'number' ? stored : null, response.default_workspace_id];
             for (const candidate of candidates) {
                 if (candidate !== null && workspaces.value.some((w) => w.id === candidate)) {
                     activeWorkspaceId.value = candidate;
@@ -183,9 +216,15 @@ export const useWorkspaceStore = defineStore('workspaces', () => {
         }
     }
 
+    /** TASK-P19-028 — explicit All-Workspaces (global) view. */
+    function switchToGlobal(): void {
+        activeWorkspaceId.value = null;
+        persist('all');
+    }
+
     return {
         workspaces, archived, serverDefaultId, activeWorkspaceId, activeWorkspace,
         loading, error, active,
-        load, switchTo, create, update, archive, restore, setDefault,
+        load, switchTo, switchToGlobal, create, update, archive, restore, setDefault,
     };
 });

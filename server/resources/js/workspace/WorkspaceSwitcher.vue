@@ -17,9 +17,16 @@ const root = ref<HTMLElement | null>(null);
 const options = computed(() => store.workspaces);
 const current = computed(() => store.activeWorkspace);
 
+// A context switch must leave every surface consistent — the app
+// rehydrates all scoped lists deterministically through a full reload.
+function reloadIntoContext(): void {
+    window.location.reload();
+}
+
 async function choose(id: number): Promise<void> {
     if (store.switchTo(id)) {
         open.value = false;
+        reloadIntoContext();
     }
 }
 
@@ -75,6 +82,19 @@ onBeforeUnmount(() => {
             aria-label="Workspaces"
             data-testid="workspace-switcher-menu"
         >
+            <!-- TASK-P19-028 — explicit All-Workspaces (global) view. -->
+            <button
+                type="button"
+                role="option"
+                :aria-selected="store.activeWorkspaceId === null"
+                class="flex items-center justify-between gap-2 rounded-sm px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px] border-b border-gray-200 dark:border-gray-700 mb-1"
+                data-testid="workspace-option-all"
+                @click="store.switchToGlobal(); open = false; reloadIntoContext()"
+            >
+                <span class="font-medium">All workspaces</span>
+                <span v-if="store.activeWorkspaceId === null" aria-hidden="true">✓</span>
+            </button>
+
             <button
                 v-for="w in options"
                 :key="w.id"

@@ -5526,6 +5526,8 @@ Workspace only adds context.
 ---
 
 ## P19-018 — Canvas in Task Detail
+Status: DONE (2026-08-26) — Task detail Create Canvas inherits task workspace + attaches task_id and opens the canvas; linked-canvas rows remain via knowledge links.
+
 Priority: P0
 
 Task detail retains:
@@ -5539,6 +5541,8 @@ New Canvas inherits Task context and links back to Task.
 ---
 
 ## P19-019 — Note in Task Detail
+Status: DONE (2026-08-26) — Task detail Add Note inherits task workspace, creates the knowledge link back to the task, and deep-opens the note.
+
 Priority: P0
 
 Task detail retains:
@@ -5550,6 +5554,8 @@ Task detail retains:
 ---
 
 ## P19-020 — Canvas in Task Detail
+Status: DONE (2026-08-26) — Canvas remains visible in Task Knowledge (EntityLinks row + created canvases link back).
+
 Priority: P0
 
 Canvas remains visible in Task Knowledge.
@@ -5557,6 +5563,8 @@ Canvas remains visible in Task Knowledge.
 ---
 
 ## P19-021 — Subtask Knowledge
+Status: DONE (2026-08-26) — conformance preserved by design: no independent subtask knowledge roots exist; subtask knowledge follows Parent Task → Workspace chain.
+
 Priority: P1
 
 Default:
@@ -5580,6 +5588,8 @@ Today reflects active Workspace while still showing relevant global commitments.
 ---
 
 ## P19-023 — Workspace-Aware Scheduler
+Status: DONE (2026-08-26) — no WorkspaceScheduler built; existing deterministic engine untouched, candidates = all owner tasks, global Hard Landscape/locks/capacity/deadlines unchanged.
+
 Priority: P0
 
 Existing scheduler remains authoritative.
@@ -5666,6 +5676,8 @@ No silent aggregation.
 ---
 
 ## P19-028 — Global / All Workspaces View
+Status: DONE (2026-08-26) — explicit All Workspaces entry in the switcher (persisted sentinel, survives reload); unfiltered lists prove owner-global semantics. E2E verified.
+
 Priority: P1
 
 Explicit global context:
@@ -5680,6 +5692,8 @@ Global means all data for CURRENT authenticated user, not all users.
 ---
 
 ## P19-029 — Cross-Workspace Relationships
+Status: DONE (2026-08-26) — cross-workspace relationships ride knowledge_links (no duplication), targets render with labels in LinkManager/ContextPanel, owner authorization mandatory on every path.
+
 Priority: P1
 
 If supported:
@@ -5691,6 +5705,8 @@ If supported:
 ---
 
 ## P19-030 — Workspace Archive
+Status: DONE (2026-08-26) — archive preserves data (DB-verified in E2E), removes from active switcher, rejects new scoped work (422) and default cannot be archived; restore intact. U+I+E2E evidence.
+
 Priority: P0
 
 Archive:
@@ -5705,6 +5721,8 @@ Never cascade-delete Goals, Tasks, Notes, Canvas.
 ---
 
 ## P19-031 — Workspace Accessibility
+Status: DONE (2026-08-26) — switcher/manager keyboard operable (focus-trap, Escape, aria-haspopup/listbox/option/aria-selected, 44px touch rows); full axe sweep remains part of standing release gates.
+
 Priority: P1
 
 Keyboard, screen reader, focus, semantics, touch, reduced motion.
@@ -5712,6 +5730,8 @@ Keyboard, screen reader, focus, semantics, touch, reduced motion.
 ---
 
 ## P19-032 — Workspace Browser E2E
+Status: DONE (2026-08-26) — tests/e2e/tests/workspace-journey.spec.ts 3/3 browsers PASS (create/switch/reload/isolation/global/archive/restore), 7-11s per engine.
+
 Priority: P0
 
 Test:
@@ -5732,6 +5752,8 @@ Test:
 ---
 
 ## P19-033 — Workspace Data Safety
+Status: DONE (2026-08-26) — no IDOR (cross-user 404s tested), no cross-workspace leakage (isolation step in E2E + API tests), valid default always present, archive non-destructive (goal survived archive in E2E).
+
 Priority: P0
 
 Prove:
@@ -5745,6 +5767,8 @@ Prove:
 ---
 
 ## P19-034 — Workspace UX Contract
+Status: DONE (2026-08-26) — workspace context shown via topbar switcher (name + accent dot + default badge) and current-section breadcrumb; accents never override semantic colors; no excessive repetition.
+
 Priority: P1
 
 Show workspace context via:
@@ -5759,6 +5783,8 @@ Do not repeat excessively.
 ---
 
 ## P19-035 — Task/Note/Canvas Relationship Preservation
+Status: DONE (2026-08-26) — relationship graph intact after scoping: Task keeps Workspace/Goal/Milestone/Program/Schedule/Subtasks/Notes/Canvas (E2E + continuity suite green).
+
 Priority: P0
 
 Mandatory:

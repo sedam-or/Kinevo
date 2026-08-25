@@ -189,3 +189,24 @@ Ollama is optional and may run alongside the app in development or as a private 
 
 ---
 
+
+## Workspaces & Context System (Phase 19)
+
+Workspaces are top-level context containers owned by a single user. Domain:
+`App\Domain\Workspaces` (aggregate + type/status VOs + repository contract);
+persistence: `workspaces` table plus nullable `workspace_id` on goals,
+programs, tasks, notes and canvases (parent-inherited entities such as
+milestones, subtasks, schedule assignments and canvas files follow their
+parent and are not directly scoped; Hard Landscape and notifications remain
+global by explicit decision).
+
+Precedence (server-enforced): explicit context > declared active workspace >
+owner's default ("Personal", provisioned at registration and lazily adopted
+for pre-existing rows). Lists accept `workspace_id` (validated owned) or an
+explicit global view; writes always land in exactly one workspace. Task↔Goal
+consistency is validated server-side (inheritance, conflict → 422).
+
+Client contract: one authoritative active state (server default wins unless a
+validated stored choice or `?workspace=` deep link exists); switching reloads
+the app so every surface rehydrates consistently. Knowledge links remain the
+relationship authority — workspaces add context only.
