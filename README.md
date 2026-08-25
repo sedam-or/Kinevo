@@ -1,206 +1,188 @@
 <div align="center">
 
-![Kinevo](./src/banner-kinevo.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-kinevo-dark.svg">
+  <img src="docs/assets/banner-kinevo-light.svg" alt="Kinevo — Plan. Schedule. Focus. Adapt." width="100%">
+</picture>
+
+[![CI](https://github.com/sedam-or/Kinevo/actions/workflows/ci.yml/badge.svg)](https://github.com/sedam-or/Kinevo/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PHP](https://img.shields.io/badge/PHP-8.4%2B-777BB4.svg)](server/composer.json)
+[![Laravel](https://img.shields.io/badge/Laravel-13-FF2D20.svg)](server/composer.json)
+[![Vue](https://img.shields.io/badge/Vue-3-4FC08D.svg)](server/package.json)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1.svg)](infrastructure/docker-compose.yml)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+**A personal operating system you actually own.**
+Goals in, chaos out: Kinevo turns long-horizon goals into scheduled, executable
+work — with a deterministic scheduling core, offline-first PWA shell, and
+optional local AI that never owns your schedule.
+
+`GOAL → BREAKDOWN → MILESTONE → TASK → SCHEDULE → TODAY → FOCUS → PROGRESS → ADAPT`
 
 </div>
 
-# Kinevo
+---
 
-> A personal operating system for planning, scheduling, execution, knowledge
-> capture, progress tracking, and optional local AI assistance. Single-user,
-> self-hostable, offline-capable, deterministic-core, modular monolith.
+## Why Kinevo
 
-## Status
+Most productivity tools rent you your own workflow. Kinevo is the opposite:
+a **single-user, self-hosted** system where the schedule is deterministic, the
+data lives in your PostgreSQL, and AI — if you enable it at all — is an
+untrusted assistant that proposes and validates, never decides.
 
-Early development. A proven repository skeleton, CI pipeline, Docker development
-environment, environment/secrets baseline, Identity/profile baseline, core
-domain aggregates (goals, milestones, programs, tasks), the deterministic
-scheduling engine, knowledge layer, canvas layer, offline shell, AI provider
-abstraction, production deployment profile, and schedule persistence are
-complete. See [`docs/implementation-status.md`](docs/implementation-status.md)
-and [`TASK.md`](TASK.md) for the current execution board.
+- **Deterministic scheduling engine** — same inputs, same plan, every time. No
+  black-box reordering of your day; the schedule is explainable and testable.
+- **Offline-first by design** — a PWA shell with a queued mutation outbox
+  (operation UUIDs, last-write-wins reconciliation) keeps you working on a
+  plane, on a train, or on a bad connection.
+- **AI that knows its place** — optional local (Ollama) or remote providers
+  break down goals into reviewable milestones. Schema-validated, domain-checked,
+  human-approved before anything is applied.
+- **One coherent workflow** — goals, milestones, programs, tasks, hard
+  landscape commitments, knowledge notes, canvas boards, capacity analytics,
+  and recovery are one connected system, not separate apps.
+- **A reference architecture worth reading** — a disciplined Laravel modular
+  monolith (domain → application → infrastructure), Vue 3 + TypeScript SPA,
+  contract-first API, and ADR-recorded decisions.
 
-## Releases
+## What you get
 
-- **Current stable release:** none yet published (pre-1.0; the first canonical
-  tagged release is pending).
-- **Development status:** 0.x pre-release; implementation continues task by task.
-- **Versioning:** [Semantic Versioning](https://semver.org/) — governance in
-  [`docs/release-management.md`](docs/release-management.md).
-- **Changelog:** [`CHANGELOG.md`](CHANGELOG.md) ([Keep a Changelog](https://keepachangelog.com/en/1.1.0/)).
-- **Compatibility matrix:** [`docs/compatibility.md`](docs/compatibility.md).
-- **License:** MIT (see below).
-- **Supported deployment:** self-hosted Docker (see
-  [`docs/deployment.md`](docs/deployment.md)).
+| Area | Highlights |
+| --- | --- |
+| Planning | Goals, milestones, programs; inline AI breakdown proposals you edit and accept |
+| Execution | Today surface with a now-next spotlight, focus sessions, boosts, recovery |
+| Scheduling | Draft generation, dynamic reschedule, hard-landscape calendar constraints |
+| Knowledge | Notes with Tiptap, links, attachments, and Excalidraw canvas boards |
+| Analytics | Work-life ratio, capacity realization, goal pressure — each chart routes to an action |
+| Resilience | Offline queue + sync, end-of-day reconciliation, morning recovery of missed work |
+| Operations | Docker deployment, backups/restore, health checks, versioned API contract |
 
-## What it is
+## Quick start
 
-Kinevo helps one person plan goals and milestones, schedule tasks against a
-deterministic engine, capture knowledge, track progress, and optionally use a
-local AI model for assistance — without surrendering schedule authority to a
-black box. Scheduling is deterministic; AI is optional, untrusted, and validated.
+Requires Docker and Make.
 
-## Who it is for
+```bash
+git clone https://github.com/sedam-or/Kinevo.git
+cd Kinevo
+make up          # build + start app (PHP-FPM) and PostgreSQL
+make migrate     # run migrations
+```
 
-- A single owner who wants a self-hosted, offline-capable productivity system.
-- Developers and contributors interested in a clean modular-monolith reference
-  architecture (Laravel + Vue + PostgreSQL).
-- Anyone who values explainable scheduling, explicit commitments, and data
-  ownership over opaque cloud productivity suites.
+Open <http://localhost:8000> and register — the first account becomes the
+owner. Daily development commands:
 
-## Architecture summary
+```bash
+make test        # PHPUnit suite (in-memory SQLite — cannot touch your data)
+make lint        # Pint style check
+make analyse     # PHPStan static analysis
+make validate    # repository baseline validation
+make down        # stop services
+```
+
+Production deployment (Docker Compose, backups, restore) is documented in
+[`docs/deployment.md`](docs/deployment.md).
+
+## How it fits together
 
 ```text
 Browser / PWA
-    │
-    ├── Vue 3 + TypeScript + Inertia
-    ├── Pinia
-    ├── Service Worker
-    └── IndexedDB
-          │
-          ▼
+    ├── Vue 3 + TypeScript + Inertia · Pinia · Service Worker · IndexedDB
+    ▼
 Laravel Modular Monolith
-    │
     ├── Planning / Goals / Milestones / Programs
     ├── Tasks / Execution / Recovery
     ├── Scheduling Engine (deterministic)
     ├── Knowledge / Notes / Canvas
     ├── Capacity / Analytics
-    ├── Offline Sync
-    └── AI Orchestrator (optional, untrusted)
+    ├── Offline Sync (queue + reconciliation)
+    └── AI Orchestrator (optional, untrusted, validated)
           │
-          ├── PostgreSQL        (canonical store)
-          ├── Object Storage    (attachments)
-          ├── Queue / Scheduler
-          └── Optional Ollama / AI provider
+          ├── PostgreSQL     (canonical store)
+          ├── Object Storage (attachments)
+          └── Ollama / AI provider (optional)
 ```
 
-External engines are always behind bounded adapters: **Excalidraw owns drawing,
+External engines stay behind bounded adapters: **Excalidraw owns drawing,
 Tiptap owns editing, Ollama owns inference — Kinevo owns business semantics.**
+
+## Engineering discipline
+
+This repository treats quality gates as part of the product, not an afterthought:
+
+- **890 backend tests** (2,952 assertions) — domain, application, and API suites
+- **499 frontend unit tests** across 68 files (Vitest)
+- **253-check real-browser matrix** — Playwright across Chromium, Firefox, and
+  WebKit, including the full golden journey, offline recovery, accessibility
+  (axe WCAG 2.2 A/AA), and mobile width sweeps
+- **PHPStan** static analysis and **Pint** style gates in CI
+- Contract-first: versioned OpenAPI, migration discipline, optimistic
+  concurrency with stable `409` conflicts
 
 ## Technology stack
 
-- Backend: Laravel (PHP 8.4+) — modular monolith.
-- Frontend: Vue 3 + TypeScript + Inertia.js + Vite + Pinia.
-- Database: PostgreSQL (canonical store).
-- Rich text: Tiptap behind a Kinevo editor adapter.
-- Canvas: Excalidraw behind a bounded integration adapter.
-- Offline: Service Worker + Cache Storage + IndexedDB (cache/queue, never
-  authoritative).
-- Jobs: Laravel Queue + Laravel Scheduler. Redis is optional optimization, not a
-  mandatory dependency.
-- AI: provider abstraction; Ollama supported locally; AI is optional.
-- Infrastructure: Docker + Linux + Nginx; Oracle Cloud Always Free is one
-  supported personal deployment profile, not a domain dependency.
-- Storage: S3-compatible object storage or equivalent private object storage.
+| Layer | Choice |
+| --- | --- |
+| Backend | PHP 8.4 · Laravel (modular monolith) |
+| Frontend | Vue 3 · TypeScript · Inertia.js · Vite · Pinia |
+| Database | PostgreSQL 17 |
+| Rich text | Tiptap (behind a Kinevo editor adapter) |
+| Canvas | Excalidraw (behind a bounded integration adapter) |
+| Offline | Service Worker · Cache Storage · IndexedDB (cache/queue, never authoritative) |
+| Jobs | Laravel Queue + Scheduler (Redis optional, never mandatory) |
+| AI | Provider abstraction; Ollama for local inference (optional) |
+| Infrastructure | Docker · Nginx · S3-compatible object storage |
 
-## Self-hosting
+## Documentation
 
-Production and personal deployment guidance lives in
-[`docs/deployment.md`](docs/deployment.md). The application is designed to be
-portable across Docker-compatible Linux hosts; there is no cloud-lock-in.
+- [`docs/SRS.md`](docs/SRS.md) — normative requirements (single source of truth)
+- [`docs/architecture.md`](docs/architecture.md) — system structure and boundaries
+- [`docs/domain-model.md`](docs/domain-model.md) — entities, invariants, state machines
+- [`docs/scheduling-engine.md`](docs/scheduling-engine.md) — deterministic scheduling contract
+- [`docs/offline-sync.md`](docs/offline-sync.md) — local-first behavior and sync contract
+- [`docs/ai-architecture.md`](docs/ai-architecture.md) — AI providers, safety, structured outputs
+- [`docs/design.md`](docs/design.md) — UI/UX and interaction design
+- [`docs/api/openapi.yaml`](docs/api/openapi.yaml) — versioned API contract
+- [`docs/deployment.md`](docs/deployment.md) — deployment, operations, backup
 
-## Local development
+<details>
+<summary><strong>Full documentation map</strong></summary>
 
-Docker-based workflow (requires Docker):
+- [`docs/knowledge-layer.md`](docs/knowledge-layer.md) — notes, links, documents, canvas
+- [`docs/environment.md`](docs/environment.md) — environment configuration and secret rules
+- [`docs/test-strategy.md`](docs/test-strategy.md) — quality gates and test pyramid
+- [`docs/release-management.md`](docs/release-management.md) — versioning, changelog, releases
+- [`docs/compatibility.md`](docs/compatibility.md) — app ↔ SRS ↔ API ↔ migration matrix
+- [`docs/implementation-status.md`](docs/implementation-status.md) — progress mirror
+- [`docs/adr/`](docs/adr) — architecture decision records
+- [`docs/third-party/licenses.md`](docs/third-party/licenses.md) — license ledger
+- [`TASK.md`](TASK.md) — execution board (status, not requirements)
+- [`AGENTS.md`](AGENTS.md) — operating contract for AI agents and contributors
 
-```bash
-make up          # build + start app (PHP-FPM) and PostgreSQL
-make migrate     # run migrations
-make logs        # tail service logs
-make down        # stop services
-```
-
-App is available at http://localhost:8000.
-
-Once the services are up, the common checks run inside the container:
-
-```bash
-make test        # PHPUnit suite
-make lint        # Pint style check
-make analyse     # PHPStan static analysis
-make validate    # repository baseline validation
-make doctor      # validate + status
-```
-
-A local PHP 8.4 + PostgreSQL install is optional; all commands also run through
-the `composer:2` image:
-
-```bash
-cd server
-docker run --rm -v "$PWD/..":/app -w /app/server composer:2 ./vendor/bin/phpunit
-```
-
-## First read
-
-For an AI coding session or a new contributor, read in this order:
-
-1. [`AGENTS.md`](AGENTS.md) — operating contract for AI agents and contributors.
-2. [`docs/SRS.md`](docs/SRS.md) — normative requirements (single source of truth).
-3. [`docs/architecture.md`](docs/architecture.md) — how the system is structured.
-4. [`docs/domain-model.md`](docs/domain-model.md) — entities, invariants, state machines.
-5. The feature-specific contract (`docs/scheduling-engine.md`,
-   `docs/knowledge-layer.md`, `docs/offline-sync.md`, `docs/ai-architecture.md`).
-6. Tests related to the feature (`server/tests/`).
-7. The source implementation (`server/app/`).
-
-## Documentation map
-
-- `docs/SRS.md` — requirements (normative). Read first.
-- `docs/architecture.md` — technical architecture and boundaries.
-- `docs/design.md` — UI/UX and interaction design.
-- `docs/domain-model.md` — entities, value objects, invariants, state machines.
-- `docs/scheduling-engine.md` — deterministic scheduling contract.
-- `docs/knowledge-layer.md` — notes, links, documents, canvas relationships.
-- `docs/offline-sync.md` — local-first behavior and sync contract.
-- `docs/ai-architecture.md` — AI provider, safety, structured outputs.
-- `docs/deployment.md` — deployment, operations, backup.
-- `docs/environment.md` — environment configuration and secret rules.
-- `docs/test-strategy.md` — quality gates and test pyramid.
-- `docs/release-management.md` — versioning, changelog, release process.
-- `docs/compatibility.md` — app ↔ SRS ↔ API ↔ migration matrix.
-- `docs/implementation-status.md` — high-level progress mirror of `TASK.md`.
-- `docs/api/openapi.yaml` — versioned API contract.
-- `docs/adr/` — architecture decision records (ADR-001..ADR-007).
-- `docs/third-party/` — license ledger and attributions.
-- `TASK.md` — execution backlog and status; NOT a requirements source.
+</details>
 
 ## Contributing
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full contributor guide,
-including branch naming, commit conventions, PR rules, SRS/ADR processes,
-migration and API rules, and the Definition of Done.
-
-- Bug reports, feature requests, and architecture discussions: use the GitHub
-  issue templates.
-- Before contributing, review [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+Contributions are welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch
+naming, conventional commits, PR rules, and the SRS/ADR/migration processes.
+Use the GitHub issue templates for bugs and feature requests, and read
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) before your first PR.
 
 ## Security
 
-See [`SECURITY.md`](SECURITY.md) for the vulnerability disclosure policy.
-Report security issues privately — never in a public issue.
+Found a vulnerability? See [`SECURITY.md`](SECURITY.md) — please report
+privately; security issues never belong in public issues.
 
-## Support
+## Status and roadmap
 
-See [`SUPPORT.md`](SUPPORT.md) for where to ask questions and get help.
+Kinevo is **pre-1.0**: requirements and architecture baselines are frozen
+(SRS v2.0.0), Phase 17 product-cohesion work is complete and browser-proven,
+and the first tagged release is being prepared under
+[`docs/release-management.md`](docs/release-management.md). Live progress:
+[`TASK.md`](TASK.md) and [`docs/implementation-status.md`](docs/implementation-status.md).
 
 ## License
 
-Kinevo is licensed under the **MIT License** — see [`LICENSE`](LICENSE).
-Third-party components retain their own licenses; see
-[`docs/third-party/licenses.md`](docs/third-party/licenses.md) for the
-provenance ledger.
-
-## Roadmap
-
-The roadmap is tracked as tasks in [`TASK.md`](TASK.md) and mirrored at a
-high level in [`docs/implementation-status.md`](docs/implementation-status.md).
-Phases: Core domain (goals/milestones/programs/tasks) → Scheduling →
-Knowledge → Canvas → Offline/Recovery → Adaptive productivity → AI → Operations.
-
-## Project maturity
-
-This project is pre-1.0. The architecture and requirements baselines are frozen
-(SRS v2.0.0); implementation proceeds task by task. The application is not yet a
-feature-complete product and should not yet be relied upon as a primary
-scheduler.
+[MIT](LICENSE) © Kinevo contributors. Third-party components keep their own
+licenses — see the provenance ledger in
+[`docs/third-party/licenses.md`](docs/third-party/licenses.md).
