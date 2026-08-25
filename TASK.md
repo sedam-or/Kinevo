@@ -5190,6 +5190,8 @@ P18 is complete only when:
 # PHASE 19 — WORKSPACE & CONTEXT SYSTEM
 
 ## P19-001 — Workspace Domain
+Status: DONE (2026-08-26) — Workspace aggregate (immutable semantics) + WorkspaceType/WorkspaceStatus VOs + WorkspaceRepository contract + EloquentWorkspaceRepository (slug uniqueness per user with deterministic suffixing; exactly-one-default transactional invariant). U=WorkspaceTest 8/8.
+
 Priority: P0
 
 Create:
@@ -5228,6 +5230,8 @@ Invariants:
 ---
 
 ## P19-002 — Workspace Persistence
+Status: DONE (2026-08-26) — workspaces table + nullable workspace_id FK on goals/programs/tasks/notes/canvases (direct scoping); parent-inherited entities (milestones/subtasks/assignments/canvas files) intentionally NOT scoped directly; User/Profile/Auth/AI settings/theme remain global; Hard Landscape + notifications explicitly left global (P19-002 evaluation recorded in adoptUnassigned comment).
+
 Priority: P0
 
 Workspace-scoped candidates:
@@ -5259,6 +5263,8 @@ Hard Landscape/Notifications must be evaluated explicitly and not blindly scoped
 ---
 
 ## P19-003 — Existing Data Migration
+Status: DONE (2026-08-26) — migration 2026_08_26_000001_create_workspaces_and_scope.php creates Personal per user and backfills all existing rows (idempotent NULL-guard, data-preserving, reversible down()); lazy adoption via EnsureDefaultWorkspaceUseCase for users provisioned after migration (registration hook + safety net); tested.
+
 Priority: P0
 
 Create default:
@@ -5279,6 +5285,8 @@ Migration must be:
 ---
 
 ## P19-004 — Workspace API
+Status: DONE (2026-08-26) — GET/POST /workspaces, GET/PATCH /workspaces/{id}, DELETE .../archive, POST .../restore, POST .../default implemented owner-scoped; OpenAPI Workspaces tag + paths/schemas synced (124 paths, check-openapi PASS). Feature tests 10/10 incl. cross-user isolation.
+
 Priority: P0
 
 Add only missing endpoints:

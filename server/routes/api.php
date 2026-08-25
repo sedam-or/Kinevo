@@ -36,6 +36,7 @@ use App\Http\Controllers\Api\ScheduleOverrideController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TodayController;
 use App\Http\Controllers\Api\WeekController;
+use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -68,6 +69,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/goals/{goalId}/milestones/{milestoneId}/status', [MilestoneController::class, 'status']);
 
     Route::get('/programs', [ProgramController::class, 'index']);
+
+    // TASK-P19-004 — Workspace control plane (owner-scoped).
+    Route::get('/workspaces', [WorkspaceController::class, 'index']);
+    Route::post('/workspaces', [WorkspaceController::class, 'store']);
+    Route::get('/workspaces/{workspaceId}', [WorkspaceController::class, 'show']);
+    Route::patch('/workspaces/{workspaceId}', [WorkspaceController::class, 'update']);
+    Route::put('/workspaces/{workspaceId}', [WorkspaceController::class, 'update']);
+    Route::delete('/workspaces/{workspaceId}/archive', [WorkspaceController::class, 'archive']);
+    Route::post('/workspaces/{workspaceId}/restore', [WorkspaceController::class, 'restore']);
+    Route::post('/workspaces/{workspaceId}/default', [WorkspaceController::class, 'setDefault']);
+
     Route::post('/programs', [ProgramController::class, 'store']);
     Route::get('/programs/{programId}', [ProgramController::class, 'show']);
     Route::put('/programs/{programId}', [ProgramController::class, 'update']);

@@ -35,6 +35,7 @@ use App\Domain\Scheduling\Contracts\ScheduleOverrideRepository;
 use App\Domain\Scheduling\HardConstraintEngine;
 use App\Domain\Tasks\Contracts\SubtaskRepository;
 use App\Domain\Tasks\Contracts\TaskRepository;
+use App\Domain\Workspaces\Contracts\WorkspaceRepository;
 use App\Infrastructure\ActivityLogs\EloquentActivityLogRepository;
 use App\Infrastructure\Adaptive\EloquentContextObservationRepository;
 use App\Infrastructure\Ai\ConfigAiProviderResolver;
@@ -65,6 +66,7 @@ use App\Infrastructure\Scheduling\EloquentScheduleAssignmentRepository;
 use App\Infrastructure\Scheduling\EloquentScheduleOverrideRepository;
 use App\Infrastructure\Tasks\EloquentSubtaskRepository;
 use App\Infrastructure\Tasks\EloquentTaskRepository;
+use App\Infrastructure\Workspaces\EloquentWorkspaceRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -104,6 +106,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AiRunRepository::class, EloquentAiRunRepository::class);
         $this->app->singleton(AiProposalRepository::class, EloquentAiProposalRepository::class);
         $this->app->singleton(AiProviderConfigRepository::class, EloquentAiProviderConfigRepository::class);
+        $this->app->singleton(WorkspaceRepository::class, EloquentWorkspaceRepository::class);
         $this->app->singleton(AiOrchestrator::class, static fn ($app) => new AiOrchestrator($app->make(AiProviderResolver::class)));
         $this->app->singleton(SchedulerRunRepository::class, EloquentSchedulerRunRepository::class);
         $this->app->singleton(ObservabilityService::class, static function ($app) {

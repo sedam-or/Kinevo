@@ -2,6 +2,7 @@
 
 namespace App\Application\Identity;
 
+use App\Application\Workspaces\EnsureDefaultWorkspaceUseCase;
 use App\Domain\Identity\Contracts\ProfileRepository;
 use App\Domain\Identity\ValueObjects\ProfileSettings;
 use App\Models\User;
@@ -16,6 +17,7 @@ final readonly class RegisterUserUseCase
 {
     public function __construct(
         private ProfileRepository $profiles,
+        private EnsureDefaultWorkspaceUseCase $ensureDefaultWorkspace,
     ) {}
 
     /**
@@ -36,6 +38,8 @@ final readonly class RegisterUserUseCase
         event(new Registered($user));
 
         $profile = $this->profiles->create($user->id, ProfileSettings::defaults());
+        // TASK-P19-003 — every new owner starts with a Personal workspace.
+        $this->ensureDefaultWorkspace->__invoke($user->id);
 
         $token = $user->createToken('owner')->plainTextToken;
 

@@ -1355,6 +1355,153 @@ paths:
         '404': { description: Milestone not found }
         '422': { description: Invalid transition }
 
+  # ---------------------------------------------------------------
+  # TASK-P19-004 — Workspace control plane (owner-scoped).
+  # ---------------------------------------------------------------
+  /workspaces:
+    get:
+      tags: [Workspaces]
+      summary: List workspaces of the current user (TASK-P19-004)
+      description: >-
+        Active workspaces by default; archived ones only with
+        include_archived=true. Guarantees a default "Personal" workspace
+        exists (TASK-P19-003 lazy provisioning + adoption).
+      parameters:
+        - name: include_archived
+          in: query
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceListResponse'
+        '401': { description: Unauthorized }
+    post:
+      tags: [Workspaces]
+      summary: Create a workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceCreateRequest'
+      responses:
+        '201':
+          description: Created (slug uniqueness per user is automatic)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
+
+  /workspaces/{workspaceId}:
+    get:
+      tags: [Workspaces]
+      summary: Get a single workspace (owner-scoped 404 otherwise)
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Workspace not found }
+    patch:
+      tags: [Workspaces]
+      summary: Update editable fields (PATCH semantics — omitted keeps stored)
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceUpdateRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Workspace not found }
+
+  /workspaces/{workspaceId}/default:
+    post:
+      tags: [Workspaces]
+      summary: Make this workspace the owner's single default
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK (exactly-one-default invariant maintained)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Workspace not found }
+        '422': { description: Archived workspace cannot become default }
+
+  /workspaces/{workspaceId}/archive:
+    delete:
+      tags: [Workspaces]
+      summary: Archive a workspace (TASK-P19-030)
+      description: >-
+        Preserves all data, hides from the active switcher, prevents new
+        scoped work; always reversible via restore. The default workspace
+        cannot be archived.
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Archived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Workspace not found }
+        '422': { description: The default workspace cannot be archived }
+
+  /workspaces/{workspaceId}/restore:
+    post:
+      tags: [Workspaces]
+      summary: Restore an archived workspace to active
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceResponse'
+        '401': { description: Unauthorized }
+        '404': { description: Workspace not found }
+
   /programs:
     get:
       tags: [Programs]
@@ -4502,6 +4649,53 @@ components:
       required: [status]
       properties:
         status: {type: string, enum: [active, paused, completed, dropped]}
+    # ---------------------------------------------------------------
+    # TASK-P19-001/004 — Workspace schemas.
+    # ---------------------------------------------------------------
+    Workspace:
+      type: object
+      required: [id, user_id, name, slug, type, is_default, status]
+      properties:
+        id: {type: integer}
+        user_id: {type: integer}
+        name: {type: string, maxLength: 80}
+        slug: {type: string, description: 'URL-safe, unique per user'}
+        description: {type: string, maxLength: 500, nullable: true}
+        icon: {type: string, maxLength: 32, nullable: true}
+        accent: {type: string, maxLength: 16, nullable: true}
+        type: {type: string, enum: [personal, work, research, learning, other]}
+        is_default: {type: boolean}
+        status: {type: string, enum: [active, archived]}
+    WorkspaceCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, minLength: 1, maxLength: 80}
+        description: {type: string, maxLength: 500, nullable: true}
+        icon: {type: string, maxLength: 32, nullable: true}
+        accent: {type: string, maxLength: 16, nullable: true}
+        type: {type: string, enum: [personal, work, research, learning, other]}
+    WorkspaceUpdateRequest:
+      type: object
+      properties:
+        name: {type: string, minLength: 1, maxLength: 80}
+        description: {type: string, maxLength: 500, nullable: true}
+        icon: {type: string, maxLength: 32, nullable: true}
+        accent: {type: string, maxLength: 16, nullable: true}
+        type: {type: string, enum: [personal, work, research, learning, other]}
+    WorkspaceResponse:
+      type: object
+      required: [workspace]
+      properties:
+        workspace: {$ref: '#/components/schemas/Workspace'}
+    WorkspaceListResponse:
+      type: object
+      required: [workspaces, default_workspace_id]
+      properties:
+        workspaces:
+          type: array
+          items: {$ref: '#/components/schemas/Workspace'}
+        default_workspace_id: {type: integer, nullable: true}
     ProgramResponse:
       type: object
       required: [program]
