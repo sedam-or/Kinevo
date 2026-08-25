@@ -4478,7 +4478,7 @@ P17-G Analytics / Decision Support UX
 - Notes: —
 
 ### TASK-P17-036 — Documentation
-- Status: TODO
+- Status: DONE (2026-08-24)
 - Priority: P1
 - Depends On: P17 implementation
 - SRS: no SRS change
@@ -4486,9 +4486,15 @@ P17-G Analytics / Decision Support UX
        docs/ai-architecture.md, docs/implementation-status.md, TASK.md,
        CHANGELOG.md
 - Acceptance:
-  - [ ] AI provider settings documented as architecture behavior; phase work
-        reflected; changelog scoped to user-facing outcomes
-- Verification: [ ] doc-link/validate gates PASS
+  - [x] AI provider settings documented as architecture behavior (ai-
+        architecture.md §Provider settings + action-surface matrix); phase
+        work reflected (§104 proven-by refreshed, ui-audit claim log,
+        implementation-status Phase 17 block, browser-e2e run records);
+        changelog scoped to user-facing outcomes (duplicate Fixed section
+        consolidated; real-provider breakdown, note header overflow, stable
+        task order added)
+- Verification: [x] doc-link/validate gates PASS (`make check-links`,
+        `make validate`)
 - Notes: never merge TASK.md and CHANGELOG.md.
 
 ### TASK-P17-037 — Task Board Integration

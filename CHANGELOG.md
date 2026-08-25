@@ -415,6 +415,15 @@ Release governance: see `docs/release-management.md`.
   persisted.
 
 ### Fixed
+- Goal → "Generate with AI" now works end to end against your local Ollama
+  model (Phase 17, TASK-P17-032): a cold model starting up no longer times
+  out at 30 seconds, every proposal is guaranteed to carry the correct goal,
+  and providers that reject empty option blocks no longer break generation.
+- The note editor no longer pushes content off-screen on phones: its header
+  (back button, title, save badge) wraps instead of overflowing at 375–412px
+  widths (Phase 17, TASK-P17-034).
+- Task lists keep one stable order even when several tasks are created in
+  the same moment, instead of occasionally flipping.
 - Canvases no longer silently lose edits made while offline: an autosave that
   failed because the device was offline is now retried automatically as soon
   as connectivity returns (offline-sync.md "sync on reconnect"), instead of
@@ -441,7 +450,6 @@ Release governance: see `docs/release-management.md`.
     wrong relative path caused Docker to mount empty directories and the backup
     restore flow failed.
 
-### Fixed
 - Saving AI provider settings on an empty database no longer creates an extra
   orphan record; the single global settings row bootstraps correctly
   (regression found by P17-007 tests).

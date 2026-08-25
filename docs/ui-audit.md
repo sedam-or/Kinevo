@@ -74,6 +74,12 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 > axe scans clean on Today/Knowledge/Canvas shell after UI-011 fix. Mobile
 > 375px smoke clean on all primary surfaces after UI-012 fixes. Screen-reader
 > live-region smoke green (save/sync states announced, bell named).
+>
+> 2026-08-24 (TASK-P17-034 width sweep): full-surface overflow audit at
+> 375/390/412/768/1024/1440 (`tests/e2e/tests/mobile-sweep.spec.ts`,
+> navigation via the real mobile bottom bar + More drawer). One new UI-012-class
+> defect found and fixed: the note editor header bled up to 68px at 375w — it
+> now wraps and the title input flexes. Sweep green 18/18 across browsers.
 
 > 2026-08-23 (TASK-P17-010, UX hierarchy audit): every major page audited for
 > the ONE-primary-CTA rule (design.md §2.3, §51). Violations fixed:

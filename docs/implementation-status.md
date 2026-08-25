@@ -143,10 +143,32 @@ AI settings discoverability (FR-60)      ✅ DONE (TASK-P17-028: unconfigured/of
                                           AI actions show "AI is not configured."
                                           + [Configure AI] → Settings;
                                           golden-journeys H2 ×3 browsers)
-Contextual AI entry points (FR-60)       ✅ DONE (TASK-P17-029: Note→Summarize/
+ Contextual AI entry points (FR-60)       ✅ DONE (TASK-P17-029: Note→Summarize/
                                           Extract, Canvas→Suggest structure,
                                           Task→Clarify; proposals pending until
                                           accepted; golden-journeys K ×3 browsers)
+ Real-browser verification gate            ✅ DONE (TASK-P17-032: golden-journeys
+                                          G/G2/G3/H/H2/K + journey-i/j green ×3
+                                          browsers against the real local model;
+                                          provider timeout/schema/options fixes)
+ Theme real-browser proof                  ✅ DONE (TASK-P17-033: theme.spec
+                                          18 passed ×3 browsers)
+ Canonical end-to-end product journey      ✅ DONE (TASK-P17-023: one continuous
+                                          session login→goal→AI breakdown→
+                                          milestones→program→scheduled task→
+                                          Today start/complete→progress→
+                                          analytics→schedule; 9 passed ×3)
+ Feature interconnectivity audit           ✅ DONE (TASK-P17-024: navigate/
+                                          understand/act/return walks incl.
+                                          linked-task deep-open + knowledge
+                                          links; 9 passed ×3 browsers)
+ AI action surface audit (FR-61/62)        ✅ DONE (TASK-P17-025: six-question
+                                          matrix in ai-architecture.md; failure
+                                          walk on all five capabilities + browser
+                                          reject path; 6 passed ×3 twice)
+ Mobile UX re-audit                        ✅ DONE (TASK-P17-034: width sweep
+                                          375…1440 across all surfaces; note
+                                          header overflow fixed; 18 passed ×3)
 ```
 
 ### Evidence rule
