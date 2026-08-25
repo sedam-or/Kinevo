@@ -13,6 +13,9 @@ import KInput from '../components/KInput.vue';
 import AiNotConfiguredNotice from '../ai/AiNotConfiguredNotice.vue';
 import { useAiSettingsStore } from '../ai/store';
 import { aiApi } from '../ai/api';
+import { noteApi } from '../note/api';
+import { canvasApi } from '../canvas/api';
+import { knowledgeLinkApi } from '../knowledge/api';
 
 const props = defineProps<{
     taskId: number;
@@ -216,6 +219,53 @@ async function clarifyTask(): Promise<void> {
     }
 }
 
+// TASK-P19-015/018 — knowledge creation from the task inherits the task's
+// workspace context and links back to the task (knowledge_links stay
+// authoritative; workspace only adds context).
+const noteCreating = ref(false);
+const noteError = ref<string | null>(null);
+
+async function addNote(): Promise<void> {
+    const task = tasks.current;
+    if (task === null || noteCreating.value) return;
+    noteCreating.value = true;
+    noteError.value = null;
+    try {
+        const { note } = await noteApi.create({
+            title: `Notes: ${task.title}`,
+            workspace_id: task.workspace_id ?? undefined,
+        });
+        await knowledgeLinkApi.createForNote(note.id, { target_type: 'task', target_id: task.id, link_type: 'related_to' });
+        shell.setView('knowledge', note.id);
+    } catch (err) {
+        noteError.value = (err as { message?: string }).message ?? 'Could not create the note.';
+    } finally {
+        noteCreating.value = false;
+    }
+}
+
+const canvasCreating = ref(false);
+const canvasError = ref<string | null>(null);
+
+async function createCanvas(): Promise<void> {
+    const task = tasks.current;
+    if (task === null || canvasCreating.value) return;
+    canvasCreating.value = true;
+    canvasError.value = null;
+    try {
+        const { canvas } = await canvasApi.create({
+            title: `Canvas: ${task.title}`,
+            task_id: task.id,
+            workspace_id: task.workspace_id ?? undefined,
+        });
+        shell.setView('canvas', canvas.id);
+    } catch (err) {
+        canvasError.value = (err as { message?: string }).message ?? 'Could not create the canvas.';
+    } finally {
+        canvasCreating.value = false;
+    }
+}
+
 const relatedLinks = computed<EntityLink[]>(() => {
     const task = tasks.current;
     const links: EntityLink[] = [];
@@ -226,8 +276,7 @@ const relatedLinks = computed<EntityLink[]>(() => {
         { label: 'Schedule', view: 'schedule' },
         { label: 'Notes', view: 'knowledge' },
         { label: 'Canvas', view: 'canvas' },
-    );
-    return links;
+    );    return links;
 });
 </script>
 
@@ -267,6 +316,18 @@ const relatedLinks = computed<EntityLink[]>(() => {
         <div v-if="tasks.error" class="text-sm text-danger" role="alert" data-testid="task-detail-error">{{ tasks.error.message }}</div>
 
         <EntityLinks :links="relatedLinks" />
+
+        <!-- TASK-P19-015/018 — create knowledge from the task context. -->
+        <div class="flex flex-wrap gap-2" data-testid="task-knowledge-actions">
+            <KButton variant="secondary" :disabled="noteCreating || tasks.current === null" data-testid="task-add-note" @click="addNote">
+                {{ noteCreating ? 'Creating…' : 'Add Note' }}
+            </KButton>
+            <KButton variant="secondary" :disabled="canvasCreating || tasks.current === null" data-testid="task-create-canvas" @click="createCanvas">
+                {{ canvasCreating ? 'Creating…' : 'Create Canvas' }}
+            </KButton>
+        </div>
+        <p v-if="noteError" class="text-sm text-danger" role="alert" data-testid="task-note-error">{{ noteError }}</p>
+        <p v-if="canvasError" class="text-sm text-danger" role="alert" data-testid="task-canvas-error">{{ canvasError }}</p>
 
         <!-- Editform -->
         <section v-if="tasks.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="task-edit">

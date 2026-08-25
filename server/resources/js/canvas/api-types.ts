@@ -49,6 +49,7 @@ export interface CanvasCreatePayload {
     milestone_id?: number | null;
     program_id?: number | null;
     task_id?: number | null;
+    workspace_id?: number;
 }
 
 export interface CanvasSavePayload {

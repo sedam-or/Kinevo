@@ -28,6 +28,7 @@ export interface CreateNotePayload {
     document_json?: Record<string, unknown> | null;
     markdown_cache?: string | null;
     plain_text_cache?: string | null;
+    workspace_id?: number;
 }
 
 export interface UpdateNotePayload {

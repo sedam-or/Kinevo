@@ -12,6 +12,7 @@ export interface Task {
     due_at: string | null;
     progress: number;
     version: number;
+    workspace_id?: number | null;
     created_at?: string;
     updated_at?: string;
 }
