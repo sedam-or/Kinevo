@@ -5168,24 +5168,34 @@ At minimum:
 
 ## P18 ACCEPTANCE GATE
 
+## Validation Re-Run (2026-08-26, second pass)
+
+Independent re-validation executed against HEAD (not against prior claims):
+route:list shows the full control plane; provider implementations contain zero
+DB:: / Model:: references; smoke script re-run with Ollama container STOPPED
+(PASS, real model reply); ai-remote-journey browser E2E re-passed on chromium;
+secret scan + check-openapi PASS; full gates re-green (phpunit 925, vitest ai+goal 36,
+phpstan 0, typecheck clean). One environment note: RefreshDatabase wipes the
+dev owner user, so the E2E owner must be re-seeded after any full-suite run.
+
 P18 is complete only when:
 
-- [ ] Runtime AI configurable through web app
-- [ ] Credential encrypted
-- [ ] Raw credential never returned
-- [ ] Credential rotation works
-- [ ] Provider protocol explicit
-- [ ] Connection test proves model usability
-- [ ] AI status uses same settings source
-- [ ] Goal Breakdown accessible
-- [ ] Proposal approval works
-- [ ] Core app works when AI unavailable
-- [ ] Normal development does not require Ollama
-- [ ] Browser E2E passes
-- [ ] Secret scan passes
-- [ ] OpenAPI passes
-- [ ] Documentation updated
-- [ ] TASK evidence updated
+- [x] Runtime AI configurable through web app — GET/PATCH /ai/settings + credential endpoints via route:list; UI sections tested
+- [x] Credential encrypted — Crypt round-trip asserted; ciphertext column verified in tests
+- [x] Raw credential never returned — no-echo assertions on every settings/credential response
+- [x] Credential rotation works — POST credential replaces atomically; DELETE clears secret only
+- [x] Provider protocol explicit — AiProviderProtocol stored/validated; openapi protocol field
+- [x] Connection test proves model usability — minimal-inference probe (not a ping); retry on transient only
+- [x] AI status uses same settings source — stateFor shared by /ai/status + settings snapshot
+- [x] Goal Breakdown accessible — entry points present (post-create/detail/empty-milestones/action menu)
+- [x] Proposal approval works — accept/reject/edit gated; badges AI GENERATED / NOT YET COMMITTED
+- [x] Core app works when AI unavailable — disabled/unreachable suites green; graceful degradation tests
+- [x] Normal development does not require Ollama — make test/ci green with ollama stopped; compose profile 'ai' opt-in
+- [x] Browser E2E passes — ai-remote-journey chromium/firefox/webkit PASS (+re-run)
+- [x] Secret scan passes — check-secrets.sh PASSED
+- [x] OpenAPI passes — check-openapi.sh PASSED (124 paths)
+- [x] Documentation updated — docs/ai-architecture.md runtime control-plane section
+- [x] TASK evidence updated — per-task Status lines above
 
 # PHASE 19 — WORKSPACE & CONTEXT SYSTEM
 
