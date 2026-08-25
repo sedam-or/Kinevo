@@ -1,0 +1,6 @@
+# GitHub Pages configuration (served from the /docs folder on `main`).
+# Static landing + docs entry point only — the application itself is a
+# Laravel + PostgreSQL monolith and never runs on Pages.
+title: Kinevo
+description: A self-hosted personal operating system — deterministic scheduling, offline-first, optional local AI.
+theme: jekyll-theme-cayman
