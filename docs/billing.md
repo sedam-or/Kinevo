@@ -19,6 +19,9 @@ data ever touches Kinevo storage.
 ## Normative links
 
 - `docs/adr/ADR-012-payment-gateway.md` — why Midtrans (Core API Subscription), Xendit-ready seam.
+- `docs/adr/ADR-013-product-tiers-pricing.md` — LOCKED tiers & prices (Free Rp0; Pro IDR 34,900/mo;
+  Power IDR 49,900/mo; annual unpriced until an explicit owner decision; web-first billing — no
+  Google Play checkout in Android v1; one subscription covers Web + Android).
 - `docs/billing-capability-matrix.md` — verified per-provider capabilities.
 - `docs/api/openapi.yaml` — API contract of record (checkout / webhook / cancel / resume / subscription snapshot).
 - `database/migrations/` — `billing_subscriptions`, `billing_transactions`, `billing_events` (P24).

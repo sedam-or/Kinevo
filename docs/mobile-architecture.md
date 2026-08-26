@@ -83,27 +83,48 @@ Shared logic lives in use cases, never in components.
 
 ## 6. Navigation
 
-Mobile nav mirrors the web information architecture: a bottom tab row
-(`Today · Capture · Goals · Notes · Settings`) backed by NativePHP **Routing** + EDGE screens.
-Each screen is a Blade/EDGE view that invokes the **same application use cases** the web calls.
+Primary bottom tabs (**locked IA**): **Today · Tasks · Capture · Workspace · More**.
+- Today is the single obvious primary path from the shell.
+- More hosts Settings / Review / Notifications (no dead ends).
+- Do NOT copy the desktop sidebar; Android is a capture/decide/execute/review companion,
+  not a shrunken clone (ADR-013).
+- Android back behavior verified during P27-001 device work.
 
 ## 7. Contracts
 
 - **No new API endpoints required for parity.** Mobile consumes the existing OpenAPI surface
   (`docs/api/openapi.yaml`) over Sanctum. The same validation/authorization/ownership rules apply
   server-side — the AI rule, offline rule, and API rule from `AGENTS.md` are unchanged.
+- **Billing boundary (locked, ADR-013): web-first.** Android v1 shows plan/subscription state
+  (`/billing/subscription`, `/saas/plan`) and deep-links to web for checkout/manage; NO Google Play
+  checkout in v1. Extension slots reserved for future Android/iOS native provider adapters without
+  redesign.
 - Mobile must carry an `operation_id` on every mutating call for offline reconciliation.
+
+## 7b. Desktop-vs-Mobile capability matrix (P26-008)
+
+| Scope | Surfaces |
+|-------|----------|
+| **Mobile-first** | Today; Capture; Task execution; Goals; AI Breakdown; Notes; Progress; Notifications; Workspace switching; concise review |
+| **Desktop-first** | full Canvas authoring; advanced analytics; deep planning; bulk editing; advanced workspace administration |
+
+Companion behaviors for desktop-first surfaces: Canvas → read/companion + WebView bridge;
+analytics → summary review surface; planning → goal/task quick actions; bulk editing and
+workspace administration → deferred to a desktop link.
 
 ## 8. Deep links
 
 - Scheme: `kinevo://` (configured in the NativePHP deep-link manifest).
-- Map to in-app screens:
+- Map to in-app screens (runtime verification pending device work, P26-010/P27):
   - `kinevo://today` → Today/NOW
   - `kinevo://task/{id}` → Task detail
   - `kinevo://note/{id}` → Note detail
   - `kinevo://goal/{id}` → Goal detail
+  - `kinevo://workspace/{id}` → Workspace context switch
+  - `kinevo://ai-proposal/{id}` → Pending AI proposal review
 - Incoming links resolve through NativePHP **Deep Links** → router → screen; the same resource ids
-  the web uses.
+  the web uses. Authenticated targets open; unauthorized targets are rejected by the same server
+  ownership rules; unknown targets fail safely to the shell root.
 
 ## 9. Offline reuse (already specified)
 

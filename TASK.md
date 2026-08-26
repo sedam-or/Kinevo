@@ -7006,39 +7006,980 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - Tests: `AiAlertsTest` 5/5 (threshold-fire-once + dismiss, ops-daily-cost not exposed + dedupe,
     anomaly not user-visible, usage summary, BYOK separation). Full suite 970 green; phpstan lint clean.
 ## PHASE 26 — MOBILE ARCHITECTURE
-### P26-001..012 — NativePHP feasibility (verified), single backend, presentation boundary, feature matrix, nav, auth, contracts, offline reuse, deep links, build pipeline
-- Status: PARTIAL DONE (2026-08-26) — documentable architecture complete; device-gated items BLOCKED here.
-  - DONE (evidence): feasibility verified vs official NativePHP v4 docs; `docs/adr/ADR-008-mobile.md`
-    (one backend, API reuse, auth/entitlement/offline/AI/billing boundaries, future iOS);
-    `docs/mobile-architecture.md` (layering, capability matrix desktop-vs-mobile, bottom-tab IA,
-    deep links `kinevo://task|note|goal/{id}`, SQLite↔Postgres sync envelope reuse); locked
-    business decisions applied to the live catalog (Free/Pro/Power tiers; IDR 34,900/49,900;
-    BYOK off on Free — enforced by P25-008 gate + tests).
-  - BLOCKED (no Android SDK/emulator/device in this environment — Rule 0.3/0.5, no fabricated
-    evidence): P26-001 debug-build spike; P26-004..006 runtime verification on device; P26-011
-    reproducible build pipeline. Prereqs: Android Studio toolchain + emulator/API level recorded
-    from real runs. These flip to DONE only with device evidence per DOD.
+
+> Locked business decisions governing this phase (owner, 2026-08-26): Free/Pro/Power tiers
+> (IDR 34,900 / IDR 49,900 monthly; annual NOT priced); Indonesia-first; IDR; Bahasa Indonesia +
+> English; web-first billing (no Google Play checkout in v1); Android-first (iOS documented only);
+> single-user/personal product; one subscription covers Web+Android; BYOK on Pro/Power only
+> (never consumes hosted credits, always bound by runtime safeguards). See
+> `docs/adr/ADR-013-product-tiers-pricing.md` and `docs/adr/ADR-008-mobile.md`.
+> Environment gate: no Android SDK/emulator/device is available here — tasks requiring device
+> evidence stay BLOCKED per Rules 0.3/0.5/0.6 (no fabricated evidence).
+
+### P26-001 — NativePHP Feasibility Spike
+- Status: BLOCKED (requires Android SDK/emulator/device)
+- Priority: High
+- Depends On: Android Studio toolchain install; NativePHP Mobile v4 (already doc-verified)
+- Business Decision: Android-first release target
+- SRS: AI/chapter boundaries unaffected; see docs/SRS.md §13 (AI optional core, FR-60)
+- Design: docs/mobile-architecture.md
+- Files: docs/mobile-architecture.md (version evidence table); spike app under server-mobile/ (new, isolated)
+- Acceptance:
+  - [ ] exact versions recorded (Laravel, PHP, Node/tooling, NativePHP Mobile version, Android toolchain)
+  - [ ] compatibility result recorded
+  - [ ] Android debug build succeeds
+  - [ ] app launches on tested emulator/device
+  - [ ] HTTPS request reaches Kinevo backend
+  - [ ] no unsupported assumption remains undocumented
+- Verification:
+  - [ ] Unit — n/a (spike)
+  - [ ] Integration — backend HTTPS reachable from device client
+  - [ ] E2E — launch + login reachability
+  - [ ] Browser/Device — emulator/device run log recorded in TASK evidence
+- Evidence: —
+- Known Limitations: doc-level verification only (official NativePHP v4 docs) until toolchain exists
+- Notes: never invent NativePHP capabilities; verify against current official docs at execution time
+
+### P26-002 — Mobile Architecture ADR
+- Status: DONE (2026-08-26)
+- Priority: High
+- Depends On: P26-001 doc-level verification
+- Business Decision: one backend; Android-first; iOS future boundary
+- SRS: —
+- Design: docs/adr/ADR-008-mobile.md
+- Files: docs/adr/ADR-008-mobile.md
+- Acceptance:
+  - [x] ADR exists (one backend; mobile as presentation/application client; API reuse; auth;
+        entitlement; offline; AI; billing; Canvas; future iOS boundary all stated)
+  - [x] ADR matches actual implementation (same Domain/Application/Infra reused; EDGE presentation)
+  - [x] no duplicate backend/domain (modular monolith preserved, ADR-001)
+- Verification:
+  - [x] Unit — n/a (document)
+  - [x] Integration — n/a
+  - [x] E2E — n/a
+  - [x] Browser/Device — n/a
+- Evidence: ADR committed `c042fb1`; cross-referenced from docs/architecture.md Mobile boundary
+- Known Limitations: runtime claims re-verified at P26-001 execution time
+- Notes: alternatives rejected: RN/Flutter, PWA/webview-only, separate Swift/Kotlin client
+
+### P26-003 — Mobile Client Layering
+- Status: DONE (2026-08-26)
+- Priority: High
+- Depends On: P26-002
+- Business Decision: backend owns authorization, persistence, AI provider access, subscription, entitlement
+- SRS: dependency rule (domain MUST NOT import presentation)
+- Design: docs/architecture.md; docs/mobile-architecture.md §1–§2
+- Files: docs/mobile-architecture.md
+- Acceptance:
+  - [x] layer boundaries documented (presentation / client state / transport / local cache+queue / platform services)
+  - [x] cross-layer dependency violations absent (EDGE UI sits above same dependency rule)
+  - [x] no domain duplication (single Laravel modular monolith)
+- Verification:
+  - [x] Unit — n/a (document)
+  - [x] Integration — n/a
+  - [x] E2E — n/a
+  - [x] Browser/Device — n/a
+- Evidence: docs/mobile-architecture.md layering diagram; ADR-008
+- Known Limitations: enforcement becomes real when mobile shell exists (P27-001)
+- Notes: Vue components intentionally NOT reused on mobile
+
+### P26-004 — Mobile Authentication
+- Status: BLOCKED (device runtime required)
+- Priority: High
+- Depends On: P26-001 (toolchain), existing Sanctum auth (`POST /auth/login`, `GET /auth/me`)
+- Business Decision: one account across Web+Android; no separate mobile identity
+- SRS: identity chapter
+- Design: docs/mobile-architecture.md §4 (Sanctum token in SecureStorage; Biometrics = local unlock only)
+- Files: mobile shell auth module (new, P27-001 host); reuse existing API contracts
+- Acceptance:
+  - [ ] login passes
+  - [ ] logout passes
+  - [ ] session restoration passes
+  - [ ] expired session passes
+  - [ ] unauthorized route cannot expose protected data
+  - [ ] secure platform storage used; no raw AI provider secret; no raw billing secret on device
+- Verification:
+  - [ ] Unit — n/a (client runtime)
+  - [ ] Integration — Sanctum token lifecycle against dev backend
+  - [ ] E2E — login→restore→logout on device
+  - [ ] Browser/Device — emulator/device evidence
+- Evidence: —
+- Known Limitations: server contracts already proven by AuthApiTest suite (existing tests green)
+- Notes: 401 handling maps to session-expired recovery UX (P27-012)
+
+### P26-005 — Mobile Entitlement Consumption
+- Status: BLOCKED (device runtime); server side DONE since P23/P25
+- Priority: High
+- Depends On: P26-004; EntitlementService (authoritative server truth)
+- Business Decision: Free/Pro/Power matrix (locked); local cache NEVER authoritative
+- SRS: SaaS chapters
+- Design: docs/mobile-architecture.md §4–§5; config/saas.php catalog
+- Files: mobile entitlement projection (new); reuse `/saas/plan` contract
+- Acceptance:
+  - [ ] Free entitlement renders correctly
+  - [ ] Pro entitlement renders correctly
+  - [ ] Power entitlement renders correctly
+  - [ ] expired/canceled entitlement handled correctly
+  - [ ] offline mode cannot forge upgraded entitlement
+- Verification:
+  - [ ] Unit — server matrix covered by SaasApiTest/BYOK-gate tests (existing, green)
+  - [ ] Integration — plan switching reflected through `/saas/plan`
+  - [ ] E2E — downgrade path (Journey G) on device
+  - [ ] Browser/Device — three-tier render evidence
+- Evidence: server-side: `config/saas.php` matrix + 970-test suite incl. custom_provider 403 on Free
+- Known Limitations: cached projection may show stale-but-safe state; authoritative check stays server-side
+- Notes: mirrors AGENTS offline rule — cache is not source of truth
+
+### P26-006 — Mobile Billing Boundary
+- Status: BLOCKED (device runtime); policy + server half DONE
+- Priority: High
+- Depends On: P24 billing (Midtrans, ADR-012); P26-005
+- Business Decision: WEB-FIRST BILLING — Android v1 has NO Google Play subscription checkout; extension adapters reserved
+- SRS: billing chapters; docs/adr/ADR-012-payment-gateway.md
+- Design: docs/mobile-architecture.md §7; docs/adr/ADR-013-product-tiers-pricing.md
+- Files: docs/mobile-architecture.md (extension boundary note); mobile Plan screen (future)
+- Acceptance:
+  - [ ] Android has no v1 payment SDK dependency
+  - [ ] web subscription state appears in Android (read-only via `/billing/subscription`, `/saas/plan`)
+  - [ ] manage path exists (deep-link to web manage page; cancel/resume remain server endpoints)
+  - [ ] future native billing boundary documented (Android/iOS provider adapter slot without redesign)
+- Verification:
+  - [ ] Unit — n/a
+  - [ ] Integration — subscription state read from existing endpoints
+  - [ ] E2E — Journey E (web purchase → Android sees entitlement)
+  - [ ] Browser/Device — Android shows correct tier
+- Evidence: server half: BillingCheckout/Webhook/CancelResume tests green; price catalog locked
+- Known Limitations: checkout happens on web browser; Android deep-links out
+- Notes: gateway decision NOT reopened inside P26–P30
+
+### P26-007 — Mobile Navigation IA
+- Status: DONE (2026-08-26, documentation)
+- Priority: Medium
+- Depends On: P26-003
+- Business Decision: Android = capture/decide/execute/review companion (not shrunken desktop clone)
+- SRS: —
+- Design: docs/mobile-architecture.md §6
+- Files: docs/mobile-architecture.md
+- Acceptance:
+  - [x] navigation hierarchy documented — primary tabs: **Today · Tasks · Capture · Workspace · More**
+  - [x] Today ≤ 1 obvious primary path from shell
+  - [ ] Android back behavior verified (DEFERRED to P27-001 device verification)
+  - [x] no dead-end navigation (More routes to Settings/Review/Notifications)
+- Verification:
+  - [x] Unit — n/a
+  - [x] Integration — n/a
+  - [ ] E2E — back-stack test lands with P27-001
+  - [ ] Browser/Device — device evidence pending
+- Evidence: IA fixed in docs (supersedes earlier draft tab set)
+- Known Limitations: back behavior needs real device
+- Notes: do NOT copy desktop sidebar
+
+### P26-008 — Desktop-vs-Mobile Capability Matrix
+- Status: DONE (2026-08-26, documentation)
+- Priority: Medium
+- Depends On: P26-007
+- Business Decision: mobile-first surfaces vs desktop-first surfaces (locked split below)
+- SRS: —
+- Design: docs/mobile-architecture.md §5
+- Files: docs/mobile-architecture.md
+- Acceptance (matrix as specified):
+  - [x] MOBILE-FIRST documented: Today; Capture; Task execution; Goals; AI Breakdown; Notes; Progress;
+        Notifications; Workspace switching; concise review
+  - [x] DESKTOP-FIRST documented: full Canvas authoring; advanced analytics; deep planning; bulk editing;
+        advanced workspace administration
+  - [x] every desktop-first feature has a mobile companion behavior (Canvas→read/companion + WebView bridge;
+        analytics→summary surface; planning→goal/task quick actions; bulk edit→deferred to web link)
+- Verification:
+  - [x] Unit — n/a
+  - [x] Integration — n/a
+  - [x] E2E — n/a
+  - [ ] Browser/Device — validated during P27 flows
+- Evidence: matrix table in docs/mobile-architecture.md
+- Known Limitations: —
+- Notes: companion behaviors must exist before mobile ships those gaps
+
+### P26-009 — Mobile Offline Boundary
+- Status: DONE (2026-08-26, documentation)
+- Priority: High
+- Depends On: docs/offline-sync.md; P26-003
+- Business Decision: PostgreSQL/server stays canonical; device SQLite local-canonical reconciles up
+- SRS: offline chapter (NFR continuity)
+- Design: docs/offline-sync.md; docs/mobile-architecture.md §3/§9
+- Files: docs/mobile-architecture.md
+- Acceptance:
+  - [x] offline architecture documented
+  - [x] existing queue reused or extension justified (operation_id/base_version envelope reused verbatim)
+  - [x] workspace-aware cache keys (workspace context part of cache scope)
+  - [x] conflict behavior documented (409 stale version; never silent overwrite)
+- Verification:
+  - [x] Unit — envelope semantics already tested server-side (concurrency rules)
+  - [ ] Integration — device sync engine (P27 gating item)
+  - [ ] E2E — offline capture → reconnect reconcile
+  - [ ] Browser/Device — device evidence pending
+- Evidence: documented; sync engine flagged as P27's binding dependency
+- Known Limitations: SQLite↔Postgres schema parity requires repository abstraction discipline
+- Notes: NO business logic inside the offline layer (rule restated)
+
+### P26-010 — Mobile Deep Links
+- Status: DONE (documentation) — runtime verify DEFERRED to P27
+- Priority: Medium
+- Depends On: P26-001; NativePHP Deep Links capability (doc-verified)
+- Business Decision: ownership preserved; unauthorized target rejected
+- SRS: navigation/knowledge linking semantics
+- Design: docs/mobile-architecture.md §8
+- Files: docs/mobile-architecture.md
+- Acceptance:
+  - [x] targets enumerated: Task, Goal, Note, Workspace, AI Proposal (`kinevo://` scheme),
+        each marked for device verification
+  - [ ] authenticated target opens (device evidence pending)
+  - [ ] unauthorized target rejected (device evidence pending)
+  - [x] unknown target fails safely (router falls back to shell root; no crash path)
+  - [x] ownership preserved (ownership checks belong to the same server contracts)
+- Verification:
+  - [ ] Unit — n/a
+  - [ ] Integration — link → screen resolver
+  - [ ] E2E — cold-start deep link
+  - [ ] Browser/Device — pending P27
+- Evidence: scheme + route map documented
+- Known Limitations: AI Proposal id needs stable deep-link shape — verify against NativePHP docs at build time
+- Notes: support only where technically verified (master rule)
+
+### P26-011 — Android Build Pipeline
+- Status: BLOCKED (requires Android SDK/toolchain)
+- Priority: High
+- Depends On: P26-001
+- Business Decision: Android-first v1
+- SRS: —
+- Design: docs/mobile-architecture.md (references NativePHP publishing docs)
+- Files: Makefile targets (planned): `mobile-build-debug`, `mobile-build-release-like`; .gitignore additions
+- Acceptance:
+  - [ ] clean checkout debug build works
+  - [ ] required environment documented (SDK/JDK versions, keystores location policy)
+  - [ ] artifacts appropriately gitignored/managed
+  - [ ] release prerequisites documented (signing keystore custody, Play listing basics)
+- Verification:
+  - [ ] Unit — n/a
+  - [ ] Integration — CI-less local pipeline first
+  - [ ] E2E — build artifact installs
+  - [ ] Browser/Device — APK runs on emulator/device
+- Evidence: —
+- Known Limitations: cannot be produced without toolchain present
+- Notes: reproducibility > speed; document before automating
+
+### P26-012 — P26 FINAL GATE
+- Status: BLOCKED (awaiting P26-001/004/005/006/011 device evidence)
+- Priority: High
+- Depends On: ALL P26 tasks
+- Business Decision: —
+- SRS: —
+- Design: —
+- Files: TASK.md (this entry)
+- Acceptance:
+  - [ ] compatibility proven (P26-001)
+  - [ ] architecture documented (DONE — ADR-008 + mobile-architecture.md)
+  - [ ] auth works (P26-004)
+  - [ ] entitlement works (P26-005)
+  - [ ] web-first billing boundary works (P26-006)
+  - [ ] offline boundary is valid (P26-009)
+  - [ ] Android build is reproducible (P26-011)
+  - [ ] no duplicate backend/domain (structurally guaranteed; confirm after spike)
+  - [ ] TASK evidence recorded (this board + P26 sub-evidence)
+- Verification:
+  - [ ] Unit / Integration / E2E / Browser-Device — aggregate of subtasks
+- Evidence: partial (documentation halves complete, cited above)
+- Known Limitations: —
+- Notes: gate clears only with real device evidence per DOD
+
 ## PHASE 27 — NATIVEPHP ANDROID MVP
-### P27-001..015 — shell/today/capture/execution/goal-AI/notes/canvas-companion/review/notifications/workspace/state-UX/accessibility/device-matrix/gate
-- Status: BLOCKED (env) · Depends On: P26 device-gated items (Android toolchain) + sync engine design + P23/P25.
-  LOCKED policy applied already at contract level: web-first billing (no Play checkout in v1),
-  single subscription covers Web+Android, Android = capture/decide/execute/review companion
-  (see docs/mobile-architecture.md). Implementation requires the Android build environment;
-  no task may claim DONE without device evidence (Rule 0.5/0.6).
+
+> Objective: implement ONLY the high-value mobile workflows. Every task below follows the §12
+> board format; statuses assume the Android environment gate (P26-011) is cleared, otherwise the
+> owning task remains device-blocked. Android MUST NOT become a shrunken desktop clone.
+
+### P27-001 — Android Shell
+- Status: TODO · Priority: High · Depends On: P26-011, P26-004
+- Business Decision: capture/decide/execute/review companion; theme matches P20 design tokens
+- SRS: — · Design: docs/design-tokens.md; docs/mobile-architecture.md §5–§6
+- Files: mobile app shell (routes/native.php, shell views, stores)
+- Acceptance:
+  - [ ] authenticated/unauthenticated states work
+  - [ ] theme matches P20 tokens
+  - [ ] offline indicator visible
+  - [ ] fatal error boundary has recovery path
+  - [ ] bottom nav = Today · Tasks · Capture · Workspace · More
+- Verification: Unit(store) / Integration(auth gate) / E2E(shell flow) / Device(screenshot matrix)
+- Evidence: — · Known Limitations: — · Notes: workspace context persisted across restart
+
+### P27-002 — Today
+- Status: TODO · Priority: High · Depends On: P27-001
+- Business Decision: NOW/NEXT/LATER hierarchy is the mobile spine
+- SRS: scheduling/today chapters (FR-01/11/15 read paths)
+- Design: docs/design.md (Today section)
+- Files: Today screen + today store
+- Acceptance:
+  - [ ] active workspace correct (context switch clean)
+  - [ ] primary (NOW) task obvious
+  - [ ] Start works
+  - [ ] Complete works
+  - [ ] Reschedule works where allowed
+  - [ ] no cross-workspace stale content after switch
+- Verification: Unit / Integration(/today contract) / E2E / Device
+- Evidence: — · Known Limitations: — · Notes: reuse existing `/today` payloads, scoped fetches only
+
+### P27-003 — Quick Capture
+- Status: TODO · Priority: High · Depends On: P27-001
+- Business Decision: context = explicit parent > active workspace
+- SRS: capture scope
+- Design: docs/design.md Quick Capture
+- Files: Capture sheet (Task/Note modes)
+- Acceptance:
+  - [ ] Task capture works
+  - [ ] Note capture works
+  - [ ] workspace inheritance correct
+  - [ ] online persistence immediate
+  - [ ] offline queue where supported (operation_id envelope)
+  - [ ] duplicate prevention (idempotency key on repeated submits)
+- Verification: Unit / Integration / E2E / Device(offline toggle)
+- Evidence: — · Known Limitations: — · Notes: mutation queue persists across app close
+
+### P27-004 — Mobile Task Execution
+- Status: TODO · Priority: High · Depends On: P27-002
+- Business Decision: — 
+- SRS: task lifecycle state machine
+- Design: docs/state-machine-ui.md
+- Files: Task detail screen
+- Acceptance:
+  - [ ] valid lifecycle actions work (view/start/complete)
+  - [ ] invalid transitions rejected with clear feedback
+  - [ ] partial completion persists
+  - [ ] subtask changes persist
+  - [ ] progress remains correct
+  - [ ] activity/progress events remain correct (server-authored)
+- Verification: Unit / Integration(state transitions) / E2E / Device
+- Evidence: — · Known Limitations: — · Notes: timer states follow existing ExecutionTimer contract
+
+### P27-005 — Goal View
+- Status: TODO · Priority: High · Depends On: P27-001
+- Business Decision: — 
+- SRS: goals/milestones chapters
+- Design: docs/design.md goal surface
+- Files: Goal view screen
+- Acceptance:
+  - [ ] title/outcome/progress/deadline/milestones render from backend data
+  - [ ] data matches backend exactly (no client-derived metrics)
+  - [ ] workspace correct
+  - [ ] next action clear
+- Verification: Unit / Integration / E2E / Device
+- Evidence: — · Known Limitations: — · Notes: deep link `kinevo://goal/{id}` lands here
+
+### P27-006 — AI Goal Breakdown
+- Status: TODO · Priority: High · Depends On: P27-005; P23/P25 entitlements
+- Business Decision: hosted AI consumes Kinevo credits; BYOK uses user credential (no hosted credits);
+  ALL credential handling server-side; human approval mandatory (proposal never auto-committed)
+- SRS: AI chapters (FR-60..62)
+- Design: docs/ai-architecture.md; docs/mobile-architecture.md §5
+- Files: Breakdown proposal flow screens
+- Acceptance:
+  - [ ] entitlement checked server-side (entitlement gate unchanged)
+  - [ ] raw key never reaches Android (masked hints only)
+  - [ ] proposal not auto-committed
+  - [ ] acceptance creates milestones via accept endpoint
+  - [ ] rejection records decision
+  - [ ] provider failure yields actionable UX (AI_PROVIDER_UNAVAILABLE surfaced)
+  - [ ] usage ledger correct (ai_runs request_id/credits/ledger intact)
+- Verification: Unit(server use cases, existing) / Integration(ledger split) / E2E(proposal cycle) / Device
+- Evidence: — · Known Limitations: — · Notes: Free users without BYOK get hosted credits w/ limits
+
+### P27-007 — Mobile Notes
+- Status: TODO · Priority: Medium · Depends On: P27-001
+- Business Decision: edit only where ergonomically justified on phone
+- SRS: knowledge chapter (Kinevo owns notes semantics)
+- Design: docs/knowledge-layer.md; docs/design.md
+- Files: Notes list/detail screens
+- Acceptance:
+  - [ ] ownership enforced (server)
+  - [ ] workspace scoping correct
+  - [ ] version conflict handled (optimistic base_version, 409 UX)
+  - [ ] offline behavior defined (queue mutations, reconcile on reconnect)
+  - [ ] link Task/Goal supported
+- Verification: Unit / Integration / E2E / Device
+- Evidence: — · Known Limitations: Tiptap authoring stays desktop; mobile = light edits
+- Notes: 
+
+### P27-008 — Canvas Companion
+- Status: TODO · Priority: Medium · Depends On: P27-001
+- Business Decision: MVP MUST NOT force full phone canvas authoring
+- SRS: canvas chapter
+- Design: docs/mobile-architecture.md §5 (WebView bridge row)
+- Files: Canvas companion screen
+- Acceptance:
+  - [ ] Canvas reachable from linked Task
+  - [ ] view/open recent changes render
+  - [ ] linked entities listed
+  - [ ] sync status meaningful (honest cache age/state)
+  - [ ] quick Task/Note action available
+  - [ ] no false full-edit affordance
+- Verification: Unit / Integration / E2E / Device
+- Evidence: — · Known Limitations: Excalidraw authoring stays desktop-bound
+- Notes: ownership protected via existing canvas contracts
+
+### P27-009 — Mobile Review
+- Status: TODO · Priority: Medium · Depends On: P27-002
+- Business Decision: metrics authoritative from backend only — no fabricated calculations
+- SRS: analytics/review chapters
+- Design: docs/design.md review surface
+- Files: Review screen
+- Acceptance:
+  - [ ] task completion shown (server metric)
+  - [ ] goal progress shown (server metric)
+  - [ ] focus summary shown
+  - [ ] relevant recovery surfaced
+  - [ ] concise insights (deterministic engine once P28-003 lands)
+  - [ ] action links work
+- Verification: Unit / Integration / E2E / Device
+- Evidence: — · Known Limitations: pre-P28 insights limited to existing analytics endpoints
+- Notes: 
+
+### P27-010 — Notifications
+- Status: TODO · Priority: Medium · Depends On: P27-001
+- Business Decision: privacy-preserving payloads; read state syncs
+- SRS: notifications chapter
+- Design: docs/mobile-architecture.md §5 (push/local rows)
+- Files: notification center + push wiring
+- Acceptance:
+  - [ ] no secret/private content leakage in payload previews
+  - [ ] deep link opens correct authenticated target
+  - [ ] read state consistent across devices
+  - [ ] existing relevant notification kinds supported
+- Verification: Unit / Integration(read sync) / E2E / Device(push plugin)
+- Evidence: — · Known Limitations: push provider setup needed (Firebase project)
+- Notes: 
+
+### P27-011 — Workspace Switching
+- Status: TODO · Priority: High · Depends On: P27-001
+- Business Decision: workspace provides context, never replaces domain relationships
+- SRS: workspace scoping (P24-000 foundation)
+- Design: docs/mobile-architecture.md §6
+- Files: Workspace switcher
+- Acceptance:
+  - [ ] switch succeeds
+  - [ ] current context changes everywhere
+  - [ ] prior workspace data does not flash into new workspace
+  - [ ] reload restores correct context
+- Verification: Unit / Integration(scope keys) / E2E / Device
+- Evidence: — · Known Limitations: — · Notes: reuse workspace-aware cache keys (P26-009)
+
+### P27-012 — Mobile State UX
+- Status: TODO · Priority: High · Depends On: P27-001
+- Business Decision: — 
+- SRS: usability NFRs
+- Design: docs/design.md state patterns
+- Files: shared state components
+- Acceptance:
+  - [ ] loading state exists and tested
+  - [ ] empty state exists and tested
+  - [ ] offline state exists and tested
+  - [ ] retryable error exists and tested
+  - [ ] conflict (409) state exists and tested
+  - [ ] unauthorized state exists and tested
+  - [ ] entitlement-limited state exists and tested (upgrade path)
+  - [ ] each state has recovery action where applicable
+- Verification: Unit(component) / Integration / E2E / Device
+- Evidence: — · Known Limitations: — · Notes: no silent failures
+
+### P27-013 — Android Accessibility
+- Status: TODO · Priority: Medium · Depends On: P27-001
+- Business Decision: — 
+- SRS: accessibility NFRs
+- Design: docs/design.md accessibility
+- Files: global styles/components audit
+- Acceptance:
+  - [ ] labels present on all interactive elements
+  - [ ] touch targets ≥ platform minimum
+  - [ ] contrast passes design-token AA pairs
+  - [ ] text scaling remains usable
+  - [ ] semantic order sensible in core workflows
+  - [ ] core workflows remain usable with TalkBack
+- Verification: Unit(n/a) / Integration(n/a) / E2E(n/a) / Device(accessibility scanner)
+- Evidence: — · Known Limitations: — · Notes: leverage native EDGE accessibility primitives
+
+### P27-014 — Android Device Matrix
+- Status: TODO · Priority: Medium · Depends On: P27-015 candidate builds
+- Business Decision: Android-first v1
+- SRS: — 
+- Design: —
+- Files: docs/browser-e2e.md sibling device log (or TASK evidence here)
+- Acceptance:
+  - [ ] small Android phone tested
+  - [ ] typical Android phone tested
+  - [ ] larger Android phone tested
+  - [ ] exact models/API versions recorded FROM ACTUAL TESTS
+  - [ ] critical flows pass on all three
+- Verification: Device(matrix run logs)
+- Evidence: — · Known Limitations: emulators acceptable if physical devices unavailable (recorded honestly)
+- Notes: 
+
+### P27-015 — P27 FINAL GATE
+- Status: TODO · Priority: High · Depends On: ALL P27 tasks
+- Business Decision: — 
+- SRS: — · Design: — · Files: TASK.md
+- Acceptance:
+  - [ ] auth · [ ] Today · [ ] capture · [ ] task execution · [ ] Goal · [ ] AI · [ ] Notes
+  - [ ] Canvas companion · [ ] review · [ ] notifications · [ ] Workspace
+  - [ ] offline/error UX · [ ] entitlement · [ ] Android device evidence
+- Verification: aggregate of subtasks (Unit/Integration/E2E/Device)
+- Evidence: — · Known Limitations: — · Notes: gate is binary per Rule 0.6
+
 ## PHASE 28 — PRODUCT INTELLIGENCE + WRAPPED
-### P28-001..012 — source matrix, metric catalog, insight engine, AI narrative, archetype, monthly review, yearly Wrapped, share artifact, public link, reflection→goal, entitlement, gate
-- Status: TODO · Depends On: P23 entitlements (wrapped key exists in catalog: Power=true).
-  Entitlement split per locked decision lands with implementation; FREE keeps basic summary,
-  PRO advanced/yearly + AI narrative, POWER expanded insights/share. No metric may use UI-only state.
+
+> Objective: evidence-based reflection and shareable storytelling. Deterministic first, AI bounded.
+
+### P28-001 — Intelligence Source Matrix
+- Status: TODO · Priority: High · Depends On: P23 data foundations
+- Business Decision: Wrapped FREE=basic, PRO=advanced/yearly, POWER=expanded (locked)
+- SRS: analytics chapters · Design: docs/mobile-architecture.md §9 upcoming; docs/domain-model.md
+- Files: docs/… intelligence matrix section (owner doc: TASK note + analytics module doc)
+- Acceptance:
+  - [ ] sources documented: Goals; Milestones; Tasks; Activity Logs; Progress Events; Focus Sessions;
+        scheduling outcomes; Workspace context
+  - [ ] every metric source documented
+  - [ ] no metric uses UI-only state
+- Verification: Unit(review of sources) / Integration(n/a) / E2E(n/a) / Device(n/a)
+- Evidence: — · Known Limitations: — · Notes: mirrors JOURNEY H inputs
+
+### P28-002 — Metric Catalog
+- Status: TODO · Priority: High · Depends On: P28-001
+- Business Decision: — 
+- SRS: analytics chapter · Design: —
+- Files: MetricCatalog class + tests (Application/Intelligence)
+- Acceptance (metrics with exact formulas defined):
+  - [ ] goals created/completed · [ ] milestones advanced/completed · [ ] tasks completed
+  - [ ] completion ratio · [ ] focus minutes · [ ] active days · [ ] streak where supported
+  - [ ] goal progress · [ ] planned vs completed work
+  - [ ] every metric defines: source, formula, date range, timezone, inclusion, exclusion, null behavior
+  - [ ] tests for all metrics
+- Verification: Unit(all formulas) / Integration(source queries) / E2E(n/a) / Device(n/a)
+- Evidence: — · Known Limitations: — · Notes: deterministic; timezone-aware (profile timezone)
+
+### P28-003 — Insight Engine
+- Status: TODO · Priority: High · Depends On: P28-002
+- Business Decision: AI assists, never silently controls; deterministic insights precede narrative
+- SRS: insights · Design: docs/ai-architecture.md boundary
+- Files: InsightEngine service + types
+- Acceptance (every insight implemented):
+  - [ ] positive trend · [ ] negative trend · [ ] consistency · [ ] goal alignment
+  - [ ] planning/execution gap · [ ] workload pattern
+  - [ ] every insight has evidence attached
+  - [ ] deterministic output (same inputs → same outputs)
+  - [ ] tests
+- Verification: Unit(each insight) / Integration(metrics feed) / E2E(n/a) / Device(n/a)
+- Evidence: — · Known Limitations: — · Notes: non-diagnostic language rules apply
+
+### P28-004 — AI Narrative
+- Status: TODO · Priority: Medium · Depends On: P28-003; AI gateway
+- Business Decision: AI receives ONLY validated metrics/insights (untrusted-input pipeline applies)
+- SRS: AI chapters (FR-60..62) · Design: docs/ai-architecture.md
+- Files: NarrativeUseCase (structured output schema)
+- Acceptance:
+  - [ ] bounded context (validated metrics package only)
+  - [ ] schema validation for structured response
+  - [ ] invalid response rejected (no silent fallback to invented data)
+  - [ ] AI-unavailable fallback keeps deterministic summary usable
+  - [ ] AI MUST NOT invent numbers/dates/goals/medical/psych/causation (guardrails tested)
+- Verification: Unit(schema reject cases) / Integration(provider stub) / E2E(n/a) / Device(n/a)
+- Evidence: — · Known Limitations: quality depends on provider; costs metered via existing ledger
+- Notes: 
+
+### P28-005 — Behavioral Archetype
+- Status: OPTIONAL (implement only after P28-003 proves out) · Priority: Low · Depends On: P28-003
+- Business Decision: behavior-derived ONLY; explainable; NON-diagnostic
+- SRS: — · Design: —
+- Files: Archetype classifier + label copy
+- Acceptance:
+  - [ ] archetypes Builder/Finisher/Explorer/Strategist/Deep Worker derive from behavior evidence
+  - [ ] evidence shown to user (why this archetype)
+  - [ ] no health/psychology claims (copy review)
+  - [ ] non-deterministic personality claims prohibited
+- Verification: Unit(classifier thresholds) / Integration / E2E / Device(n/a)
+- Evidence: — · Known Limitations: skip entirely if evidence rules cannot be met cleanly
+- Notes: 
+
+### P28-006 — Monthly Review
+- Status: TODO · Priority: High · Depends On: P28-002/003
+- Business Decision: FREE gets basic monthly/yearly summary when enough data exists
+- SRS: review · Design: docs/design.md review
+- Files: MonthlyReview screen/API composition
+- Acceptance:
+  - [ ] activity section (metrics) · [ ] progress section · [ ] notable changes
+  - [ ] stalled items surfaced · [ ] suggested next focus (from insights, actionable)
+  - [ ] deterministic metrics underlying everything · [ ] evidence visible · [ ] next action present
+- Verification: Unit / Integration / E2E(web) / Device(mobile review later)
+- Evidence: — · Known Limitations: — · Notes: feeds Reflection→Goal (P28-010)
+
+### P28-007 — Yearly Wrapped
+- Status: TODO · Priority: High · Depends On: P28-006
+- Business Decision: ENTITLEMENT SPLIT LOCKED — FREE basic summary; PRO advanced yearly + richer
+  comparisons + AI narrative where available; POWER all PRO + deeper history + expanded share
+- SRS: wrapped chapters · Design: docs/design.md wrapped surface
+- Files: Wrapped flow (sections + composition)
+- Acceptance (required sections):
+  - [ ] opening · [ ] goals · [ ] milestones · [ ] execution · [ ] focus · [ ] knowledge
+  - [ ] major progress · [ ] patterns · [ ] reflection · [ ] next direction
+  - [ ] FREE: basic summary rendered
+  - [ ] PRO: advanced yearly Wrapped rendered
+  - [ ] POWER: expanded insights/share customization rendered
+- Verification: Unit(per-section builders) / Integration(entitlement branches) / E2E(Journey H) / Device
+- Evidence: — · Known Limitations: — · Notes: uses history.depth entitlement for depth ceilings
+
+### P28-008 — Shareable Artifact
+- Status: TODO · Priority: Medium · Depends On: P28-007
+- Business Decision: privacy-safe by default; explicit user confirmation required
+- SRS: sharing/security · Design: docs/design.md share cards
+- Files: ShareCard renderer (vertical story / square / downloadable card-image)
+- Acceptance:
+  - [ ] user sees EXACT share payload before confirming
+  - [ ] privacy-safe by default (no raw private task/note/canvas content)
+  - [ ] explicit confirmation step required
+  - [ ] formats: vertical story · square · download image/card
+  - [ ] preview required before any external action
+- Verification: Unit(payload builder) / Integration(storage/export) / E2E(preview→confirm) / Device(save image)
+- Evidence: — · Known Limitations: — · Notes: POWER expands customization options only
+
+### P28-009 — Public Share Link
+- Status: OPTIONAL/DECISION_REQUIRED (owner confirmed public links?) · Priority: Low · Depends On: P28-008
+- Business Decision: IF implemented — non-guessable token; revocable; privacy-safe payload
+- SRS: security NFRs · Design: docs/api/openapi.yaml additions
+- Files: PublicShareLink model/controller/tests (+ migration)
+- Acceptance:
+  - [ ] unauthorized access test passes
+  - [ ] revoke test passes
+  - [ ] no private data leakage in public payload
+  - [ ] token non-guessable (entropy documented)
+- Verification: Unit(token) / Integration(revoke) / E2E(link visit logged-out) / Device(n/a)
+- Evidence: — · Known Limitations: rate limiting + abuse monitoring required before enabling
+- Notes: skip unless owner explicitly green-lights public sharing
+
+### P28-010 — Reflection to Goal
+- Status: TODO · Priority: Medium · Depends On: P28-006
+- Business Decision: NO automatic Goal creation — explicit confirmation mandatory
+- SRS: goals · Design: docs/design.md reflection loop
+- Files: Insight→Goal composer dialog
+- Acceptance:
+  - [ ] no automatic Goal creation anywhere
+  - [ ] explicit confirmation step present
+  - [ ] workspace context preserved (target workspace selectable/correct default)
+  - [ ] Goal creation succeeds through normal use case
+- Verification: Unit / Integration / E2E(insight→confirmed goal) / Device
+- Evidence: — · Known Limitations: — · Notes: closes the intention loop (final product definition §16)
+
+### P28-011 — Wrapped Entitlement
+- Status: TODO · Priority: High · Depends On: P28-007
+- Business Decision: FREE basic / PRO advanced+AI / POWER deeper history + share customization
+- SRS: entitlements · Design: config/saas.php keys (wrapped=true currently Power; extend keys per catalog)
+- Files: entitlement keys expansion (wrapped.yearly, wrapped.advanced_share, insights.*, history.depth)
+- Acceptance:
+  - [ ] backend enforcement tests (each tier × each capability)
+  - [ ] frontend enforcement (gates hidden/disabled states)
+  - [ ] downgrade does NOT delete historical data
+  - [ ] expired/canceled subscription degrades gracefully to Free view
+- Verification: Unit(policy matrix) / Integration(API denials) / E2E(Journey G interplay) / Device(view-only)
+- Evidence: — · Known Limitations: exact numeric limits come from approved catalog (never invented)
+- Notes: reuse P23 EntitlementService — NO second entitlement system (Rule 0.1)
+
+### P28-012 — P28 FINAL GATE
+- Status: TODO · Priority: High · Depends On: ALL P28 tasks
+- Business Decision: — · SRS: — · Design: — · Files: TASK.md
+- Acceptance:
+  - [ ] metric catalog · [ ] insight engine · [ ] AI narrative · [ ] monthly review
+  - [ ] yearly Wrapped · [ ] share artifact · [ ] privacy · [ ] entitlement · [ ] reflection loop · [ ] E2E
+- Verification: Unit/Integration/E2E suites green + browser evidence for wrapped flow
+- Evidence: — · Known Limitations: — · Notes: —
+
 ## PHASE 29 — BETA / GROWTH VALIDATION
-### P29-001..012 — target user, activation, funnel, retention, AI adoption, workspace adoption, pricing validation, unit economics, UX research, churn taxonomy, feature freeze, gate
-- Status: DECISION_REQUIRED/USERS-GATED · Requires real beta users; not code-only (Rule 0.7:
-  not uncontrolled feature work). Pricing catalog authoritative: Free Rp0 / Pro Rp34.900 / Power
-  Rp49.900 monthly; annual price must NOT be invented (blocked list §13). Unit economics track
-  hosted-AI cost separately from BYOK (BYOK never in Kinevo spend).
+
+> Objective: validate whether users repeatedly obtain value. NOT uncontrolled feature development
+> (Rule 0.7). Requires REAL USERS — measurement/instrumentation tasks are buildable; conclusions
+> require beta traffic.
+
+### P29-001 — Target User
+- Status: TODO(doc) · Priority: Medium · Depends On: —
+- Business Decision: Indonesia-first; individual users; multiple goals/projects; fragmented tools
+- SRS: product definition · Design: —
+- Files: docs/… persona/profile note
+- Acceptance:
+  - [ ] target user profile documented
+  - [ ] exclusions documented (teams/enterprise explicitly OUT per locked decisions)
+- Verification: Doc review · Evidence: — · Known Limitations: refined by research (P29-009) · Notes: —
+
+### P29-002 — Activation Definition
+- Status: TODO · Priority: High · Depends On: P29-001
+- Business Decision: canonical activation = signup → workspace → Goal → Task/milestone → execute/complete
+- SRS: — · Design: — · Files: event instrumentation service + tests
+- Acceptance:
+  - [ ] exact event definition written (event names, properties, timestamp semantics)
+  - [ ] instrumentation implemented (server-emitted, privacy-safe)
+  - [ ] test event verified end-to-end
+- Verification: Unit(event builders) / Integration(DB write) / E2E(signup→activation emits) / Device(n/a)
+- Evidence: — · Known Limitations: — · Notes: no PII in event payloads beyond ids
+
+### P29-003 — Core Loop Funnel
+- Status: TODO · Priority: High · Depends On: P29-002
+- Business Decision: — · SRS: — · Design: — · Files: funnel query/report command
+- Acceptance:
+  - [ ] funnel measures: Goal created → Breakdown → Task created → Task executed → Task completed → repeat use
+  - [ ] report/query available (ops command or SQL view)
+- Verification: Integration(seed+query) · Evidence: sample run captured · Notes: —
+
+### P29-004 — Retention
+- Status: TODO · Priority: High · Depends On: P29-002
+- Business Decision: — · SRS: — · Design: — · Files: retention query/command
+- Acceptance:
+  - [ ] definitions documented (D1/D7/D30/WAU/recurring core-loop usage with timezone semantics)
+  - [ ] report/query available
+- Verification: Integration(fixtures across day boundaries) · Evidence: — · Known Limitations: — · Notes: —
+
+### P29-005 — AI Adoption
+- Status: TODO · Priority: Medium · Depends On: P25 ledger
+- Business Decision: BYOK adoption tracked WITHOUT consuming hosted credits distinction preserved
+- SRS: AI chapters · Design: docs/ai-architecture.md · Files: adoption counters/report
+- Acceptance:
+  - [ ] tracks: AI provider setup; Goal Breakdown usage; proposal acceptance; hosted credit consumption;
+        BYOK adoption
+  - [ ] no unnecessary raw prompt storage (metadata only)
+- Verification: Unit / Integration(ai_runs aggregates) / E2E / Device(n/a)
+- Evidence: — · Known Limitations: — · Notes: extends P25 observability, no duplication
+
+### P29-006 — Workspace Adoption
+- Status: TODO · Priority: Medium · Depends On: P29-002
+- Business Decision: single-user personal product (multiple workspaces OK; no teams)
+- SRS: workspace chapter · Design: — · Files: counters/report
+- Acceptance:
+  - [ ] metrics available: workspace creation; second-workspace creation; switching frequency; scoped work share
+- Verification: Integration · Evidence: — · Known Limitations: — · Notes: —
+
+### P29-007 — Pricing Validation
+- Status: TODO(instrumentation)/GATED(real signups) · Priority: High · Depends On: P24 billing live
+- Business Decision: LOCKED PRICES — Free Rp0; Pro Rp34,900/month; Power Rp49,900/month.
+  Annual price/discount MUST NOT be invented (DECISION_REQUIRED blocklist §13)
+- SRS: billing · Design: docs/adr/ADR-013-product-tiers-pricing.md · Files: pricing report query
+- Acceptance:
+  - [ ] pricing catalog is authoritative (config/billing.php + saas.php — already locked)
+  - [ ] metrics instrumented: signup by tier; upgrade intent; conversion; cancellation; downgrade; churn;
+        AI cost/user
+- Verification: Integration(billing events→report) · Evidence: sandbox transactions only · Notes: —
+
+### P29-008 — Unit Economics
+- Status: TODO · Priority: Medium · Depends On: P29-007
+- Business Decision: BYOK cost stays separate from Kinevo-hosted spend forever; NO profitability claims
+- SRS: — · Design: — · Files: economics worksheet/query (internal only)
+- Acceptance:
+  - [ ] tracks internally: subscription revenue; payment fee; hosted AI cost; infrastructure cost;
+        storage/bandwidth if material; support burden if measurable
+  - [ ] gross contribution signal computable
+  - [ ] no unsupported profitability claim published anywhere
+- Verification: Integration(cost tables populated) · Evidence: — · Known Limitations: — · Notes: —
+
+### P29-009 — UX Research
+- Status: GATED(real users) · Priority: High · Depends On: beta cohort
+- Business Decision: — · SRS: — · Design: — · Files: interview script + findings doc
+- Acceptance:
+  - [ ] validate: what Kinevo is; first-value comprehension; Workspace understanding;
+        Goal Breakdown understanding; Today usefulness; AI trust; pricing comprehension
+  - [ ] research summary written · [ ] top blockers ranked
+- Verification: n/a (research) · Evidence: interviews/sessions recordings notes · Known Limitations: — · Notes: —
+
+### P29-010 — Failure/Churn Taxonomy
+- Status: TODO · Priority: Medium · Depends On: P29-009 start
+- Business Decision: — · SRS: — · Design: — · Files: taxonomy section in research doc
+- Acceptance:
+  - [ ] taxonomy categories: technical; UX; product value; pricing; AI quality; performance; missing workflow
+  - [ ] incidents classified as they occur (living log)
+- Verification: n/a · Evidence: classification log · Known Limitations: — · Notes: —
+
+### P29-011 — Beta Feature Freeze
+- Status: ACTIVE ON BETA START · Priority: High · Depends On: P29 go-live
+- Business Decision: freeze respects rescue-phase-style discipline
+- SRS: — · Design: — · Files: TASK.md hold-list section
+- Acceptance:
+  - [ ] only P0/P1 defects, validated UX fixes, reliability fixes allowed
+  - [ ] new features require explicit owner decision
+  - [ ] beta hold-list enforced (recorded here)
+- Verification: process gate · Evidence: exemption log · Known Limitations: — · Notes: —
+
+### P29-012 — P29 FINAL GATE
+- Status: GATED · Priority: High · Depends On: ALL P29 + real cohort
+- Business Decision: — · SRS: — · Design: — · Files: TASK.md
+- Acceptance:
+  - [ ] target user · [ ] activation · [ ] retention · [ ] AI adoption · [ ] Workspace adoption
+  - [ ] pricing measurement · [ ] unit economics · [ ] UX research · [ ] churn taxonomy · [ ] feature freeze
+- Verification: reports present + research concluded · Evidence: dashboard/exports · Notes: gate binary
+
 ## PHASE 30 — V1.0 PRODUCTION RELEASE
-### P30-001..018 — freeze, semver, changelog, OS/SaaS boundary, migration dry-run, Web E2E, Android smoke, subscription E2E, AI economics E2E, security audit, backup drill, monitoring, runbooks, prod config, release notes, tag, rollback, gate
-- Status: BLOCKED · Requires ALL prior gates green + real infra (backup restore drill, three-browser
-  E2E run, sandbox payment evidence) + explicit operator approval for the v1.0.0 tag (never auto-tagged).
+
+> Objective: stable Indonesia-first Kinevo SaaS with Web + Android. Operator approval REQUIRED for
+> the tag; agent never tags/releases autonomously (AGENTS release lifecycle).
+
+### P30-001 — Release Freeze
+- Status: TODO · Priority: High · Depends On: P28/P29 gates
+- Business Decision: — · SRS: — · Design: — · Files: freeze announcement note
+- Acceptance:
+  - [ ] freeze announced · [ ] exceptions recorded (allowed: P0/P1, security, data integrity, release blockers)
+- Verification: process · Evidence: exception log · Notes: —
+
+### P30-002 — Semantic Versioning
+- Status: TODO(doc) · Priority: Medium · Depends On: —
+- Business Decision: SemVer; app version from latest v* git tag (AGENTS lifecycle)
+- SRS: — · Design: docs/release-management.md (exists — align, do not duplicate)
+- Files: docs/release-management.md updates
+- Acceptance:
+  - [ ] major/minor/patch policy documented · [ ] manifests aligned
+- Verification: make version-check green · Evidence: — · Notes: —
+
+### P30-003 — Changelog
+- Status: TODO · Priority: High · Depends On: P30-002
+- Business Decision: pricing changes; AI policy; mobile availability; known limitations included
+- SRS: — · Design: Keep a Changelog · Files: CHANGELOG.md release cut
+- Acceptance:
+  - [ ] categories Added/Changed/Fixed/Security/Deprecated/Removed complete
+  - [ ] pricing · AI policy · mobile availability · known limitations present
+- Verification: make changelog-check green · Evidence: — · Notes: —
+
+### P30-004 — Open Source / SaaS Boundary
+- Status: TODO · Priority: Medium · Depends On: —
+- Business Decision: repo open-source; SaaS infra + gateway providers externalized
+- SRS: — · Design: docs/third-party/licenses.md · Files: boundary doc section (docs/billing.md or deployment.md)
+- Acceptance:
+  - [ ] open-source source documented · [ ] SaaS-only infrastructure documented
+  - [ ] external providers/payment gateway/AI gateway/BYOK documented
+  - [ ] licensing review done · [ ] third-party attribution current · [ ] boundary documented
+- Verification: license checker · Evidence: licenses ledger current · Notes: —
+
+### P30-005 — Production Migration Dry Run
+- Status: BLOCKED(needs prod-like backup) · Priority: High · Depends On: infrastructure access
+- Business Decision: — · SRS: — · Design: docs/deployment.md · Files: drill script/log
+- Acceptance:
+  - [ ] restore backup succeeds · [ ] migrate succeeds · [ ] validate · [ ] smoke
+  - [ ] data integrity verified
+- Verification: drill transcript · Evidence: timestamps/log excerpts · Known Limitations: — · Notes: RPO/RTO noted
+
+### P30-006 — Web E2E
+- Status: TODO · Priority: High · Depends On: suites stable
+- Business Decision: — · SRS: journeys · Design: docs/browser-e2e.md
+- Files: Playwright/spec expansion
+- Acceptance — critical journeys all green:
+  - [ ] Login · [ ] Workspace · [ ] Goal · [ ] AI · [ ] Milestone · [ ] Task · [ ] Today · [ ] Note
+  - [ ] Canvas · [ ] Schedule · [ ] Analytics · [ ] Billing · [ ] Entitlement · [ ] Wrapped
+  - [ ] Chromium green · [ ] Firefox green · [ ] WebKit green
+- Verification: E2E x3 engines · Evidence: CI/local run logs · Notes: —
+
+### P30-007 — Android Smoke
+- Status: BLOCKED(device+release APK) · Priority: High · Depends On: P26-011/P27 gates
+- Business Decision: Android-first v1 · SRS: — · Design: — · Files: smoke checklist
+- Acceptance:
+  - [ ] install · [ ] launch · [ ] login · [ ] Workspace · [ ] Today · [ ] Task · [ ] Goal · [ ] AI
+  - [ ] Notes · [ ] entitlement · [ ] offline · [ ] reconnect
+  - [ ] release-like APK used · [ ] representative device · [ ] no P0/P1 crash
+- Verification: Device smoke transcript · Evidence: — · Notes: —
+
+### P30-008 — Subscription E2E
+- Status: BLOCKED(sandbox credentials + real webhook run) · Priority: High · Depends On: P24 + P26-006
+- Business Decision: web checkout only; one subscription covers Web+Android
+- SRS: billing · Design: docs/adr/ADR-012 · Files: E2E spec
+- Acceptance:
+  - [ ] Free→Pro purchase on web → verified webhook → subscription active → entitlement active
+        → Android login → Pro access
+  - [ ] Power path · [ ] cancellation · [ ] downgrade · [ ] expiration covered
+- Verification: sandbox evidence · webhook evidence · entitlement evidence · cross-device evidence
+- Evidence: — · Known Limitations: — · Notes: mirrors JOURNEY B/C/E/G/F
+
+### P30-009 — AI Economics E2E
+- Status: TODO · Priority: High · Depends On: P25 ledger + P30-008 env
+- Business Decision: hosted consumes credits; BYOK does NOT; both stay safeguarded
+- SRS: AI chapters · Design: docs/ai-architecture.md · Files: E2E assertions on ledger
+- Acceptance:
+  - [ ] Free hosted AI · [ ] Pro hosted AI · [ ] Power hosted AI · [ ] Pro BYOK · [ ] Power BYOK
+  - [ ] usage ledger proves correct classification (ledger=kinevo|byok, credits_consumed correctness)
+  - [ ] no raw secret leak anywhere in responses/logs
+- Verification: Unit(existing AiUsage/AiAlerts suites) / Integration / E2E / Device(n/a)
+- Evidence: — · Known Limitations: — · Notes: extends JOURNEY D
+
+### P30-010 — Security Final Audit
+- Status: TODO · Priority: High · Depends On: features frozen
+- Business Decision: — · SRS: security NFRs · Design: SECURITY.md (disclosure) · Files: audit report doc
+- Acceptance — all negative cases have expected results:
+  - [ ] IDOR · [ ] cross-workspace · [ ] entitlement bypass · [ ] price tampering
+  - [ ] fake payment success · [ ] invalid webhook · [ ] duplicate webhook · [ ] BYOK leak
+  - [ ] billing-secret leak · [ ] Wrapped leak · [ ] unauthorized deep link · [ ] expired-subscription bypass
+- Verification: targeted test matrix executed · Evidence: report · Notes: no open P0/P1 findings allowed
+
+### P30-011 — Backup/Restore Final Drill
+- Status: BLOCKED(prod infra) · Priority: High · Depends On: P30-005 environment
+- Business Decision: — · SRS: durability NFRs · Design: docs/deployment.md · Files: drill log
+- Acceptance:
+  - [ ] restore success across: user; workspace; goals; tasks; Notes; Canvas; subscription; entitlement;
+        AI usage; billing events
+  - [ ] integrity verification · [ ] RPO/RTO evidence
+- Verification: drill transcript · Evidence: — · Notes: —
+
+### P30-012 — Monitoring and Alerts
+- Status: TODO · Priority: High · Depends On: infra
+- Business Decision: — · SRS: operations · Design: docs/deployment.md · Files: alert configs + test log
+- Acceptance (alerts configured AND tested):
+  - [ ] app down · [ ] database unhealthy · [ ] queue failure · [ ] scheduler failure · [ ] AI outage
+  - [ ] payment webhook failure · [ ] backup failure · [ ] abnormal AI spend (ties to P25-010 ops alerts)
+  - [ ] abnormal payment failure
+- Verification: induced-failure drill per alert · Evidence: fired alerts log · Notes: —
+
+### P30-013 — Support/Incident Runbooks
+- Status: TODO · Priority: Medium · Depends On: P30-012
+- Business Decision: — · SRS: — · Design: — · Files: runbooks/ folder
+- Acceptance:
+  - [ ] runbooks exist: payment mismatch; AI unavailable; account issue; entitlement mismatch;
+        mobile issue; data issue; rollback
+  - [ ] owner identified per runbook
+- Verification: tabletop walkthrough (at least rollback) · Evidence: — · Notes: —
+
+### P30-014 — Production Configuration Verification
+- Status: BLOCKED(prod secrets/infra) · Priority: High · Depends On: deploy target
+- Business Decision: never commit secrets · SRS: — · Design: docs/environment.md · Files: checklist
+- Acceptance:
+  - [ ] APP_KEY · DB · storage · mail · AI gateway · payment gateway · TLS · backup · monitoring verified
+  - [ ] no secrets baked into image · [ ] health endpoint passes · [ ] production smoke passes
+- Verification: checklist transcript · Evidence: — · Notes: —
+
+### P30-015 — Release Notes
+- Status: TODO · Priority: Medium · Depends On: P30-003
+- Business Decision: publishes Free/Pro/Power pricing; AI usage policy; BYOK; Android availability;
+  Wrapped; known limitations; support channels
+- SRS: — · Design: — · Files: RELEASE_NOTES or GitHub Release body draft
+- Acceptance:
+  - [ ] release summary written · [ ] reviewed before publish
+- Verification: doc review · Evidence: — · Notes: publishing remains manual/operator action
+
+### P30-016 — v1.0.0 Tag
+- Status: BLOCKED(operator approval mandatory) · Priority: High · Depends On: P30-018 gate green
+- Business Decision: tag only after ALL gates · SRS: — · Design: docs/release-management.md · Files: git tag v1.0.0
+- Acceptance:
+  - [ ] tag created · [ ] changelog tied · [ ] release notes attached · [ ] reproducible build evidenced
+- Verification: make release-dry-run green beforehand · Evidence: — · Notes: agent NEVER auto-tags
+
+### P30-017 — Rollback Procedure
+- Status: TODO(doc)+drill · Priority: High · Depends On: P30-013
+- Business Decision: — · SRS: reliability · Design: docs/deployment.md · Files: rollback runbook
+- Acceptance:
+  - [ ] trigger criteria · operator roles · deploy rollback steps · DB considerations · customer impact ·
+        communications template — all documented
+  - [ ] tabletop OR real drill performed
+- Verification: drill log · Evidence: — · Notes: —
+
+### P30-018 — P30 FINAL GATE
+- Status: GATED · Priority: High · Depends On: EVERYTHING above
+- Business Decision: v1.0 releases ONLY when all gates green
+- SRS: — · Design: — · Files: TASK.md sign-off
+- Acceptance:
+  - [ ] technical · security · subscription · entitlement · AI economics · Web E2E · Android smoke
+  - [ ] backup · monitoring · support ready · documentation ready — ALL green
+- Verification: compiled gate report citing each subsystem's evidence · Evidence: —
+- Known Limitations: — · Notes: no silent weakening of any gate
 
 Execution rule: sequential P21→P22→…; P26/P27 may parallelize only after API/security stability per roadmap §3.
