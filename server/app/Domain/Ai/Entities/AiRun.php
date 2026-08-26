@@ -25,6 +25,10 @@ final class AiRun
         public readonly int $latencyMs,
         public readonly ?string $errorCode,
         public readonly CarbonImmutable $createdAt,
+        public readonly ?string $requestId = null,
+        public readonly int $creditsConsumed = 0,
+        public readonly ?int $estimatedCostMinor = null,
+        public readonly ?string $costCurrency = null,
     ) {}
 
     public static function success(
@@ -39,6 +43,10 @@ final class AiRun
         ?int $outputTokens,
         int $latencyMs,
         ?CarbonImmutable $createdAt = null,
+        int $creditsConsumed = 0,
+        ?string $requestId = null,
+        ?int $estimatedCostMinor = null,
+        ?string $costCurrency = null,
     ): self {
         return new self(
             null,
@@ -55,6 +63,10 @@ final class AiRun
             $latencyMs,
             null,
             $createdAt ?? CarbonImmutable::now(),
+            $requestId,
+            $creditsConsumed,
+            $estimatedCostMinor,
+            $costCurrency,
         );
     }
 
@@ -68,6 +80,7 @@ final class AiRun
         int $latencyMs,
         string $errorCode,
         ?CarbonImmutable $createdAt = null,
+        ?string $requestId = null,
     ): self {
         return new self(
             null,
@@ -84,6 +97,7 @@ final class AiRun
             $latencyMs,
             $errorCode,
             $createdAt ?? CarbonImmutable::now(),
+            $requestId,
         );
     }
 
@@ -104,6 +118,10 @@ final class AiRun
             $this->latencyMs,
             $this->errorCode,
             $this->createdAt,
+            $this->requestId,
+            $this->creditsConsumed,
+            $this->estimatedCostMinor,
+            $this->costCurrency,
         );
     }
 
@@ -114,6 +132,7 @@ final class AiRun
     {
         return [
             'id' => $this->id,
+            'request_id' => $this->requestId,
             'user_id' => $this->userId,
             'provider' => $this->provider,
             'model' => $this->model,
@@ -123,6 +142,9 @@ final class AiRun
             'context_hash' => $this->contextHash,
             'input_tokens' => $this->inputTokens,
             'output_tokens' => $this->outputTokens,
+            'credits_consumed' => $this->creditsConsumed,
+            'estimated_cost_minor' => $this->estimatedCostMinor,
+            'cost_currency' => $this->costCurrency,
             'status' => $this->status,
             'latency_ms' => $this->latencyMs,
             'error_code' => $this->errorCode,

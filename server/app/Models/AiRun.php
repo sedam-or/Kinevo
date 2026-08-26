@@ -17,12 +17,17 @@ use Illuminate\Support\Carbon;
  * @property string|null $context_hash
  * @property int|null $input_tokens
  * @property int|null $output_tokens
+ * @property int $credits_consumed
+ * @property int|null $estimated_cost_minor
+ * @property string|null $cost_currency
+ * @property string|null $request_id
  * @property string $status
  * @property int $latency_ms
  * @property string|null $error_code
  * @property Carbon $created_at
  */
 #[Fillable([
+    'request_id',
     'user_id',
     'provider',
     'model',
@@ -32,6 +37,9 @@ use Illuminate\Support\Carbon;
     'context_hash',
     'input_tokens',
     'output_tokens',
+    'credits_consumed',
+    'estimated_cost_minor',
+    'cost_currency',
     'status',
     'latency_ms',
     'error_code',

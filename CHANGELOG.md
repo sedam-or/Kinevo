@@ -19,6 +19,10 @@ Release governance: see `docs/release-management.md`.
   explains itself in plain language instead of developer terms, and note and
   canvas lists no longer show internal revision counters.
 ### Added
+- AI usage is now metered and honest (Phase 25, TASK-P25-001..005): every AI action is refused up front
+  (403) once your monthly credits run out, and only successful generations spend a credit — failed
+  provider calls burn nothing. Each run records a stable request id, tokens and credits spent, so the
+  AI-runs history shows exactly what each request consumed.
 - Billing is live against the real Midtrans sandbox (Phase 24, TASK-P24-035/036): a user can
   start a paid checkout whose pending subscription is created by the provider, and a
   signature-verified settlement webhook activates the subscription, records the payment

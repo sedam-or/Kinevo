@@ -22,7 +22,6 @@ use App\Application\Ai\SetAiProviderCredentialUseCase;
 use App\Application\Ai\SetAiProviderEnabledUseCase;
 use App\Application\Ai\TestAiProviderConnectionUseCase;
 use App\Application\Ai\UpdateAiProposalUseCase;
-use App\Application\Saas\EntitlementService;
 use App\Domain\Ai\AiOutputException;
 use App\Domain\Ai\AiProviderException;
 use App\Domain\Ai\Contracts\AiProposalRepository;
@@ -30,6 +29,7 @@ use App\Domain\Ai\Entities\AiProposal as AiProposalEntity;
 use App\Domain\Ai\ValueObjects\AiProposalType;
 use App\Domain\Ai\ValueObjects\AiRequest;
 use App\Domain\Ai\ValueObjects\AiRole;
+use App\Domain\Saas\Exceptions\EntitlementLimitException;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -61,28 +61,15 @@ final class AiController extends Controller
         private readonly RejectAiProposalUseCase $rejectProposal,
         private readonly UpdateAiProposalUseCase $updateProposal,
         private readonly AiProposalRepository $proposalRepository,
-        private readonly EntitlementService $entitlements,
     ) {}
 
     /**
-     * TASK-P23-007 — metered AI preflight: deny before any provider call
-     * when the monthly ai_credits allowance is exhausted.
+     * TASK-P23-007/P25-004 — metered AI denial is enforced inside the use
+     * cases (AiCreditGuard); controllers only translate the domain denial.
      */
-    private function consumeAiCredit(Request $request): ?JsonResponse
+    private function deniedEntitlement(EntitlementLimitException $e): JsonResponse
     {
-        if ($this->entitlements->remaining($request->user()->id, 'ai_credits') <= 0) {
-            $plan = $this->entitlements->planFor($request->user()->id);
-
-            return response()->json([
-                'error' => "Monthly AI credits exhausted on the {$plan->name} plan.",
-                'code' => 'ENTITLEMENT_LIMIT',
-                'entitlement' => 'ai_credits',
-                'plan' => $plan->code,
-            ], 403);
-        }
-        $this->entitlements->consume($request->user()->id, 'ai_credits');
-
-        return null;
+        return response()->json($e->toResponse(), 403);
     }
 
     public function status(): JsonResponse
@@ -248,10 +235,6 @@ final class AiController extends Controller
 
         $data = $validator->validated();
 
-        if (($denied = $this->consumeAiCredit($request)) !== null) {
-            return $denied;
-        }
-
         // TASK-P22-006 — per-user single-flight: one in-flight generation per
         // owner; concurrent requests are rejected instead of piling up cost.
         $lock = Cache::lock('ai:generate:'.$request->user()->id, 60);
@@ -260,13 +243,18 @@ final class AiController extends Controller
         }
 
         try {
-            $response = $this->generateText->__invoke(new AiRequest(
-                new AiRole($data['role']),
-                $data['prompt'],
-                $data['system_prompt'] ?? null,
-                isset($data['temperature']) ? (float) $data['temperature'] : null,
-                $data['max_tokens'] ?? null,
-            ));
+            $response = $this->generateText->__invoke(
+                $request->user()->id,
+                new AiRequest(
+                    new AiRole($data['role']),
+                    $data['prompt'],
+                    $data['system_prompt'] ?? null,
+                    isset($data['temperature']) ? (float) $data['temperature'] : null,
+                    $data['max_tokens'] ?? null,
+                ),
+            );
+        } catch (EntitlementLimitException $e) {
+            return $this->deniedEntitlement($e);
         } catch (AiProviderException $e) {
             return response()->json([
                 'error' => $e->getMessage(),
@@ -299,9 +287,6 @@ final class AiController extends Controller
         }
 
         $data = $validator->validated();
-        if (($denied = $this->consumeAiCredit($request)) !== null) {
-            return $denied;
-        }
 
         try {
             $validated = $this->generateProposal->__invoke(
@@ -310,6 +295,8 @@ final class AiController extends Controller
                 $data['prompt'],
                 $data['system_prompt'] ?? null,
             );
+        } catch (EntitlementLimitException $e) {
+            return $this->deniedEntitlement($e);
         } catch (AiProviderException $e) {
             return response()->json([
                 'error' => $e->getMessage(),
@@ -466,10 +453,6 @@ final class AiController extends Controller
 
         $data = $validator->validated();
 
-        if (($denied = $this->consumeAiCredit($request)) !== null) {
-            return $denied;
-        }
-
         try {
             $proposal = $this->generateNoteProposal->__invoke(
                 $request->user()->id,
@@ -477,6 +460,8 @@ final class AiController extends Controller
                 new AiProposalType(AiProposalType::SUMMARY),
                 $data['instructions'] ?? null,
             );
+        } catch (EntitlementLimitException $e) {
+            return $this->deniedEntitlement($e);
         } catch (InvalidArgumentException $e) {
             if (str_starts_with($e->getMessage(), 'Note not found')) {
                 return response()->json(['error' => $e->getMessage()], 404);
@@ -511,16 +496,14 @@ final class AiController extends Controller
 
         $data = $validator->validated();
 
-        if (($denied = $this->consumeAiCredit($request)) !== null) {
-            return $denied;
-        }
-
         try {
             $proposal = $this->generateCanvasProposal->__invoke(
                 $request->user()->id,
                 $data['prompt'],
                 $data['system_prompt'] ?? null,
             );
+        } catch (EntitlementLimitException $e) {
+            return $this->deniedEntitlement($e);
         } catch (AiProviderException $e) {
             return response()->json([
                 'error' => $e->getMessage(),
@@ -558,6 +541,8 @@ final class AiController extends Controller
                 new AiProposalType(AiProposalType::TASK_EXTRACTION),
                 $data['instructions'] ?? null,
             );
+        } catch (EntitlementLimitException $e) {
+            return $this->deniedEntitlement($e);
         } catch (InvalidArgumentException $e) {
             if (str_starts_with($e->getMessage(), 'Note not found')) {
                 return response()->json(['error' => $e->getMessage()], 404);

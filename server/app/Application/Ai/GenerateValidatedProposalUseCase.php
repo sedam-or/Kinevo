@@ -32,6 +32,7 @@ final readonly class GenerateValidatedProposalUseCase
         private AiSchemaRegistry $registry,
         private StructuredAiOutputParser $parser,
         private AiRunRepository $runs,
+        private AiCreditGuard $credits,
     ) {}
 
     public function __invoke(
@@ -44,12 +45,14 @@ final readonly class GenerateValidatedProposalUseCase
         $provider = $this->resolver->resolve();
         $contextHash = hash('sha256', $prompt);
         $schemaVersion = $this->registry->versionFor($type);
+        $requestId = $this->credits->begin($userId);
 
         try {
             $response = $this->ai->generate(new AiRequest($type->role(), $prompt, $systemPrompt));
 
             $proposal = $this->parser->parse($type, $response->text);
 
+            $this->credits->spend($userId);
             $this->runs->record(AiRun::success(
                 $userId,
                 $response->provider,
@@ -61,19 +64,22 @@ final readonly class GenerateValidatedProposalUseCase
                 $response->promptTokens,
                 $response->completionTokens,
                 $response->latencyMs,
+                null,
+                1,
+                $requestId,
             ));
 
             return $proposal;
         } catch (AiProviderException $e) {
-            $this->recordFailure($userId, $provider->name(), $provider->model(), $type, $schemaVersion, $contextHash, $started, AiProviderException::CODE_UNAVAILABLE);
+            $this->recordFailure($userId, $provider->name(), $provider->model(), $type, $schemaVersion, $contextHash, $started, AiProviderException::CODE_UNAVAILABLE, $requestId);
 
             throw $e;
         } catch (AiOutputException $e) {
-            $this->recordFailure($userId, $provider->name(), $provider->model(), $type, $schemaVersion, $contextHash, $started, AiOutputException::CODE_INVALID);
+            $this->recordFailure($userId, $provider->name(), $provider->model(), $type, $schemaVersion, $contextHash, $started, AiOutputException::CODE_INVALID, $requestId);
 
             throw $e;
         } catch (InvalidArgumentException $e) {
-            $this->recordFailure($userId, $provider->name(), $provider->model(), $type, $schemaVersion, $contextHash, $started, AiOutputException::CODE_INVALID);
+            $this->recordFailure($userId, $provider->name(), $provider->model(), $type, $schemaVersion, $contextHash, $started, AiOutputException::CODE_INVALID, $requestId);
 
             throw $e;
         }
@@ -88,6 +94,7 @@ final readonly class GenerateValidatedProposalUseCase
         string $contextHash,
         int $started,
         string $errorCode,
+        ?string $requestId = null,
     ): void {
         $this->runs->record(AiRun::failed(
             $userId,
@@ -98,6 +105,8 @@ final readonly class GenerateValidatedProposalUseCase
             $contextHash,
             (int) ((hrtime(true) - $started) / 1_000_000),
             $errorCode,
+            null,
+            $requestId,
         ));
     }
 }

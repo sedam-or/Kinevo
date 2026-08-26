@@ -5502,6 +5502,7 @@ components:
       required: [id, user_id, provider, model, proposal_type, status, latency_ms, created_at]
       properties:
         id: {type: integer}
+        request_id: {type: string, nullable: true, description: Per-request identity (TASK-P25-002)}
         user_id: {type: integer}
         provider: {type: string}
         model: {type: string}
@@ -5511,6 +5512,9 @@ components:
         context_hash: {type: string, nullable: true}
         input_tokens: {type: integer, nullable: true}
         output_tokens: {type: integer, nullable: true}
+        credits_consumed: {type: integer, minimum: 0, description: Metered credits spent (TASK-P25-001/003)}
+        estimated_cost_minor: {type: integer, nullable: true, description: Provider cost estimate in minor units when priced (TASK-P25-001)}
+        cost_currency: {type: string, nullable: true}
         status: {type: string, enum: [success, failed]}
         latency_ms: {type: integer, minimum: 0}
         error_code: {type: string, nullable: true}

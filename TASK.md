@@ -6934,8 +6934,15 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Status: PASSED for WEB scope (2026-08-26) — applicable web set (P24-005..035 minus explicit deferrals) green: checkout/webhook/cancel/resume live-verified against Midtrans sandbox, entitlement sync + cross-device proven, security hardening + test suites + OpenAPI + ops commands + docs complete. Production still gated by merchant activation + production key flip + refund/chargeback verification (P24-022/023 deferred) per docs/billing.md checklist.
 
 ## PHASE 25 — AI USAGE / COST CONTROL
-### P25-001..010 — usage records, request identity, credits, preflight, postflight, routing, safeguards, BYOK policy, usage UI, cost alerts
-- Status: TODO · Depends On: P23
+### P25-001..005 — usage records, request identity, credits, preflight, postflight
+- Status: DONE (2026-08-26) — engineering core:
+  - `ai_runs` + `request_id`/`credits_consumed`/`estimated_cost_minor`/`cost_currency` (migration 2026_08_26_120000).
+  - `AiCreditGuard` (application) = single metering seam; use cases (5) do preflight before provider call and postflight spend on success; failures burn nothing + record failed run with request_id.
+  - Controllers deprecated duplicated `consumeAiCredit` (AiController + GoalController) → 403 `ENTITLEMENT_LIMIT` via domain exception catch; same wire contract for the UI.
+  - `ai:smoke` bypasses metering (diagnostic).
+  - Tests: `AiUsageTest` 4/4 (success records usage, exhaustion blocked pre-provider w/o new run, failure spends nothing, proposal path spends). Full suite 955 green.
+### P25-006..010 — routing, safeguards, BYOK policy, usage UI, cost alerts
+- Status: DEFERRED pending product decisions (see lanes): router selects provider (BYOK vs Kinevo-hosted) needs policy; hard safeguards/budget caps beyond monthly credits need threshold decisions; cost estimation columns exist but provider pricing model (BYOK/Kinevo-hosted, currency) is a product decision; usage UI beyond existing plan snapshot + ai/runs defer to settings work; cost alerts defer to notification center.
 ## PHASE 26 — MOBILE ARCHITECTURE
 ### P26-001..009 — NativePHP feasibility (BLOCKED until verified vs official docs), single backend, presentation boundary, feature matrix, nav, auth, contracts, offline reuse, deep links
 ## PHASE 27 — NATIVEPHP MOBILE MVP

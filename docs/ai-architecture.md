@@ -151,6 +151,17 @@ A small quantized model is preferred for low-resource VPS. Exact model is a depl
 ### AI audit
 Persist safe metadata, not private prompts or note contents, unless explicit audit retention requires otherwise.
 
+### AI usage & cost metering (Phase 25 / TASK-P25-001..005)
+Every user inference is metered at the use-case layer (`AiCreditGuard`, not controllers):
+- **Identity** — each run carries a `request_id` (uuid) for correlation across logs/support.
+- **Preflight** — `begin(userId)` refuses the request (403 `ENTITLEMENT_LIMIT`) before any provider
+  call when the plan's monthly `ai_credits` are exhausted.
+- **Postflight** — `spend(userId)` consumes one credit only on success; provider failures record a
+  `failed` run with `credits_consumed=0` and burn nothing.
+- **Records** — `ai_runs` gains `request_id`, `credits_consumed`, and optional provider cost estimate
+  columns (`estimated_cost_minor`, `cost_currency`, null until a pricing model is configured).
+- CLI diagnostics (`ai:smoke`) call the orchestrator directly and never bill a user.
+
 ### Human approval
 Material changes MUST follow:
 ```text

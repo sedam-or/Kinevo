@@ -12,6 +12,7 @@ final readonly class EloquentAiRunRepository implements AiRunRepository
     public function record(AiRun $run): AiRun
     {
         $model = AiRunModel::query()->create([
+            'request_id' => $run->requestId,
             'user_id' => $run->userId,
             'provider' => $run->provider,
             'model' => $run->model,
@@ -21,6 +22,9 @@ final readonly class EloquentAiRunRepository implements AiRunRepository
             'context_hash' => $run->contextHash,
             'input_tokens' => $run->inputTokens,
             'output_tokens' => $run->outputTokens,
+            'credits_consumed' => $run->creditsConsumed,
+            'estimated_cost_minor' => $run->estimatedCostMinor,
+            'cost_currency' => $run->costCurrency,
             'status' => $run->status,
             'latency_ms' => $run->latencyMs,
             'error_code' => $run->errorCode,
@@ -67,6 +71,10 @@ final readonly class EloquentAiRunRepository implements AiRunRepository
             $model->latency_ms,
             $model->error_code,
             CarbonImmutable::parse($model->created_at),
+            $model->request_id,
+            (int) $model->credits_consumed,
+            $model->estimated_cost_minor !== null ? (int) $model->estimated_cost_minor : null,
+            $model->cost_currency,
         );
     }
 }
