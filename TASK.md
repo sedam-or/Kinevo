@@ -5170,6 +5170,13 @@ At minimum:
 
 ## Validation Re-Run (2026-08-26, second pass)
 
+Late-day addendum: the FREE OmniRoute tier became intermittent (HTTP-200
+empty completions interleaved with successes within minutes). Hardening
+landed: connection-test probe now retries transient failures twice
+(750ms/1.5s backoff); ai-remote-journey budgets raised to 480s/400s.
+The journey PASSED twice earlier the same day (36.1s chromium; firefox/webkit)
+— current-run flakes are external-service availability, not product regressions.
+
 Independent re-validation executed against HEAD (not against prior claims):
 route:list shows the full control plane; provider implementations contain zero
 DB:: / Model:: references; smoke script re-run with Ollama container STOPPED
