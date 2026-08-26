@@ -7,6 +7,8 @@ use App\Domain\Billing\GatewayCapabilities;
 use App\Domain\Billing\NormalizedBillingEvent;
 use App\Domain\Billing\PaymentGateway;
 use App\Domain\Billing\SubscriptionState;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 /**
@@ -19,7 +21,51 @@ final readonly class MidtransGateway implements PaymentGateway
 {
     public function __construct(
         private string $serverKey,
+        private string $baseUrl = 'https://api.sandbox.midtrans.com',
     ) {}
+
+    /** TASK-P24-010 — create a provider-managed subscription (recurring). */
+    public function createSubscription(array $payload): array
+    {
+        try {
+            $response = Http::timeout(30)
+                ->withBasicAuth($this->serverKey, '')
+                ->acceptJson()
+                ->post($this->baseUrl.'/v1/subscriptions', $payload);
+        } catch (ConnectionException) {
+            throw new RuntimeException('Midtrans is unreachable.');
+        }
+
+        if ($response->status() === 429) {
+            throw new RuntimeException('MIDTRANS_RATE_LIMITED');
+        }
+        if (! $response->successful()) {
+            throw new RuntimeException('MIDTRANS_ERROR_'.$response->status().': '.substr((string) $response->body(), 0, 200));
+        }
+
+        return (array) $response->json();
+    }
+
+    /** TASK-P24-012 — lifecycle: get / enable / disable. */
+    public function getSubscription(string $providerSubscriptionId): array
+    {
+        return (array) Http::timeout(20)
+            ->withBasicAuth($this->serverKey, '')
+            ->acceptJson()
+            ->get($this->baseUrl.'/v1/subscriptions/'.$providerSubscriptionId)
+            ->json();
+    }
+
+    public function setSubscriptionEnabled(string $providerSubscriptionId, bool $enabled): array
+    {
+        $action = $enabled ? 'enable' : 'disable';
+
+        return (array) Http::timeout(20)
+            ->withBasicAuth($this->serverKey, '')
+            ->acceptJson()
+            ->post($this->baseUrl.'/v1/subscriptions/'.$providerSubscriptionId.'/'.$action)
+            ->json();
+    }
 
     public function capabilities(): GatewayCapabilities
     {

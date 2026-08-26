@@ -45,6 +45,7 @@ use App\Infrastructure\Ai\EloquentAiProposalRepository;
 use App\Infrastructure\Ai\EloquentAiProviderConfigRepository;
 use App\Infrastructure\Ai\EloquentAiRunRepository;
 use App\Infrastructure\Attachments\EloquentAttachmentRepository;
+use App\Infrastructure\Billing\MidtransGateway;
 use App\Infrastructure\Boosts\EloquentBoostTargetRepository;
 use App\Infrastructure\Breaks\EloquentBreakPeriodRepository;
 use App\Infrastructure\Canvas\EloquentCanvasRepository;
@@ -116,6 +117,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(WorkspaceRepository::class, EloquentWorkspaceRepository::class);
         $this->app->singleton(SubscriptionRepository::class, EloquentSubscriptionRepository::class);
         $this->app->singleton(UsageRepository::class, EloquentUsageRepository::class);
+        $this->app->singleton(MidtransGateway::class, function () {
+            return new MidtransGateway(
+                (string) config('billing.midtrans.server_key'),
+                (string) config('billing.midtrans.base_url'),
+            );
+        });
         $this->app->singleton(AiOrchestrator::class, static fn ($app) => new AiOrchestrator($app->make(AiProviderResolver::class)));
         $this->app->singleton(SchedulerRunRepository::class, EloquentSchedulerRunRepository::class);
         $this->app->singleton(ObservabilityService::class, static function ($app) {

@@ -16,6 +16,32 @@ const overview = ref<PlanOverview | null>(null);
 const loading = ref(false);
 const switching = ref<string | null>(null);
 const error = ref<string | null>(null);
+const checkoutUrl = ref<string | null>(null);
+const lastPlan = ref<string | null>(null);
+
+/** TASK-P24-010 — backend creates the provider subscription; browser follows redirect only. */
+async function subscribe(code: string): Promise<void> {
+    switching.value = code;
+    error.value = null;
+    try {
+        const res = await apiClient.request<{ redirect_url: string | null; payment_type: string | null }>('/billing/checkout', {
+            method: 'POST',
+            body: JSON.stringify({ plan_code: code }),
+        });
+        lastPlan.value = code;
+        if (res.redirect_url) {
+            window.location.href = res.redirect_url;
+
+            return;
+        }
+        // No hosted redirect (e.g. GoPay app flow): show pending state.
+        await load();
+    } catch (e) {
+        error.value = (e as Error).message;
+    } finally {
+        switching.value = null;
+    }
+}
 
 const PLANS = [
     { code: 'free', name: 'Free' },
@@ -107,11 +133,24 @@ onMounted(load);
                     <ul class="text-xs text-gray-600 dark:text-gray-400 list-disc ml-4">
                         <li>{{ p.code === overview.plan.code ? currentEntitlements() : summaryFor(p.code) }}</li>
                     </ul>
-                    <button type="button" class="underline self-start min-h-[44px] disabled:opacity-50"
-                        :disabled="p.code === overview.plan.code || switching !== null"
-                        :data-testid="`plan-switch-${p.code}`" @click="switchTo(p.code)">
-                        {{ switching === p.code ? 'Switching…' : 'Switch to this plan' }}
-                    </button>
+                    <div class="flex flex-col gap-1">
+                        <button type="button" class="underline self-start min-h-[44px] disabled:opacity-50"
+                            :disabled="p.code === overview.plan.code || switching !== null"
+                            :data-testid="`plan-switch-${p.code}`" @click="switchTo(p.code)">
+                            {{ switching === p.code ? 'Switching…' : 'Switch to this plan' }}
+                        </button>
+                        <!-- TASK-P24-027 — paid plans go through Midtrans checkout. -->
+                        <button v-if="p.code !== overview.plan.code && p.code !== 'free'" type="button"
+                            class="underline self-start min-h-[44px] text-[var(--color-primary)] disabled:opacity-50"
+                            :disabled="switching !== null" :data-testid="`plan-subscribe-${p.code}`" @click="subscribe(p.code)">
+                            {{ switching === p.code ? 'Preparing…' : 'Subscribe (Midtrans)' }}
+                        </button>
+                        <a v-if="checkoutUrl && lastPlan === p.code" :href="checkoutUrl" target="_blank" rel="noopener"
+                            class="underline self-start min-h-[44px]" data-testid="plan-checkout-link">
+                            Complete payment →
+                        </a>
+                        <p v-if="error && lastPlan === p.code" class="text-xs text-danger" role="alert">{{ error }}</p>
+                    </div>
                 </div>
             </section>
         </template>

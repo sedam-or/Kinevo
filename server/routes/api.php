@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AttachmentController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BillingController;
 use App\Http\Controllers\Api\BoostController;
 use App\Http\Controllers\Api\BreakController;
 use App\Http\Controllers\Api\CalendarController;
@@ -41,6 +42,10 @@ use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 // TASK-P22-002 — brute-force defense (5/min per IP on credential endpoints).
+// TASK-P24-013 — provider webhook (machine-to-machine; signature-verified).
+Route::post('/billing/webhook/midtrans', [BillingController::class, 'midtransWebhook'])
+    ->middleware('throttle:60,1');
+
 Route::middleware(['guest', 'throttle:auth'])->group(function () {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
@@ -77,6 +82,10 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/saas/plan', [SaasController::class, 'show']);
     Route::patch('/saas/plan', [SaasController::class, 'update']);
     Route::put('/saas/plan', [SaasController::class, 'update']);
+
+    // TASK-P24-010 — checkout creation (idempotent, authenticated).
+    Route::post('/billing/checkout', [BillingController::class, 'checkout']);
+    Route::get('/billing/subscription', [BillingController::class, 'subscription']);
 
     // TASK-P19-004 — Workspace control plane (owner-scoped).
     Route::get('/workspaces', [WorkspaceController::class, 'index']);

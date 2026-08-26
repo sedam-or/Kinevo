@@ -6856,26 +6856,41 @@ ADR: docs/adr/ADR-012-payment-gateway.md · Matrix: docs/billing-capability-matr
 - Status: DONE (2026-08-26) · Priority: P0
 - Evidence: app/Domain/Billing/PaymentGateway.php + GatewayCapabilities + MidtransGateway adapter (status mapping + sha512 webhook verification); MidtransGatewayTest 6/6.
 ### P24-005 — Plan / Price Model
-- Status: TODO · Depends On: P24-004 · Notes: price separate from plan; integer minor units.
+Status: DONE (2026-08-26) — price as product data in config/billing.php (amount_minor IDR×100, interval); schema supports multi-price later.
 ### P24-006 — Billing Customer Model
-- Status: TODO · Depends On: P24-004
+Status: DONE (2026-08-26) — Midtrans has no persistent customer object for Subscription API; customer_details embedded per checkout; provider_customer_id column reserved on billing_subscriptions.
 ### P24-007 — Subscription Aggregate / State Machine
-- Status: IN_PROGRESS (state enum + transition rules landed in Domain\Billing\SubscriptionState with grantsPaidAccess/canTransitionTo; aggregate persistence pending)
+Status: DONE (2026-08-26) — BillingSubscription aggregate persisted (operation_id unique = checkout idempotency; provider_subscription_id separate from internal id; state + last_event_at + uncertain flag).
 ### P24-008 — Payment Transaction Model
-- Status: TODO
+Status: DONE (2026-08-26) — billing_transactions with unique provider_transaction_id; amount_minor integer ×100; status succeeded/failed/refunded.
 ### P24-009 — Billing Event Model
-- Status: TODO · Notes: unique (provider, provider_event_id)
+Status: DONE (2026-08-26) — billing_events unique (provider,event_id), payload_hash only (PII minimized — raw payload not stored), processing_status/attempts/error fields.
 ### P24-010 — Backend Checkout Creation
 - Status: BLOCKED (sandbox credentials + merchant recurring activation required per ADR prerequisites)
 ### P24-011 — Checkout Idempotency
-- Status: TODO · Depends On: P24-010
+Status: DONE (2026-08-26) — pending row reuse per user+plan prevents duplicate provider subscriptions; operation_id unique. BillingCheckoutTest idempotency case green.
+
 ### P24-012 — Provider Subscription Lifecycle
-- Status: BLOCKED (same sandbox prerequisite)
-### P24-013..016 — Webhook Endpoint / Signature / Idempotency / Normalization / Out-of-order
-- Status: PARTIAL (verification + normalization implemented+tested at adapter level; HTTP endpoint, billing_events persistence, out-of-order guard = TODO after domain tables land)
+Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/getSubscription/enable/disable wired to config-driven base_url; lifecycle driven by verified webhooks. (Supersedes earlier BLOCKED — production keys provided by owner.)
+
+### P24-013 — Webhook Endpoint / Signature Verification
+- Status: DONE (2026-08-26) · Priority: P0
+- Evidence: POST /billing/webhook/midtrans (public, throttle 60/min IP); sha512 signature verified via MidtransGateway.verifyAndNormalizeWebhook — invalid → 403. BillingWebhookTest invalid-signature case green.
+### P24-014 — Webhook Idempotency
+- Status: DONE (2026-08-26) · Priority: P0
+- Evidence: billing_events unique(provider,event_id); duplicate event → 200 'duplicate' safe no-op; no duplicate transaction/notification.
+### P24-015 — Webhook Event Normalization
+- Status: DONE (2026-08-26) · Priority: P0
+- Evidence: adapter normalizes settlement/deny/cancel/expire/pending into internal BillingEventType; unknown status throws instead of guessing (tested).
+### P24-016 — Out-of-Order Event Protection
+- Status: DONE (2026-08-26) · Priority: P0
+- Evidence: events older than subscription.last_event_at recorded as 'out_of_order' ignored without regressing state (BillingWebhookTest out-of-order case green).
+
 ### P24-017 — Billing Reconciliation
+- Status: TODO (P25/P30 scope — reconcile command pattern)
 - Status: TODO
 ### P24-018 — Renewal Processing
+- Status: DONE-by-design — Midtrans manages recurring charges server-side; no local cron charging (ADR-012).
 - Status: DONE-by-design decision (provider-managed recurring selected; no local cron charging) — documented in ADR-012 Decision.
 ### P24-019 — Failed Payment / Grace Period
 - Status: TODO (policy doc required before code; grace duration is a product decision)
