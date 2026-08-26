@@ -6839,8 +6839,81 @@ to DONE only with evidence per §10/§11 of that prompt.
   - [x] P23-009 tests: SaasApiTest 7/7 (default free snapshot, switch, workspace limit→upgrade unlock, credits exhaust→403→snapshot, export gate, expired degrade)
 - Evidence: tests/Feature/Api/SaasApiTest.php · config/saas.php · app/Application/Saas/* · resources/js/saas/*
 ## PHASE 24 — SUBSCRIPTION & BILLING
-### P24-001..009 — Billing boundary/persistence/events/webhooks/checkout/sync/cancellation/UX/tests
-- Status: BLOCKED-pending-verification · Notes: provider choice & store rules MUST be verified against official docs first (§1.3); do not implement on assumption.
+
+Authoritative spec: replacement P24 prompt (2026-08-26) — 44 tasks, dependency order §25, final gate §26.
+ADR: docs/adr/ADR-012-payment-gateway.md · Matrix: docs/billing-capability-matrix.md.
+
+### P24-001 — Payment Gateway Architecture Spike
+- Status: DONE (2026-08-26) · Priority: P0
+- Evidence: ADR-012 Alternatives/verified capabilities; sources = official Midtrans Subscription API / API Methods / GoPay Tokenization pages; Xendit Subscriptions + Cards-MIT + webhook validation help pages. Xendit fees/settlement UNKNOWN this pass.
+### P24-002 — Payment Gateway Selection ADR
+- Status: DONE (2026-08-26) · Priority: P0
+- Evidence: docs/adr/ADR-012-payment-gateway.md — Decision: Midtrans Core-API Subscription as primary adapter; Xendit kept behind seam.
+### P24-003 — Payment Gateway Capability Matrix
+- Status: DONE (2026-08-26) · Priority: P0
+- Evidence: docs/billing-capability-matrix.md (+ machine-readable GatewayCapabilities::toArray); refund/dispute = UNKNOWN until verified.
+### P24-004 — Payment Gateway Contract
+- Status: DONE (2026-08-26) · Priority: P0
+- Evidence: app/Domain/Billing/PaymentGateway.php + GatewayCapabilities + MidtransGateway adapter (status mapping + sha512 webhook verification); MidtransGatewayTest 6/6.
+### P24-005 — Plan / Price Model
+- Status: TODO · Depends On: P24-004 · Notes: price separate from plan; integer minor units.
+### P24-006 — Billing Customer Model
+- Status: TODO · Depends On: P24-004
+### P24-007 — Subscription Aggregate / State Machine
+- Status: IN_PROGRESS (state enum + transition rules landed in Domain\Billing\SubscriptionState with grantsPaidAccess/canTransitionTo; aggregate persistence pending)
+### P24-008 — Payment Transaction Model
+- Status: TODO
+### P24-009 — Billing Event Model
+- Status: TODO · Notes: unique (provider, provider_event_id)
+### P24-010 — Backend Checkout Creation
+- Status: BLOCKED (sandbox credentials + merchant recurring activation required per ADR prerequisites)
+### P24-011 — Checkout Idempotency
+- Status: TODO · Depends On: P24-010
+### P24-012 — Provider Subscription Lifecycle
+- Status: BLOCKED (same sandbox prerequisite)
+### P24-013..016 — Webhook Endpoint / Signature / Idempotency / Normalization / Out-of-order
+- Status: PARTIAL (verification + normalization implemented+tested at adapter level; HTTP endpoint, billing_events persistence, out-of-order guard = TODO after domain tables land)
+### P24-017 — Billing Reconciliation
+- Status: TODO
+### P24-018 — Renewal Processing
+- Status: DONE-by-design decision (provider-managed recurring selected; no local cron charging) — documented in ADR-012 Decision.
+### P24-019 — Failed Payment / Grace Period
+- Status: TODO (policy doc required before code; grace duration is a product decision)
+### P24-020 — Cancellation / Resume
+- Status: TODO (maps to enable/disable endpoints once lifecycle lands)
+### P24-021 — Upgrade / Downgrade
+- Status: TODO (proration semantics must come from provider verification, not assumption)
+### P24-022/023 — Refund / Chargeback Handling
+- Status: DEFERRED (capability UNKNOWN until verified against provider docs/merchant contract)
+### P24-024 — Entitlement Synchronization
+- Status: IN_PROGRESS (P23 EntitlementService already resolves effective plan from subscription state; BillingEvent→Subscription sync task remains)
+### P24-025..029 — Billing History/Settings UI/Checkout UX/Failure UX/Notifications
+- Status: TODO · Depends On: P24-010
+### P24-030 — Billing Security Hardening
+- Status: PARTIAL (no raw card storage by architecture; webhook signature verified+tested; secrets server-side; full checklist closes with webhook endpoint landing)
+### P24-031 — Billing OpenAPI
+- Status: TODO · Depends On: implemented endpoints only
+### P24-032..034 — Domain/Adapter/Webhook Test Suites
+- Status: PARTIAL (adapter suite 6/6 green; domain/webhook suites follow domain persistence tasks)
+### P24-035 — Sandbox E2E
+- Status: BLOCKED (sandbox credentials)
+### P24-036 — Cross-Device Entitlement E2E
+- Status: TODO (web purchase → same-account entitlement; mobile restore deferred with mobile billing)
+### P24-037 — Billing Operations / Diagnostics
+- Status: TODO (reconcile command pattern per spec §13)
+### P24-038 — Billing Documentation
+- Status: PARTIAL (ADR + matrix done; docs/billing.md after implementation proven)
+### P24-039 — Mobile Billing Architecture Spike
+- Status: DONE-as-scope-decision? NO → **DEFERRED**: Apple IAP / Google Play Billing treated as separate adapters feeding the same entitlement model; native store adapters NOT in current release scope until verified per platform policy (spec §1.2).
+### P24-040/041 — Apple / Google Adapters
+- Status: DEFERRED (must verify StoreKit/Billing Library current docs at implementation time)
+### P24-042 — Cross-Platform Purchase Restoration
+- Status: DEFERRED with mobile adapters
+### P24-043 — Duplicate Subscription Protection
+- Status: TODO (business rule: one active web subscription per user; cross-platform duplicates need product approval)
+### P24-044 — Final Production Billing Gate
+- Status: NOT PASSED (requires 005..035 applicable set + sandbox evidence)
+
 ## PHASE 25 — AI USAGE / COST CONTROL
 ### P25-001..010 — usage records, request identity, credits, preflight, postflight, routing, safeguards, BYOK policy, usage UI, cost alerts
 - Status: TODO · Depends On: P23
