@@ -177,6 +177,9 @@ class AiAlertsTest extends TestCase
         config([...$this->openaiCosting()]);
         [$user, $token] = $this->userWithToken();
 
+        // BYOK is a Pro+ entitlement (locked business decision).
+        $this->withToken($token)->patchJson('/api/v1/saas/plan', ['plan_code' => 'pro'])->assertOk();
+        $this->app['auth']->forgetGuards();
         $this->withToken($token)->putJson('/api/v1/ai/byok', [
             'provider' => 'openai',
             'model' => 'gpt-4o-mini',

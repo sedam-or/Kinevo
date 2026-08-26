@@ -5,14 +5,23 @@
  * never hardcoded as `if plan == 'pro'` in code. Enforcement goes through
  * App\Application\Saas\EntitlementService.
  *
+ * LOCKED BUSINESS DECISIONS (owner, 2026-08-26):
+ *  - Tiers are exactly Free / Pro / Power (the former `personal` tier is
+ *    retired; active legacy rows degrade to the default plan via
+ *    Subscription::effectivePlanCode()).
+ *  - Monthly prices live in config/billing.php: Pro = IDR 34,900, Power =
+ *    IDR 49,900. Annual billing is architecturally supported but NO annual
+ *    price/discount exists until an explicit owner decision.
+ *  - BYOK (`custom_provider`) is FALSE on Free, TRUE on Pro/Power. BYOK never
+ *    consumes Kinevo-hosted ai_credits but stays bound by runtime safeguards
+ *    (P25-007).
+ *
  * Entitlement keys:
  *  - max_workspaces  (int limit)
  *  - ai_credits      (int monthly allowance)
  *  - export          (bool: activity/ics export)
- * Reserved-but-not-yet-enforced keys (require approved product requirements
- * before enforcement lands): advanced_analytics, wrapped, mobile_access,
- * custom_provider. custom_provider stays TRUE on every plan for now — it is
- * existing core behaviour (P18) and gating it would mutilate the product.
+ *  - advanced_analytics / wrapped / mobile_access (reserved; enforced by P28+)
+ *  - custom_provider (bool: BYOK, enforced since P25-008)
  */
 return [
     'default_plan' => 'free',
@@ -27,19 +36,7 @@ return [
                 'advanced_analytics' => false,
                 'wrapped' => false,
                 'mobile_access' => true,
-                'custom_provider' => true,
-            ],
-        ],
-        'personal' => [
-            'name' => 'Personal',
-            'entitlements' => [
-                'max_workspaces' => 5,
-                'ai_credits' => 100,
-                'export' => true,
-                'advanced_analytics' => false,
-                'wrapped' => false,
-                'mobile_access' => true,
-                'custom_provider' => true,
+                'custom_provider' => false,
             ],
         ],
         'pro' => [

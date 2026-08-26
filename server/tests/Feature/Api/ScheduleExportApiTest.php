@@ -25,7 +25,7 @@ final class ScheduleExportApiTest extends TestCase
         // TASK-P23-007 — export moved behind an entitlement; these export
         // suites exercise the export behaviour itself, so grant it here.
         SaasSubscription::query()->create([
-            'user_id' => $user->id, 'plan_code' => 'personal',
+            'user_id' => $user->id, 'plan_code' => 'pro',
             'provider' => 'manual', 'state' => 'active',
         ]);
 

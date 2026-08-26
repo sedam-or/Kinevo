@@ -25,7 +25,7 @@ class BillingWebhookTest extends TestCase
         $user = User::factory()->create();
         $sub = BillingSubscription::query()->create([
             'user_id' => $user->id,
-            'plan_code' => 'personal',
+            'plan_code' => 'pro',
             'price_amount_minor' => 4_900_000,
             'provider' => 'midtrans',
             'operation_id' => 'kinevo-op-1',
@@ -48,7 +48,7 @@ class BillingWebhookTest extends TestCase
             'transaction_status' => 'settlement', 'transaction_id' => 'tx-1',
             'transaction_time' => now()->toIso8601String(),
             'subscription_id' => 'sub-77',
-            'metadata' => ['kinevo_user_id' => null, 'kinevo_plan_code' => 'personal'],
+            'metadata' => ['kinevo_user_id' => null, 'kinevo_plan_code' => 'pro'],
             'currency' => 'IDR',
         ], $overrides);
         $body['signature_key'] = hash('sha512', $body['order_id'].$body['status_code'].$body['gross_amount'].$this->key());
@@ -64,7 +64,7 @@ class BillingWebhookTest extends TestCase
             ->assertStatus(403); // empty payload malformed
 
         $res = $this->call('POST', '/api/v1/billing/webhook/midtrans', [], [], [],
-            ['CONTENT_TYPE' => 'application/json'], $this->payload(['metadata' => ['kinevo_user_id' => $user->id, 'kinevo_plan_code' => 'personal']]))
+            ['CONTENT_TYPE' => 'application/json'], $this->payload(['metadata' => ['kinevo_user_id' => $user->id, 'kinevo_plan_code' => 'pro']]))
             ->assertOk();
 
         $res->assertJsonPath('status', 'applied');
@@ -72,13 +72,13 @@ class BillingWebhookTest extends TestCase
         $this->assertDatabaseHas('billing_transactions', [
             'provider_transaction_id' => 'tx-1', 'status' => 'succeeded', 'amount_minor' => 4_900_000, // 49000.00 IDR x100
         ]);
-        $this->assertDatabaseHas('subscriptions', ['id' => SaasSubscription::query()->where('user_id', $user->id)->first()->id, 'plan_code' => 'personal', 'state' => 'active']);
+        $this->assertDatabaseHas('subscriptions', ['id' => SaasSubscription::query()->where('user_id', $user->id)->first()->id, 'plan_code' => 'pro', 'state' => 'active']);
     }
 
     public function test_duplicate_event_is_safe_noop(): void
     {
         [$user, $sub] = $this->seedBilling();
-        $raw = $this->payload(['metadata' => ['kinevo_user_id' => $user->id, 'kinevo_plan_code' => 'personal']]);
+        $raw = $this->payload(['metadata' => ['kinevo_user_id' => $user->id, 'kinevo_plan_code' => 'pro']]);
 
         $this->call('POST', '/api/v1/billing/webhook/midtrans', [], [], [], ['CONTENT_TYPE' => 'application/json'], $raw)->assertOk();
         $firstCount = BillingTransaction::count();

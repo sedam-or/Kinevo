@@ -45,7 +45,6 @@ async function subscribe(code: string): Promise<void> {
 
 const PLANS = [
     { code: 'free', name: 'Free' },
-    { code: 'personal', name: 'Personal' },
     { code: 'pro', name: 'Pro' },
     { code: 'power', name: 'Power' },
 ];
@@ -78,9 +77,8 @@ async function switchTo(code: string): Promise<void> {
 
 const PLAN_SUMMARY: Record<string, string> = {
     free: '2 workspaces · 20 AI credits/mo',
-    personal: '5 workspaces · 100 AI credits/mo · export',
-    pro: '10 workspaces · 300 AI credits/mo · advanced analytics',
-    power: '25 workspaces · 1000 AI credits/mo · wrapped',
+    pro: '10 workspaces · 300 AI credits/mo · BYOK · export',
+    power: '25 workspaces · 1000 AI credits/mo · Wrapped',
 };
 function summaryFor(code: string): string {
     return PLAN_SUMMARY[code] ?? '';

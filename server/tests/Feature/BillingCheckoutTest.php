@@ -27,13 +27,13 @@ class BillingCheckoutTest extends TestCase
             ], 201),
         ]);
 
-        $first = $this->withToken($token)->postJson('/api/v1/billing/checkout', ['plan_code' => 'personal'])
+        $first = $this->withToken($token)->postJson('/api/v1/billing/checkout', ['plan_code' => 'pro'])
             ->assertStatus(201)
             ->assertJsonPath('provider_subscription_id', 'sub-prov-1')
             ->assertJsonPath('status', 'pending');
 
         // Second identical request reuses the pending row — no duplicate provider sub.
-        $second = $this->withToken($token)->postJson('/api/v1/billing/checkout', ['plan_code' => 'personal'])
+        $second = $this->withToken($token)->postJson('/api/v1/billing/checkout', ['plan_code' => 'pro'])
             ->assertStatus(201)
             ->assertJsonPath('billing_subscription_id', $first->json('billing_subscription_id'));
 

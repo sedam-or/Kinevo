@@ -74,7 +74,7 @@ class SaasApiTest extends TestCase
             ->assertJsonPath('limit', 2);
 
         // Upgrade unlocks it.
-        $this->withToken($token)->patchJson('/api/v1/saas/plan', ['plan_code' => 'personal']);
+        $this->withToken($token)->patchJson('/api/v1/saas/plan', ['plan_code' => 'pro']);
         $this->app['auth']->forgetGuards();
         $this->withToken($token)->postJson('/api/v1/workspaces', ['name' => 'Third'])
             ->assertStatus(201);
@@ -117,7 +117,7 @@ class SaasApiTest extends TestCase
             ->assertStatus(403)
             ->assertJsonPath('entitlement', 'export');
 
-        $this->withToken($token)->patchJson('/api/v1/saas/plan', ['plan_code' => 'personal']);
+        $this->withToken($token)->patchJson('/api/v1/saas/plan', ['plan_code' => 'pro']);
         $this->app['auth']->forgetGuards();
         $this->withToken($token)->postJson('/api/v1/export', ['format' => 'json'])->assertOk();
     }

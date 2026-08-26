@@ -7006,38 +7006,39 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - Tests: `AiAlertsTest` 5/5 (threshold-fire-once + dismiss, ops-daily-cost not exposed + dedupe,
     anomaly not user-visible, usage summary, BYOK separation). Full suite 970 green; phpstan lint clean.
 ## PHASE 26 — MOBILE ARCHITECTURE
-### P26-001..009 — NativePHP feasibility (verified), single backend, presentation boundary, feature matrix, nav, auth, contracts, offline reuse, deep links
-- Status: DONE (2026-08-26) — architecture/feasibility phase complete; **app build is P27**.
-  - **Feasibility verified vs official docs** (nativephp.com/docs/mobile v4): NativePHP embeds a
-    pre-compiled PHP runtime + Laravel on-device (no web server, offline-first), renders real
-    native UI via **EDGE** (Blade → native views), exposes native APIs (biometrics, push, secure
-    storage, deep links, device/file/share), and builds iOS+Android from one codebase. The prior
-    BLOCKED flag is resolved by evidence.
-  - **Single backend preserved** (ADR-001): web (Vue/Inertia SPA) and mobile (Blade/EDGE) are two
-    presentation fronts over the same Domain+Application+Infrastructure; domain stays presentation-
-    agnostic per `docs/architecture.md` dependency rule. `docs/adr/ADR-008-mobile.md` records the
-    decision + rejected alternatives (RN/Flutter/PWA/separate backend).
-  - **Presentation boundary**: web ≠ mobile UI (Vue not reused; EDGE native surface is new).
-  - **Persistence/sync**: on-device SQLite (local canonical) reconciles to server PostgreSQL via the
-    existing `operation_id`/`base_version` envelope (`docs/offline-sync.md`); 409 on stale writes.
-  - **Auth**: Sanctum token (same contracts) in SecureStorage + Biometrics plugin for local unlock.
-  - **Contracts**: no new API endpoints for parity — mobile consumes the existing OpenAPI over
-    Sanctum; AI/offline/API rules unchanged.
-  - **Feature matrix (P27 → NativePHP capability)** + nav (bottom tabs) + deep links
-    (`kinevo://task|note|goal/{id}`) documented in `docs/mobile-architecture.md`.
-  - **Risks surfaced**: sync engine is the P27 gating dependency; SQLite↔Postgres schema parity;
-    pin NativePHP versions (avoid paid-only plugin hard deps).
-## PHASE 27 — NATIVEPHP MOBILE MVP
-### P27-001..011 — shell/today/capture/execution/goal-AI/notes/canvas-companion/analytics/notifications/subscription visibility/device evidence
-- Status: TODO · Depends On: sync engine (P26 risk) + P23/P25; P26 architecture verified (2026-08-26)
+### P26-001..012 — NativePHP feasibility (verified), single backend, presentation boundary, feature matrix, nav, auth, contracts, offline reuse, deep links, build pipeline
+- Status: PARTIAL DONE (2026-08-26) — documentable architecture complete; device-gated items BLOCKED here.
+  - DONE (evidence): feasibility verified vs official NativePHP v4 docs; `docs/adr/ADR-008-mobile.md`
+    (one backend, API reuse, auth/entitlement/offline/AI/billing boundaries, future iOS);
+    `docs/mobile-architecture.md` (layering, capability matrix desktop-vs-mobile, bottom-tab IA,
+    deep links `kinevo://task|note|goal/{id}`, SQLite↔Postgres sync envelope reuse); locked
+    business decisions applied to the live catalog (Free/Pro/Power tiers; IDR 34,900/49,900;
+    BYOK off on Free — enforced by P25-008 gate + tests).
+  - BLOCKED (no Android SDK/emulator/device in this environment — Rule 0.3/0.5, no fabricated
+    evidence): P26-001 debug-build spike; P26-004..006 runtime verification on device; P26-011
+    reproducible build pipeline. Prereqs: Android Studio toolchain + emulator/API level recorded
+    from real runs. These flip to DONE only with device evidence per DOD.
+## PHASE 27 — NATIVEPHP ANDROID MVP
+### P27-001..015 — shell/today/capture/execution/goal-AI/notes/canvas-companion/review/notifications/workspace/state-UX/accessibility/device-matrix/gate
+- Status: BLOCKED (env) · Depends On: P26 device-gated items (Android toolchain) + sync engine design + P23/P25.
+  LOCKED policy applied already at contract level: web-first billing (no Play checkout in v1),
+  single subscription covers Web+Android, Android = capture/decide/execute/review companion
+  (see docs/mobile-architecture.md). Implementation requires the Android build environment;
+  no task may claim DONE without device evidence (Rule 0.5/0.6).
 ## PHASE 28 — PRODUCT INTELLIGENCE + WRAPPED
-### P28-001..010 — deterministic metrics, formulas, insight engine, bounded AI narrative, archetypes, monthly review, yearly wrapped, shareable artifacts, public-link security, reflection→planning loop
-- Status: TODO · Depends On: P23 (entitlement `wrapped`)
+### P28-001..012 — source matrix, metric catalog, insight engine, AI narrative, archetype, monthly review, yearly Wrapped, share artifact, public link, reflection→goal, entitlement, gate
+- Status: TODO · Depends On: P23 entitlements (wrapped key exists in catalog: Power=true).
+  Entitlement split per locked decision lands with implementation; FREE keeps basic summary,
+  PRO advanced/yearly + AI narrative, POWER expanded insights/share. No metric may use UI-only state.
 ## PHASE 29 — BETA / GROWTH VALIDATION
-### P29-001..010 — cohort, activation, retention, AI adoption, workspace adoption, feature usage, UX research, pricing experiments, funnel, feedback triage
-- Status: TODO · Requires real users; not code-only.
-## PHASE 30 — v1.0 PRODUCTION RELEASE
-### P30-001..014 — freeze, versioning, changelog, OS/SaaS boundary, migration dry-run, production E2E, final backup, security review, cost review, monitoring readiness, release docs, v1.0.0 tag, rollback plan, final acceptance
-- Status: TODO · Requires ALL prior gates + explicit operator approval for tag.
+### P29-001..012 — target user, activation, funnel, retention, AI adoption, workspace adoption, pricing validation, unit economics, UX research, churn taxonomy, feature freeze, gate
+- Status: DECISION_REQUIRED/USERS-GATED · Requires real beta users; not code-only (Rule 0.7:
+  not uncontrolled feature work). Pricing catalog authoritative: Free Rp0 / Pro Rp34.900 / Power
+  Rp49.900 monthly; annual price must NOT be invented (blocked list §13). Unit economics track
+  hosted-AI cost separately from BYOK (BYOK never in Kinevo spend).
+## PHASE 30 — V1.0 PRODUCTION RELEASE
+### P30-001..018 — freeze, semver, changelog, OS/SaaS boundary, migration dry-run, Web E2E, Android smoke, subscription E2E, AI economics E2E, security audit, backup drill, monitoring, runbooks, prod config, release notes, tag, rollback, gate
+- Status: BLOCKED · Requires ALL prior gates green + real infra (backup restore drill, three-browser
+  E2E run, sandbox payment evidence) + explicit operator approval for the v1.0.0 tag (never auto-tagged).
 
 Execution rule: sequential P21→P22→…; P26/P27 may parallelize only after API/security stability per roadmap §3.

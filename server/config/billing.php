@@ -22,9 +22,12 @@ return [
 
     // TASK-P24-005 — price rows per plan (one price per plan for now; the
     // schema supports multiple prices/platforms later without migration churn).
+    // LOCKED (owner, 2026-08-26): Pro = IDR 34,900/mo, Power = IDR 49,900/mo,
+    // Free = IDR 0 (no paid row). Annual billing is supported by this shape
+    // (interval/interval_count) but NO annual price exists until an explicit
+    // owner decision — do not invent one.
     'prices' => [
-        'personal' => ['currency' => 'IDR', 'amount_minor' => 4_900_000, 'interval' => 'MONTH', 'interval_count' => 1],
-        'pro' => ['currency' => 'IDR', 'amount_minor' => 9_900_000, 'interval' => 'MONTH', 'interval_count' => 1],
-        'power' => ['currency' => 'IDR', 'amount_minor' => 19_900_000, 'interval' => 'MONTH', 'interval_count' => 1],
+        'pro' => ['currency' => 'IDR', 'amount_minor' => 3_490_000, 'interval' => 'MONTH', 'interval_count' => 1],
+        'power' => ['currency' => 'IDR', 'amount_minor' => 4_990_000, 'interval' => 'MONTH', 'interval_count' => 1],
     ],
 ];

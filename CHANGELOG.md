@@ -497,6 +497,13 @@ Release governance: see `docs/release-management.md`.
   app runs offline-first on device and syncs to the server using the existing
   offline contract; building the actual app is the next phase (P27).
 
+- Pricing simplified to three tiers with locked Indonesian prices (owner
+  decision): Free (Rp0), Pro (Rp34.900/month), Power (Rp49.900/month). The
+  intermediate Personal tier is retired — existing subscriptions on it keep
+  working but degrade gracefully to plan-catalog defaults. Pro/Power now bring
+  your own AI key; Free uses Kinevo-hosted credits only. Annual billing remains
+  architecturally supported but unpriced until a future decision.
+
 ## [0.4.0] — 2026-08-17
 
 ### Added

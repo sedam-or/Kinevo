@@ -38,6 +38,10 @@ final readonly class Subscription
     /** Effective plan code: non-active subscriptions fall back to the free plan. */
     public function effectivePlanCode(): string
     {
-        return $this->isActive() ? $this->planCode : Plan::defaultCode();
+        // Tier retired from the catalog (e.g. legacy rows) degrades to the
+        // default plan instead of throwing — plan data is config-owned.
+        return $this->isActive() && Plan::exists($this->planCode)
+            ? $this->planCode
+            : Plan::defaultCode();
     }
 }

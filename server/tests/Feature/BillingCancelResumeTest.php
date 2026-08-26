@@ -19,13 +19,13 @@ class BillingCancelResumeTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('t')->plainTextToken;
         BillingSubscription::query()->create([
-            'user_id' => $user->id, 'plan_code' => 'personal',
+            'user_id' => $user->id, 'plan_code' => 'pro',
             'price_amount_minor' => 4_900_000, 'provider' => 'midtrans',
             'operation_id' => 'op-1', 'provider_subscription_id' => 'sub-cx',
             'state' => 'active',
         ]);
         SaasSubscription::query()->create([
-            'user_id' => $user->id, 'plan_code' => 'personal',
+            'user_id' => $user->id, 'plan_code' => 'pro',
             'provider' => 'midtrans', 'state' => 'active',
         ]);
         config(['billing.midtrans.server_key' => 'test-key']);
@@ -46,7 +46,7 @@ class BillingCancelResumeTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('t')->plainTextToken;
         BillingSubscription::query()->create([
-            'user_id' => $user->id, 'plan_code' => 'personal',
+            'user_id' => $user->id, 'plan_code' => 'pro',
             'price_amount_minor' => 4_900_000, 'provider' => 'midtrans',
             'operation_id' => 'op-2', 'provider_subscription_id' => 'sub-rs',
             'state' => 'canceled',
@@ -63,7 +63,7 @@ class BillingCancelResumeTest extends TestCase
             ->assertJsonPath('status', 'resumed');
 
         $this->assertDatabaseHas('billing_subscriptions', ['user_id' => $user->id, 'state' => 'active']);
-        $this->assertDatabaseHas('subscriptions', ['user_id' => $user->id, 'plan_code' => 'personal']);
+        $this->assertDatabaseHas('subscriptions', ['user_id' => $user->id, 'plan_code' => 'pro']);
     }
 
     public function test_cancel_without_subscription_returns_404(): void

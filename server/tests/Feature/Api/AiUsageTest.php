@@ -219,6 +219,17 @@ class AiUsageTest extends TestCase
             ->assertOk()
             ->assertJsonPath('byok', null);
 
+        // LOCKED business decision: Free has NO BYOK. Denied on the request path.
+        $this->withToken($token)->putJson('/api/v1/ai/byok', [
+            'provider' => 'ollama', 'model' => 'llama3.1',
+        ])->assertStatus(403)
+            ->assertJsonPath('code', 'ENTITLEMENT_LIMIT')
+            ->assertJsonPath('entitlement', 'custom_provider');
+
+        // Pro unlocks BYOK (self-serve plan switch), roundtrip never leaks the key.
+        $this->withToken($token)->patchJson('/api/v1/saas/plan', ['plan_code' => 'pro'])->assertOk();
+        $this->app['auth']->forgetGuards();
+
         $this->withToken($token)->putJson('/api/v1/ai/byok', [
             'provider' => 'openai',
             'model' => 'gpt-4o-mini',
@@ -234,21 +245,14 @@ class AiUsageTest extends TestCase
             ->assertOk()
             ->assertJsonPath('byok.key_masked', '****1234')
             ->assertJsonMissingPath('byok.api_key');
-
-        // custom_provider is a per-plan entitlement (P25-008 owner decision):
-        // disabling it for free blocks BYOK on the request path.
-        config(['saas.plans.free.entitlements.custom_provider' => false]);
-        $this->app['auth']->forgetGuards();
-        $this->withToken($token)->putJson('/api/v1/ai/byok', [
-            'provider' => 'ollama', 'model' => 'llama3.1',
-        ])->assertStatus(403)
-            ->assertJsonPath('code', 'ENTITLEMENT_LIMIT')
-            ->assertJsonPath('entitlement', 'custom_provider');
     }
 
     public function test_byok_generation_spends_no_credit_and_marks_byok_ledger(): void
     {
         [$user, $token] = $this->userWithToken();
+
+        $this->withToken($token)->patchJson('/api/v1/saas/plan', ['plan_code' => 'pro'])->assertOk();
+        $this->app['auth']->forgetGuards();
 
         $this->withToken($token)->putJson('/api/v1/ai/byok', [
             'provider' => 'openai',
@@ -278,7 +282,7 @@ class AiUsageTest extends TestCase
         $this->withToken($token)->getJson('/api/v1/saas/plan')
             ->assertOk()
             ->assertJsonPath('usage.ai_credits.used', 0)
-            ->assertJsonPath('usage.ai_credits.remaining', 20);
+            ->assertJsonPath('usage.ai_credits.remaining', 300);
 
         // Disabling BYOK returns the user to the Kinevo-hosted ledger.
         $this->withToken($token)->deleteJson('/api/v1/ai/byok')->assertOk();
