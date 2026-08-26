@@ -24,6 +24,7 @@ use App\Application\Ai\TestAiProviderConnectionUseCase;
 use App\Application\Ai\UpdateAiProposalUseCase;
 use App\Domain\Ai\AiOutputException;
 use App\Domain\Ai\AiProviderException;
+use App\Domain\Ai\AiRuntimeLimitException;
 use App\Domain\Ai\Contracts\AiProposalRepository;
 use App\Domain\Ai\Entities\AiProposal as AiProposalEntity;
 use App\Domain\Ai\ValueObjects\AiProposalType;
@@ -70,6 +71,15 @@ final class AiController extends Controller
     private function deniedEntitlement(EntitlementLimitException $e): JsonResponse
     {
         return response()->json($e->toResponse(), 403);
+    }
+
+    private function deniedRuntime(AiRuntimeLimitException $e): JsonResponse
+    {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'code' => $e->runtimeCode,
+            ...$e->context,
+        ], 429);
     }
 
     public function status(): JsonResponse
@@ -255,6 +265,8 @@ final class AiController extends Controller
             );
         } catch (EntitlementLimitException $e) {
             return $this->deniedEntitlement($e);
+        } catch (AiRuntimeLimitException $e) {
+            return $this->deniedRuntime($e);
         } catch (AiProviderException $e) {
             return response()->json([
                 'error' => $e->getMessage(),
@@ -297,6 +309,8 @@ final class AiController extends Controller
             );
         } catch (EntitlementLimitException $e) {
             return $this->deniedEntitlement($e);
+        } catch (AiRuntimeLimitException $e) {
+            return $this->deniedRuntime($e);
         } catch (AiProviderException $e) {
             return response()->json([
                 'error' => $e->getMessage(),
@@ -462,6 +476,8 @@ final class AiController extends Controller
             );
         } catch (EntitlementLimitException $e) {
             return $this->deniedEntitlement($e);
+        } catch (AiRuntimeLimitException $e) {
+            return $this->deniedRuntime($e);
         } catch (InvalidArgumentException $e) {
             if (str_starts_with($e->getMessage(), 'Note not found')) {
                 return response()->json(['error' => $e->getMessage()], 404);
@@ -504,6 +520,8 @@ final class AiController extends Controller
             );
         } catch (EntitlementLimitException $e) {
             return $this->deniedEntitlement($e);
+        } catch (AiRuntimeLimitException $e) {
+            return $this->deniedRuntime($e);
         } catch (AiProviderException $e) {
             return response()->json([
                 'error' => $e->getMessage(),
@@ -543,6 +561,8 @@ final class AiController extends Controller
             );
         } catch (EntitlementLimitException $e) {
             return $this->deniedEntitlement($e);
+        } catch (AiRuntimeLimitException $e) {
+            return $this->deniedRuntime($e);
         } catch (InvalidArgumentException $e) {
             if (str_starts_with($e->getMessage(), 'Note not found')) {
                 return response()->json(['error' => $e->getMessage()], 404);

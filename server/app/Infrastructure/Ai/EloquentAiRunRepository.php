@@ -9,6 +9,27 @@ use Carbon\CarbonImmutable;
 
 final readonly class EloquentAiRunRepository implements AiRunRepository
 {
+    public function countSince(int $userId, CarbonImmutable $since, ?string $status = null): int
+    {
+        $query = AiRunModel::query()
+            ->where('user_id', $userId)
+            ->where('created_at', '>=', $since);
+
+        if ($status !== null) {
+            $query->where('status', $status);
+        }
+
+        return (int) $query->count();
+    }
+
+    public function sumEstimatedCostSince(int $userId, CarbonImmutable $since): int
+    {
+        return (int) AiRunModel::query()
+            ->where('user_id', $userId)
+            ->where('created_at', '>=', $since)
+            ->sum('estimated_cost_minor');
+    }
+
     public function record(AiRun $run): AiRun
     {
         $model = AiRunModel::query()->create([

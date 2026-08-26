@@ -166,6 +166,12 @@ Every user inference is metered at the use-case layer (`AiCreditGuard`, not cont
   providers); unpriced runs stay null. `estimated_cost ≠ provider invoice`; future pipeline:
   Usage → Estimated Cost → Actual Invoice → Gross Margin.
 - CLI diagnostics (`ai:smoke`) call the orchestrator directly and never bill a user.
+- **Hard runtime safeguards** (P25-007, separate from credits): config-driven `ai.limits`
+  (`AI_MAX_REQUESTS_PER_MINUTE` drives `throttle:ai`; `AI_MAX_REQUESTS_PER_DAY` and
+  `AI_MAX_ESTIMATED_DAILY_COST` are enforced pre-provider by `AiCreditGuard`, 429
+  `AI_DAILY_LIMIT`/`AI_DAILY_COST_LIMIT`); per-request context/output are already bounded by
+  prompt budgets and `AiRequest.max_tokens`. Protect economics via credits; protect runtime via
+  these — BYOK (P25-008) is still bound by them (no abuse bypass).
 
 ### Human approval
 Material changes MUST follow:

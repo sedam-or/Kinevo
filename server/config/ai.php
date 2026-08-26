@@ -52,6 +52,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Hard runtime safeguards (TASK-P25-007)
+    |--------------------------------------------------------------------------
+    | Separate from ai_credits: credits protect entitlement/economics, these
+    | protect the runtime (and apply to BYOK too — abuse protection is never
+    | bypassed by bringing your own key). Null = no cap; numbers are NOT
+    | locked by guesswork — set them explicitly via environment.
+    |
+    | Layers:
+    |  - per-request : max_prompt_chars / max_system_prompt_chars above bound
+    |                  context; provider output is capped by the request's
+    |                  max_tokens (AiRequest) when supplied.
+    |  - per-minute  : max_requests_per_minute drives the throttle:ai limiter.
+    |  - per-day     : max_requests_per_day and max_estimated_daily_cost_minor
+    |                  are enforced in the credit guard before a provider call.
+    |  - per-period  : ai_credits (EntitlementService) — the economic layer.
+    */
+    'limits' => [
+        'max_requests_per_minute' => env('AI_MAX_REQUESTS_PER_MINUTE'),
+        'max_requests_per_day' => env('AI_MAX_REQUESTS_PER_DAY'),
+        'max_estimated_daily_cost_minor' => env('AI_MAX_ESTIMATED_DAILY_COST'),
+        'max_input_tokens' => env('AI_MAX_INPUT_TOKENS'),
+        'max_output_tokens' => env('AI_MAX_OUTPUT_TOKENS'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Provider Cost / Price Catalog (TASK-P25-001)
     |--------------------------------------------------------------------------
     | Drives Kinevo-hosted inference cost estimation only. Product data — the

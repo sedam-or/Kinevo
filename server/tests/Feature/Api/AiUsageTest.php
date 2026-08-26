@@ -155,6 +155,62 @@ class AiUsageTest extends TestCase
         $this->assertNotNull($run->pricing_snapshot_id);
     }
 
+    public function test_daily_request_safeguard_denies_after_cap(): void
+    {
+        config(['ai.driver' => 'mock', 'ai.limits.max_requests_per_day' => 1]);
+        [$user, $token] = $this->userWithToken();
+
+        $this->withToken($token)->postJson('/api/v1/ai/generate', [
+            'role' => 'task_extraction', 'prompt' => 'one',
+        ])->assertStatus(200);
+
+        $this->neutralizeAiRateLimit($user->id);
+        $this->withToken($token)->postJson('/api/v1/ai/generate', [
+            'role' => 'task_extraction', 'prompt' => 'two',
+        ])->assertStatus(429)
+            ->assertJsonPath('code', 'AI_DAILY_LIMIT');
+
+        $this->assertSame(1, AiRunModel::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_daily_estimated_cost_safeguard_denies(): void
+    {
+        config([
+            'ai.driver' => 'openai',
+            'ai.openai.base_url' => 'https://api.openai.com/v1',
+            'ai.openai.api_key' => 'sk-test',
+            'ai.openai.model' => 'gpt-4o-mini',
+            'ai.cost.catalog' => [
+                'openai.gpt-4o-mini' => [
+                    'currency' => 'USD',
+                    'input_price_minor' => 1000,
+                    'output_price_minor' => 1000,
+                    'effective_from' => '2026-01-01',
+                ],
+            ],
+            'ai.limits.max_estimated_daily_cost_minor' => 1000,
+        ]);
+        [$user, $token] = $this->userWithToken();
+
+        Http::fake(['api.openai.com/*' => Http::response([
+            'choices' => [['message' => ['content' => 'ok']]],
+            'usage' => ['prompt_tokens' => 1000, 'completion_tokens' => 0],
+        ], 200)]);
+
+        // Cost 1000 minor recorded on the first run → second is denied pre-provider.
+        $this->withToken($token)->postJson('/api/v1/ai/generate', [
+            'role' => 'task_extraction', 'prompt' => 'one',
+        ])->assertStatus(200);
+
+        $this->neutralizeAiRateLimit($user->id);
+        $this->withToken($token)->postJson('/api/v1/ai/generate', [
+            'role' => 'task_extraction', 'prompt' => 'two',
+        ])->assertStatus(429)
+            ->assertJsonPath('code', 'AI_DAILY_COST_LIMIT');
+
+        $this->assertSame(1, AiRunModel::query()->where('user_id', $user->id)->count());
+    }
+
     public function test_proposal_paths_also_spend_credits(): void
     {
         config([

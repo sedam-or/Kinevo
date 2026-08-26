@@ -19,6 +19,9 @@ Release governance: see `docs/release-management.md`.
   explains itself in plain language instead of developer terms, and note and
   canvas lists no longer show internal revision counters.
 ### Added
+- Hard AI runtime safeguards keep costs sane (Phase 25, TASK-P25-007): per-minute, per-day and
+  daily-estimated-cost limits are config-driven and enforced before any provider call — separate
+  from credits, so abuse protection still applies even when you bring your own key.
 - Estimated provider cost now rides along with each AI run (Phase 25, TASK-P25-001): a versioned
   price catalog computes an estimated cost from token usage against owner-configured rates, recorded
   on the AI-runs history with pricing provenance — still clearly separate from the real provider

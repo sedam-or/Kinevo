@@ -148,7 +148,10 @@ class AppServiceProvider extends ServiceProvider
             return [Limit::perMinute(120)->by(($r->user()->id ?? $r->ip()).'|api')];
         });
         RateLimiter::for('ai', function (Request $r) {
-            return [Limit::perMinute(10)->by(($r->user()->id ?? $r->ip()).'|ai')];
+            // TASK-P25-007 — per-minute AI runtime safeguard (config-driven; null/0 → 10).
+            $perMinute = (int) (config('ai.limits.max_requests_per_minute') ?: 10);
+
+            return [Limit::perMinute($perMinute)->by(($r->user()->id ?? $r->ip()).'|ai')];
         });
         RateLimiter::for('uploads', function (Request $r) {
             return [Limit::perMinute(20)->by(($r->user()->id ?? $r->ip()).'|uploads')];

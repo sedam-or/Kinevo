@@ -6959,6 +6959,18 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   2026_08_26_130000). Catalog ships EMPTY (owner populates real prices — no silent pricing);
   unpriced runs stay null. BYOK runs never costed here (P25-008). estimated_cost ≠ provider invoice.
   Tests: AiCostEstimatorTest 5/5 + run-level integration (5/5 AiUsageTest).
+### P25-007 — Hard Safeguards / Budgets
+- Status: DONE (2026-08-26) — four layers, separate from credits (credits = economics, safeguards =
+  runtime; BYOK exempt from credits but NOT from safeguards per owner policy):
+  - per-request: prompt/system char budgets (existing) + provider output bound via AiRequest.maxTokens.
+  - per-minute: `throttle:ai` config-driven (`ai.limits.max_requests_per_minute`, env
+    `AI_MAX_REQUESTS_PER_MINUTE`, default 10).
+  - per-day: `AI_MAX_REQUESTS_PER_DAY` → pre-provider 429 `AI_DAILY_LIMIT`; `AI_MAX_ESTIMATED_DAILY_COST`
+    → 429 `AI_DAILY_COST_LIMIT` (sums recorded estimated cost from ai_runs). Null = no cap.
+  - per-period: ai_credits (P25-003).
+  - New `AiRuntimeLimitException` (429) caught in all 6 AI endpoints. Values NOT locked by guesswork.
+  Tests: AiUsageTest daily-request + daily-cost safeguards (2 new); full suite 963 green.
+  NOTE: prior "detailed specs truncated" note for P25-007 now obsolete (full spec received later).
 ## PHASE 26 — MOBILE ARCHITECTURE
 ### P26-001..009 — NativePHP feasibility (BLOCKED until verified vs official docs), single backend, presentation boundary, feature matrix, nav, auth, contracts, offline reuse, deep links
 ## PHASE 27 — NATIVEPHP MOBILE MVP

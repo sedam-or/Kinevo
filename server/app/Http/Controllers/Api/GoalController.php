@@ -11,6 +11,7 @@ use App\Application\Goals\UpdateGoalUseCase;
 use App\Application\Workspaces\ResolveWorkspaceContext;
 use App\Domain\Ai\AiOutputException;
 use App\Domain\Ai\AiProviderException;
+use App\Domain\Ai\AiRuntimeLimitException;
 use App\Domain\Goals\ValueObjects\GoalHorizon;
 use App\Domain\Goals\ValueObjects\GoalStatus;
 use App\Domain\Saas\Exceptions\EntitlementLimitException;
@@ -189,6 +190,12 @@ final class GoalController extends Controller
             );
         } catch (EntitlementLimitException $e) {
             return response()->json($e->toResponse(), 403);
+        } catch (AiRuntimeLimitException $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+                'code' => $e->runtimeCode,
+                ...$e->context,
+            ], 429);
         } catch (InvalidArgumentException $e) {
             if ($e->getMessage() === 'Goal not found.' || $e->getMessage() === 'AI proposal not found.') {
                 return response()->json(['error' => $e->getMessage()], 404);
