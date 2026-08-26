@@ -32,6 +32,7 @@ use App\Domain\Ai\ValueObjects\AiRole;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
 
@@ -226,7 +227,7 @@ final class AiController extends Controller
 
         // TASK-P22-006 — per-user single-flight: one in-flight generation per
         // owner; concurrent requests are rejected instead of piling up cost.
-        $lock = \Illuminate\Support\Facades\Cache::lock('ai:generate:'.$request->user()->id, 60);
+        $lock = Cache::lock('ai:generate:'.$request->user()->id, 60);
         if (! $lock->get()) {
             return response()->json(['error' => 'An AI request is already running.', 'code' => 'AI_CONCURRENCY_LIMIT'], 429);
         }
