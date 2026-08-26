@@ -158,8 +158,13 @@ Every user inference is metered at the use-case layer (`AiCreditGuard`, not cont
   call when the plan's monthly `ai_credits` are exhausted.
 - **Postflight** — `spend(userId)` consumes one credit only on success; provider failures record a
   `failed` run with `credits_consumed=0` and burn nothing.
-- **Records** — `ai_runs` gains `request_id`, `credits_consumed`, and optional provider cost estimate
-  columns (`estimated_cost_minor`, `cost_currency`, null until a pricing model is configured).
+- **Records** — `ai_runs` gains `request_id`, `credits_consumed`, and provider cost estimate columns
+  (`estimated_cost_minor`, `cost_currency`, plus provenance `pricing_source`/`pricing_snapshot_id`).
+- **Cost estimation** (P25-001, not a financial truth) — `AiCostEstimator` derives per-run cost from a
+  versioned price catalog (`config/ai.php` `cost.catalog`: per-1K-token input/output rates in minor
+  units + currency + effective window, `provider.*` wildcard). Catalog ships EMPTY (owner prices real
+  providers); unpriced runs stay null. `estimated_cost ≠ provider invoice`; future pipeline:
+  Usage → Estimated Cost → Actual Invoice → Gross Margin.
 - CLI diagnostics (`ai:smoke`) call the orchestrator directly and never bill a user.
 
 ### Human approval

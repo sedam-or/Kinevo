@@ -6942,7 +6942,23 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - `ai:smoke` bypasses metering (diagnostic).
   - Tests: `AiUsageTest` 4/4 (success records usage, exhaustion blocked pre-provider w/o new run, failure spends nothing, proposal path spends). Full suite 955 green.
 ### P25-006..010 — routing, safeguards, BYOK policy, usage UI, cost alerts
-- Status: DEFERRED pending product decisions (see lanes): router selects provider (BYOK vs Kinevo-hosted) needs policy; hard safeguards/budget caps beyond monthly credits need threshold decisions; cost estimation columns exist but provider pricing model (BYOK/Kinevo-hosted, currency) is a product decision; usage UI beyond existing plan snapshot + ai/runs defer to settings work; cost alerts defer to notification center.
+- Status: IN_PROGRESS (decisions locked 2026-08-26) — execution order per owner:
+  P25-001 Cost/Price Catalog → P25-002/003 (DONE) → P25-006 Routing → P25-007 Safeguards
+  → P25-008 BYOK → P25-009 UI → P25-010 Alerts.
+- Owner policy (P25-008): BYOK does NOT consume Kinevo `ai_credits`; split two ledgers —
+  Kinevo-hosted AI spends Kinevo credits (Kinevo bears inference cost) vs BYOK spends user
+  credential (user bears cost, no Kinevo credit deduction). Reject the model `ai_credits =
+  universal AI requests`. Pricing catalog (P25-001) is an input to hard cost caps (P25-007) and
+  reporting (P25-010). NOTE: detailed specs for P25-006/007/009/010 arrived truncated; request
+  the specifics when those slices start.
+### P25-001 — Cost / Price Catalog
+- Status: DONE (2026-08-26) — config-driven price catalog `config/ai.php` (`cost.catalog` keyed
+  `provider.model` or `provider.*`, per-1K-token input/output rates in minor units + currency +
+  `effective_from`/`effective_until` window). `AiCostEstimator` derives `estimated_cost_minor`/
+  `cost_currency` + provenance (`pricing_source`/`pricing_snapshot_id`) per run (migration
+  2026_08_26_130000). Catalog ships EMPTY (owner populates real prices — no silent pricing);
+  unpriced runs stay null. BYOK runs never costed here (P25-008). estimated_cost ≠ provider invoice.
+  Tests: AiCostEstimatorTest 5/5 + run-level integration (5/5 AiUsageTest).
 ## PHASE 26 — MOBILE ARCHITECTURE
 ### P26-001..009 — NativePHP feasibility (BLOCKED until verified vs official docs), single backend, presentation boundary, feature matrix, nav, auth, contracts, offline reuse, deep links
 ## PHASE 27 — NATIVEPHP MOBILE MVP

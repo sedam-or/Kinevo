@@ -20,6 +20,8 @@ use Illuminate\Support\Carbon;
  * @property int $credits_consumed
  * @property int|null $estimated_cost_minor
  * @property string|null $cost_currency
+ * @property string $pricing_source
+ * @property string|null $pricing_snapshot_id
  * @property string|null $request_id
  * @property string $status
  * @property int $latency_ms
@@ -40,6 +42,8 @@ use Illuminate\Support\Carbon;
     'credits_consumed',
     'estimated_cost_minor',
     'cost_currency',
+    'pricing_source',
+    'pricing_snapshot_id',
     'status',
     'latency_ms',
     'error_code',

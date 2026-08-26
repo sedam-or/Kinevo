@@ -49,4 +49,36 @@ return [
 
     'max_prompt_chars' => (int) env('AI_MAX_PROMPT_CHARS', 8000),
     'max_system_prompt_chars' => (int) env('AI_MAX_SYSTEM_PROMPT_CHARS', 2000),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Provider Cost / Price Catalog (TASK-P25-001)
+    |--------------------------------------------------------------------------
+    | Drives Kinevo-hosted inference cost estimation only. Product data — the
+    | OWNER MUST VERIFY real provider prices before relying on these for hard
+    | cost caps (P25-007) or reporting (P25-010). Prices are integer minor
+    | units per 1K tokens; a "provider.*" entry matches any model of that
+    | provider. Absent/inactive entries => no cost estimated (run stays null).
+    | BYOK runs (P25-008) are never costed here — the user bears that spend.
+    | estimated_cost is NOT a financial truth (it ≠ the provider invoice).
+    */
+    'cost' => [
+        'default_currency' => env('AI_COST_CURRENCY', 'USD'),
+        'catalog' => [
+            // 'openai.gpt-4o-mini' => [
+            //     'currency' => 'USD',
+            //     'input_price_minor' => 1,   // minor units per 1K input tokens
+            //     'output_price_minor' => 3,  // minor units per 1K output tokens
+            //     'effective_from' => '2026-01-01',
+            //     'effective_until' => null,
+            // ],
+            // 'ollama.llama3.1' => [
+            //     'currency' => 'USD',
+            //     'input_price_minor' => 0,
+            //     'output_price_minor' => 0,
+            //     'effective_from' => '2026-01-01',
+            //     'effective_until' => null,
+            // ],
+        ],
+    ],
 ];

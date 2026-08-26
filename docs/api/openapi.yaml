@@ -5513,8 +5513,10 @@ components:
         input_tokens: {type: integer, nullable: true}
         output_tokens: {type: integer, nullable: true}
         credits_consumed: {type: integer, minimum: 0, description: Metered credits spent (TASK-P25-001/003)}
-        estimated_cost_minor: {type: integer, nullable: true, description: Provider cost estimate in minor units when priced (TASK-P25-001)}
+        estimated_cost_minor: {type: integer, nullable: true, description: Provider cost estimate in minor units when priced (TASK-P25-001; NOT financial truth)}
         cost_currency: {type: string, nullable: true}
+        pricing_source: {type: string, enum: [unpriced, catalog], description: Where the estimated cost came from}
+        pricing_snapshot_id: {type: string, nullable: true, description: Reproducible catalog snapshot ref}
         status: {type: string, enum: [success, failed]}
         latency_ms: {type: integer, minimum: 0}
         error_code: {type: string, nullable: true}

@@ -25,6 +25,8 @@ final readonly class EloquentAiRunRepository implements AiRunRepository
             'credits_consumed' => $run->creditsConsumed,
             'estimated_cost_minor' => $run->estimatedCostMinor,
             'cost_currency' => $run->costCurrency,
+            'pricing_source' => $run->pricingSource,
+            'pricing_snapshot_id' => $run->pricingSnapshotId,
             'status' => $run->status,
             'latency_ms' => $run->latencyMs,
             'error_code' => $run->errorCode,
@@ -75,6 +77,8 @@ final readonly class EloquentAiRunRepository implements AiRunRepository
             (int) $model->credits_consumed,
             $model->estimated_cost_minor !== null ? (int) $model->estimated_cost_minor : null,
             $model->cost_currency,
+            $model->pricing_source,
+            $model->pricing_snapshot_id,
         );
     }
 }

@@ -19,6 +19,10 @@ Release governance: see `docs/release-management.md`.
   explains itself in plain language instead of developer terms, and note and
   canvas lists no longer show internal revision counters.
 ### Added
+- Estimated provider cost now rides along with each AI run (Phase 25, TASK-P25-001): a versioned
+  price catalog computes an estimated cost from token usage against owner-configured rates, recorded
+  on the AI-runs history with pricing provenance — still clearly separate from the real provider
+  invoice, and empty until the owner populates real prices.
 - AI usage is now metered and honest (Phase 25, TASK-P25-001..005): every AI action is refused up front
   (403) once your monthly credits run out, and only successful generations spend a credit — failed
   provider calls burn nothing. Each run records a stable request id, tokens and credits spent, so the

@@ -26,6 +26,7 @@ final readonly class GenerateAiTextUseCase
         private AiProviderResolver $resolver,
         private AiRunRepository $runs,
         private AiCreditGuard $credits,
+        private AiCostEstimator $costEstimator,
     ) {}
 
     public function __invoke(int $userId, AiRequest $request): AiResponse
@@ -38,6 +39,12 @@ final readonly class GenerateAiTextUseCase
             $response = $this->ai->generate($request);
 
             $this->credits->spend($userId);
+            $cost = $this->costEstimator->estimate(
+                $response->provider,
+                $response->model,
+                $response->promptTokens,
+                $response->completionTokens,
+            );
             $this->runs->record(AiRun::success(
                 $userId,
                 $response->provider,
@@ -52,6 +59,10 @@ final readonly class GenerateAiTextUseCase
                 null,
                 1,
                 $requestId,
+                $cost['estimated_cost_minor'],
+                $cost['cost_currency'],
+                $cost['pricing_source'],
+                $cost['pricing_snapshot_id'],
             ));
 
             return $response;

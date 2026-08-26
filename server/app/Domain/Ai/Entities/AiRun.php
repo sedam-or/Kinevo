@@ -29,6 +29,8 @@ final class AiRun
         public readonly int $creditsConsumed = 0,
         public readonly ?int $estimatedCostMinor = null,
         public readonly ?string $costCurrency = null,
+        public readonly string $pricingSource = 'unpriced',
+        public readonly ?string $pricingSnapshotId = null,
     ) {}
 
     public static function success(
@@ -47,6 +49,8 @@ final class AiRun
         ?string $requestId = null,
         ?int $estimatedCostMinor = null,
         ?string $costCurrency = null,
+        ?string $pricingSource = 'unpriced',
+        ?string $pricingSnapshotId = null,
     ): self {
         return new self(
             null,
@@ -67,6 +71,8 @@ final class AiRun
             $creditsConsumed,
             $estimatedCostMinor,
             $costCurrency,
+            $pricingSource,
+            $pricingSnapshotId,
         );
     }
 
@@ -122,6 +128,8 @@ final class AiRun
             $this->creditsConsumed,
             $this->estimatedCostMinor,
             $this->costCurrency,
+            $this->pricingSource,
+            $this->pricingSnapshotId,
         );
     }
 
@@ -145,6 +153,8 @@ final class AiRun
             'credits_consumed' => $this->creditsConsumed,
             'estimated_cost_minor' => $this->estimatedCostMinor,
             'cost_currency' => $this->costCurrency,
+            'pricing_source' => $this->pricingSource,
+            'pricing_snapshot_id' => $this->pricingSnapshotId,
             'status' => $this->status,
             'latency_ms' => $this->latencyMs,
             'error_code' => $this->errorCode,

@@ -119,6 +119,42 @@ class AiUsageTest extends TestCase
             ->assertJsonPath('usage.ai_credits.remaining', 20);
     }
 
+    public function test_successful_run_records_estimated_cost_from_price_catalog(): void
+    {
+        config([
+            'ai.driver' => 'openai',
+            'ai.openai.base_url' => 'https://api.openai.com/v1',
+            'ai.openai.api_key' => 'sk-test',
+            'ai.openai.model' => 'gpt-4o-mini',
+            'ai.cost.catalog' => [
+                'openai.gpt-4o-mini' => [
+                    'currency' => 'USD',
+                    'input_price_minor' => 5,
+                    'output_price_minor' => 15,
+                    'effective_from' => '2026-01-01',
+                ],
+            ],
+        ]);
+        [$user, $token] = $this->userWithToken();
+
+        Http::fake(['api.openai.com/*' => Http::response([
+            'choices' => [['message' => ['content' => 'ok']]],
+            'usage' => ['prompt_tokens' => 1000, 'completion_tokens' => 2000],
+        ], 200)]);
+
+        $this->withToken($token)->postJson('/api/v1/ai/generate', [
+            'role' => 'task_extraction',
+            'prompt' => 'Anything',
+        ])->assertStatus(200);
+
+        $run = AiRunModel::query()->where('user_id', $user->id)->first();
+        $this->assertNotNull($run);
+        $this->assertSame(35, (int) $run->estimated_cost_minor);
+        $this->assertSame('USD', $run->cost_currency);
+        $this->assertSame('catalog', $run->pricing_source);
+        $this->assertNotNull($run->pricing_snapshot_id);
+    }
+
     public function test_proposal_paths_also_spend_credits(): void
     {
         config([

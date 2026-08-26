@@ -41,6 +41,7 @@ final readonly class CreateGoalBreakdownProposalUseCase
         private AiProposalRepository $proposals,
         private WorkspaceRepository $workspaces,
         private AiCreditGuard $credits,
+        private AiCostEstimator $costEstimator,
     ) {}
 
     public function __invoke(
@@ -116,6 +117,12 @@ final readonly class CreateGoalBreakdownProposalUseCase
             $proposal = $this->parser->parse($type, $response->text);
 
             $this->credits->spend($userId);
+            $cost = $this->costEstimator->estimate(
+                $response->provider,
+                $response->model,
+                $response->promptTokens,
+                $response->completionTokens,
+            );
             $this->runs->record(AiRun::success($userId,
                 $response->provider,
                 $response->model,
@@ -129,6 +136,10 @@ final readonly class CreateGoalBreakdownProposalUseCase
                 null,
                 1,
                 $requestId,
+                $cost['estimated_cost_minor'],
+                $cost['cost_currency'],
+                $cost['pricing_source'],
+                $cost['pricing_snapshot_id'],
             ));
 
             return $proposal;

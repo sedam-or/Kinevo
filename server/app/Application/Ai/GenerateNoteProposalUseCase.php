@@ -39,6 +39,7 @@ final readonly class GenerateNoteProposalUseCase
         private AiRunRepository $runs,
         private AiProposalRepository $proposals,
         private AiCreditGuard $credits,
+        private AiCostEstimator $costEstimator,
     ) {}
 
     public function __invoke(
@@ -94,6 +95,12 @@ final readonly class GenerateNoteProposalUseCase
             $proposal = $this->parser->parse($type, $response->text);
 
             $this->credits->spend($userId);
+            $cost = $this->costEstimator->estimate(
+                $response->provider,
+                $response->model,
+                $response->promptTokens,
+                $response->completionTokens,
+            );
             $this->runs->record(AiRun::success(
                 $userId,
                 $response->provider,
@@ -108,6 +115,10 @@ final readonly class GenerateNoteProposalUseCase
                 null,
                 1,
                 $requestId,
+                $cost['estimated_cost_minor'],
+                $cost['cost_currency'],
+                $cost['pricing_source'],
+                $cost['pricing_snapshot_id'],
             ));
 
             return $proposal;
