@@ -5197,6 +5197,12 @@ P18 is complete only when:
 - [x] Documentation updated — docs/ai-architecture.md runtime control-plane section
 - [x] TASK evidence updated — per-task Status lines above
 
+## P20 Validation Re-run (2026-08-26)
+Command Palette proven in a REAL browser: command-palette.spec.ts chromium —
+Ctrl/Cmd+Shift+K opens → nav commands listed → executing "Goals" navigates +
+closes (v-model) → Escape dismisses (5.7s). Full gates re-green after:
+phpunit 925 / vitest 519 / typecheck clean / phpstan 0 / audit 0.
+
 # PHASE 19 — WORKSPACE & CONTEXT SYSTEM
 
 ## P19-001 — Workspace Domain
