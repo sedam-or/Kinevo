@@ -235,3 +235,28 @@ describe('TaskDetailView clarify (TASK-P17-029)', () => {
         expect(wrapper.find('[data-testid="ai-not-configured"]').exists()).toBe(true);
     });
 });
+
+/** TASK-P19-036 — Task Detail IA: every required section present, in spec order. */
+describe('TaskDetailView IA (TASK-P19-036)', () => {
+    it('renders planning → knowledge actions → subtasks in order with all sections present', async () => {
+        vi.mocked(taskApi.show).mockResolvedValue({ task: { ...task, status: 'in_progress' } });
+        vi.mocked(taskApi.subtasks).mockResolvedValue({ subtasks: [] });
+        vi.mocked(attachmentApi.rules).mockResolvedValue({ max_per_task: 3, max_bytes: 5 * 1024 * 1024, allowed_extensions: ['jpg', 'jpeg', 'png', 'pdf'], allowed_mime: ['image/jpeg', 'image/png', 'application/pdf'] });
+        vi.mocked(attachmentApi.list).mockResolvedValue({ attachments: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(TaskDetailView, { props: { taskId: 1 }, global: { plugins: [pinia] } });
+        await flushPromises();
+        await flushPromises();
+
+        const html = wrapper.html();
+        for (const required of ['task-add-note', 'task-create-canvas', 'task-edit-title']) {
+            expect(html).toContain(required);
+        }
+        // Order: continuity strip (schedule/knowledge links) BEFORE edit form (planning).
+        const strip = html.indexOf('task-add-note');
+        const planning = html.indexOf('task-edit-title');
+        expect(strip).toBeGreaterThan(-1);
+        expect(planning).toBeGreaterThan(strip);
+    });
+});

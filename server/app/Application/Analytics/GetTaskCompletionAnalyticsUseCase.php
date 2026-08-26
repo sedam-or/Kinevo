@@ -20,9 +20,12 @@ final readonly class GetTaskCompletionAnalyticsUseCase
         private ActivityLogRepository $activityLogs,
     ) {}
 
-    public function __invoke(int $userId, CarbonImmutable $from, CarbonImmutable $to): TaskCompletionAnalytics
+    /** TASK-P19-027 — optional workspace scoping (null = global). */
+    public function __invoke(int $userId, CarbonImmutable $from, CarbonImmutable $to, ?int $workspaceId = null): TaskCompletionAnalytics
     {
-        $all = $this->tasks->listForUser($userId);
+        $all = $workspaceId !== null
+            ? $this->tasks->listForUserInWorkspace($userId, $workspaceId)
+            : $this->tasks->listForUser($userId);
         $total = count($all);
         $completed = 0;
         $byStatus = [];

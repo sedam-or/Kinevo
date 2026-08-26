@@ -424,3 +424,19 @@ describe('GoalDetailView', () => {
         expect(useShellStore().activeView).toBe('ai-settings');
     });
 });
+
+/** TASK-P19-037 — Goal Detail IA: outcome/deadline/progress/milestones/AI present. */
+describe('GoalDetailView IA (TASK-P19-037)', () => {
+    it('carries outcome, deadline, progress, milestones and AI breakdown entry', async () => {
+        vi.mocked(goalApi.milestones).mockResolvedValue({ milestones: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+        const wrapper = mount(GoalDetailView, { props: { goalId: 1 }, global: { plugins: [pinia] } });
+        await flushPromises();
+
+        const html = wrapper.html();
+        for (const required of ['goal-progress-bar', 'goal-milestones', 'goal-detail-breakdown']) {
+            expect(html).toContain(required);
+        }
+    });
+});

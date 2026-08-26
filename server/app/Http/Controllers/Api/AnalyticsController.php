@@ -11,12 +11,14 @@ use App\Application\Analytics\GetPillarAnalyticsUseCase;
 use App\Application\Analytics\GetProgressEventsAnalyticsUseCase;
 use App\Application\Analytics\GetTaskCompletionAnalyticsUseCase;
 use App\Application\Analytics\GetWorkLifeAnalyticsUseCase;
+use App\Application\Workspaces\ResolveWorkspaceContext;
 use App\Domain\Analytics\Pillar;
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use InvalidArgumentException;
 
 /**
  * Analytics (SRS Phase 13, TASK-130). Consumes already-generated data through
@@ -35,6 +37,7 @@ final class AnalyticsController extends Controller
         private readonly GetProgressEventsAnalyticsUseCase $progressEvents,
         private readonly GetPillarAnalyticsUseCase $pillars,
         private readonly GetHeatmapAnalyticsUseCase $heatmap,
+        private readonly ResolveWorkspaceContext $workspaceContext,
     ) {}
 
     /**
@@ -64,13 +67,20 @@ final class AnalyticsController extends Controller
             return $parsed;
         }
         [$userId, $from, $to] = $parsed;
+        try {
+            // TASK-P19-027 — explicit workspace scoping; absent = global view.
+            $wid = $this->workspaceContext->forList($userId, $request->query('workspace_id'));
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
+        }
 
         return response()->json([
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
+            'workspace_id' => $wid,
             'work_life' => $this->workLife->__invoke($userId, $from, $to)->toArray(),
-            'task_completion' => $this->taskCompletion->__invoke($userId, $from, $to)->toArray(),
-            'goal_progress' => $this->goalProgress->__invoke($userId, $to)->toArray(),
+            'task_completion' => $this->taskCompletion->__invoke($userId, $from, $to, $wid)->toArray(),
+            'goal_progress' => $this->goalProgress->__invoke($userId, $to, $wid)->toArray(),
             'capacity' => $this->capacity->__invoke($userId, $from, $to)->toArray(),
             'activity' => $this->activity->__invoke($userId, $from, $to)->toArray(),
             'focus' => $this->focus->__invoke($userId, $from, $to)->toArray(),

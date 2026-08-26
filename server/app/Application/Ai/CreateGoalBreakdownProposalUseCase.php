@@ -17,6 +17,7 @@ use App\Domain\Ai\ValueObjects\AiProposalType;
 use App\Domain\Ai\ValueObjects\AiRequest;
 use App\Domain\Ai\ValueObjects\ValidatedAiProposal;
 use App\Domain\Goals\Goal;
+use App\Domain\Workspaces\Contracts\WorkspaceRepository;
 use InvalidArgumentException;
 
 /**
@@ -38,6 +39,7 @@ final readonly class CreateGoalBreakdownProposalUseCase
         private StructuredAiOutputParser $parser,
         private AiRunRepository $runs,
         private AiProposalRepository $proposals,
+        private WorkspaceRepository $workspaces,
     ) {}
 
     public function __invoke(
@@ -70,6 +72,18 @@ final readonly class CreateGoalBreakdownProposalUseCase
             return $instructions;
         }
 
+        // TASK-P19-025/026 — minimal workspace-bounded context: the goal's
+        // workspace name/type travels with the prompt so the breakdown stays
+        // relevant to that context. Never credentials, never other workspaces.
+        $workspaceContext = '';
+        if ($goal->workspaceId !== null) {
+            $workspace = $this->workspaces->findForUser($goal->userId, $goal->workspaceId);
+            if ($workspace !== null) {
+                $workspaceContext = " The goal belongs to the \"{$workspace->name}\" workspace"
+                    ." (type: {$workspace->type->value}); keep milestone titles relevant to it.";
+            }
+        }
+
         // TASK-P17-027: request a concise decision summary + high-level
         // assumptions, inputs used and constraints honoured. The schema forbids
         // chain-of-thought exposure; this keeps the generator aligned.
@@ -77,7 +91,7 @@ final readonly class CreateGoalBreakdownProposalUseCase
         // requires goal_id in the payload and the use case verifies it matches
         // the requested goal (cross-goal guard, FR-52). A real provider can
         // never satisfy that check if it is never told the id.
-        return "Break down the goal \"{$goal->title}\" (goal id: {$goal->id}) into between 2 and 5 milestones with target dates (YYYY-MM-DD) and estimated workload in minutes."
+        return "Break down the goal \"{$goal->title}\" (goal id: {$goal->id}) into between 2 and 5 milestones with target dates (YYYY-MM-DD) and estimated workload in minutes.{$workspaceContext}"
             .' Response MUST be a single JSON object with EXACTLY these keys:'
             .' {"type":"goal_breakdown_proposal","goal_id":'.$goal->id.',"rationale":"short decision summary string",'
             .' "assumptions":["string"],"inputs":["string"],"constraints":["string"],"risks":["string"],'

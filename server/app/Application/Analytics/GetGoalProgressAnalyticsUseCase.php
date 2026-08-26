@@ -26,12 +26,17 @@ final readonly class GetGoalProgressAnalyticsUseCase
         private TaskRepository $tasks,
     ) {}
 
-    public function __invoke(int $userId, ?CarbonImmutable $now = null): GoalProgressAnalytics
+    /** TASK-P19-027 — optional workspace scoping (null = global). */
+    public function __invoke(int $userId, ?CarbonImmutable $now = null, ?int $workspaceId = null): GoalProgressAnalytics
     {
         $reference = $now ?? CarbonImmutable::now();
 
-        $allGoals = $this->goals->listForUser($userId);
-        $allTasks = $this->tasks->listForUser($userId);
+        $allGoals = $workspaceId !== null
+            ? $this->goals->listForUserInWorkspace($userId, $workspaceId)
+            : $this->goals->listForUser($userId);
+        $allTasks = $workspaceId !== null
+            ? $this->tasks->listForUserInWorkspace($userId, $workspaceId)
+            : $this->tasks->listForUser($userId);
 
         $goalRows = [];
         $totalMilestones = 0;

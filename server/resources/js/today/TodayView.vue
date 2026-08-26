@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { todayApi } from './api';
 import { useTodayStore } from './store';
 import { useShellStore } from '../shell/store';
+import { useWorkspaceStore } from '../workspace/store';
 import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
 import ExecutionTimer from '../execution/ExecutionTimer.vue';
 import RechargeTimer from '../recharge/RechargeTimer.vue';
@@ -23,6 +24,7 @@ const props = defineProps<{
 }>();
 
 const today = useTodayStore();
+const workspaces = useWorkspaceStore();
 const shell = useShellStore();
 
 /** §22: capacity as a share of the available envelope (0-100). */
@@ -323,7 +325,17 @@ async function endBoostTarget(): Promise<void> {
         <header class="flex items-center justify-between">
             <div>
                 <h1 class="text-xl font-semibold" data-testid="today-date">{{ formattedDate }}</h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400" data-testid="today-sync">Status: {{ statusLabel }}</p>
+                <p class="text-sm flex items-center gap-2">
+                    <span
+                        v-if="workspaces.activeWorkspace"
+                        class="inline-flex items-center gap-1 rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs"
+                        data-testid="today-workspace-chip"
+                    >
+                        <span v-if="workspaces.activeWorkspace.accent" class="inline-block h-2 w-2 rounded-full" :style="{ backgroundColor: workspaces.activeWorkspace.accent }" aria-hidden="true" />
+                        {{ workspaces.activeWorkspace.name }}
+                    </span>
+                    <span v-else class="text-gray-500 dark:text-gray-400" data-testid="today-sync">Status: {{ statusLabel }}</span>
+                </p>
             </div>
             <!-- Capacity feedback (design.md §22): a load bar; click reveals details. -->
             <div class="flex flex-col items-end gap-1" data-testid="today-capacity" :class="{ 'cursor-pointer': today.capacity }" @click="today.capacity && (capacityRevealed = !capacityRevealed)">

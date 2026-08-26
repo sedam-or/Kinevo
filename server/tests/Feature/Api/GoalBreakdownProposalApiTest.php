@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Goal;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -301,5 +302,56 @@ class GoalBreakdownProposalApiTest extends TestCase
         $this->withToken($token)->getJson("/api/v1/ai/proposals/{$proposalId}")
             ->assertStatus(200)
             ->assertJsonPath('proposal.proposal_type', 'milestone');
+    }
+}
+
+// --------------------------------------------------------------------
+// TASK-P19-025/026 — workspace-bounded AI context.
+// --------------------------------------------------------------------
+class GoalBreakdownWorkspaceContextTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_breakdown_prompt_includes_goal_workspace_metadata(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('owner')->plainTextToken;
+        $this->withToken($token)->getJson('/api/v1/workspaces');
+        $researchId = (int) $this->withToken($token)->postJson('/api/v1/workspaces', [
+            'name' => 'Research', 'type' => 'research',
+        ])->json('workspace.id');
+        $this->app['auth']->forgetGuards();
+
+        $goalId = (int) $this->withToken($token)->postJson('/api/v1/goals', [
+            'title' => 'Finish thesis', 'horizon' => 'quarterly', 'workspace_id' => $researchId,
+        ])->json('goal.id');
+
+        config([
+            'ai.driver' => 'ollama',
+            'ai.ollama.base_url' => 'http://localhost:11434',
+            'ai.ollama.model' => 'llama3.1',
+        ]);
+        $captured = null;
+        Http::fake(function (Request $request) use (&$captured) {
+            $captured = $request['prompt'] ?? null;
+
+            return Http::response(['response' => json_encode([
+                'type' => 'goal_breakdown_proposal',
+                'goal_id' => $goalId,
+                'milestones' => [
+                    ['title' => 'A', 'target_date' => '2026-09-01', 'estimated_minutes' => 300],
+                ],
+            ])], 200);
+        });
+
+        $this->withToken($token)->postJson("/api/v1/goals/{$goalId}/breakdown-proposals", [])
+            ->assertOk()
+            ->assertJsonPath('proposal.decision', 'pending');
+
+        $this->assertNotNull($captured);
+        $this->assertStringContainsString('"Research" workspace', $captured);
+        $this->assertStringContainsString('type: research', $captured);
+        // Bounded context: no credentials, no unrelated workspace data.
+        $this->assertStringNotContainsStringIgnoringCase('api_key', (string) $captured);
     }
 }

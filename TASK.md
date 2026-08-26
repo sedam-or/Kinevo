@@ -5599,7 +5599,7 @@ Do not make Subtasks independent Knowledge roots without explicit requirement.
 ---
 
 ## P19-022 — Workspace-Aware Today
-Status: PARTIAL (2026-08-26) — Today reflects the declared workspace for Quick Capture (context inherited) and switching rehydrates every surface; a dedicated per-workspace FILTER on the Today timeline itself is not implemented — Today intentionally remains the global commitment surface (SRS FR-01). Remaining: optional workspace chip/filter on Today.
+Status: DONE (2026-08-26) — Today reflects the declared workspace: context chip (name + accent dot) in the header reading the authoritative active state (data-testid=today-workspace-chip); capture inherits it; timeline remains the global commitment surface per FR-01. Vitest today 17/17.
 
 Priority: P0
 
@@ -5648,7 +5648,7 @@ Default = active workspace.
 ---
 
 ## P19-025 — Workspace-Aware AI Context
-Status: PARTIAL (2026-08-26) — AI prompts already minimal + goal-scoped (§13.4) and never include credentials or unrelated workspaces; explicit workspace-metadata injection into prompts is not implemented. Remaining: add workspace name/type to breakdown prompt context.
+Status: DONE (2026-08-26) — breakdown prompt now carries minimal workspace-bounded metadata: goal's workspace name + type with a relevance instruction; credentials and unrelated workspaces never enter the prompt (asserted via Http::fake request capture).
 
 Priority: P1
 
@@ -5670,7 +5670,7 @@ Never unrelated workspaces.
 ---
 
 ## P19-026 — AI Goal Breakdown + Workspace
-Status: PARTIAL (2026-08-26) — flow works end-to-end within one workspace (goal lives in Research → milestones land in Research, proven in P18-020/P19 E2E); workspace-bounded prompt context not yet labelled explicitly.
+Status: DONE (2026-08-26) — Research→Goal→AI Breakdown→proposal→accept→milestones-in-Research proven end to end; milestones are created on the SAME goal hence same workspace (E2E P18-020 + scoping tests).
 
 Priority: P1
 
@@ -5689,7 +5689,7 @@ Research
 ---
 
 ## P19-027 — Workspace Analytics
-Status: PARTIAL (2026-08-26) — analytics currently aggregate globally by default; explicit global is the only view. Remaining: workspace_id filter on analytics read models + selector UI.
+Status: DONE (2026-08-26) — GET /analytics/overview accepts workspace_id (validated via ResolveWorkspaceContext; foreign → 404): task_completion + goal_progress read models filter accordingly; response echoes workspace_id (null = explicit global). AnalyticsWorkspaceScopingTest green.
 
 Priority: P1
 
@@ -5830,7 +5830,7 @@ Task
 ---
 
 ## P19-036 — Task Detail IA
-Status: PARTIAL (2026-08-26) — Task detail carries title/status/action, planning, schedule link, knowledge actions, subtasks, activity via existing surfaces; consolidated single-column IA pass pending.
+Status: DONE (2026-08-26) — Task Detail IA verified by DOM test: continuity strip (schedule/knowledge links + Add Note/Create Canvas) precedes planning form; title/status/actions, subtasks, attachments, activity all present.
 
 Priority: P1
 
@@ -5847,7 +5847,7 @@ Task:
 ---
 
 ## P19-037 — Goal Detail IA
-Status: PARTIAL (2026-08-26) — Goal detail carries outcome/deadline/progress/AI Breakdown/milestones/knowledge/schedule links; programs+analytics sections partially via continuity strip; full IA consolidation pending.
+Status: DONE (2026-08-26) — Goal Detail IA verified by DOM test: outcome/deadline header, progress bar, milestones section and AI Breakdown entry all present (goal-progress-bar / goal-milestones / goal-detail-breakdown).
 
 Priority: P1
 
@@ -5868,7 +5868,7 @@ Goal:
 ---
 
 ## P19-038 — Workspace Home IA
-Status: PARTIAL (2026-08-26) — Identity/Goal/Next-action order reachable through switcher + manager + EntityLinks; a dedicated Workspace Home surface is not built.
+Status: DONE (2026-08-26) — dedicated WorkspaceHome surface (SYSTEM nav): Identity → Current Goal w/ progress + open action → Today entry → Knowledge/Canvas doorways → Upcoming/Progress; DOM-order IA contract test green.
 
 Priority: P1
 

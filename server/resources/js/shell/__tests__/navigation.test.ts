@@ -32,7 +32,7 @@ describe('shell navigation config', () => {
         expect(itemsFor('PLAN')).toEqual(['goals', 'tasks', 'schedule']);
         expect(itemsFor('KNOWLEDGE')).toEqual(['knowledge', 'canvas']);
         expect(itemsFor('REVIEW')).toEqual(['analytics']);
-        expect(itemsFor('SYSTEM')).toEqual(['settings', 'ai-settings']);
+        expect(itemsFor('SYSTEM')).toEqual(['settings', 'ai-settings', 'workspace-home']);
     });
 
     it('each nav item belongs to exactly one group', () => {

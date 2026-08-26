@@ -484,3 +484,33 @@ class AnalyticsApiTest extends TestCase
             ->assertJsonPath('days.0.completion_count', 2);
     }
 }
+
+/** TASK-P19-027 — workspace scoping on the analytics read models. */
+class AnalyticsWorkspaceScopingTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_overview_filters_goal_progress_by_declared_workspace(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('owner')->plainTextToken;
+        $this->withToken($token)->getJson('/api/v1/workspaces');
+        $researchId = (int) $this->withToken($token)->postJson('/api/v1/workspaces', ['name' => 'Research'])->json('workspace.id');
+        $this->app['auth']->forgetGuards();
+
+        $this->withToken($token)->postJson('/api/v1/goals', [
+            'title' => 'Research goal', 'horizon' => 'quarterly', 'workspace_id' => $researchId,
+        ]);
+        $this->withToken($token)->postJson('/api/v1/goals', [
+            'title' => 'Personal goal', 'horizon' => 'quarterly',
+        ]);
+
+        $scoped = $this->withToken($token)->getJson("/api/v1/analytics/overview?workspace_id={$researchId}")->assertOk();
+        $this->assertSame($researchId, $scoped->json('workspace_id'));
+        $this->assertSame(1, $scoped->json('goal_progress.total_goals'));
+
+        $global = $this->withToken($token)->getJson('/api/v1/analytics/overview')->assertOk();
+        $this->assertNull($global->json('workspace_id'));
+        $this->assertSame(2, $global->json('goal_progress.total_goals'));
+    }
+}

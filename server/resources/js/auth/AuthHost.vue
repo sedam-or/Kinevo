@@ -25,6 +25,7 @@ import CanvasView from '../canvas/CanvasView.vue';
 // trims the first-paint payload (§89).
 const AnalyticsView = defineAsyncComponent(() => import('../analytics/AnalyticsView.vue'));
 import QuickCapture from '../quickcapture/QuickCapture.vue';
+import WorkspaceHome from '../workspace/WorkspaceHome.vue';
 import { useQuickCaptureStore } from '../quickcapture/store';
 import { useKeyboardShortcuts } from '../shell/keyboard';
 
@@ -184,6 +185,7 @@ const viewTitle = computed(() => {
 
             <ProfileView v-if="shell.activeView === 'settings'" />
             <AiSettingsView v-else-if="shell.activeView === 'ai-settings'" />
+            <WorkspaceHome v-else-if="shell.activeView === 'workspace-home'" />
             <TodayView v-else-if="shell.activeView === 'today'" :date="todayDate" />
             <WeekView v-else-if="shell.activeView === 'week'" :anchor-date="todayDate" />
             <CalendarView v-else-if="shell.activeView === 'calendar'" :anchor-date="todayDate" />
