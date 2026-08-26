@@ -224,6 +224,13 @@ final class AiController extends Controller
 
         $data = $validator->validated();
 
+        // TASK-P22-006 — per-user single-flight: one in-flight generation per
+        // owner; concurrent requests are rejected instead of piling up cost.
+        $lock = \Illuminate\Support\Facades\Cache::lock('ai:generate:'.$request->user()->id, 60);
+        if (! $lock->get()) {
+            return response()->json(['error' => 'An AI request is already running.', 'code' => 'AI_CONCURRENCY_LIMIT'], 429);
+        }
+
         try {
             $response = $this->generateText->__invoke(new AiRequest(
                 new AiRole($data['role']),
@@ -239,6 +246,8 @@ final class AiController extends Controller
             ], 503);
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
+        } finally {
+            $lock->release();
         }
 
         return response()->json([

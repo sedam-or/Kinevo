@@ -50,7 +50,7 @@ return [
     |
     */
 
-    'expiration' => null,
+    'expiration' => 60 * 24 * 30, // TASK-P22-002 — 30-day absolute token lifetime
 
     /*
     |--------------------------------------------------------------------------

@@ -124,6 +124,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // TASK-P22-002/P22-005/P22-006 — evidence-based rate-limit classes.
+        \Illuminate\Support\Facades\RateLimiter::for('auth', function (\Illuminate\Http\Request $r) {
+            return [\Illuminate\Cache\RateLimiting\Limit::perMinute(5)->by($r->ip())];
+        });
+        \Illuminate\Support\Facades\RateLimiter::for('api', function (\Illuminate\Http\Request $r) {
+            return [\Illuminate\Cache\RateLimiting\Limit::perMinute(120)->by(($r->user()?->id ?? $r->ip()).'|api')];
+        });
+        \Illuminate\Support\Facades\RateLimiter::for('ai', function (\Illuminate\Http\Request $r) {
+            return [\Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by(($r->user()?->id ?? $r->ip()).'|ai')];
+        });
+        \Illuminate\Support\Facades\RateLimiter::for('uploads', function (\Illuminate\Http\Request $r) {
+            return [\Illuminate\Cache\RateLimiting\Limit::perMinute(20)->by(($r->user()?->id ?? $r->ip()).'|uploads')];
+        });
+        \Illuminate\Support\Facades\RateLimiter::for('exports', function (\Illuminate\Http\Request $r) {
+            return [\Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by(($r->user()?->id ?? $r->ip()).'|exports')];
+        });
+
         $this->loadMigrationsFrom(dirname(__DIR__, 3).'/database/migrations');
     }
 }

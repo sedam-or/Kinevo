@@ -39,7 +39,8 @@ use App\Http\Controllers\Api\WeekController;
 use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('guest')->group(function () {
+// TASK-P22-002 — brute-force defense (5/min per IP on credential endpoints).
+Route::middleware(['guest', 'throttle:auth'])->group(function () {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
 });
@@ -47,7 +48,8 @@ Route::middleware('guest')->group(function () {
 // Public readiness probe for the reverse proxy / orchestrator (SRS §16.3/§16.5).
 Route::get('/health', [HealthController::class, 'health']);
 
-Route::middleware('auth:sanctum')->group(function () {
+// TASK-P22-005 — normal API class (120/min per user) on every authed route.
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
 
@@ -59,7 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/goals/{goalId}', [GoalController::class, 'show']);
     Route::put('/goals/{goalId}', [GoalController::class, 'update']);
     Route::post('/goals/{goalId}/status', [GoalController::class, 'status']);
-    Route::post('/goals/{goalId}/breakdown-proposals', [GoalController::class, 'breakdown']);
+    Route::post('/goals/{goalId}/breakdown-proposals', [GoalController::class, 'breakdown'])->middleware('throttle:ai');
 
     Route::get('/goals/{goalId}/milestones', [MilestoneController::class, 'index']);
     Route::post('/goals/{goalId}/milestones', [MilestoneController::class, 'store']);
@@ -102,24 +104,24 @@ Route::middleware('auth:sanctum')->group(function () {
     // Evidence attachments (FR-43): max 3 JPG/PNG/PDF per completed task, ≤5 MB.
     Route::get('/attachments/rules', [AttachmentController::class, 'rules']);
     Route::get('/tasks/{taskId}/attachments', [AttachmentController::class, 'index']);
-    Route::post('/tasks/{taskId}/attachments', [AttachmentController::class, 'store']);
+    Route::post('/tasks/{taskId}/attachments', [AttachmentController::class, 'store'])->middleware('throttle:uploads');
     Route::get('/tasks/{taskId}/attachments/{attachmentId}', [AttachmentController::class, 'show']);
     Route::delete('/tasks/{taskId}/attachments/{attachmentId}', [AttachmentController::class, 'destroy']);
 
     // KRS PDF import (FR-24): stage → preview → confirm to persist Hard Landscape.
-    Route::post('/imports/krs-pdf', [ImportController::class, 'store']);
+    Route::post('/imports/krs-pdf', [ImportController::class, 'store'])->middleware('throttle:uploads');
     Route::get('/imports/{importId}', [ImportController::class, 'show']);
     Route::post('/imports/{importId}/confirm', [ImportController::class, 'confirm']);
     Route::post('/imports/{importId}/discard', [ImportController::class, 'discard']);
 
     // iCalendar import (FR-30): stage → preview → confirm; conflicts never overwrite.
-    Route::post('/imports/ics', [IcalImportController::class, 'store']);
+    Route::post('/imports/ics', [IcalImportController::class, 'store'])->middleware('throttle:uploads');
     Route::get('/imports/ics/{importId}', [IcalImportController::class, 'show']);
     Route::post('/imports/ics/{importId}/confirm', [IcalImportController::class, 'confirm']);
     Route::post('/imports/ics/{importId}/discard', [IcalImportController::class, 'discard']);
 
     Route::get('/logs', [ActivityLogController::class, 'index']);
-    Route::post('/export', [ActivityLogController::class, 'export']);
+    Route::post('/export', [ActivityLogController::class, 'export'])->middleware('throttle:exports');
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{notificationId}/read', [NotificationController::class, 'read']);
@@ -165,20 +167,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::match(['patch', 'put'], '/ai/settings', [AiController::class, 'settingsUpdate']);
     Route::post('/ai/settings/credential', [AiController::class, 'credentialSet']);
     Route::delete('/ai/settings/credential', [AiController::class, 'credentialRemove']);
-    Route::post('/ai/settings/test', [AiController::class, 'settingsTest']);
+    Route::post('/ai/settings/test', [AiController::class, 'settingsTest'])->middleware('throttle:ai');
     Route::post('/ai/settings/enable', [AiController::class, 'settingsEnable']);
     Route::post('/ai/settings/disable', [AiController::class, 'settingsDisable']);
     Route::get('/ai/providers', [AiController::class, 'providersIndex']);
-    Route::post('/ai/generate', [AiController::class, 'generate']);
-    Route::post('/ai/proposals', [AiController::class, 'proposals']);
+    Route::post('/ai/generate', [AiController::class, 'generate'])->middleware('throttle:ai');
+    Route::post('/ai/proposals', [AiController::class, 'proposals'])->middleware('throttle:ai');
     Route::get('/ai/proposals', [AiController::class, 'proposalsIndex']);
     Route::get('/ai/proposals/{proposalId}', [AiController::class, 'proposalsShow']);
     Route::put('/ai/proposals/{proposalId}', [AiController::class, 'proposalsUpdate']);
     Route::post('/ai/proposals/{proposalId}/accept', [AiController::class, 'proposalsAccept']);
     Route::post('/ai/proposals/{proposalId}/reject', [AiController::class, 'proposalsReject']);
-    Route::post('/ai/summarize-note', [AiController::class, 'summarizeNote']);
-    Route::post('/ai/extract-tasks', [AiController::class, 'extractTasks']);
-    Route::post('/ai/suggest-canvas', [AiController::class, 'suggestCanvas']);
+    Route::post('/ai/summarize-note', [AiController::class, 'summarizeNote'])->middleware('throttle:ai');
+    Route::post('/ai/extract-tasks', [AiController::class, 'extractTasks'])->middleware('throttle:ai');
+    Route::post('/ai/suggest-canvas', [AiController::class, 'suggestCanvas'])->middleware('throttle:ai');
     Route::get('/ai/runs', [AiController::class, 'runs']);
 
     Route::get('/metrics', [HealthController::class, 'metrics']);
@@ -214,7 +216,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/calendar', [CalendarController::class, 'index']);
 
     // iCalendar export (FR-30 / TASK-143): download selected schedule range.
-    Route::get('/schedule/export/ics', [ScheduleExportController::class, 'ical']);
+    Route::get('/schedule/export/ics', [ScheduleExportController::class, 'ical'])->middleware('throttle:exports');
 
     // Hard Landscape (SRS §7.1; FR-27/FR-28).
     Route::get('/hard-landscape', [HardLandscapeController::class, 'index']);

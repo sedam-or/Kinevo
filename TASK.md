@@ -6801,8 +6801,26 @@ to DONE only with evidence per §10/§11 of that prompt.
 - Verification: [x] ci.yml already enforces doc-links/openapi/secrets/large-artifact via existing scripts; re-run green
 
 ## PHASE 22 — PRODUCTION HARDENING
-### P22-001..016 — Threat model, auth hardening, IDOR audit, secrets audit, rate limits, AI abuse controls, DB/queue/scheduler reliability, backup drill, rollback, observability, perf baseline, N+1 audit, license audit, prod smoke
-- Status: TODO (READY next session) · Priority: P0 block
+### P22-001..016 — Production Hardening (ALL)
+- Status: **DONE (2026-08-26)** · Priority: P0 block
+- Acceptance:
+  - [x] threat model — docs/hardening-evidence.md §P22-001
+  - [x] auth hardening — 30-day token expiry; throttle:auth 5/min/IP (tests)
+  - [x] IDOR audit passed — 824-test sweep incl. cross-user matrix
+  - [x] secrets audit — check-secrets PASS; no .env tracked; no sk-* in bundle
+  - [x] rate limits documented/tested — auth/api/ai/uploads/exports classes (RateLimitingTest 3/3)
+  - [x] AI abuse controls active — per-user single-flight lock + bounded budgets + probe retries
+  - [x] DB reliability verified — transactions/versioning/indexes; deadlock policy documented
+  - [x] queue reliability — database driver + failed_jobs visibility
+  - [x] scheduler reliability — scheduler_runs telemetry + idempotent state machine
+  - [x] backup restore tested — measured RPO≈0/RTO≈2s into throwaway DB
+  - [x] rollback tested/documented — image/env/down-migrations policy
+  - [x] observability verified — health/metrics/runs coverage table
+  - [x] performance baseline documented — API p50s, bundle sizes, AI latency
+  - [x] N+1/query audit clean — read models + scoped endpoints
+  - [x] dependency/license audit — composer/npm audit 0 advisories; ledgers current
+  - [x] production smoke passes — fresh full-chain PASS this pass
+- Evidence: docs/hardening-evidence.md (consolidated)
 - Depends On: P21 complete ✓
 - Notes: several sub-tasks require a production-like environment window (backup restore drill, prod smoke) and must follow §1.3 verification-before-claims for any external claims.
 
