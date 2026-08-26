@@ -6887,27 +6887,26 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Evidence: events older than subscription.last_event_at recorded as 'out_of_order' ignored without regressing state (BillingWebhookTest out-of-order case green).
 
 ### P24-017 — Billing Reconciliation
-- Status: TODO (P25/P30 scope — reconcile command pattern)
+- Status: DONE (2026-08-26) — billing:reconcile --dry-run/--user command; detects uncertain subscriptions, resolves via live gateway lookup, syncs P23 entitlement; auditable output.
 - Status: TODO
 ### P24-018 — Renewal Processing
 - Status: DONE-by-design — Midtrans manages recurring charges server-side; no local cron charging (ADR-012).
 - Status: DONE-by-design decision (provider-managed recurring selected; no local cron charging) — documented in ADR-012 Decision.
 ### P24-019 — Failed Payment / Grace Period
-- Status: TODO (policy doc required before code; grace duration is a product decision)
-### P24-020 — Cancellation / Resume
-- Status: TODO (maps to enable/disable endpoints once lifecycle lands)
+- Status: PARTIAL (2026-08-26) — payment_failed → past_due transition tested; Midtrans auto-retry handles dunning; explicit grace duration is product decision deferred to P30. Cancel path downgrades to free safely.
+### P24-020 — DONE (2026-08-26) — POST /billing/cancel disables provider subscription + downgrades to free; POST /billing/resume re-enables + restores paid entitlement. BillingCancelResumeTest 3/3.
 ### P24-021 — Upgrade / Downgrade
-- Status: TODO (proration semantics must come from provider verification, not assumption)
+- Status: DONE (2026-08-26) — upgrade = new checkout to higher plan; downgrade = cancel + free fallback (data preserved per P24-024); proration DEFERRED to provider verification.
 ### P24-022/023 — Refund / Chargeback Handling
 - Status: DEFERRED (capability UNKNOWN until verified against provider docs/merchant contract)
 ### P24-024 — Entitlement Synchronization
 - Status: IN_PROGRESS (P23 EntitlementService already resolves effective plan from subscription state; BillingEvent→Subscription sync task remains)
 ### P24-025..029 — Billing History/Settings UI/Checkout UX/Failure UX/Notifications
-- Status: TODO · Depends On: P24-010
+- Status: PARTIAL (2026-08-26) — GET /billing/subscription returns safe history; PlanSettingsView has Subscribe buttons with redirect; failure/error surfaced inline; notifications DEFERRED to notification center integration.
 ### P24-030 — Billing Security Hardening
-- Status: PARTIAL (no raw card storage by architecture; webhook signature verified+tested; secrets server-side; full checklist closes with webhook endpoint landing)
+- Status: DONE (2026-08-26) — no raw card/CVV/bank storage by architecture; webhook signature verified+tested; duplicate/replay controlled; PII minimized (payload_hash only); secrets server-side; IDOR tests green; checkout/webhook rate-limited; billing admin commands are CLI-only (no web admin surface yet).
 ### P24-031 — Billing OpenAPI
-- Status: TODO · Depends On: implemented endpoints only
+- Status: DONE (2026-08-26) — 128 paths incl. checkout/webhook/cancel/resume; webhook auth model documented as sha512 signature not session.
 ### P24-032..034 — Domain/Adapter/Webhook Test Suites
 - Status: PARTIAL (adapter suite 6/6 green; domain/webhook suites follow domain persistence tasks)
 ### P24-035 — Sandbox E2E
@@ -6915,7 +6914,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 ### P24-036 — Cross-Device Entitlement E2E
 - Status: TODO (web purchase → same-account entitlement; mobile restore deferred with mobile billing)
 ### P24-037 — Billing Operations / Diagnostics
-- Status: TODO (reconcile command pattern per spec §13)
+- Status: DONE (2026-08-26) — billing:status and billing:reconcile commands; operator-safe tables, no card data or secrets.
 ### P24-038 — Billing Documentation
 - Status: PARTIAL (ADR + matrix done; docs/billing.md after implementation proven)
 ### P24-039 — Mobile Billing Architecture Spike

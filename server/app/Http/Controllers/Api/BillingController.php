@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Infrastructure\Billing\MidtransGateway;
 use App\Models\BillingSubscription;
 use App\Models\BillingTransaction;
+use App\Models\SaasSubscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -79,6 +80,76 @@ final class BillingController extends Controller
                     'status' => $t->status,
                 ]),
         ]);
+    }
+
+    /** TASK-P24-020 — cancel renewal (disable provider subscription). */
+    public function cancel(Request $request): JsonResponse
+    {
+        $row = BillingSubscription::query()
+            ->where('user_id', $request->user()->id)
+            ->whereIn('state', ['active', 'past_due'])
+            ->orderByDesc('id')
+            ->first();
+
+        if ($row === null) {
+            return response()->json(['error' => 'No active subscription to cancel.'], 404);
+        }
+
+        try {
+            $this->midtrans->setSubscriptionEnabled((string) $row->provider_subscription_id, false);
+        } catch (RuntimeException $e) {
+            return response()->json(['error' => 'Gateway error during cancellation.', 'code' => 'GATEWAY_ERROR'], 502);
+        }
+
+        $row->state = 'canceled';
+        $row->save();
+        $this->downgradeToFree($row->user_id);
+
+        return response()->json(['status' => 'canceled', 'plan_code' => $row->plan_code]);
+    }
+
+    /** TASK-P24-020 — resume a canceled subscription. */
+    public function resume(Request $request): JsonResponse
+    {
+        $row = BillingSubscription::query()
+            ->where('user_id', $request->user()->id)
+            ->where('state', 'canceled')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($row === null) {
+            return response()->json(['error' => 'No canceled subscription to resume.'], 404);
+        }
+
+        try {
+            $this->midtrans->setSubscriptionEnabled((string) $row->provider_subscription_id, true);
+        } catch (RuntimeException $e) {
+            return response()->json(['error' => 'Gateway error during resume.', 'code' => 'GATEWAY_ERROR'], 502);
+        }
+
+        $row->state = 'active';
+        $row->save();
+
+        // Restore entitlement.
+        $saas = SaasSubscription::query()->where('user_id', $row->user_id)->first();
+        if ($saas !== null) {
+            $saas->plan_code = $row->plan_code;
+            $saas->state = 'active';
+            $saas->save();
+        }
+
+        return response()->json(['status' => 'resumed', 'plan_code' => $row->plan_code]);
+    }
+
+    /** TASK-P24-019 — downgrade expired/canceled users to free tier safely. */
+    private function downgradeToFree(int $userId): void
+    {
+        $saas = SaasSubscription::query()->where('user_id', $userId)->first();
+        if ($saas !== null) {
+            $saas->plan_code = 'free';
+            $saas->state = 'active';
+            $saas->save();
+        }
     }
 
     /** TASK-P24-013..015 — Midtrans notification endpoint (machine-to-machine). */

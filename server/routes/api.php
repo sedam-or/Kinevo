@@ -84,6 +84,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::put('/saas/plan', [SaasController::class, 'update']);
 
     // TASK-P24-010 — checkout creation (idempotent, authenticated).
+    Route::post('/billing/cancel', [BillingController::class, 'cancel']);
+    Route::post('/billing/resume', [BillingController::class, 'resume']);
     Route::post('/billing/checkout', [BillingController::class, 'checkout']);
     Route::get('/billing/subscription', [BillingController::class, 'subscription']);
 
