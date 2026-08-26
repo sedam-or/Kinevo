@@ -32,6 +32,8 @@ function isEditableTarget(event: KeyboardEvent): boolean {
 export interface KeyboardShortcutOptions {
     onNavigate(view: ShellView): void;
     onQuickCapture(): void;
+    /** TASK-P20-033 — Cmd/Ctrl+Shift+K opens the unified command palette. */
+    onCommandPalette(): void;
 }
 
 export function useKeyboardShortcuts(options: KeyboardShortcutOptions): void {
@@ -47,11 +49,17 @@ export function useKeyboardShortcuts(options: KeyboardShortcutOptions): void {
     }
 
     function onKeyDown(event: KeyboardEvent): void {
-        // Cmd/Ctrl + K → Quick Capture (never conflicts with text input).
+        // Cmd/Ctrl + K → Quick Capture; Cmd/Ctrl + Shift + K → Command
+        // Palette (TASK-P20-033). Neither fires while typing in fields.
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
             event.preventDefault();
-            options.onQuickCapture();
+            if (event.shiftKey) {
+                options.onCommandPalette();
+            } else {
+                options.onQuickCapture();
+            }
             clearPending();
+
             return;
         }
 

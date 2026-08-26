@@ -26,6 +26,7 @@ import CanvasView from '../canvas/CanvasView.vue';
 const AnalyticsView = defineAsyncComponent(() => import('../analytics/AnalyticsView.vue'));
 import QuickCapture from '../quickcapture/QuickCapture.vue';
 import WorkspaceHome from '../workspace/WorkspaceHome.vue';
+import CommandPalette from '../commands/CommandPalette.vue';
 import { useQuickCaptureStore } from '../quickcapture/store';
 import { useKeyboardShortcuts } from '../shell/keyboard';
 
@@ -121,6 +122,8 @@ function goToLogin(): void {
 
 // Global keyboard shortcuts (design.md §46). Only active once authenticated so
 // the guest login screen keeps its own input handling.
+const paletteOpen = ref(false);
+
 useKeyboardShortcuts({
     onNavigate(view) {
         if (!auth.isAuthenticated) {
@@ -133,6 +136,12 @@ useKeyboardShortcuts({
             return;
         }
         qc.show();
+    },
+    onCommandPalette() {
+        if (!auth.isAuthenticated) {
+            return;
+        }
+        paletteOpen.value = true;
     },
 });
 
@@ -207,5 +216,6 @@ const viewTitle = computed(() => {
         <!-- Mounted only while open: useFocusTrap's onMounted must fire when
              the dialog appears, or initial focus never lands (TASK-R6). -->
         <QuickCapture v-if="auth.isAuthenticated && qc.open" />
+        <CommandPalette v-if="auth.isAuthenticated" v-model:open="paletteOpen" />
     </AppErrorBoundary>
 </template>

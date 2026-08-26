@@ -23,6 +23,13 @@ const BASELINE: Record<string, { setup: (page: import('@playwright/test').Page) 
             await page.getByTestId('today-view').waitFor({ state: 'visible' });
         },
     },
+    'workspace-home': {
+        fullPage: false,
+        setup: async (page) => {
+            await page.getByTestId('nav-workspace-home').click();
+            await page.getByTestId('workspace-home').waitFor({ state: 'visible' });
+        },
+    },
     task: {
         fullPage: false,
         setup: async (page) => {

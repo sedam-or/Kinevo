@@ -1,5 +1,4 @@
 {
-    "$schema": "https://getcomposer.org/schema.json",
     "name": "kinevo-os/kinevo",
     "type": "project",
     "description": "Kinevo \u2014 a single-user, self-hostable, offline-capable personal operating system built as a Laravel modular monolith.",

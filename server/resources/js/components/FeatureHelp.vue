@@ -12,18 +12,25 @@
  * preference — no server state, no cross-device sync.
  */
 import { ref } from 'vue';
+// TASK-P20-011 — definitions come from the central registry; inline
+// title/body props still win so one-off surfaces can stay local.
+import { featureDefinition } from '../features/registry';
 
 const props = withDefaults(
     defineProps<{
         /** Stable feature id — doubles as the localStorage dismissal key. */
         id: string;
-        title: string;
-        body: string;
+        title?: string;
+        body?: string;
         /** `icon` = popover trigger; `block` = always-visible callout. */
         variant?: 'icon' | 'block';
     }>(),
     { variant: 'icon' },
 );
+
+const registered = featureDefinition(props.id);
+const title = props.title ?? registered?.title ?? props.id;
+const body = props.body ?? registered?.body ?? '';
 
 const STORAGE_PREFIX = 'kinevo.feature-help.';
 

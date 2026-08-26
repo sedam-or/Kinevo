@@ -3,12 +3,13 @@ import { defineComponent, h } from 'vue';
 import { mount } from '@vue/test-utils';
 import { useKeyboardShortcuts } from '../keyboard';
 
-function Host(props: { onNavigate: (v: string) => void; onQuickCapture: () => void }) {
+function Host(props: { onNavigate: (v: string) => void; onQuickCapture: () => void; onCommandPalette?: () => void }) {
     return defineComponent({
         setup() {
             useKeyboardShortcuts({
                 onNavigate: props.onNavigate,
                 onQuickCapture: props.onQuickCapture,
+                onCommandPalette: props.onCommandPalette ?? ((): void => undefined),
             });
             return () => h('div', { 'data-testid': 'host' });
         },
@@ -36,7 +37,7 @@ afterEach(() => {
 describe('useKeyboardShortcuts (design.md §46)', () => {
     it('navigates with G then T / W / C / G / K chords', () => {
         const onNavigate = vi.fn();
-        mount(Host({ onNavigate, onQuickCapture: vi.fn() }));
+        mount(Host({ onNavigate, onQuickCapture: vi.fn(), onCommandPalette: vi.fn() }));
 
         fireKey('g');
         fireKey('t');
@@ -73,7 +74,7 @@ describe('useKeyboardShortcuts (design.md §46)', () => {
 
     it('does not navigate while typing in an input', () => {
         const onNavigate = vi.fn();
-        mount(Host({ onNavigate, onQuickCapture: vi.fn() }));
+        mount(Host({ onNavigate, onQuickCapture: vi.fn(), onCommandPalette: vi.fn() }));
         const input = document.createElement('input');
 
         fireKey('g', { target: input });
@@ -83,7 +84,7 @@ describe('useKeyboardShortcuts (design.md §46)', () => {
 
     it('ignores an incomplete chord (G followed by an unknown key)', () => {
         const onNavigate = vi.fn();
-        mount(Host({ onNavigate, onQuickCapture: vi.fn() }));
+        mount(Host({ onNavigate, onQuickCapture: vi.fn(), onCommandPalette: vi.fn() }));
 
         fireKey('g');
         fireKey('z');

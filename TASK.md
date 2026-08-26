@@ -5915,6 +5915,8 @@ Login
 # PHASE 20 — BRAND, DESIGN SYSTEM & PRODUCT EXPERIENCE
 
 ## P20-001 — Brand Audit
+Status: DONE (2026-08-26) — inventory compiled into docs/brand.md §1 (favicon, banners, tokenized palette, typography, motion).
+
 Priority: P0
 
 Inspect:
@@ -5934,6 +5936,8 @@ Do not replace brand identity automatically.
 ---
 
 ## P20-002 — Brand Architecture
+Status: DONE (2026-08-26) — docs/brand.md §6: min size, clear space, monochrome variants, light/dark usage, forbidden treatments; existing identity authoritative.
+
 Priority: P1
 
 Formalize:
@@ -5954,6 +5958,8 @@ Existing logo remains authoritative.
 ---
 
 ## P20-003 — Color Architecture
+Status: DONE (2026-08-26) — three-level color architecture documented (brand/primitive → semantic → component); components consume semantic utilities only.
+
 Priority: P0
 
 Three levels:
@@ -5991,6 +5997,8 @@ Components should consume semantic/component tokens, not raw hex.
 ---
 
 ## P20-004 — Existing Palette Preservation
+Status: DONE (2026-08-26) — existing palette preserved as formal tokens (R2 sweep); missing semantic states filled (danger/info/warning ± contrast); AA contrast tuned in R5 (#DE3005 primary).
+
 Priority: P0
 
 Map existing Kinevo palette into formal tokens.
@@ -6004,6 +6012,8 @@ Run contrast validation.
 ---
 
 ## P20-005 — Theme Architecture
+Status: DONE (2026-08-26) — one theme system light/dark/system, no-flash hydration, live OS follow; browser-proven theme.spec 18/18 (TASK-P17-033).
+
 Priority: P0
 
 Support:
@@ -6021,6 +6031,8 @@ No per-page theme implementations.
 ---
 
 ## P20-006 — Typography Architecture
+Status: DONE (2026-08-26) — typography roles defined in docs/brand.md §4 mapping to tokens/typography.ts scale.
+
 Priority: P1
 
 Define:
@@ -6038,6 +6050,8 @@ Typography hierarchy is part of information architecture.
 ---
 
 ## P20-007 — Spacing/Radius/Shadow/Z-Index/Motion
+Status: DONE (2026-08-26) — spacing/radius/shadow/z/motion all tokenized (R2); neo-brutalist offsets 4/6/2px verified (P17-012 tactile-language.spec).
+
 Priority: P1
 
 Formalize all into tokens.
@@ -6047,6 +6061,8 @@ No arbitrary visual values in new UI.
 ---
 
 ## P20-008 — Visual Hierarchy
+Status: DONE (2026-08-26) — per-page hierarchy audited & fixed in P17-010 (one primary CTA per page checklist in ui-audit §4); analytics executive-signal-first ordering (P17-018).
+
 Priority: P0
 
 Every page:
@@ -6064,6 +6080,8 @@ Avoid card walls.
 ---
 
 ## P20-009 — CTA Architecture
+Status: DONE (2026-08-26) — CTA variants constrained to KButton primary/secondary/danger(+ghost); lifecycle-aware primary actions per state machine (§19 task actions, P17-010 fixes UI-013/UI-014).
+
 Priority: P0
 
 Define:
@@ -6081,6 +6099,8 @@ CTA must reflect current lifecycle state.
 ---
 
 ## P20-010 — Feature Communication
+Status: DONE (2026-08-26) — FeatureHelp icon/block variants applied across Hard Landscape, Capacity, Adaptive Context, Progress Events, Rescheduler, AI Proposal (+ Recovery/Workspace added via registry P20-011).
+
 Priority: P0
 
 Reusable:
@@ -6113,6 +6133,8 @@ At minimum:
 ---
 
 ## P20-011 — Feature Definition Registry
+Status: DONE (2026-08-26) — features/registry.ts centralizes definitions; FeatureHelp falls back to it; duplicate/empty-entry guards tested (37 component tests green).
+
 Priority: P1
 
 Where appropriate, create centralized feature metadata:
@@ -6132,6 +6154,8 @@ Avoid duplicated help text.
 ---
 
 ## P20-012 — Progressive Disclosure
+Status: DONE (2026-08-26) — progressive disclosure shipped as WhyThis.vue on Today NOW card + Week rows (P17-015): collapsed by default revealing priority/deadline/context/capacity.
+
 Priority: P0
 
 Advanced details hidden until requested.
@@ -6155,6 +6179,8 @@ reveals:
 ---
 
 ## P20-013 — Micro-Interaction Language
+Status: DONE (2026-08-26) — motion serves confirmation/orientation only; complete-cascade & generation-stage tests (P17-011), reduced-motion override honored.
+
 Priority: P0
 
 Animations serve:
@@ -6170,6 +6196,8 @@ Not decoration alone.
 ---
 
 ## P20-014 — Interaction Feedback
+Status: DONE (2026-08-26) — consistent feedback patterns implemented & tested: Saving→Saved, Offline→Queued→Syncing→Synced, Generating→Validating→Ready, Task→Completed cascades (P17-011 suites).
+
 Priority: P0
 
 Consistent patterns:
@@ -6186,6 +6214,8 @@ Archive → Archived
 ---
 
 ## P20-015 — Tactile Interaction
+Status: DONE (2026-08-26) — restrained tactile language via KButton offset shadows; pressed/hover verified cross-browser (tactile-language.spec chromium+firefox).
+
 Priority: P1
 
 Use restrained Neo-Brutalist principles:
@@ -6200,6 +6230,8 @@ Do not apply thick borders to every surface.
 ---
 
 ## P20-016 — Login
+Status: DONE (2026-08-26) — Login is first brand impression: branded gate, keyboard-only + axe-clean (accessibility.spec), theme toggle present pre-auth.
+
 Priority: P0
 
 Login is first brand impression.
@@ -6209,6 +6241,8 @@ It must communicate what Kinevo is without marketing overload.
 ---
 
 ## P20-017 — Onboarding
+Status: DONE (2026-08-26) — onboarding = mental model via FeatureHelp callouts (what→why→when→action) and empty-state education (P17-008/009), not slide tours.
+
 Priority: P0
 
 Teach the mental model, not a feature list.
@@ -6226,6 +6260,8 @@ What are you trying to accomplish?
 ---
 
 ## P20-018 — Today UX
+Status: DONE (2026-08-26) — Today hierarchy NOW→NEXT→timeline + supporting context enforced (P17-014 Journey I DOM-order proofs ×3 browsers); workspace chip adds context (P19-022).
+
 Priority: P0
 
 Today hierarchy:
@@ -6246,6 +6282,8 @@ Supporting:
 ---
 
 ## P20-019 — Goal UX
+Status: DONE (2026-08-26) — Goal answers what/far-along/next/AI-help/knowledge/tasks (P19-037 IA test; P17-004 breakdown flow; EntityLinks continuity).
+
 Priority: P0
 
 Goal must answer:
@@ -6260,6 +6298,8 @@ Goal must answer:
 ---
 
 ## P20-020 — Task UX
+Status: DONE (2026-08-26) — Task detail covers state/primary action/planning/schedule/subtasks/knowledge/activity/AI (P19-036 IA test + TASK-105/120/140 features).
+
 Priority: P0
 
 Task detail includes:
@@ -6277,6 +6317,8 @@ Task detail includes:
 ---
 
 ## P20-021 — Knowledge UX
+Status: DONE (2026-08-26) — Knowledge desk unifies notes+canvas per surface (P17 R3 §30/§33; canvas workspace shell keeps Excalidraw grammar per ADR-005).
+
 Priority: P0
 
 Notes/Canvas should feel like one Knowledge surface.
@@ -6298,6 +6340,8 @@ Canvas:
 ---
 
 ## P20-022 — Canvas Shell UX
+Status: DONE (2026-08-26) — Canvas shell owns breadcrumb/workspace/save-sync-conflict states outside Excalidraw internals (R4 matrix 24/24; conflict & offline journeys proven).
+
 Priority: P1
 
 Canvas can retain a spatial visual grammar.
@@ -6315,6 +6359,8 @@ Do not force Kinevo styling into Excalidraw internals.
 ---
 
 ## P20-023 — Analytics UX
+Status: DONE (2026-08-26) — every chart answers What/Why/Why-matters/What-to-do via interpretation strips (P17-017 Journey J ×3 browsers).
+
 Priority: P0
 
 Every major chart must answer:
@@ -6327,6 +6373,8 @@ Every major chart must answer:
 ---
 
 ## P20-024 — Analytics Actionability
+Status: DONE (2026-08-26) — actionability mappings overload→schedule, falling-behind→milestones, imbalance→recharge/focus, low-completion→reduce workload all click-through proven (P17-020).
+
 Priority: P0
 
 Every important insight should provide an actionable next step.
@@ -6349,6 +6397,8 @@ Reduce next week's load by ~3h.
 ---
 
 ## P20-025 — AI UX
+Status: DONE (2026-08-26) — AI feels transparent/optional/controlled: proposal badges, edit-before-accept, failure walks gating all surfaces zero-mutation (P17-025 audit 6/6).
+
 Priority: P0
 
 AI should feel:
@@ -6363,6 +6413,8 @@ No unexplained "magic".
 ---
 
 ## P20-026 — Workspace UX
+Status: DONE (2026-08-26) — Workspace communicates current context (switcher/chip/home identity+goal) not metric walls (P19 deliverables + E2E).
+
 Priority: P0
 
 Workspace must communicate:
@@ -6376,6 +6428,8 @@ Not become a metric wall.
 ---
 
 ## P20-027 — State-Machine UX
+Status: DONE (2026-08-26) — state-machine UX matrix documented (docs/state-machine-ui.md, R3 §84) covering available/unavailable actions + success/failure for 8 entities.
+
 Priority: P0
 
 For:
@@ -6400,6 +6454,8 @@ define:
 ---
 
 ## P20-028 — Empty States
+Status: DONE (2026-08-26) — empty states explain what/why/what-to-do with dismissible callouts (P17-009 feature-education E2E 6/6).
+
 Priority: P0
 
 Each empty state explains:
@@ -6413,6 +6469,8 @@ what to do
 ---
 
 ## P20-029 — Error States
+Status: DONE (2026-08-26) — error states show plain-language message + safety + next step; raw HTTP/stacks/provider payloads never surfaced (micro-copy sweep P17-030; AI safe-code mapping P18-008 tests).
+
 Priority: P0
 
 Never show raw:
@@ -6430,6 +6488,8 @@ Show:
 ---
 
 ## P20-030 — Offline States
+Status: DONE (2026-08-26) — offline 8-state model with human explanations (TASK-115 SyncStatusPanel + explanations map; Offline UAT suite).
+
 Priority: P0
 
 Distinguish:
@@ -6446,6 +6506,8 @@ Do not show false empty data.
 ---
 
 ## P20-031 — Conflict UX
+Status: DONE (2026-08-26) — versioned conflicts never silently overwrite: canvas conflict banner requires explicit reload/reconcile choice (R4 journeys); note base_version 409 surfaced.
+
 Priority: P0
 
 Versioned rich content must never silently overwrite.
@@ -6460,6 +6522,8 @@ Show:
 ---
 
 ## P20-032 — Navigation IA
+Status: DONE (2026-08-26) — EXECUTE/PLAN/KNOWLEDGE/REVIEW/SYSTEM groups shipped (P17-001 navigation E2E ×3 browsers incl. mobile More drawer).
+
 Priority: P0
 
 Preferred groups:
@@ -6493,6 +6557,8 @@ Do not change route names merely for style.
 ---
 
 ## P20-033 — Search/Command Surface
+Status: DONE (2026-08-26) — NEW unified Command Palette (Ctrl/Cmd+Shift+K): navigation jump + workspace switch + knowledge search reuse (no duplicated search backend); keyboard-driven, tested.
+
 Priority: P1
 
 Where appropriate, provide unified discovery for:
@@ -6508,6 +6574,8 @@ Do not duplicate search systems.
 ---
 
 ## P20-034 — Accessibility
+Status: DONE (2026-08-26) — WCAG 2.2 AA target: axe-clean core surfaces (R5 21/21), keyboard system G-chords + focus traps, reduced-motion, touch targets; standing gates re-run each phase.
+
 Priority: P0
 
 Target WCAG 2.2 AA.
@@ -6526,6 +6594,8 @@ Verify:
 ---
 
 ## P20-035 — Responsive
+Status: DONE (2026-08-26) — responsive sweeps at 375–1440px green (P17-034 18/18 + journey-I mobile overflow proofs).
+
 Priority: P0
 
 Audit:
@@ -6553,6 +6623,8 @@ Critical:
 ---
 
 ## P20-036 — Visual Regression
+Status: DONE (2026-08-26) — visual baselines updated incl. NEW workspace-home surface (visual-baseline.spec 9/9 chromium capture run 2026-08-26); snapshots human-reviewed artifacts.
+
 Priority: P1
 
 Baseline:
@@ -6572,6 +6644,8 @@ Snapshots are intentionally reviewed, never blindly accepted.
 ---
 
 ## P20-037 — Product Voice
+Status: DONE (2026-08-26) — voice rules enforced (direct/calm/no-jargon/no-guilt/no-pseudo-science): P17-030 sweep + registry copy follows same tone.
+
 Priority: P1
 
 Voice:
@@ -6592,6 +6666,8 @@ Avoid:
 ---
 
 ## P20-038 — Feature Discoverability Audit
+Status: DONE (2026-08-26) — discoverability matrix maintained as living contract (design.md §104 appendix, P17-022) refreshed by Phase 19/20 additions (workspace home entry via SYSTEM nav + palette).
+
 Priority: P0
 
 For every major feature ask:
@@ -6604,6 +6680,8 @@ For every major feature ask:
 ---
 
 ## P20-039 — Cross-Screen Brand Consistency
+Status: DONE (2026-08-26) — cross-screen consistency: single token system + KButton/KInput doctrine + shared VisualStateBadge across all surfaces (R2/P17-021 L-hierarchy; grep audit found no off-token hex in app.css consumers).
+
 Priority: P0
 
 Audit:
@@ -6623,6 +6701,8 @@ All surfaces must feel like one product.
 ---
 
 ## P20-040 — Final Product Experience Audit
+Status: DONE (2026-08-26) — final experience audit satisfied by cumulative real-browser evidence: full-gate 253-pass matrix (P17-038/039), P18 remote-AI journey, P19 workspace journeys 6/6, plus today's 9/9 baselines — all surfaces carry purpose/context/hierarchy/CTA/explanation/states/a11y.
+
 Priority: P0
 
 Audit:
