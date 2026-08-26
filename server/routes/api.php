@@ -205,6 +205,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::put('/ai/byok', [AiController::class, 'byokSave']);
     Route::delete('/ai/byok', [AiController::class, 'byokDelete']);
 
+    // TASK-P25-009/010 — AI Usage summary + cost alerts (Settings surface).
+    Route::get('/ai/usage', [AiController::class, 'usageSummary']);
+    Route::get('/ai/alerts', [AiController::class, 'alertsIndex']);
+    Route::post('/ai/alerts/read', [AiController::class, 'alertsRead']);
+
     Route::get('/metrics', [HealthController::class, 'metrics']);
     Route::get('/observability/runs', [HealthController::class, 'runs']);
 

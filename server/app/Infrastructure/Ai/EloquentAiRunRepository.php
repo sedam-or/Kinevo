@@ -6,6 +6,7 @@ use App\Domain\Ai\Contracts\AiRunRepository;
 use App\Domain\Ai\Entities\AiRun;
 use App\Models\AiRun as AiRunModel;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 
 final readonly class EloquentAiRunRepository implements AiRunRepository
 {
@@ -28,6 +29,55 @@ final readonly class EloquentAiRunRepository implements AiRunRepository
             ->where('user_id', $userId)
             ->where('created_at', '>=', $since)
             ->sum('estimated_cost_minor');
+    }
+
+    public function sumEstimatedCostForAllSince(CarbonImmutable $since): int
+    {
+        return (int) AiRunModel::query()
+            ->where('created_at', '>=', $since)
+            ->sum('estimated_cost_minor');
+    }
+
+    /** @return array{ kinevo_count:int, kinevo_cost_minor:int, byok_count:int, total_count:int } */
+    public function monthlyUsageForUser(int $userId, CarbonImmutable $since): array
+    {
+        $byLedger = DB::table('ai_runs')
+            ->where('user_id', $userId)
+            ->where('created_at', '>=', $since)
+            ->selectRaw('billing_ledger, count(*) as count, coalesce(sum(estimated_cost_minor), 0) as cost')
+            ->groupBy('billing_ledger')
+            ->get()
+            ->mapWithKeys(static fn ($row) => [(string) $row->billing_ledger => (array) $row])
+            ->all();
+
+        $kinevo = $byLedger['kinevo'] ?? null;
+        $byok = $byLedger['byok'] ?? null;
+
+        return [
+            'kinevo_count' => (int) ($kinevo['count'] ?? 0),
+            'kinevo_cost_minor' => (int) ($kinevo['cost'] ?? 0),
+            'byok_count' => (int) ($byok['count'] ?? 0),
+            'total_count' => (int) ($kinevo['count'] ?? 0) + (int) ($byok['count'] ?? 0),
+        ];
+    }
+
+    /** @return array<int, array{ type:string, count:int, kinevo_cost_minor:int }> */
+    public function monthlyBreakdown(int $userId, CarbonImmutable $since): array
+    {
+        return DB::table('ai_runs')
+            ->where('user_id', $userId)
+            ->where('created_at', '>=', $since)
+            ->where('billing_ledger', 'kinevo')
+            ->selectRaw('proposal_type, count(*) as count, coalesce(sum(estimated_cost_minor), 0) as cost')
+            ->groupBy('proposal_type')
+            ->orderByDesc('count')
+            ->get()
+            ->map(static fn ($row) => [
+                'type' => (string) $row->proposal_type,
+                'count' => (int) $row->count,
+                'kinevo_cost_minor' => (int) $row->cost,
+            ])
+            ->all();
     }
 
     public function record(AiRun $run): AiRun

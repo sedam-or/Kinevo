@@ -15,6 +15,19 @@ vi.mock('../api', async (importOriginal) => {
             removeCredential: vi.fn(),
             enable: vi.fn(),
             disable: vi.fn(),
+            usage: vi.fn().mockResolvedValue({
+                period: '2026-08',
+                period_start: '2026-08-01T00:00:00.000Z',
+                period_end: '2026-08-31T23:59:59.000Z',
+                plan: { code: 'free', name: 'Free' },
+                credits: { used: 0, limit: 20, remaining: 20, percent: 0 },
+                kinevo: { request_count: 0, estimated_cost_minor: 0, currency: 'USD' },
+                byok: { request_count: 0 },
+                breakdown: [],
+                alerts: { unread_count: 0, items: [] },
+            }),
+            runs: vi.fn().mockResolvedValue({ runs: [] }),
+            readAlerts: vi.fn().mockResolvedValue({ marked_read: 0 }),
         },
     };
 });

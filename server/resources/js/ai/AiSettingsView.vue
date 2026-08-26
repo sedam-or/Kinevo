@@ -4,6 +4,7 @@ import { useAiSettingsStore } from './store';
 import { aiApi, type AiProviderCatalogEntry, type AiStatusState } from './api';
 import KButton from '../components/KButton.vue';
 import SecretField from './SecretField.vue';
+import AiUsageSummaryCard from './AiUsageSummaryCard.vue';
 
 const store = useAiSettingsStore();
 
@@ -202,7 +203,11 @@ async function removeKey(): Promise<void> {
     <div class="max-w-lg flex flex-col gap-4" data-testid="ai-settings-view">
         <div v-if="store.loading" class="text-sm text-gray-500 dark:text-gray-400" data-testid="ai-settings-loading">Loading…</div>
 
-        <form v-else class="flex flex-col gap-6" @submit.prevent="submit" data-testid="ai-provider-form">
+        <template v-else>
+            <!-- TASK-P25-009 — Settings → AI Usage, summary-first. -->
+            <AiUsageSummaryCard />
+
+            <form class="flex flex-col gap-6" @submit.prevent="submit" data-testid="ai-provider-form">
             <div v-if="formError" class="text-sm text-danger" role="alert" data-testid="ai-settings-error">{{ formError }}</div>
 
             <!-- Section 1 · Runtime Status -->
@@ -293,6 +298,7 @@ async function removeKey(): Promise<void> {
                 <KButton type="submit" :disabled="saving" data-testid="ai-save-button">{{ saving ? 'Saving…' : 'Save settings' }}</KButton>
                 <span v-if="saved" class="text-sm text-green-700 dark:text-green-400" data-testid="ai-settings-saved">AI provider settings saved.</span>
             </div>
-        </form>
+            </form>
+        </template>
     </div>
 </template>

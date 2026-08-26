@@ -12,6 +12,8 @@ use App\Application\Ai\GenerateValidatedProposalUseCase;
 use App\Application\Ai\GetAiProposalUseCase;
 use App\Application\Ai\GetAiProviderConfigUseCase;
 use App\Application\Ai\GetAiProviderStatusUseCase;
+use App\Application\Ai\GetAiUsageSummaryUseCase;
+use App\Application\Ai\ListAiCostAlertsUseCase;
 use App\Application\Ai\ListAiProposalsUseCase;
 use App\Application\Ai\ListAiRunsUseCase;
 use App\Application\Ai\ListAvailableAiProvidersUseCase;
@@ -65,6 +67,8 @@ final class AiController extends Controller
         private readonly UpdateAiProposalUseCase $updateProposal,
         private readonly AiProposalRepository $proposalRepository,
         private readonly ManageUserAiProviderConfigUseCase $userAiProvider,
+        private readonly GetAiUsageSummaryUseCase $usageSummary,
+        private readonly ListAiCostAlertsUseCase $aiCostAlerts,
     ) {}
 
     /**
@@ -665,5 +669,27 @@ final class AiController extends Controller
         }
 
         return response()->json(['proposal' => $proposal->toArray()]);
+    }
+
+    /** TASK-P25-009 — AI Usage summary (Settings surface). Read-only. */
+    public function usageSummary(Request $request): JsonResponse
+    {
+        return response()->json($this->usageSummary->__invoke($request->user()->id));
+    }
+
+    /** TASK-P25-010 — unread user cost alerts for the in-app surface. */
+    public function alertsIndex(Request $request): JsonResponse
+    {
+        return response()->json([
+            'alerts' => $this->aiCostAlerts->listUnseen($request->user()->id),
+        ]);
+    }
+
+    /** TASK-P25-010 — dismiss all unread user cost alerts. */
+    public function alertsRead(Request $request): JsonResponse
+    {
+        return response()->json([
+            'marked_read' => $this->aiCostAlerts->markAllRead($request->user()->id),
+        ]);
     }
 }

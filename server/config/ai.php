@@ -107,4 +107,25 @@ return [
             // ],
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cost Alerts (TASK-P25-010)
+    |--------------------------------------------------------------------------
+    | Domain events evaluated post-success on every metered run; delivery
+    | channels are deliberately out of scope (no notification center yet).
+    |   - usage_thresholds        [%] — per-user ai_credits thresholds that
+    |                              raise a user-visible alert once each month.
+    |   - ops_daily_cost_minor    int — company-wide estimated Kinevo spend per
+    |                              day (minor units) that raises an OPS alert.
+    |   - user_anomaly_daily_requests int — per-user request count per day that
+    |                              raises an OPS anomaly alert.
+    | Set any ops value to 0 / null to disable that check. ALERTS DO NOT BLOCK;
+    | they only record events (the P25-007 hard limits still gate the runtime).
+    */
+    'alerts' => [
+        'usage_thresholds' => [50, 75, 90, 100],
+        'ops_daily_cost_minor' => (int) (env('AI_OPS_DAILY_COST_LIMIT') ?: 0),
+        'user_anomaly_daily_requests' => (int) (env('AI_ANOMALY_DAILY_REQUESTS') ?: 0),
+    ],
 ];

@@ -3851,6 +3851,45 @@ paths:
         '401': { description: Unauthorized }
         '422': { description: Invalid query parameters }
 
+  /ai/usage:
+    get:
+      tags: [AI]
+      summary: AI Usage summary for Settings (TASK-P25-009). Read-only.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiUsageSummaryResponse'
+        '401': { description: Unauthorized }
+
+  /ai/alerts:
+    get:
+      tags: [AI]
+      summary: Unread user cost-alert events (TASK-P25-010). Ops alerts never exposed here.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAlertsResponse'
+        '401': { description: Unauthorized }
+
+  /ai/alerts/read:
+    post:
+      tags: [AI]
+      summary: Dismiss all unread user cost alerts (TASK-P25-010).
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiAlertsReadResponse'
+        '401': { description: Unauthorized }
+
 
 
 components:
@@ -5589,6 +5628,85 @@ components:
         runs:
           type: array
           items: {$ref: '#/components/schemas/AiRun'}
+    AiUsageAlert:
+      type: object
+      required: [id, kind, threshold, context, seen_at, created_at]
+      properties:
+        id: {type: integer}
+        kind:
+          type: string
+          enum: [user.usage_threshold]
+          description: Only user-facing kinds are exposed; ops.* events stay server-side (TASK-P25-010)
+        threshold: {type: integer, nullable: true, description: Crossed percentage (user.usage_threshold)}
+        context:
+          type: object
+          additionalProperties: true
+          description: Safe context, e.g. {used, limit, percent}
+        seen_at: {type: string, format: date-time, nullable: true}
+        created_at: {type: string, format: date-time}
+    AiAlertsResponse:
+      type: object
+      required: [alerts]
+      properties:
+        alerts:
+          type: array
+          items: {$ref: '#/components/schemas/AiUsageAlert'}
+    AiAlertsReadResponse:
+      type: object
+      required: [marked_read]
+      properties:
+        marked_read: {type: integer, description: Number of alerts dismissed}
+    AiUsageSummaryResponse:
+      type: object
+      required: [period, plan, credits, kinevo, byok, breakdown, alerts]
+      properties:
+        period: {type: string, description: Billing month, YYYY-MM}
+        period_start: {type: string, format: date-time}
+        period_end: {type: string, format: date-time}
+        plan:
+          type: object
+          required: [code, name]
+          properties:
+            code: {type: string}
+            name: {type: string}
+        credits:
+          type: object
+          required: [used, limit, remaining, percent]
+          properties:
+            used: {type: integer}
+            limit: {type: integer}
+            remaining: {type: integer}
+            percent: {type: number, description: 0-100, one decimal}
+        kinevo:
+          type: object
+          required: [request_count, estimated_cost_minor, currency]
+          properties:
+            request_count: {type: integer}
+            estimated_cost_minor: {type: integer, description: Estimated Kinevo-hosted cost this month, minor units}
+            currency: {type: string}
+        byok:
+          type: object
+          required: [request_count]
+          properties:
+            request_count: {type: integer}
+        breakdown:
+          type: array
+          description: Per-feature hosted (ledger kinevo) usage this month
+          items:
+            type: object
+            required: [type, count, kinevo_cost_minor]
+            properties:
+              type: {type: string, description: proposal_type of the AI action}
+              count: {type: integer}
+              kinevo_cost_minor: {type: integer}
+        alerts:
+          type: object
+          required: [unread_count, items]
+          properties:
+            unread_count: {type: integer}
+            items:
+              type: array
+              items: {$ref: '#/components/schemas/AiUsageAlert'}
     ByokConfig:
       type: object
       properties:

@@ -6983,6 +6983,28 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - New `AiRuntimeLimitException` (429) caught in all 6 AI endpoints. Values NOT locked by guesswork.
   Tests: AiUsageTest daily-request + daily-cost safeguards (2 new); full suite 963 green.
   NOTE: prior "detailed specs truncated" note for P25-007 now obsolete (full spec received later).
+### P25-009 — Usage UI (Settings → AI Usage)
+- Status: DONE (2026-08-26) — summary-first surface, no charts (daily chart deferred per owner):
+  - Backend: `GET /ai/usage` (`GetAiUsageSummaryUseCase` + repo aggregates) — plan + `ai_credits`
+    progress/percent, Kinevo-hosted request count + estimated cost (minor, currency), BYOK request
+    count, THIS-MONTH per-feature breakdown (ledger kinevo), unread alerts. Read-only.
+  - Frontend: `AiUsageSummaryCard.vue` mounted atop `AiSettingsView.vue` — credits progress bar,
+    Kinevo cost + BYOK stat blocks, per-feature breakdown list, recent AI runs (`/ai/runs`), and the
+    dismissable alerts banner (no charts). Design skill consulted; follows design tokens/§design.md.
+  - Tests: `AiAlertsTest` usage-summary + ledger-separation (2); `AiUsageSummaryCard.test.ts` 3/3.
+### P25-010 — Cost Alerts (domain events first, channels later)
+- Status: DONE (2026-08-26):
+  - `ai_cost_alerts` (migration 2026_08_26_150000): `user_id` NULL = ops; kind/threshold/context/seen_at.
+  - `AiCostAlert` entity + `AiCostAlertRepository` + Eloquent impl + `AiCostAlertService`, evaluated
+    POST-success in `AiCreditGuard` (never blocks); dedupe once per month-threshold / per day.
+  - User: `user.usage_threshold` (50/75/90/100%, config `ai.alerts.usage_thresholds`), in-app unread.
+  - Ops: `ops.daily_cost` (`AI_OPS_DAILY_COST_LIMIT`, user_id NULL) + `ops.user_anomaly`
+    (`AI_ANOMALY_DAILY_REQUESTS`, user-attributed) — stored + `Log::warning`, NEVER in user payloads
+    (listUnseenForUser filters to user kinds).
+  - API: `GET /ai/alerts`, `POST /ai/alerts/read`. Provider price-anomaly detection deferred (needs
+    baselines); delivery channels (email/Slack/notifications) deliberately out of scope.
+  - Tests: `AiAlertsTest` 5/5 (threshold-fire-once + dismiss, ops-daily-cost not exposed + dedupe,
+    anomaly not user-visible, usage summary, BYOK separation). Full suite 970 green; phpstan lint clean.
 ## PHASE 26 — MOBILE ARCHITECTURE
 ### P26-001..009 — NativePHP feasibility (BLOCKED until verified vs official docs), single backend, presentation boundary, feature matrix, nav, auth, contracts, offline reuse, deep links
 ## PHASE 27 — NATIVEPHP MOBILE MVP

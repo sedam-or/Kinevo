@@ -129,6 +129,53 @@ export interface AiAcceptResult {
     canvas?: { id: number; title: string } | null;
 }
 
+/** TASK-P25-010 — user cost-alert event (in-app, unread until dismissed). */
+export interface AiUsageAlert {
+    id: number;
+    kind: string;
+    threshold: number | null;
+    context: Record<string, unknown>;
+    seen_at: string | null;
+    created_at: string;
+}
+
+/** TASK-P25-009 — AI run audit metadata (safe projection, no prompt content). */
+export interface AiRunRecord {
+    id: number;
+    request_id: string | null;
+    provider: string;
+    model: string;
+    proposal_type: string;
+    input_tokens: number | null;
+    output_tokens: number | null;
+    credits_consumed: number;
+    estimated_cost_minor: number | null;
+    cost_currency: string | null;
+    billing_ledger: string;
+    status: string;
+    latency_ms: number | null;
+    created_at: string;
+}
+
+export interface AiUsageBreakdownEntry {
+    type: string;
+    count: number;
+    kinevo_cost_minor: number;
+}
+
+/** TASK-P25-009 — Settings → AI Usage summary (summary-first, no charts). */
+export interface AiUsageSummary {
+    period: string;
+    period_start: string;
+    period_end: string;
+    plan: { code: string; name: string };
+    credits: { used: number; limit: number; remaining: number; percent: number };
+    kinevo: { request_count: number; estimated_cost_minor: number; currency: string };
+    byok: { request_count: number };
+    breakdown: AiUsageBreakdownEntry[];
+    alerts: { unread_count: number; items: AiUsageAlert[] };
+}
+
 export const aiApi = {
     async config(): Promise<{ config: AiProviderConfigPayload }> {
         return apiClient.request<{ config: AiProviderConfigPayload }>('/ai/settings');
@@ -237,5 +284,25 @@ export const aiApi = {
 
     async acceptProposalWithResult(proposalId: number): Promise<AiAcceptResult> {
         return apiClient.request<AiAcceptResult>(`/ai/proposals/${proposalId}/accept`, { method: 'POST' });
+    },
+
+    /** TASK-P25-009 — AI Usage summary for the Settings→AI Usage surface. */
+    async usage(): Promise<AiUsageSummary> {
+        return apiClient.request<AiUsageSummary>('/ai/usage');
+    },
+
+    /** TASK-P25-010 — unread user cost alerts. */
+    async alerts(): Promise<{ alerts: AiUsageAlert[] }> {
+        return apiClient.request<{ alerts: AiUsageAlert[] }>('/ai/alerts');
+    },
+
+    /** TASK-P25-010 — dismiss all unread user cost alerts. */
+    async readAlerts(): Promise<{ marked_read: number }> {
+        return apiClient.request<{ marked_read: number }>('/ai/alerts/read', { method: 'POST' });
+    },
+
+    /** TASK-P25-009 — recent AI run audit records (safe metadata only). */
+    async runs(limit = 10): Promise<{ runs: AiRunRecord[] }> {
+        return apiClient.request<{ runs: AiRunRecord[] }>(`/ai/runs?limit=${limit}`);
     },
 };

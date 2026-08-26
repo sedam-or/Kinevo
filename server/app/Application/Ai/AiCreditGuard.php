@@ -20,8 +20,10 @@ use Illuminate\Support\Str;
  *   the price catalog, ledger `kinevo` — Kinevo bears the inference cost.
  * - BYOK (byok=true): spends nothing and stores no Kinevo cost (ledger
  *   `byok`) — the user bears their provider's spend. Runtime safeguards apply
- *   to BOTH (no abuse bypass). Called from inference use cases, not
- *   controllers; CLI diagnostics (ai:smoke) bypass entirely.
+ *   to BOTH (no abuse bypass). P25-010 cost alerts are evaluated after every
+ *   metered success (user thresholds + ops daily cost/anomaly).
+ *   Called from inference use cases, not controllers; CLI diagnostics
+ *   (ai:smoke) bypass entirely.
  */
 final readonly class AiCreditGuard
 {
@@ -29,6 +31,7 @@ final readonly class AiCreditGuard
         private EntitlementService $entitlements,
         private AiRunRepository $runs,
         private AiCostEstimator $costEstimator,
+        private AiCostAlertService $alerts,
     ) {}
 
     /**
@@ -130,5 +133,7 @@ final readonly class AiCreditGuard
             $cost['pricing_snapshot_id'],
             $ledger,
         ));
+
+        $this->alerts->evaluatePostSuccess($userId, $byok, $cost['estimated_cost_minor']);
     }
 }

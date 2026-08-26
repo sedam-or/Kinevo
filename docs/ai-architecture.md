@@ -178,6 +178,20 @@ Every user inference is metered at the use-case layer (`AiCreditGuard`, not cont
   `AI_DAILY_LIMIT`/`AI_DAILY_COST_LIMIT`); per-request context/output are already bounded by
   prompt budgets and `AiRequest.max_tokens`. Protect economics via credits; protect runtime via
   these — BYOK (P25-008) is still bound by them (no abuse bypass).
+- **Usage surface** (P25-009, summary-first): `GET /ai/usage` aggregates the plan's `ai_credits`
+  progress, Kinevo-hosted estimated cost + per-feature breakdown this month, BYOK request count, and
+  unread alert events. No charts by design (daily chart deferred); the frontend `AiUsageSummaryCard`
+  renders it in Settings → AI until a fuller Usage view lands.
+- **Cost alerts** (P25-010, domain events first; channels later): after every metered success
+  `AiCostAlertService` records events and never blocks:
+  - `user.usage_threshold` (user-facing, in-app until dismissed via `GET/POST /ai/alerts[/read]`) —
+    monthly ai_credits crossing 50/75/90/100% (config `ai.alerts.usage_thresholds`);
+  - `ops.daily_cost` (ops, user_id NULL, never in user payloads) — company-wide estimated Kinevo
+    spend crossing `AI_OPS_DAILY_COST_LIMIT`; logged + stored once per day;
+  - `ops.user_anomaly` (ops, user-attributed) — a user crossing `AI_ANOMALY_DAILY_REQUESTS`
+    requests/day; logged + stored once per day.
+  Provider cost/price-anomaly detection is deferred (needs baselines). Delivery channels
+  (email/Slack/notification center) are deliberately out of scope; this service only records events.
 
 ### Human approval
 Material changes MUST follow:

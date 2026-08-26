@@ -480,6 +480,16 @@ Release governance: see `docs/release-management.md`.
   that happen ON the end day. Previously `to=2026-08-23` cut off at
   00:00:00, so same-day activity silently disappeared from the overview —
   a latent bug that surfaced on UTC date rollover (overview + heatmap).
+- A real AI Usage surface lands in Settings (Phase 25, TASK-P25-009): a
+  summary-first card shows this month's AI credits progress, the estimated
+  Kinevo-hosted cost, BYOK usage, a per-feature breakdown of what you asked
+  for, and your recent AI runs. No charts yet — the daily chart is explicitly
+  deferred.
+- AI budget alerts keep surprises away (Phase 25, TASK-P25-010): you get an
+  in-app notice when you cross 50/75/90/100% of your monthly AI credits, and
+  operators get logged, once-per-day internal alerts on company-wide AI spend
+  or a user's anomalous request rate. Alerts never block — they record events
+  only, until delivery channels arrive later.
 
 ## [0.4.0] — 2026-08-17
 
