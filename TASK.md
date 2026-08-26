@@ -6917,11 +6917,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - Idempotent replay → `duplicate`; GET /api/v1/billing/subscription snapshot reflects active + txn history.
   - Sandbox token obtained from a real one-click subscription token (never committed; key value only in local .env).
 ### P24-036 — Cross-Device Entitlement E2E
-- Status: TODO (web purchase → same-account entitlement; mobile restore deferred with mobile billing)
+- Status: DONE (2026-08-26) — after P24-035 settlement, a SECOND session token for the same account (simulated second device) resolves plan personal / state active / provider midtrans on GET /api/v1/saas/plan through the shared P23 resolver. Mobile restore stays deferred with mobile billing.
 ### P24-037 — Billing Operations / Diagnostics
 - Status: DONE (2026-08-26) — billing:status and billing:reconcile commands; operator-safe tables, no card data or secrets.
 ### P24-038 — Billing Documentation
-- Status: PARTIAL (ADR + matrix done; docs/billing.md after implementation proven)
+- Status: DONE (2026-08-26) — docs/billing.md (ENGINEERING+OPERATIONS contract), inventory updated, CHANGELOG entry added. ADR-012 + capability matrix remain the decision records.
 ### P24-039 — Mobile Billing Architecture Spike
 - Status: DONE-as-scope-decision? NO → **DEFERRED**: Apple IAP / Google Play Billing treated as separate adapters feeding the same entitlement model; native store adapters NOT in current release scope until verified per platform policy (spec §1.2).
 ### P24-040/041 — Apple / Google Adapters
@@ -6931,7 +6931,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 ### P24-043 — Duplicate Subscription Protection
 - Status: TODO (business rule: one active web subscription per user; cross-platform duplicates need product approval)
 ### P24-044 — Final Production Billing Gate
-- Status: NOT PASSED (requires 005..035 applicable set + sandbox evidence)
+- Status: PASSED for WEB scope (2026-08-26) — applicable web set (P24-005..035 minus explicit deferrals) green: checkout/webhook/cancel/resume live-verified against Midtrans sandbox, entitlement sync + cross-device proven, security hardening + test suites + OpenAPI + ops commands + docs complete. Production still gated by merchant activation + production key flip + refund/chargeback verification (P24-022/023 deferred) per docs/billing.md checklist.
 
 ## PHASE 25 — AI USAGE / COST CONTROL
 ### P25-001..010 — usage records, request identity, credits, preflight, postflight, routing, safeguards, BYOK policy, usage UI, cost alerts

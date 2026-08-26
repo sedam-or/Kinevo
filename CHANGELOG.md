@@ -19,6 +19,11 @@ Release governance: see `docs/release-management.md`.
   explains itself in plain language instead of developer terms, and note and
   canvas lists no longer show internal revision counters.
 ### Added
+- Billing is live against the real Midtrans sandbox (Phase 24, TASK-P24-035/036): a user can
+  start a paid checkout whose pending subscription is created by the provider, and a
+  signature-verified settlement webhook activates the subscription, records the payment
+  transaction, and grants the plan to every device on the account (idempotent, replay-safe,
+  out-of-order-safe). Billing operations documentation shipped in `docs/billing.md`.
 - AI now lives where you work (Phase 17, TASK-P17-029): notes offer
   "Summarize with AI" and "Extract tasks with AI" in the editor, the canvas
   index suggests a board structure from a plain-language description, and

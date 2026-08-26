@@ -17,6 +17,7 @@ PRODUCT · ENGINEERING · CONTRIBUTOR · AGENT · OPERATIONS · HISTORICAL · TE
 | docs/knowledge-layer.md | ENGINEERING | current | |
 | docs/offline-sync.md | ENGINEERING | current | |
 | docs/ai-architecture.md | ENGINEERING | current (+ P18 control plane §) | |
+| docs/billing.md | ENGINEERING | current (P24-038) | payment/billing ops contract |
 | docs/design.md | PRODUCT | current (UX authority incl. §104) | |
 | docs/design-tokens.md | ENGINEERING | current | |
 | docs/state-machine-ui.md | ENGINEERING | current | R3 deliverable |
