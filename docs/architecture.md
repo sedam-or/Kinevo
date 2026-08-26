@@ -90,6 +90,12 @@ Tiptap owns document editing mechanics. Kinevo owns note identity, links, persis
 ### AI boundary
 LLMs are untrusted external-like providers. All outputs pass schema validation and domain validation.
 
+### Mobile boundary
+NativePHP (Phase 26/27) is a **presentation front, not a second backend**. It reuses the Domain +
+Application + Infrastructure layers; its Blade/EDGE native UI sits above the same dependency rule
+(architecture.md top). On-device SQLite is the local canonical store and reconciles to PostgreSQL
+via the offline-sync envelope. See `docs/mobile-architecture.md` and `docs/adr/ADR-008-mobile.md`.
+
 ### Scheduler boundary
 Scheduler is a domain subsystem, not a controller or job implementation. Jobs trigger scheduler runs but do not implement scheduling decisions.
 

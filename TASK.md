@@ -7006,10 +7006,30 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - Tests: `AiAlertsTest` 5/5 (threshold-fire-once + dismiss, ops-daily-cost not exposed + dedupe,
     anomaly not user-visible, usage summary, BYOK separation). Full suite 970 green; phpstan lint clean.
 ## PHASE 26 — MOBILE ARCHITECTURE
-### P26-001..009 — NativePHP feasibility (BLOCKED until verified vs official docs), single backend, presentation boundary, feature matrix, nav, auth, contracts, offline reuse, deep links
+### P26-001..009 — NativePHP feasibility (verified), single backend, presentation boundary, feature matrix, nav, auth, contracts, offline reuse, deep links
+- Status: DONE (2026-08-26) — architecture/feasibility phase complete; **app build is P27**.
+  - **Feasibility verified vs official docs** (nativephp.com/docs/mobile v4): NativePHP embeds a
+    pre-compiled PHP runtime + Laravel on-device (no web server, offline-first), renders real
+    native UI via **EDGE** (Blade → native views), exposes native APIs (biometrics, push, secure
+    storage, deep links, device/file/share), and builds iOS+Android from one codebase. The prior
+    BLOCKED flag is resolved by evidence.
+  - **Single backend preserved** (ADR-001): web (Vue/Inertia SPA) and mobile (Blade/EDGE) are two
+    presentation fronts over the same Domain+Application+Infrastructure; domain stays presentation-
+    agnostic per `docs/architecture.md` dependency rule. `docs/adr/ADR-008-mobile.md` records the
+    decision + rejected alternatives (RN/Flutter/PWA/separate backend).
+  - **Presentation boundary**: web ≠ mobile UI (Vue not reused; EDGE native surface is new).
+  - **Persistence/sync**: on-device SQLite (local canonical) reconciles to server PostgreSQL via the
+    existing `operation_id`/`base_version` envelope (`docs/offline-sync.md`); 409 on stale writes.
+  - **Auth**: Sanctum token (same contracts) in SecureStorage + Biometrics plugin for local unlock.
+  - **Contracts**: no new API endpoints for parity — mobile consumes the existing OpenAPI over
+    Sanctum; AI/offline/API rules unchanged.
+  - **Feature matrix (P27 → NativePHP capability)** + nav (bottom tabs) + deep links
+    (`kinevo://task|note|goal/{id}`) documented in `docs/mobile-architecture.md`.
+  - **Risks surfaced**: sync engine is the P27 gating dependency; SQLite↔Postgres schema parity;
+    pin NativePHP versions (avoid paid-only plugin hard deps).
 ## PHASE 27 — NATIVEPHP MOBILE MVP
 ### P27-001..011 — shell/today/capture/execution/goal-AI/notes/canvas-companion/analytics/notifications/subscription visibility/device evidence
-- Status: TODO · Depends On: P26 verified + P23/P25
+- Status: TODO · Depends On: sync engine (P26 risk) + P23/P25; P26 architecture verified (2026-08-26)
 ## PHASE 28 — PRODUCT INTELLIGENCE + WRAPPED
 ### P28-001..010 — deterministic metrics, formulas, insight engine, bounded AI narrative, archetypes, monthly review, yearly wrapped, shareable artifacts, public-link security, reflection→planning loop
 - Status: TODO · Depends On: P23 (entitlement `wrapped`)

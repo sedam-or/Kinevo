@@ -491,6 +491,12 @@ Release governance: see `docs/release-management.md`.
   or a user's anomalous request rate. Alerts never block — they record events
   only, until delivery channels arrive later.
 
+- Mobile architecture is locked in (Phase 26, TASK-P26): we verified NativePHP
+  against its official docs and confirmed the native app reuses the same Laravel
+  backend — the web UI and the mobile app are two fronts over one codebase. The
+  app runs offline-first on device and syncs to the server using the existing
+  offline contract; building the actual app is the next phase (P27).
+
 ## [0.4.0] — 2026-08-17
 
 ### Added
