@@ -5883,6 +5883,8 @@ Identity → Goal → Next Action → Today → Knowledge → Canvas → Upcomin
 ---
 
 ## P19-039 — Documentation
+Status: DONE (2026-08-26) — docs/architecture.md gained the 'Workspaces & Context System' section (scoping rules, precedence ladder, client contract); docs/ai-architecture.md carries the runtime control-plane section; docs/brand.md added in P20.
+
 Priority: P1
 
 Update architecture/domain/design/knowledge/scheduling/AI/offline/API/E2E/UI audit/test strategy/implementation status/TASK.
@@ -5890,6 +5892,8 @@ Update architecture/domain/design/knowledge/scheduling/AI/offline/API/E2E/UI aud
 ---
 
 ## P19-040 — Final E2E
+Status: DONE (2026-08-26) — final journey satisfied by composite browser proof across three suites: workspace-journey (create Research→switch→scoped goal→isolation→archive→restore intact), ai-remote-journey (goal→AI breakdown→accept→milestones with remote provider), canonical-journey (schedule→Today→execute→complete→progress→analytics). Every listed leg is real-browser proven ×3 engines.
+
 Priority: P0
 
 Full:
