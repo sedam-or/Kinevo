@@ -103,8 +103,15 @@ final readonly class TestAiProviderConnectionUseCase
                 if (! in_array($transient->errorCode(), [AiProviderException::CODE_UNAVAILABLE, AiProviderException::CODE_RATE_LIMITED, AiProviderException::CODE_TIMEOUT], true)) {
                     throw $transient;
                 }
+                // Free-tier routers rotate through dead upstreams; give the
+                // probe two more bounded chances before reporting failure.
                 usleep(750_000);
-                $response = $probe();
+                try {
+                    $response = $probe();
+                } catch (AiProviderException $second) {
+                    usleep(1_500_000);
+                    $response = $probe();
+                }
             }
             if (trim($response->text) === '') {
                 throw AiProviderException::unavailable('AI provider returned an empty completion.');

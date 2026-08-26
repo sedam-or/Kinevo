@@ -22,7 +22,7 @@ test.describe('P18 AI remote runtime journey', () => {
     test.skip(!API_KEY, 'E2E_AI_API_KEY not set — remote AI journey requires injected credentials');
 
     test('settings → credential → masked → inference test → breakdown → accept', async ({ page }) => {
-        test.setTimeout(240_000);
+        test.setTimeout(480_000);
         await login(page);
 
         // --- Settings surface -------------------------------------------------
@@ -84,7 +84,7 @@ test.describe('P18 AI remote runtime journey', () => {
 
         // Proposal review: explicit AI GENERATED / NOT YET COMMITTED markers,
         // then acceptance commits milestones to the timeline.
-        await expect(page.getByTestId('proposal-review')).toBeVisible({ timeout: 240_000 });
+        await expect(page.getByTestId('proposal-review')).toBeVisible({ timeout: 400_000 });
         await expect(page.getByTestId('proposal-ai-generated-badge')).toHaveText('AI GENERATED');
         await expect(page.getByTestId('proposal-not-committed-badge')).toHaveText('NOT YET COMMITTED');
         await page.getByTestId('proposal-accept').click();
