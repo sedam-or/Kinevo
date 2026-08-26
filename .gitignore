@@ -41,3 +41,4 @@ server/public/build/
 .claude/
 skills-lock.json
 ui-ux-pro-max-skill/
+storage/backups/*.sql.gz
