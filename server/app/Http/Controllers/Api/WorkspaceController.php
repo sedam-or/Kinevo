@@ -8,6 +8,7 @@ use App\Application\Workspaces\ListWorkspacesUseCase;
 use App\Application\Workspaces\RestoreWorkspaceUseCase;
 use App\Application\Workspaces\SetDefaultWorkspaceUseCase;
 use App\Application\Workspaces\UpdateWorkspaceUseCase;
+use App\Domain\Saas\Exceptions\EntitlementLimitException;
 use App\Domain\Workspaces\Contracts\WorkspaceRepository;
 use App\Domain\Workspaces\Exceptions\DuplicateWorkspaceSlugException;
 use App\Http\Controllers\Controller;
@@ -63,6 +64,9 @@ final class WorkspaceController extends Controller
             $workspace = $this->createWorkspace->__invoke($request->user()->id, $validator->validated());
         } catch (InvalidArgumentException|DuplicateWorkspaceSlugException $e) {
             return response()->json(['error' => $e->getMessage()], 409);
+        } catch (EntitlementLimitException $e) {
+            // TASK-P23-008 — explain what's limited, usage, and next action.
+            return response()->json($e->toResponse(), 403);
         }
 
         return response()->json(['workspace' => $workspace->toArray()], 201);

@@ -49,6 +49,7 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'System',
         items: [
             { key: 'settings', label: 'Settings', icon: 'settings' },
+            { key: 'plan-settings', label: 'Plan', icon: 'plan' },
             { key: 'ai-settings', label: 'AI & Providers', icon: 'ai' },
             { key: 'workspace-home', label: 'Workspace Home', icon: 'workspace' },
         ],

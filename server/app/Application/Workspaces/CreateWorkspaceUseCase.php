@@ -2,6 +2,7 @@
 
 namespace App\Application\Workspaces;
 
+use App\Application\Saas\EntitlementService;
 use App\Domain\Workspaces\Contracts\WorkspaceRepository;
 use App\Domain\Workspaces\Exceptions\DuplicateWorkspaceSlugException;
 use App\Domain\Workspaces\Workspace;
@@ -10,6 +11,7 @@ final readonly class CreateWorkspaceUseCase
 {
     public function __construct(
         private WorkspaceRepository $workspaces,
+        private EntitlementService $entitlements,
     ) {}
 
     /**
@@ -20,6 +22,10 @@ final readonly class CreateWorkspaceUseCase
      */
     public function __invoke(int $userId, array $input): Workspace
     {
+        // TASK-P23-007 — backend entitlement enforcement (max_workspaces).
+        $activeCount = count($this->workspaces->listForUser($userId, false));
+        $this->entitlements->assertWithinLimit($userId, 'max_workspaces', $activeCount);
+
         $workspace = Workspace::create(
             userId: $userId,
             name: (string) ($input['name'] ?? ''),

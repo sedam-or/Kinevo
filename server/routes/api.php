@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\ProgramController;
 use App\Http\Controllers\Api\ProgressEventController;
 use App\Http\Controllers\Api\RechargeController;
 use App\Http\Controllers\Api\RecoveryController;
+use App\Http\Controllers\Api\SaasController;
 use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\ScheduleDraftController;
 use App\Http\Controllers\Api\ScheduleExportController;
@@ -71,6 +72,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('/goals/{goalId}/milestones/{milestoneId}/status', [MilestoneController::class, 'status']);
 
     Route::get('/programs', [ProgramController::class, 'index']);
+
+    // TASK-P23-008 — plan overview + self-serve switching (manual provider).
+    Route::get('/saas/plan', [SaasController::class, 'show']);
+    Route::patch('/saas/plan', [SaasController::class, 'update']);
+    Route::put('/saas/plan', [SaasController::class, 'update']);
 
     // TASK-P19-004 — Workspace control plane (owner-scoped).
     Route::get('/workspaces', [WorkspaceController::class, 'index']);

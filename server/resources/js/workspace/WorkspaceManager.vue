@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useFocusTrap } from '../shell/focus-trap';
 import { useWorkspaceStore } from './store';
+import UpgradeNotice from '../saas/UpgradeNotice.vue';
 import KButton from '../components/KButton.vue';
 
 /**
@@ -19,6 +20,7 @@ useFocusTrap(root, () => emit('close'));
 const newName = ref('');
 const newType = ref('other');
 const newError = ref<string | null>(null);
+const limitHit = ref<{ message: string; plan: string; entitlement: string } | null>(null);
 const creating = ref(false);
 const editingId = ref<number | null>(null);
 const editName = ref('');
@@ -32,10 +34,18 @@ async function submitCreate(): Promise<void> {
         return;
     }
     creating.value = true;
+    limitHit.value = null;
     const ok = await store.create({ name: newName.value.trim(), type: newType.value });
     creating.value = false;
     if (ok) {
         newName.value = '';
+    } else if (store.error?.serverCode === 'ENTITLEMENT_LIMIT') {
+        // TASK-P23-008 — explain the limit and the path forward.
+        limitHit.value = {
+            message: store.error.message,
+            plan: String((store.error as unknown as Record<string, unknown>).plan ?? 'free'),
+            entitlement: String((store.error as unknown as Record<string, unknown>).entitlement ?? 'max_workspaces'),
+        };
     } else {
         newError.value = store.error?.message ?? 'Could not create the workspace.';
     }
@@ -68,6 +78,7 @@ async function saveEdit(): Promise<void> {
             </div>
 
             <!-- Create -->
+            <UpgradeNotice v-if="limitHit" :message="limitHit.message" :plan="limitHit.plan" :entitlement="limitHit.entitlement" data-testid="workspace-upgrade-notice" />
             <form class="flex flex-col gap-2 border-b border-gray-200 dark:border-gray-700 pb-4" @submit.prevent="submitCreate" data-testid="workspace-create-form">
                 <label class="text-sm flex flex-col gap-1">
                     New workspace

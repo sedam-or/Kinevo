@@ -22,6 +22,7 @@ use App\Application\Ai\SetAiProviderCredentialUseCase;
 use App\Application\Ai\SetAiProviderEnabledUseCase;
 use App\Application\Ai\TestAiProviderConnectionUseCase;
 use App\Application\Ai\UpdateAiProposalUseCase;
+use App\Application\Saas\EntitlementService;
 use App\Domain\Ai\AiOutputException;
 use App\Domain\Ai\AiProviderException;
 use App\Domain\Ai\Contracts\AiProposalRepository;
@@ -60,7 +61,29 @@ final class AiController extends Controller
         private readonly RejectAiProposalUseCase $rejectProposal,
         private readonly UpdateAiProposalUseCase $updateProposal,
         private readonly AiProposalRepository $proposalRepository,
+        private readonly EntitlementService $entitlements,
     ) {}
+
+    /**
+     * TASK-P23-007 — metered AI preflight: deny before any provider call
+     * when the monthly ai_credits allowance is exhausted.
+     */
+    private function consumeAiCredit(Request $request): ?JsonResponse
+    {
+        if ($this->entitlements->remaining($request->user()->id, 'ai_credits') <= 0) {
+            $plan = $this->entitlements->planFor($request->user()->id);
+
+            return response()->json([
+                'error' => "Monthly AI credits exhausted on the {$plan->name} plan.",
+                'code' => 'ENTITLEMENT_LIMIT',
+                'entitlement' => 'ai_credits',
+                'plan' => $plan->code,
+            ], 403);
+        }
+        $this->entitlements->consume($request->user()->id, 'ai_credits');
+
+        return null;
+    }
 
     public function status(): JsonResponse
     {
@@ -225,6 +248,10 @@ final class AiController extends Controller
 
         $data = $validator->validated();
 
+        if (($denied = $this->consumeAiCredit($request)) !== null) {
+            return $denied;
+        }
+
         // TASK-P22-006 — per-user single-flight: one in-flight generation per
         // owner; concurrent requests are rejected instead of piling up cost.
         $lock = Cache::lock('ai:generate:'.$request->user()->id, 60);
@@ -272,6 +299,9 @@ final class AiController extends Controller
         }
 
         $data = $validator->validated();
+        if (($denied = $this->consumeAiCredit($request)) !== null) {
+            return $denied;
+        }
 
         try {
             $validated = $this->generateProposal->__invoke(
@@ -436,6 +466,10 @@ final class AiController extends Controller
 
         $data = $validator->validated();
 
+        if (($denied = $this->consumeAiCredit($request)) !== null) {
+            return $denied;
+        }
+
         try {
             $proposal = $this->generateNoteProposal->__invoke(
                 $request->user()->id,
@@ -476,6 +510,10 @@ final class AiController extends Controller
         }
 
         $data = $validator->validated();
+
+        if (($denied = $this->consumeAiCredit($request)) !== null) {
+            return $denied;
+        }
 
         try {
             $proposal = $this->generateCanvasProposal->__invoke(

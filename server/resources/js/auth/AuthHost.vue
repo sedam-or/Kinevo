@@ -26,6 +26,7 @@ import CanvasView from '../canvas/CanvasView.vue';
 const AnalyticsView = defineAsyncComponent(() => import('../analytics/AnalyticsView.vue'));
 import QuickCapture from '../quickcapture/QuickCapture.vue';
 import WorkspaceHome from '../workspace/WorkspaceHome.vue';
+import PlanSettingsView from '../saas/PlanSettingsView.vue';
 import CommandPalette from '../commands/CommandPalette.vue';
 import { useQuickCaptureStore } from '../quickcapture/store';
 import { useKeyboardShortcuts } from '../shell/keyboard';
@@ -193,6 +194,7 @@ const viewTitle = computed(() => {
             </div>
 
             <ProfileView v-if="shell.activeView === 'settings'" />
+            <PlanSettingsView v-else-if="shell.activeView === 'plan-settings'" />
             <AiSettingsView v-else-if="shell.activeView === 'ai-settings'" />
             <WorkspaceHome v-else-if="shell.activeView === 'workspace-home'" />
             <TodayView v-else-if="shell.activeView === 'today'" :date="todayDate" />

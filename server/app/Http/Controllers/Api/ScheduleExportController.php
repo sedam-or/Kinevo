@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Application\Exports\ExportScheduleIcsUseCase;
+use App\Application\Saas\EntitlementService;
+use App\Domain\Saas\Exceptions\EntitlementLimitException;
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -23,6 +25,15 @@ final class ScheduleExportController extends Controller
 
     public function ical(Request $request): Response
     {
+        // TASK-P23-007 — export entitlement gate.
+        $check = app(EntitlementService::class);
+        try {
+            $check->assertCan($request->user()->id, 'export', 'Export is available on paid plans.');
+        } catch (EntitlementLimitException $e) {
+            return response($e->toResponse()['error'], 403)
+                ->header('Content-Type', 'text/plain');
+        }
+
         $validator = Validator::make($request->query(), [
             'from' => ['required', 'date'],
             'to' => ['required', 'date', 'after_or_equal:from'],

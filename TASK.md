@@ -6825,8 +6825,19 @@ to DONE only with evidence per §10/§11 of that prompt.
 - Notes: several sub-tasks require a production-like environment window (backup restore drill, prod smoke) and must follow §1.3 verification-before-claims for any external claims.
 
 ## PHASE 23 — SAAS FOUNDATION
-### P23-001..009 — Account boundary decision, plan model, entitlements, EntitlementService, usage model, subscription-state abstraction, backend gating, limit UX, domain tests
-- Status: TODO · Depends On: P22
+### P23-001..009 — SaaS Foundation (ALL)
+- Status: **DONE (2026-08-26)** · Depends On: P22 ✓
+- Acceptance:
+  - [x] P23-001 account boundary: single-owner User/Profile retained; no redundant Account aggregate (documented decision)
+  - [x] P23-002 plan model: config/saas.php machine-readable catalogue (free/personal/pro/power); no hardcoded plan branches
+  - [x] P23-003 entitlements: max_workspaces, ai_credits, export enforced; advanced_analytics/wrapped/mobile_access reserved in registry; custom_provider stays universal (core behaviour, P18)
+  - [x] P23-004 EntitlementService: can/limit/consume/remaining/assertWithinLimit/assertCan — the only plan-aware code
+  - [x] P23-005 usage separate from allowance: usage_counters table + atomic insert-or-increment repo
+  - [x] P23-006 subscription state abstraction: active/past_due/canceled/expired; non-active degrades to free; past-due blocks self-switch
+  - [x] P23-007 backend gating: workspaces create (403 ENTITLEMENT_LIMIT), AI metered endpoints preflight+consume, activity export + ics export gated
+  - [x] P23-008 UX: GET/PATCH /saas/plan API; Settings→Plan view (usage bar, switcher); UpgradeNotice on workspace-limit with next action
+  - [x] P23-009 tests: SaasApiTest 7/7 (default free snapshot, switch, workspace limit→upgrade unlock, credits exhaust→403→snapshot, export gate, expired degrade)
+- Evidence: tests/Feature/Api/SaasApiTest.php · config/saas.php · app/Application/Saas/* · resources/js/saas/*
 ## PHASE 24 — SUBSCRIPTION & BILLING
 ### P24-001..009 — Billing boundary/persistence/events/webhooks/checkout/sync/cancellation/UX/tests
 - Status: BLOCKED-pending-verification · Notes: provider choice & store rules MUST be verified against official docs first (§1.3); do not implement on assumption.

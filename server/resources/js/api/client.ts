@@ -88,6 +88,10 @@ async function parseError(response: Response): Promise<ApiError> {
         if (typeof body.code === 'string') {
             serverCode = body.code;
         }
+        if (serverCode === 'ENTITLEMENT_LIMIT') {
+            // TASK-P23-008 — surface upgrade context for the UI.
+            (body as { plan?: unknown; entitlement?: unknown });
+        }
         if (body.errors && typeof body.errors === 'object') {
             errors = body.errors as Record<string, string[]>;
         }

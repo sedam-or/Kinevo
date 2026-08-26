@@ -8,6 +8,7 @@ use App\Application\Goals\GetGoalUseCase;
 use App\Application\Goals\ListGoalsUseCase;
 use App\Application\Goals\SetGoalStatusUseCase;
 use App\Application\Goals\UpdateGoalUseCase;
+use App\Application\Saas\EntitlementService;
 use App\Application\Workspaces\ResolveWorkspaceContext;
 use App\Domain\Ai\AiOutputException;
 use App\Domain\Ai\AiProviderException;
@@ -30,7 +31,26 @@ final class GoalController extends Controller
         private readonly SetGoalStatusUseCase $setGoalStatusUseCase,
         private readonly CreateGoalBreakdownProposalUseCase $createBreakdownProposalUseCase,
         private readonly ResolveWorkspaceContext $workspaceContext,
+        private readonly EntitlementService $saasEntitlements,
     ) {}
+
+    /** TASK-P23-007 — metered AI preflight shared with AiController semantics. */
+    private function consumeAiCredit(Request $request): ?JsonResponse
+    {
+        if ($this->saasEntitlements->remaining($request->user()->id, 'ai_credits') <= 0) {
+            $plan = $this->saasEntitlements->planFor($request->user()->id);
+
+            return response()->json([
+                'error' => "Monthly AI credits exhausted on the {$plan->name} plan.",
+                'code' => 'ENTITLEMENT_LIMIT',
+                'entitlement' => 'ai_credits',
+                'plan' => $plan->code,
+            ], 403);
+        }
+        $this->saasEntitlements->consume($request->user()->id, 'ai_credits');
+
+        return null;
+    }
 
     public function index(Request $request): JsonResponse
     {
@@ -170,6 +190,9 @@ final class GoalController extends Controller
 
     public function breakdown(Request $request, int $goalId): JsonResponse
     {
+        if (($denied = $this->consumeAiCredit($request)) !== null) {
+            return $denied;
+        }
         $validator = Validator::make($request->all(), [
             'instructions' => ['nullable', 'string', 'max:'.config('ai.max_prompt_chars', 8000)],
         ]);

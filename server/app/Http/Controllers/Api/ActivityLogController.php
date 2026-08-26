@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Application\ActivityLogs\ExportActivityLogsUseCase;
 use App\Application\ActivityLogs\ListActivityLogsUseCase;
+use App\Application\Saas\EntitlementService;
+use App\Domain\Saas\Exceptions\EntitlementLimitException;
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +18,7 @@ final class ActivityLogController extends Controller
     public function __construct(
         private readonly ListActivityLogsUseCase $listLogs,
         private readonly ExportActivityLogsUseCase $exportLogs,
+        private readonly EntitlementService $entitlements,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -48,6 +51,13 @@ final class ActivityLogController extends Controller
 
     public function export(Request $request): JsonResponse
     {
+        // TASK-P23-007 — export is an entitled capability.
+        try {
+            $this->entitlements->assertCan($request->user()->id, 'export', 'Export is available on paid plans.');
+        } catch (EntitlementLimitException $e) {
+            return response()->json($e->toResponse(), 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'format' => ['required', 'string', 'in:json,csv'],
             'from' => ['nullable', 'date'],

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\ActivityLog;
+use App\Models\SaasSubscription;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,6 +17,12 @@ class ActivityLogApiTest extends TestCase
     {
         $user = User::factory()->create();
         $token = $user->createToken('owner')->plainTextToken;
+        // TASK-P23-007 — export moved behind an entitlement; these export
+        // suites exercise the export behaviour itself, so grant it here.
+        SaasSubscription::query()->create([
+            'user_id' => $user->id, 'plan_code' => 'personal',
+            'provider' => 'manual', 'state' => 'active',
+        ]);
 
         return [$user, $token];
     }

@@ -29,6 +29,8 @@ use App\Domain\Pauses\Contracts\PauseEventRepository;
 use App\Domain\Programs\Contracts\ProgramRepository;
 use App\Domain\Progress\Contracts\ProgressEventRepository;
 use App\Domain\Recharge\Contracts\RechargeSessionRepository;
+use App\Domain\Saas\Contracts\SubscriptionRepository;
+use App\Domain\Saas\Contracts\UsageRepository;
 use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
 use App\Domain\Scheduling\Contracts\ScheduleOverrideRepository;
@@ -61,6 +63,8 @@ use App\Infrastructure\Pauses\EloquentPauseEventRepository;
 use App\Infrastructure\Programs\EloquentProgramRepository;
 use App\Infrastructure\Progress\EloquentProgressEventRepository;
 use App\Infrastructure\Recharge\EloquentRechargeSessionRepository;
+use App\Infrastructure\Saas\EloquentSubscriptionRepository;
+use App\Infrastructure\Saas\EloquentUsageRepository;
 use App\Infrastructure\Scheduling\EloquentHardLandscapeRepository;
 use App\Infrastructure\Scheduling\EloquentScheduleAssignmentRepository;
 use App\Infrastructure\Scheduling\EloquentScheduleOverrideRepository;
@@ -110,6 +114,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(AiProposalRepository::class, EloquentAiProposalRepository::class);
         $this->app->singleton(AiProviderConfigRepository::class, EloquentAiProviderConfigRepository::class);
         $this->app->singleton(WorkspaceRepository::class, EloquentWorkspaceRepository::class);
+        $this->app->singleton(SubscriptionRepository::class, EloquentSubscriptionRepository::class);
+        $this->app->singleton(UsageRepository::class, EloquentUsageRepository::class);
         $this->app->singleton(AiOrchestrator::class, static fn ($app) => new AiOrchestrator($app->make(AiProviderResolver::class)));
         $this->app->singleton(SchedulerRunRepository::class, EloquentSchedulerRunRepository::class);
         $this->app->singleton(ObservabilityService::class, static function ($app) {
