@@ -19,6 +19,10 @@ Release governance: see `docs/release-management.md`.
   explains itself in plain language instead of developer terms, and note and
   canvas lists no longer show internal revision counters.
 ### Added
+- Bring your own key finally means it (Phase 25, TASK-P25-008): you can connect an AI provider with
+  your own credential in Settings → AI. Your requests then skip Kinevo's credit meter entirely (your
+  spend, your provider), while the request gets a `byok` ledger flag and is still protected by the
+  runtime safeguards. Your API key is encrypted at rest and never shown again once saved.
 - Hard AI runtime safeguards keep costs sane (Phase 25, TASK-P25-007): per-minute, per-day and
   daily-estimated-cost limits are config-driven and enforced before any provider call — separate
   from credits, so abuse protection still applies even when you bring your own key.

@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property string $pricing_source
  * @property string|null $pricing_snapshot_id
  * @property string|null $request_id
+ * @property string $billing_ledger
  * @property string $status
  * @property int $latency_ms
  * @property string|null $error_code
@@ -44,6 +45,7 @@ use Illuminate\Support\Carbon;
     'cost_currency',
     'pricing_source',
     'pricing_snapshot_id',
+    'billing_ledger',
     'status',
     'latency_ms',
     'error_code',

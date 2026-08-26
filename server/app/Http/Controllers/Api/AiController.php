@@ -15,6 +15,7 @@ use App\Application\Ai\GetAiProviderStatusUseCase;
 use App\Application\Ai\ListAiProposalsUseCase;
 use App\Application\Ai\ListAiRunsUseCase;
 use App\Application\Ai\ListAvailableAiProvidersUseCase;
+use App\Application\Ai\ManageUserAiProviderConfigUseCase;
 use App\Application\Ai\RejectAiProposalUseCase;
 use App\Application\Ai\RemoveAiProviderCredentialUseCase;
 use App\Application\Ai\SaveAiProviderConfigUseCase;
@@ -27,6 +28,7 @@ use App\Domain\Ai\AiProviderException;
 use App\Domain\Ai\AiRuntimeLimitException;
 use App\Domain\Ai\Contracts\AiProposalRepository;
 use App\Domain\Ai\Entities\AiProposal as AiProposalEntity;
+use App\Domain\Ai\Entities\AiProviderConfig as AiProviderConfigEntity;
 use App\Domain\Ai\ValueObjects\AiProposalType;
 use App\Domain\Ai\ValueObjects\AiRequest;
 use App\Domain\Ai\ValueObjects\AiRole;
@@ -62,6 +64,7 @@ final class AiController extends Controller
         private readonly RejectAiProposalUseCase $rejectProposal,
         private readonly UpdateAiProposalUseCase $updateProposal,
         private readonly AiProposalRepository $proposalRepository,
+        private readonly ManageUserAiProviderConfigUseCase $userAiProvider,
     ) {}
 
     /**
@@ -80,6 +83,71 @@ final class AiController extends Controller
             'code' => $e->runtimeCode,
             ...$e->context,
         ], 429);
+    }
+
+    /** TASK-P25-008 — safe BYOK settings projection (API key never leaves server). */
+    private function projectByok(?AiProviderConfigEntity $config): ?array
+    {
+        if ($config === null) {
+            return null;
+        }
+
+        $key = $config->apiKey;
+        $masked = $key === null ? null : (strlen($key) <= 4 ? '****' : '****'.substr($key, -4));
+
+        return [
+            'provider' => $config->provider,
+            'model' => $config->model,
+            'base_url' => $config->baseUrl,
+            'enabled' => $config->enabled,
+            'key_masked' => $masked,
+        ];
+    }
+
+    public function byokShow(Request $request): JsonResponse
+    {
+        return response()->json(['byok' => $this->projectByok($this->userAiProvider->get($request->user()->id))]);
+    }
+
+    public function byokSave(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'provider' => ['required', 'string', 'in:ollama,openai'],
+            'model' => ['nullable', 'string', 'max:120'],
+            'base_url' => ['nullable', 'url', 'max:255'],
+            'api_key' => ['nullable', 'string', 'max:512'],
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+        $data = $validator->validated();
+
+        try {
+            $config = $this->userAiProvider->save(
+                $request->user()->id,
+                (string) $data['provider'],
+                isset($data['model']) ? (string) $data['model'] : null,
+                isset($data['base_url']) ? (string) $data['base_url'] : null,
+                isset($data['api_key']) ? (string) $data['api_key'] : null,
+            );
+        } catch (EntitlementLimitException $e) {
+            return response()->json($e->toResponse(), 403);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['byok' => $this->projectByok($config)], 201);
+    }
+
+    public function byokDelete(Request $request): JsonResponse
+    {
+        try {
+            $this->userAiProvider->remove($request->user()->id);
+        } catch (EntitlementLimitException $e) {
+            return response()->json($e->toResponse(), 403);
+        }
+
+        return response()->json(['status' => 'removed']);
     }
 
     public function status(): JsonResponse

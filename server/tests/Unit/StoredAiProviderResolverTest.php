@@ -38,7 +38,7 @@ class StoredAiProviderResolverTest extends TestCase
             $configs,
         );
 
-        $provider = $resolver->resolve();
+        $provider = $resolver->resolve(0);
         $this->assertInstanceOf(OpenAiCompatibleProvider::class, $provider);
         $this->assertSame('stored-model', $provider->model());
         $base = new ReflectionProperty($provider, 'baseUrl');
@@ -53,12 +53,12 @@ class StoredAiProviderResolverTest extends TestCase
         $none->method('get')->willReturn(null);
         $env = $this->app->make('config');
         $env->set('ai.driver', 'mock');
-        $this->assertInstanceOf(MockProvider::class, new ConfigAiProviderResolver($this->factory($env), $none)->resolve());
+        $this->assertInstanceOf(MockProvider::class, new ConfigAiProviderResolver($this->factory($env), $none)->resolve(0));
 
         // Stored but disabled → env fallback still applies.
         $disabled = $this->createMock(AiProviderConfigRepository::class);
         $disabled->method('get')->willReturn(new ConfigEntity(provider: 'ollama', enabled: false));
-        $this->assertInstanceOf(MockProvider::class, new ConfigAiProviderResolver($this->factory($env), $disabled)->resolve());
+        $this->assertInstanceOf(MockProvider::class, new ConfigAiProviderResolver($this->factory($env), $disabled)->resolve(0));
     }
 
     #[Test]
@@ -71,7 +71,7 @@ class StoredAiProviderResolverTest extends TestCase
             model: 'llama3.1',
             baseUrl: 'http://localhost:11434',
         ));
-        $provider = new ConfigAiProviderResolver($this->factory($this->app->make('config')), $configs)->resolve();
+        $provider = new ConfigAiProviderResolver($this->factory($this->app->make('config')), $configs)->resolve(0);
         $this->assertInstanceOf(OllamaProvider::class, $provider);
         $this->assertSame('llama3.1', $provider->model());
     }

@@ -31,7 +31,7 @@ final class AiSmokeCommand extends Command
     public function handle(): int
     {
         try {
-            $response = $this->ai->generate(new AiRequest(
+            $response = $this->ai->generate(0, new AiRequest(
                 new AiRole('task_extraction'),
                 (string) $this->argument('prompt'),
             ));

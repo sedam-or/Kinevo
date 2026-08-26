@@ -26,44 +26,27 @@ final readonly class GenerateAiTextUseCase
         private AiProviderResolver $resolver,
         private AiRunRepository $runs,
         private AiCreditGuard $credits,
-        private AiCostEstimator $costEstimator,
     ) {}
 
     public function __invoke(int $userId, AiRequest $request): AiResponse
     {
         $started = hrtime(true);
-        $provider = $this->resolver->resolve();
-        $requestId = $this->credits->begin($userId);
+        $provider = $this->resolver->resolve($userId);
+        $byok = $this->resolver->isUserProvided($userId);
+        $requestId = $this->credits->begin($userId, $byok);
 
         try {
-            $response = $this->ai->generate($request);
+            $response = $this->ai->generate($userId, $request);
 
-            $this->credits->spend($userId);
-            $cost = $this->costEstimator->estimate(
-                $response->provider,
-                $response->model,
-                $response->promptTokens,
-                $response->completionTokens,
-            );
-            $this->runs->record(AiRun::success(
+            $this->credits->recordSuccess(
                 $userId,
-                $response->provider,
-                $response->model,
+                $byok,
+                $requestId,
+                $response,
                 'text_generation',
                 null,
-                null,
-                null,
-                $response->promptTokens,
-                $response->completionTokens,
-                $response->latencyMs,
-                null,
-                1,
-                $requestId,
-                $cost['estimated_cost_minor'],
-                $cost['cost_currency'],
-                $cost['pricing_source'],
-                $cost['pricing_snapshot_id'],
-            ));
+                (string) hash('sha256', $request->prompt),
+            );
 
             return $response;
         } catch (AiProviderException $e) {

@@ -2,17 +2,19 @@
 
 namespace App\Domain\Ai\Contracts;
 
-use InvalidArgumentException;
-
 /**
- * Resolves the configured AI provider (SRS FR-60). Implementations MAY cache
- * the resolved provider; resolution happens at call time so runtime-selected
- * configuration (e.g. per-test overrides) is honored.
+ * Resolves the AI provider for a request (SRS FR-60). Resolution is
+ * user-scoped since P25-008: an enabled per-user BYOK credential wins over the
+ * global (Kinevo-hosted) configuration. Implementations MUST NOT cache across
+ * users. `null` userId = non-user/system path (no BYOK, global default).
  */
 interface AiProviderResolver
 {
+    public function resolve(int $userId): AiProvider;
+
     /**
-     * @throws InvalidArgumentException when the configured driver is unknown
+     * Whether this user's request will run on their own (BYOK) credential —
+     * used by the billing split (no ai_credits, billable_to_kinevo=false).
      */
-    public function resolve(): AiProvider;
+    public function isUserProvided(int $userId): bool;
 }

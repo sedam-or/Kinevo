@@ -31,6 +31,7 @@ final class AiRun
         public readonly ?string $costCurrency = null,
         public readonly string $pricingSource = 'unpriced',
         public readonly ?string $pricingSnapshotId = null,
+        public readonly string $billingLedger = 'kinevo',
     ) {}
 
     public static function success(
@@ -51,6 +52,7 @@ final class AiRun
         ?string $costCurrency = null,
         ?string $pricingSource = 'unpriced',
         ?string $pricingSnapshotId = null,
+        string $billingLedger = 'kinevo',
     ): self {
         return new self(
             null,
@@ -73,6 +75,7 @@ final class AiRun
             $costCurrency,
             $pricingSource,
             $pricingSnapshotId,
+            $billingLedger,
         );
     }
 
@@ -130,6 +133,7 @@ final class AiRun
             $this->costCurrency,
             $this->pricingSource,
             $this->pricingSnapshotId,
+            $this->billingLedger,
         );
     }
 
@@ -155,6 +159,7 @@ final class AiRun
             'cost_currency' => $this->costCurrency,
             'pricing_source' => $this->pricingSource,
             'pricing_snapshot_id' => $this->pricingSnapshotId,
+            'billing_ledger' => $this->billingLedger,
             'status' => $this->status,
             'latency_ms' => $this->latencyMs,
             'error_code' => $this->errorCode,

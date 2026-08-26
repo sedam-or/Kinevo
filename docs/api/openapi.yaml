@@ -3388,6 +3388,66 @@ paths:
         '401': { description: Unauthorized }
         '404': { description: No canceled subscription }
 
+  /ai/byok:
+    get:
+      tags: [AI]
+      summary: Per-user BYOK provider settings (safe projection, P25-008)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [byok]
+                properties:
+                  byok: {$ref: '#/components/schemas/ByokConfig'}
+        '401': { description: Unauthorized }
+    put:
+      tags: [AI]
+      summary: Save/enable a per-user BYOK provider credential (custom_provider-gated)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider]
+              properties:
+                provider: {type: string, enum: [ollama, openai]}
+                model: {type: string, nullable: true}
+                base_url: {type: string, format: uri, nullable: true}
+                api_key: {type: string, nullable: true, description: Encrypted at rest; never returned}
+      responses:
+        '201':
+          description: Saved
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [byok]
+                properties:
+                  byok: {$ref: '#/components/schemas/ByokConfig'}
+        '403': { $ref: '#/components/schemas/ErrorResponse', description: custom_provider not entitled }
+        '422': { description: Validation error }
+    delete:
+      tags: [AI]
+      summary: Remove a per-user BYOK provider config (returns to Kinevo-hosted)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: {type: string, enum: [removed]}
+        '403': { $ref: '#/components/schemas/ErrorResponse' }
+
   /ai/providers:
     get:
       tags: [AI]
@@ -5517,6 +5577,7 @@ components:
         cost_currency: {type: string, nullable: true}
         pricing_source: {type: string, enum: [unpriced, catalog], description: Where the estimated cost came from}
         pricing_snapshot_id: {type: string, nullable: true, description: Reproducible catalog snapshot ref}
+        billing_ledger: {type: string, enum: [kinevo, byok], description: kinevo = spends ai_credits + cost borne by Kinevo; byok = user credential, no credit, no Kinevo cost (P25-008)}
         status: {type: string, enum: [success, failed]}
         latency_ms: {type: integer, minimum: 0}
         error_code: {type: string, nullable: true}
@@ -5528,6 +5589,14 @@ components:
         runs:
           type: array
           items: {$ref: '#/components/schemas/AiRun'}
+    ByokConfig:
+      type: object
+      properties:
+        provider: {type: string}
+        model: {type: string, nullable: true}
+        base_url: {type: string, nullable: true}
+        enabled: {type: boolean}
+        key_masked: {type: string, nullable: true, description: Masked hint only; raw key never leaves the server}
     ErrorResponse:
       type: object
       required: [error]

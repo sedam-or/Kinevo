@@ -200,6 +200,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('/ai/suggest-canvas', [AiController::class, 'suggestCanvas'])->middleware('throttle:ai');
     Route::get('/ai/runs', [AiController::class, 'runs']);
 
+    // TASK-P25-008 — per-user BYOK provider settings (custom_provider-gated).
+    Route::get('/ai/byok', [AiController::class, 'byokShow']);
+    Route::put('/ai/byok', [AiController::class, 'byokSave']);
+    Route::delete('/ai/byok', [AiController::class, 'byokDelete']);
+
     Route::get('/metrics', [HealthController::class, 'metrics']);
     Route::get('/observability/runs', [HealthController::class, 'runs']);
 

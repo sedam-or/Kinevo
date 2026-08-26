@@ -5,34 +5,40 @@ namespace App\Application\Ai;
 use App\Application\Saas\EntitlementService;
 use App\Domain\Ai\AiRuntimeLimitException;
 use App\Domain\Ai\Contracts\AiRunRepository;
+use App\Domain\Ai\Entities\AiRun;
+use App\Domain\Ai\ValueObjects\AiResponse;
 use App\Domain\Saas\Exceptions\EntitlementLimitException;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 
 /**
- * TASK-P25-003..005/007 — AI request guard: metered preflight before any
- * provider call and postflight consumption on success, PLUS daily runtime
- * safeguards (request count / estimated cost — P25-007). Called from the
- * inference use cases (not controllers) so every entry point enforces the
- * same gates; CLI diagnostics opt out. One credit is spent per successful
- * Kinevo-funded inference; failures and denials burn nothing. BYOK requests
- * (P25-008) skip the credit spend but keep the runtime safeguards.
+ * TASK-P25-003..005/007/008 — AI request guard: metered preflight before any
+ * provider call, postflight accounting on success, daily runtime safeguards
+ * (P25-007), and the Kinevo-hosted vs BYOK ledger split (P25-008).
+ *
+ * - Kinevo-hosted (byok=false): spends one ai_credit, costs the run against
+ *   the price catalog, ledger `kinevo` — Kinevo bears the inference cost.
+ * - BYOK (byok=true): spends nothing and stores no Kinevo cost (ledger
+ *   `byok`) — the user bears their provider's spend. Runtime safeguards apply
+ *   to BOTH (no abuse bypass). Called from inference use cases, not
+ *   controllers; CLI diagnostics (ai:smoke) bypass entirely.
  */
 final readonly class AiCreditGuard
 {
     public function __construct(
         private EntitlementService $entitlements,
         private AiRunRepository $runs,
+        private AiCostEstimator $costEstimator,
     ) {}
 
     /**
-     * Preflight before any provider call: the economic layer (monthly
-     * ai_credits, 403) then the runtime safety layer (TASK-P25-007, 429).
+     * Preflight before any provider call: economic layer (monthly ai_credits,
+     * 403; skipped for BYOK) then runtime safety layer (TASK-P25-007, 429).
      * Issues the per-request identity for the run on success.
      */
-    public function begin(int $userId): string
+    public function begin(int $userId, bool $byok = false): string
     {
-        if ($this->entitlements->remaining($userId, 'ai_credits') <= 0) {
+        if (! $byok && $this->entitlements->remaining($userId, 'ai_credits') <= 0) {
             $plan = $this->entitlements->planFor($userId);
 
             throw new EntitlementLimitException(
@@ -74,9 +80,55 @@ final readonly class AiCreditGuard
         }
     }
 
-    /** Postflight: spend one credit for a successful generation. */
-    public function spend(int $userId): void
-    {
-        $this->entitlements->consume($userId, 'ai_credits');
+    /**
+     * Postflight accounting: consume + estimate + record the successful run
+     * with the correct billing ledger. BYOK runs spend nothing, store no
+     * Kinevo cost, and are marked ledger `byok`.
+     */
+    public function recordSuccess(
+        int $userId,
+        bool $byok,
+        string $requestId,
+        AiResponse $response,
+        string $proposalType,
+        ?int $schemaVersion,
+        string $contextHash,
+    ): void {
+        $creditsConsumed = 0;
+        $cost = ['estimated_cost_minor' => null, 'cost_currency' => null, 'pricing_source' => 'unpriced', 'pricing_snapshot_id' => null];
+        $ledger = 'byok';
+
+        if (! $byok) {
+            $this->entitlements->consume($userId, 'ai_credits');
+            $creditsConsumed = 1;
+            $cost = $this->costEstimator->estimate(
+                $response->provider,
+                $response->model,
+                $response->promptTokens,
+                $response->completionTokens,
+            );
+            $ledger = 'kinevo';
+        }
+
+        $this->runs->record(AiRun::success(
+            $userId,
+            $response->provider,
+            $response->model,
+            $proposalType,
+            $schemaVersion,
+            null,
+            $contextHash,
+            $response->promptTokens,
+            $response->completionTokens,
+            $response->latencyMs,
+            null,
+            $creditsConsumed,
+            $requestId,
+            $cost['estimated_cost_minor'],
+            $cost['cost_currency'],
+            $cost['pricing_source'],
+            $cost['pricing_snapshot_id'],
+            $ledger,
+        ));
     }
 }

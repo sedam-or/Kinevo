@@ -6942,15 +6942,27 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - `ai:smoke` bypasses metering (diagnostic).
   - Tests: `AiUsageTest` 4/4 (success records usage, exhaustion blocked pre-provider w/o new run, failure spends nothing, proposal path spends). Full suite 955 green.
 ### P25-006..010 — routing, safeguards, BYOK policy, usage UI, cost alerts
-- Status: IN_PROGRESS (decisions locked 2026-08-26) — execution order per owner:
-  P25-001 Cost/Price Catalog → P25-002/003 (DONE) → P25-006 Routing → P25-007 Safeguards
-  → P25-008 BYOK → P25-009 UI → P25-010 Alerts.
-- Owner policy (P25-008): BYOK does NOT consume Kinevo `ai_credits`; split two ledgers —
-  Kinevo-hosted AI spends Kinevo credits (Kinevo bears inference cost) vs BYOK spends user
-  credential (user bears cost, no Kinevo credit deduction). Reject the model `ai_credits =
-  universal AI requests`. Pricing catalog (P25-001) is an input to hard cost caps (P25-007) and
-  reporting (P25-010). NOTE: detailed specs for P25-006/007/009/010 arrived truncated; request
-  the specifics when those slices start.
+- Execution order (owner): P25-001 → P25-002/003 → P25-006 Routing → P25-007 Safeguards → P25-008 BYOK
+  → P25-009 Usage UI → P25-010 Cost Alerts.
+- Owner policy (P25-008, locked): BYOK does NOT consume Kinevo `ai_credits`; two ledgers —
+  Kinevo-hosted spends credits (Kinevo bears cost) vs BYOK uses user credential (no credit deduction).
+  Rejected: `ai_credits = universal AI requests`. Pricing catalog (P25-001) feeds caps (P25-007) and
+  reporting (P25-010).
+### P25-006+008 — Provider Routing + BYOK
+- Status: DONE (2026-08-26):
+  - Resolution is user-scoped: `AiProviderResolver::resolve(int $userId)` + `isUserProvided()`; NO
+    cross-user caching (orchestrator passes userId; status() uses system path).
+  - Provisioning (per-user, encrypted — owner choice): `user_ai_provider_configs` (one row/user,
+    `api_key_encrypted` = Laravel Crypt, never serialized); `UserAiProviderConfigRepository`
+    contract + Eloquent impl; `ManageUserAiProviderConfigUseCase` gates saves/removes on the
+    per-plan `custom_provider` entitlement (config/saas.php — product data; NOT hardcoded in code).
+  - API: `GET/PUT/DELETE /ai/byok` (masked key projection; raw key never leaves the server).
+  - Ledger split (owner policy): Kinevo-hosted spends 1 ai_credit + costs the run (`billing_ledger=kinevo`);
+    BYOK spends 0 credits, no Kinevo cost (`billing_ledger=byok`) — `recordSuccess` centralizes it in
+    `AiCreditGuard`. Runtime safeguards (P25-007) apply to BOTH.
+  - Allowed BYOK providers: ollama / openai-compatible.
+  - Tests: BYOK settings round-trip + custom_provider gate, BYOK generation → ledger byok / no credit /
+    unbudgeted cost + return to kinevo on delete; resolver signature test updated. Full suite 965 green.
 ### P25-001 — Cost / Price Catalog
 - Status: DONE (2026-08-26) — config-driven price catalog `config/ai.php` (`cost.catalog` keyed
   `provider.model` or `provider.*`, per-1K-token input/output rates in minor units + currency +

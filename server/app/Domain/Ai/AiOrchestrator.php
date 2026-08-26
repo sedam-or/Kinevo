@@ -2,7 +2,6 @@
 
 namespace App\Domain\Ai;
 
-use App\Domain\Ai\Contracts\AiProvider;
 use App\Domain\Ai\Contracts\AiProviderResolver;
 use App\Domain\Ai\ValueObjects\AiProviderStatus;
 use App\Domain\Ai\ValueObjects\AiRequest;
@@ -16,24 +15,21 @@ use App\Domain\Ai\ValueObjects\AiResponse;
  */
 final class AiOrchestrator
 {
-    private ?AiProvider $provider = null;
-
     public function __construct(
         private readonly AiProviderResolver $resolver,
     ) {}
 
-    public function generate(AiRequest $request): AiResponse
+    /**
+     * TASK-P25-008 — user-scoped routing: per-user BYOK credential wins over
+     * the global (Kinevo-hosted) provider. `null` used by CLI/system paths.
+     */
+    public function generate(int $userId, AiRequest $request): AiResponse
     {
-        return $this->provider()->generate($request);
+        return $this->resolver->resolve($userId)->generate($request);
     }
 
     public function status(): AiProviderStatus
     {
-        return $this->provider()->status();
-    }
-
-    private function provider(): AiProvider
-    {
-        return $this->provider ??= $this->resolver->resolve();
+        return $this->resolver->resolve(0)->status();
     }
 }

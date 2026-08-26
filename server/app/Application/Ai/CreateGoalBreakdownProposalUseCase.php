@@ -41,7 +41,6 @@ final readonly class CreateGoalBreakdownProposalUseCase
         private AiProposalRepository $proposals,
         private WorkspaceRepository $workspaces,
         private AiCreditGuard $credits,
-        private AiCostEstimator $costEstimator,
     ) {}
 
     public function __invoke(
@@ -106,41 +105,26 @@ final readonly class CreateGoalBreakdownProposalUseCase
     {
         $started = hrtime(true);
         $type = new AiProposalType(AiProposalType::GOAL_BREAKDOWN);
-        $provider = $this->resolver->resolve();
+        $provider = $this->resolver->resolve($userId);
         $contextHash = hash('sha256', $prompt);
         $schemaVersion = $this->registry->versionFor($type);
-        $requestId = $this->credits->begin($userId);
+        $byok = $this->resolver->isUserProvided($userId);
+        $requestId = $this->credits->begin($userId, $byok);
 
         try {
-            $response = $this->ai->generate(new AiRequest($type->role(), $prompt, $systemPrompt));
+            $response = $this->ai->generate($userId, new AiRequest($type->role(), $prompt, $systemPrompt));
 
             $proposal = $this->parser->parse($type, $response->text);
 
-            $this->credits->spend($userId);
-            $cost = $this->costEstimator->estimate(
-                $response->provider,
-                $response->model,
-                $response->promptTokens,
-                $response->completionTokens,
-            );
-            $this->runs->record(AiRun::success($userId,
-                $response->provider,
-                $response->model,
+            $this->credits->recordSuccess(
+                $userId,
+                $byok,
+                $requestId,
+                $response,
                 $type->value,
                 $schemaVersion,
-                null,
                 $contextHash,
-                $response->promptTokens,
-                $response->completionTokens,
-                $response->latencyMs,
-                null,
-                1,
-                $requestId,
-                $cost['estimated_cost_minor'],
-                $cost['cost_currency'],
-                $cost['pricing_source'],
-                $cost['pricing_snapshot_id'],
-            ));
+            );
 
             return $proposal;
         } catch (AiProviderException $e) {

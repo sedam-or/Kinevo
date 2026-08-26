@@ -48,6 +48,7 @@ final readonly class EloquentAiRunRepository implements AiRunRepository
             'cost_currency' => $run->costCurrency,
             'pricing_source' => $run->pricingSource,
             'pricing_snapshot_id' => $run->pricingSnapshotId,
+            'billing_ledger' => $run->billingLedger,
             'status' => $run->status,
             'latency_ms' => $run->latencyMs,
             'error_code' => $run->errorCode,
@@ -100,6 +101,7 @@ final readonly class EloquentAiRunRepository implements AiRunRepository
             $model->cost_currency,
             $model->pricing_source,
             $model->pricing_snapshot_id,
+            $model->billing_ledger,
         );
     }
 }

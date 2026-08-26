@@ -211,6 +211,85 @@ class AiUsageTest extends TestCase
         $this->assertSame(1, AiRunModel::query()->where('user_id', $user->id)->count());
     }
 
+    public function test_byok_settings_roundtrip_and_custom_provider_gate(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        $this->withToken($token)->getJson('/api/v1/ai/byok')
+            ->assertOk()
+            ->assertJsonPath('byok', null);
+
+        $this->withToken($token)->putJson('/api/v1/ai/byok', [
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'base_url' => 'https://api.example.com/v1',
+            'api_key' => 'sk-secret-value-1234',
+        ])->assertStatus(201)
+            ->assertJsonPath('byok.provider', 'openai')
+            ->assertJsonPath('byok.key_masked', '****1234')
+            ->assertJsonMissingPath('byok.api_key');
+
+        // The key never comes back raw.
+        $this->withToken($token)->getJson('/api/v1/ai/byok')
+            ->assertOk()
+            ->assertJsonPath('byok.key_masked', '****1234')
+            ->assertJsonMissingPath('byok.api_key');
+
+        // custom_provider is a per-plan entitlement (P25-008 owner decision):
+        // disabling it for free blocks BYOK on the request path.
+        config(['saas.plans.free.entitlements.custom_provider' => false]);
+        $this->app['auth']->forgetGuards();
+        $this->withToken($token)->putJson('/api/v1/ai/byok', [
+            'provider' => 'ollama', 'model' => 'llama3.1',
+        ])->assertStatus(403)
+            ->assertJsonPath('code', 'ENTITLEMENT_LIMIT')
+            ->assertJsonPath('entitlement', 'custom_provider');
+    }
+
+    public function test_byok_generation_spends_no_credit_and_marks_byok_ledger(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        $this->withToken($token)->putJson('/api/v1/ai/byok', [
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'base_url' => 'https://api.example.com/v1',
+            'api_key' => 'sk-secret-value-1234',
+        ])->assertStatus(201);
+
+        Http::fake(['api.example.com/*' => Http::response([
+            'choices' => [['message' => ['content' => 'byok answer']]],
+            'usage' => ['prompt_tokens' => 500, 'completion_tokens' => 200],
+        ], 200)]);
+
+        $this->withToken($token)->postJson('/api/v1/ai/generate', [
+            'role' => 'task_extraction', 'prompt' => 'Anything',
+        ])->assertStatus(200)
+            ->assertJsonPath('provider', 'openai')
+            ->assertJsonPath('text', 'byok answer');
+
+        $run = AiRunModel::query()->where('user_id', $user->id)->first();
+        $this->assertNotNull($run);
+        $this->assertSame('byok', $run->billing_ledger);
+        $this->assertSame(0, $run->credits_consumed);
+        $this->assertNull($run->estimated_cost_minor);
+        $this->assertSame('unpriced', $run->pricing_source);
+
+        $this->withToken($token)->getJson('/api/v1/saas/plan')
+            ->assertOk()
+            ->assertJsonPath('usage.ai_credits.used', 0)
+            ->assertJsonPath('usage.ai_credits.remaining', 20);
+
+        // Disabling BYOK returns the user to the Kinevo-hosted ledger.
+        $this->withToken($token)->deleteJson('/api/v1/ai/byok')->assertOk();
+        config(['ai.driver' => 'mock']);
+        $this->neutralizeAiRateLimit($user->id);
+        $this->withToken($token)->postJson('/api/v1/ai/generate', [
+            'role' => 'task_extraction', 'prompt' => 'back to hosted',
+        ])->assertStatus(200)->assertJsonPath('provider', 'mock');
+        $this->assertSame('kinevo', AiRunModel::query()->where('user_id', $user->id)->latest()->first()->billing_ledger);
+    }
+
     public function test_proposal_paths_also_spend_credits(): void
     {
         config([

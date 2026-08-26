@@ -166,6 +166,12 @@ Every user inference is metered at the use-case layer (`AiCreditGuard`, not cont
   providers); unpriced runs stay null. `estimated_cost ≠ provider invoice`; future pipeline:
   Usage → Estimated Cost → Actual Invoice → Gross Margin.
 - CLI diagnostics (`ai:smoke`) call the orchestrator directly and never bill a user.
+- **Provider routing & BYOK** (P25-006/008): resolution is user-scoped (`AiProviderResolver::resolve(userId)`).
+  A per-user BYOK credential (`user_ai_provider_configs`, api key encrypted at rest; settings at
+  `GET/PUT/DELETE /ai/byok`, gated by the per-plan `custom_provider` entitlement) wins over the global
+  Kinevo-hosted config. Ledger split: BYOK runs spend **no** ai_credits and store **no** Kinevo cost
+  (`billing_ledger=byok`); Kinevo-hosted runs spend one credit, cost the run against the price
+  catalog, and mark `billing_ledger=kinevo`. Runtime safeguards (P25-007) bind BOTH paths.
 - **Hard runtime safeguards** (P25-007, separate from credits): config-driven `ai.limits`
   (`AI_MAX_REQUESTS_PER_MINUTE` drives `throttle:ai`; `AI_MAX_REQUESTS_PER_DAY` and
   `AI_MAX_ESTIMATED_DAILY_COST` are enforced pre-provider by `AiCreditGuard`, 429
