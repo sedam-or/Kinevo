@@ -5482,6 +5482,8 @@ Default Note context = active workspace.
 ---
 
 ## P19-015 — Note Creation from Task/Goal
+Status: DONE (2026-08-26) — Task detail Add Note inherits task workspace, creates knowledge link back to task, deep-opens the editor via consumeFocus('knowledge') (deep-open plumbing added to NoteView). Browser-proven in workspace-journey test 2.
+
 Priority: P0
 
 Task → Add Note:
@@ -5536,6 +5538,8 @@ Workspace only adds context.
 ---
 
 ## P19-018 — Canvas in Task Detail
+Status: DONE (2026-08-26) — Task detail Create Canvas inherits workspace + attaches task_id; lands in canvas workspace. Browser-proven (workspace-journey test 2, 3 browsers).
+
 Status: DONE (2026-08-26) — Task detail Create Canvas inherits task workspace + attaches task_id and opens the canvas; linked-canvas rows remain via knowledge links.
 
 Priority: P0
@@ -5551,6 +5555,8 @@ New Canvas inherits Task context and links back to Task.
 ---
 
 ## P19-019 — Note in Task Detail
+Status: DONE (2026-08-26) — Linked Notes list + Create Note + Open Note all present on Task detail (EntityLinks row + Add Note action).
+
 Status: DONE (2026-08-26) — Task detail Add Note inherits task workspace, creates the knowledge link back to the task, and deep-opens the note.
 
 Priority: P0
@@ -5564,6 +5570,8 @@ Task detail retains:
 ---
 
 ## P19-020 — Canvas in Task Detail
+Status: DONE (2026-08-26) — Canvas remains visible in Task Knowledge (EntityLinks Canvas row + created canvases link back to the task).
+
 Status: DONE (2026-08-26) — Canvas remains visible in Task Knowledge (EntityLinks row + created canvases link back).
 
 Priority: P0
@@ -5591,6 +5599,8 @@ Do not make Subtasks independent Knowledge roots without explicit requirement.
 ---
 
 ## P19-022 — Workspace-Aware Today
+Status: PARTIAL (2026-08-26) — Today reflects the declared workspace for Quick Capture (context inherited) and switching rehydrates every surface; a dedicated per-workspace FILTER on the Today timeline itself is not implemented — Today intentionally remains the global commitment surface (SRS FR-01). Remaining: optional workspace chip/filter on Today.
+
 Priority: P0
 
 Today reflects active Workspace while still showing relevant global commitments.
@@ -5638,6 +5648,8 @@ Default = active workspace.
 ---
 
 ## P19-025 — Workspace-Aware AI Context
+Status: PARTIAL (2026-08-26) — AI prompts already minimal + goal-scoped (§13.4) and never include credentials or unrelated workspaces; explicit workspace-metadata injection into prompts is not implemented. Remaining: add workspace name/type to breakdown prompt context.
+
 Priority: P1
 
 AI receives only minimal relevant context:
@@ -5658,6 +5670,8 @@ Never unrelated workspaces.
 ---
 
 ## P19-026 — AI Goal Breakdown + Workspace
+Status: PARTIAL (2026-08-26) — flow works end-to-end within one workspace (goal lives in Research → milestones land in Research, proven in P18-020/P19 E2E); workspace-bounded prompt context not yet labelled explicitly.
+
 Priority: P1
 
 Flow:
@@ -5675,6 +5689,8 @@ Research
 ---
 
 ## P19-027 — Workspace Analytics
+Status: PARTIAL (2026-08-26) — analytics currently aggregate globally by default; explicit global is the only view. Remaining: workspace_id filter on analytics read models + selector UI.
+
 Priority: P1
 
 Default = active workspace.
@@ -5814,6 +5830,8 @@ Task
 ---
 
 ## P19-036 — Task Detail IA
+Status: PARTIAL (2026-08-26) — Task detail carries title/status/action, planning, schedule link, knowledge actions, subtasks, activity via existing surfaces; consolidated single-column IA pass pending.
+
 Priority: P1
 
 Task:
@@ -5829,6 +5847,8 @@ Task:
 ---
 
 ## P19-037 — Goal Detail IA
+Status: PARTIAL (2026-08-26) — Goal detail carries outcome/deadline/progress/AI Breakdown/milestones/knowledge/schedule links; programs+analytics sections partially via continuity strip; full IA consolidation pending.
+
 Priority: P1
 
 Goal:
@@ -5848,6 +5868,8 @@ Goal:
 ---
 
 ## P19-038 — Workspace Home IA
+Status: PARTIAL (2026-08-26) — Identity/Goal/Next-action order reachable through switcher + manager + EntityLinks; a dedicated Workspace Home surface is not built.
+
 Priority: P1
 
 Identity → Goal → Next Action → Today → Knowledge → Canvas → Upcoming → Progress

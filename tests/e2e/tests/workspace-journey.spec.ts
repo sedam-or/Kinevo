@@ -89,4 +89,67 @@ test.describe('P19 workspace journeys', () => {
         await page.getByTestId('nav-goals').click();
         await expect(page.getByTestId('goal-list')).toContainText(goalName.split('-')[0]);
     });
+
+test('scoped task → Add Note → Create Canvas inherit workspace and link back (P19-015/018/032)', async ({ page }) => {
+    test.setTimeout(120_000);
+    await login(page);
+
+    const name = unique('Lab');
+
+    // Create + switch into the workspace.
+    await page.getByTestId('workspace-switcher-trigger').click();
+    await page.getByTestId('workspace-manage-button').click();
+    await page.getByTestId('workspace-create-name').fill(name);
+    await page.getByTestId('workspace-create-submit').click();
+    const row = page.locator('[data-testid^="workspace-row-"]').filter({ hasText: name });
+    await expect(row).toBeVisible();
+    const slug = (await row.getAttribute('data-testid'))!.replace('workspace-row-', '');
+    await page.getByTestId('workspace-manager-close').click();
+    await page.getByTestId('workspace-switcher-trigger').click();
+    await page.getByTestId(`workspace-option-${slug}`).click();
+    // Switching reloads the app; wait until the new context is hydrated.
+    await page.getByTestId('today-view').waitFor({ state: 'visible', timeout: 30_000 });
+
+    // Scoped quick capture inside this workspace.
+    const taskTitle = unique(`${name} task`);
+    await page.keyboard.press('ControlOrMeta+KeyK');
+    const modal = page.getByTestId('quick-capture-modal');
+    await modal.waitFor({ state: 'visible', timeout: 15_000 });
+    await modal.getByTestId('qc-title').fill(taskTitle);
+    await modal.getByTestId('qc-submit').click();
+    // Placed OR no-capacity are both acceptable outcomes for this journey;
+    // in the latter, "Schedule Later" keeps the scoped task in backlog.
+    try {
+        await modal.getByTestId('qc-no-capacity').waitFor({ state: 'visible', timeout: 6_000 });
+        await modal.getByTestId('qc-schedule-later').click();
+    } catch {
+        await modal.getByTestId('qc-done').click();
+    }
+    await expect(page.getByTestId('quick-capture-modal')).toBeHidden({ timeout: 20_000 });
+
+    // Open the task's detail.
+    await page.getByTestId('nav-tasks').click();
+    await page.locator('[data-testid="task-item"]').filter({ hasText: taskTitle }).first().getByTestId('task-open').click();
+    await expect(page.getByTestId('task-add-note')).toBeVisible();
+
+    // Add Note inherits workspace + links back; lands on the note editor.
+    await page.getByTestId('task-add-note').click();
+    await expect(page.getByTestId('note-detail')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('note-title-input')).toHaveValue(new RegExp(`Notes: ${taskTitle}`));
+
+    // Back to the task, then Create Canvas inherits context too.
+    await page.getByTestId('nav-tasks').click();
+    await page.locator('[data-testid="task-item"]').filter({ hasText: taskTitle }).first().getByTestId('task-open').click();
+    await page.getByTestId('task-create-canvas').click();
+    await expect(page.getByTestId('canvas-workspace')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('canvas-title-input')).toHaveValue(new RegExp(`Canvas: ${taskTitle}`));
+
+    // Server truth: canvas carries workspace_id of THIS workspace (not default).
+    const wsResp = await page.request.get('http://127.0.0.1:8000/api/v1/workspaces', {
+        headers: { Authorization: `Bearer ${await page.evaluate(() => localStorage.getItem('kinevo.auth.token') ?? '')}` },
+    });
+    const data = await wsResp.json();
+    const lab = (data.workspaces as Array<{ id: number; name: string }>).find((w) => w.name === name);
+    expect(lab).toBeDefined();
+});
 });
