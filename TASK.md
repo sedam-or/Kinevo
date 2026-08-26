@@ -6755,3 +6755,79 @@ For each verify:
 - state feedback
 - empty/error/offline behavior
 - accessibility
+---
+
+# Phase 21–30 Roadmap — Repository → SaaS → Mobile → Intelligence → v1.0
+
+Authoritative spec: `docs/archive/KINEVO_MASTER_PHASE18_PHASE19_PHASE20_EXECUTION_PROMPT.md`
+successor prompt (P21→P30). Statuses below are execution control; detailed
+acceptance criteria live in the master prompt §PHASE sections. A task may move
+to DONE only with evidence per §10/§11 of that prompt.
+
+## PHASE 21 — REPOSITORY & DOCUMENTATION CONSOLIDATION
+### P21-001 — Documentation inventory
+- Status: DONE (2026-08-26) · Priority: P0
+- Acceptance: [x] every root/docs artifact recorded
+- Evidence: docs/documentation-inventory.md
+### P21-002 — Documentation classification
+- Status: DONE (2026-08-26) · Priority: P0
+- Acceptance: [x] 7-bucket classification, no misc
+- Evidence: docs/documentation-inventory.md table
+### P21-003 — Documentation restructure
+- Status: DONE (2026-08-26) · Priority: P1
+- Acceptance: [x] archive created; no moves that break references; existing canonical layout retained (already normalized)
+- Verification: [x] make check-links PASS
+### P21-004 — SRS disposition
+- Status: DONE (2026-08-26) · Priority: P0
+- Acceptance: [x] SRS = current authoritative requirements (not archived)
+- Evidence: docs/documentation-inventory.md disposition row
+### P21-005 — TASK.md hygiene
+- Status: DONE (2026-08-26) · Priority: P0
+- Acceptance: [x] execution control retained; historical P18–20 specs moved to docs/archive/
+### P21-006 — AGENTS.md hygiene
+- Status: DONE (2026-08-26) · Priority: P0
+- Acceptance: [x] contains only boundaries/security/test protocol/workflow/agent constraints; rescue-freeze note now historical but marked as lifted
+### P21-007 — Historical archive
+- Status: DONE (2026-08-26) · Priority: P1
+- Acceptance: [x] master prompts + system-analysis snapshot in docs/archive/
+### P21-008 — Link/reference cleanup
+- Status: DONE (2026-08-26) · Priority: P0
+- Verification: [x] make check-links / check-openapi / check-secrets PASS after moves
+### P21-009 — Root hygiene
+- Status: DONE (2026-08-26) · Priority: P1
+- Acceptance: [x] untracked scratch removed from root (mapping.md, stale prompt)
+### P21-010 — CI documentation gates
+- Status: DONE (2026-08-26) · Priority: P0
+- Verification: [x] ci.yml already enforces doc-links/openapi/secrets/large-artifact via existing scripts; re-run green
+
+## PHASE 22 — PRODUCTION HARDENING
+### P22-001..016 — Threat model, auth hardening, IDOR audit, secrets audit, rate limits, AI abuse controls, DB/queue/scheduler reliability, backup drill, rollback, observability, perf baseline, N+1 audit, license audit, prod smoke
+- Status: TODO (READY next session) · Priority: P0 block
+- Depends On: P21 complete ✓
+- Notes: several sub-tasks require a production-like environment window (backup restore drill, prod smoke) and must follow §1.3 verification-before-claims for any external claims.
+
+## PHASE 23 — SAAS FOUNDATION
+### P23-001..009 — Account boundary decision, plan model, entitlements, EntitlementService, usage model, subscription-state abstraction, backend gating, limit UX, domain tests
+- Status: TODO · Depends On: P22
+## PHASE 24 — SUBSCRIPTION & BILLING
+### P24-001..009 — Billing boundary/persistence/events/webhooks/checkout/sync/cancellation/UX/tests
+- Status: BLOCKED-pending-verification · Notes: provider choice & store rules MUST be verified against official docs first (§1.3); do not implement on assumption.
+## PHASE 25 — AI USAGE / COST CONTROL
+### P25-001..010 — usage records, request identity, credits, preflight, postflight, routing, safeguards, BYOK policy, usage UI, cost alerts
+- Status: TODO · Depends On: P23
+## PHASE 26 — MOBILE ARCHITECTURE
+### P26-001..009 — NativePHP feasibility (BLOCKED until verified vs official docs), single backend, presentation boundary, feature matrix, nav, auth, contracts, offline reuse, deep links
+## PHASE 27 — NATIVEPHP MOBILE MVP
+### P27-001..011 — shell/today/capture/execution/goal-AI/notes/canvas-companion/analytics/notifications/subscription visibility/device evidence
+- Status: TODO · Depends On: P26 verified + P23/P25
+## PHASE 28 — PRODUCT INTELLIGENCE + WRAPPED
+### P28-001..010 — deterministic metrics, formulas, insight engine, bounded AI narrative, archetypes, monthly review, yearly wrapped, shareable artifacts, public-link security, reflection→planning loop
+- Status: TODO · Depends On: P23 (entitlement `wrapped`)
+## PHASE 29 — BETA / GROWTH VALIDATION
+### P29-001..010 — cohort, activation, retention, AI adoption, workspace adoption, feature usage, UX research, pricing experiments, funnel, feedback triage
+- Status: TODO · Requires real users; not code-only.
+## PHASE 30 — v1.0 PRODUCTION RELEASE
+### P30-001..014 — freeze, versioning, changelog, OS/SaaS boundary, migration dry-run, production E2E, final backup, security review, cost review, monitoring readiness, release docs, v1.0.0 tag, rollback plan, final acceptance
+- Status: TODO · Requires ALL prior gates + explicit operator approval for tag.
+
+Execution rule: sequential P21→P22→…; P26/P27 may parallelize only after API/security stability per roadmap §3.
