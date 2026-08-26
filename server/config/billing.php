@@ -12,6 +12,9 @@ return [
         'merchant_id' => env('MIDTRANS_MERCHANT_ID'),
         'server_key' => env('MIDTRANS_SERVER_KEY'),
         'client_key' => env('MIDTRANS_CLIENT_KEY'),
+        // Sandbox-only saved card token (saved_token_id from a one-click Snap
+        // charge). Production flow captures the token per user at checkout.
+        'test_card_token' => env('MIDTRANS_TEST_CARD_TOKEN'),
         'base_url' => env('MIDTRANS_ENV', 'sandbox') === 'production'
             ? 'https://api.midtrans.com'
             : 'https://api.sandbox.midtrans.com',

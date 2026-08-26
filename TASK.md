@@ -6900,7 +6900,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 ### P24-022/023 — Refund / Chargeback Handling
 - Status: DEFERRED (capability UNKNOWN until verified against provider docs/merchant contract)
 ### P24-024 — Entitlement Synchronization
-- Status: IN_PROGRESS (P23 EntitlementService already resolves effective plan from subscription state; BillingEvent→Subscription sync task remains)
+- Status: DONE (2026-08-26) — BillingEvent→P23 resolver sync proven end-to-end in sandbox E2E (P24-035): settlement activates `billing_subscriptions` AND flips `subscriptions` to plan personal / active / provider midtrans; cancel downgrades to free.
 ### P24-025..029 — Billing History/Settings UI/Checkout UX/Failure UX/Notifications
 - Status: PARTIAL (2026-08-26) — GET /billing/subscription returns safe history; PlanSettingsView has Subscribe buttons with redirect; failure/error surfaced inline; notifications DEFERRED to notification center integration.
 ### P24-030 — Billing Security Hardening
@@ -6908,9 +6908,14 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 ### P24-031 — Billing OpenAPI
 - Status: DONE (2026-08-26) — 128 paths incl. checkout/webhook/cancel/resume; webhook auth model documented as sha512 signature not session.
 ### P24-032..034 — Domain/Adapter/Webhook Test Suites
-- Status: PARTIAL (adapter suite 6/6 green; domain/webhook suites follow domain persistence tasks)
+- Status: DONE (2026-08-26) — domain 12/12, adapter 6/6, webhook 4/4, checkout 3/3 greens.
 ### P24-035 — Sandbox E2E
-- Status: BLOCKED (sandbox credentials)
+- Status: DONE (2026-08-26) — LIVE against api.sandbox.midtrans.com with real server key:
+  - checkout POST /api/v1/billing/checkout (plan personal) → provider created subscription `2d60abaa-583c-4797-b191-db4b826d8a43` (amount 49000 IDR, credit_card, metadata kinevo_user_id=17, plan personal); local row pending. (Adapter payload fixed for Subscription API: `payment_type`, `token`, `schedule{interval,interval_unit,start_time}` — previously 400 `subscription.token/schedule/payment_type is required`.)
+  - settlement webhook (sha512 real-signature, status_code 200, gross_amount 49000.00) → `applied`.
+  - Verified: billing_subscriptions state=active/uncertain=false; billing_transactions amount_minor=4_900_000 succeeded; subscriptions plan=personal/state=active/provider=midtrans; billing_events processed.
+  - Idempotent replay → `duplicate`; GET /api/v1/billing/subscription snapshot reflects active + txn history.
+  - Sandbox token obtained from a real one-click subscription token (never committed; key value only in local .env).
 ### P24-036 — Cross-Device Entitlement E2E
 - Status: TODO (web purchase → same-account entitlement; mobile restore deferred with mobile billing)
 ### P24-037 — Billing Operations / Diagnostics

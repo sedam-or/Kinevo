@@ -64,19 +64,26 @@ final class BillingService
         $operationId = 'kinevo-'.$userId.'-'.Str::lower(Str::random(10));
 
         // TASK-P24-005 — money in integer minor units; Midtrans takes whole IDR.
+        // Subscription API requires payment_type, a saved card token and the
+        // schedule shape (interval/interval_unit) — P24-035 sandbox evidence.
         $payload = [
             'name' => 'Kinevo '.$planCode.' ('.$user->email.')',
             'amount' => intdiv((int) $price['amount_minor'], 100),
             'currency' => $price['currency'],
-            'period' => $price['interval'],
-            'frequency' => (int) $price['interval_count'],
-            'customer_details' => [
-                'first_name' => $user->name,
-                'email' => $user->email,
+            'payment_type' => 'credit_card',
+            'token' => (string) config('billing.midtrans.test_card_token'),
+            'schedule' => [
+                'interval' => (int) $price['interval_count'],
+                'interval_unit' => strtolower((string) $price['interval']),
+                'start_time' => now()->addMonth()->format('Y-m-d H:i:s O'),
             ],
             'metadata' => [
                 'kinevo_user_id' => $userId,
                 'kinevo_plan_code' => $planCode,
+            ],
+            'customer_details' => [
+                'first_name' => $user->name,
+                'email' => $user->email,
             ],
         ];
 
