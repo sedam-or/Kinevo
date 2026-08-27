@@ -96,7 +96,7 @@ CLI diagnostics (no web admin surface for billing — P24-037):
 Sandbox → production checklist (from ADR-012 consequences):
 1. Merchant activation: Midtrans recurring + GoPay Tokenization must be ON for the merchant (Support/Sales).
 2. Flip `MIDTRANS_ENV=production`; swap server/client keys; keep `MIDTRANS_WEBHOOK_VERIFY=true`.
-3. Re-verify refund/chargeback behavior (currently UNKNOWN capability — P24-022/023 deferred) and sign-off
+3. Re-verify refund/chargeback behavior in PRODUCTION (sandbox-capability verified 2026-08-27 — P24-022/023; Core API refund for settled credit_card + webhook capture of `refund`/`chargeback`/`partial_*`) and sign-off
    fees/settlement from the merchant contract.
 4. Point the production webhook URL at the public endpoint; confirm 60/min throttle is adequate.
 5. Run the applicable P24 test set (BillingWebhookTest, BillingCheckoutTest, BillingDomainTest, adapter suite).
@@ -121,7 +121,7 @@ Live against `api.sandbox.midtrans.com` with real sandbox credentials:
 
 ## Out of scope / deferred
 
-- Refund / chargeback (P24-022/023): capability UNKNOWN until merchant contract; no API implemented.
+- Refund / chargeback (P24-022/023): `MIDTRANS_REFUND` via Core API `POST /v2/{order_id}/refund` (credit_card, sandbox-simulated); webhook maps `refund`/`partial_refund` → transaction `refunded`, `chargeback`/`partial_chargeback` → refunded + `uncertain` (no silent entitlement change).
 - Apple IAP / Google Play adapters (P24-039..041): separate adapters, deferred with mobile (P26+).
 - Cross-platform purchase restoration (P24-042) and duplicate-subscription policy (P24-043): with mobile.
 - Proration on upgrade/downgrade (P24-021): provider-verification dependent; current behavior is

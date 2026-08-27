@@ -20,8 +20,10 @@ use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * TASK-P24-010/011/014/016/024 — checkout creation (idempotent) and
- * verified-event application (idempotent, out-of-order safe, entitlement sync).
+ * TASK-P24-010/011/014/016/021/022/023/024/043 — checkout creation
+ * (idempotent, one-active-subscription guard), verified-event application
+ * (idempotent, out-of-order safe, entitlement sync), and refund/chargeback
+ * recording without silently guessing entitlement.
  */
 final class BillingService
 {
@@ -53,6 +55,16 @@ final class BillingService
             ->first();
         if ($existing !== null) {
             return $this->present($existing);
+        }
+
+        // TASK-P24-043 — web rule: one active subscription per user. Cross-platform
+        // (Apple/Google) duplicates need product approval and are NOT enforced here.
+        $active = BillingSubscription::query()
+            ->where('user_id', $userId)
+            ->whereIn('state', [SubscriptionState::Active->value, SubscriptionState::PastDue->value, SubscriptionState::CancelAtPeriodEnd->value])
+            ->first();
+        if ($active !== null) {
+            throw new InvalidArgumentException('ACTIVE_SUBSCRIPTION_EXISTS: cancel the active subscription before checking out another plan.');
         }
 
         $user = User::query()->findOrFail($userId);
@@ -170,6 +182,15 @@ final class BillingService
                 return 'invalid_transition';
             }
         }
+        // TASK-P24-019 — a recovered payment clears prior uncertainty.
+        if ($event->type === BillingEventType::PaymentSucceeded && $sub->uncertain) {
+            $sub->uncertain = false;
+        }
+        // TASK-P24-022/023 — a chargeback makes entitlement uncertain (funds
+        // reversed); no silent state change. A merchant refund does not touch state.
+        if ($event->type === BillingEventType::ChargebackOpened) {
+            $sub->uncertain = true;
+        }
         $sub->last_event_at = Carbon::parse($occurredAt);
         $sub->save();
 
@@ -187,6 +208,13 @@ final class BillingService
                     'occurred_at' => $occurredAt,
                 ],
             );
+        }
+
+        // TASK-P24-022/023 — refund / chargeback mirror onto the charged transaction.
+        if ($event->type === BillingEventType::RefundCreated || $event->type === BillingEventType::ChargebackOpened) {
+            BillingTransaction::query()
+                ->where('provider_transaction_id', $event->providerTransactionId ?? $event->providerEventId)
+                ->update(['status' => 'refunded']);
         }
 
         // TASK-P24-024 — entitlement synchronization into the P23 resolver.

@@ -17,8 +17,8 @@ webhook validation). Fees/settlement require merchant contracts → UNKNOWN.
 | Cancel | disable endpoint ✓ | product-level cancel (Subscriptions) / merchant stop (MIT) |
 | Resume | enable endpoint ✓ | re-create/reactivate — semantics UNKNOWN |
 | Update subscription | PATCH endpoint ✓ | Subscriptions product supports update; MIT = new payment requests |
-| Refund | UNKNOWN (not verified this pass) | Refund APIs exist per channel (verified endpoints) |
-| Dispute/chargeback | UNKNOWN | UNKNOWN |
+| Refund | SUPPORTED (2026-08-27 — POST `/v2/{order_id}/refund`, settled credit_card; sandbox simulator) | Refund APIs exist per channel (verified endpoints) |
+| Dispute/chargeback | SUPPORTED for webhook capture of `chargeback`/`partial_chargeback`; resolution handled manually via Midtrans Dashboard | UNKNOWN |
 | Webhook mechanism | HTTP notification w/ signature_key (sha512) verification | POST + `X-CALLBACK-TOKEN` static compare |
 | Idempotency | Subscription create idempotent for limited period | Idempotency-key on writes; X-EXTERNAL-ID 24h uniqueness |
 | Sandbox | api.sandbox.midtrans.com; GoPay sandbox updated Oct 2024 | Dashboard test mode keys |
@@ -31,6 +31,6 @@ webhook validation). Fees/settlement require merchant contracts → UNKNOWN.
 // MidtransAdapter::capabilities()
 supports: create_customer(NO*), checkout(YES hosted+subscription),
           subscription_lifecycle(create/get/update/enable/disable),
-          refund(UNKNOWN), dispute(UNKNOWN), out_of_order_guard(via provider lookup)
+          refund(SUPPORTED via Core API refund), dispute(SUPPORTED — webhook capture; resolution manual), out_of_order_guard
 * Midtrans customer object is implicit in transaction/customer_details.
 ```

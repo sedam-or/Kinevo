@@ -3345,7 +3345,7 @@ paths:
                   provider_subscription_id: {type: string, nullable: true}
                   redirect_url: {type: string, nullable: true}
         '401': { description: Unauthorized }
-        '422': { description: Unknown or free plan }
+        '422': { description: Unknown or free plan, or an active subscription already exists }
         '502': { description: Gateway error }
 
   /billing/webhook/midtrans:
@@ -3357,6 +3357,10 @@ paths:
         signature verification (order_id + status_code + gross_amount + server_key),
         NOT browser session. Invalid signature → 403. Duplicate events are
         idempotent no-ops. Out-of-order events do not regress state.
+        `transaction_status` maps: settlement/capture → succeeded,
+        pending → past_due, deny/cancel → canceled, expire → expired,
+        refund/partial_refund → transaction refunded, chargeback/partial_chargeback
+        → transaction refunded + subscription flagged uncertain.
       requestBody:
         required: true
         content:

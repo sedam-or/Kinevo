@@ -24,6 +24,37 @@ final readonly class MidtransGateway implements PaymentGateway
         private string $baseUrl = 'https://api.sandbox.midtrans.com',
     ) {}
 
+    /**
+     * TASK-P24-022 — merchant-initiated refund (verified against
+     * docs.midtrans.com/reference/refund-transaction, 2026-08-27).
+     * Core API POST /v2/{order_id}/refund; credit_card supported; $amountMinor
+     * is carried ×100 (IDR) and sent as whole rupiah (optional = full refund).
+     */
+    public function refundTransaction(string $orderId, ?int $amountMinor = null, ?string $refundKey = null): array
+    {
+        $payload = [];
+        $refundKey !== null && $payload['refund_key'] = $refundKey;
+        $amountMinor !== null && $payload['amount'] = intdiv($amountMinor, 100);
+
+        try {
+            $response = Http::timeout(30)
+                ->withBasicAuth($this->serverKey, '')
+                ->acceptJson()
+                ->post($this->baseUrl.'/v2/'.$orderId.'/refund', $payload);
+        } catch (ConnectionException) {
+            throw new RuntimeException('Midtrans is unreachable.');
+        }
+
+        if ($response->status() === 429) {
+            throw new RuntimeException('MIDTRANS_RATE_LIMITED');
+        }
+        if (! $response->successful()) {
+            throw new RuntimeException('MIDTRANS_REFUND_ERROR_'.$response->status().': '.substr((string) $response->body(), 0, 200));
+        }
+
+        return (array) $response->json();
+    }
+
     /** TASK-P24-010 — create a provider-managed subscription (recurring). */
     public function createSubscription(array $payload): array
     {
@@ -79,8 +110,8 @@ final readonly class MidtransGateway implements PaymentGateway
             retryBehavior: GatewayCapabilities::SUPPORTED,
             cancellation: GatewayCapabilities::SUPPORTED,
             resume: GatewayCapabilities::SUPPORTED,
-            refund: GatewayCapabilities::UNKNOWN,
-            dispute: GatewayCapabilities::UNKNOWN,
+            refund: GatewayCapabilities::SUPPORTED,
+            dispute: GatewayCapabilities::SUPPORTED,
             webhookVerification: 'sha512(order_id+status_code+gross_amount+server_key)',
             idempotency: 'subscription-create limited-period idempotency (documented)',
             sandboxAvailable: true,
@@ -91,6 +122,9 @@ final readonly class MidtransGateway implements PaymentGateway
             limitations: [
                 'Recurring methods currently Card and GoPay Tokenization only',
                 'GoPay web linking URL single-access',
+                'Refund via Core API ONLY for settled transactions (credit_card/gopay/qris/etc)',
+                'Chargeback resolution is handled via Midtrans Dashboard (manual); webhook carries opened/partial status only',
+                'Sandbox chargeback/refund notifications are produced by the dashboard simulator',
             ],
         );
     }
@@ -130,12 +164,23 @@ final readonly class MidtransGateway implements PaymentGateway
             'deny', 'cancel' => BillingEventType::SubscriptionCanceled,
             'expire' => BillingEventType::SubscriptionExpired,
             'pending' => BillingEventType::PaymentFailed, // provisional failure until settled
+            // TASK-P24-022/023 — merchant refunds + cardholder chargebacks (notification).
+            'refund', 'partial_refund' => BillingEventType::RefundCreated,
+            'chargeback', 'partial_chargeback' => BillingEventType::ChargebackOpened,
             default => throw new RuntimeException("Unknown Midtrans transaction_status [{$body['transaction_status']}]."),
         };
 
+        // TASK-P24-022/023 — refund/chargeback notifications reuse the ORIGINAL
+        // transaction_id, so the event id is suffixed per event class to keep
+        // them distinct from the settling payment (idempotency contract).
+        $eventId = (string) $body['transaction_id'];
+        if (in_array($type, [BillingEventType::RefundCreated, BillingEventType::ChargebackOpened], true)) {
+            $eventId .= $type === BillingEventType::RefundCreated ? ':refund' : ':chargeback';
+        }
+
         return new NormalizedBillingEvent(
             provider: 'midtrans',
-            providerEventId: (string) ($body['transaction_id'] ?? $body['order_id']),
+            providerEventId: $eventId,
             type: $type,
             providerSubscriptionId: isset($body['subscription_id']) ? (string) $body['subscription_id'] : null,
             providerTransactionId: (string) $body['transaction_id'],

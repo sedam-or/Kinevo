@@ -39,6 +39,17 @@ Release governance: see `docs/release-management.md`.
   signature-verified settlement webhook activates the subscription, records the payment
   transaction, and grants the plan to every device on the account (idempotent, replay-safe,
   out-of-order-safe). Billing operations documentation shipped in `docs/billing.md`.
+- Billing refunds and chargebacks no longer surprise you (Phase 24, TASK-P24-022/023): a settled
+  charge can be refunded against the Midtrans Core API, and webhook-driven refund or chargeback
+  notifications mark the charged transaction `refunded`, while a chargeback also flags the
+  subscription as uncertain instead of silently revoking or keeping paid access. All states,
+  transitions, and signatures are covered by tests.
+- Grace on a missed payment, then a clean recovery (Phase 24, TASK-P24-019): a failed attempt moves
+  the subscription to `past_due` with entitlement preserved, and the next successful settlement
+  restores full active status automatically (Midtrans handles the retry dunning).
+- One paid subscription per account, enforced (Phase 24, TASK-P24-043): starting a second checkout
+  while an active/past-due subscription exists is rejected with a clear error; cancel first, then
+  switch plans.
 - AI now lives where you work (Phase 17, TASK-P17-029): notes offer
   "Summarize with AI" and "Extract tasks with AI" in the editor, the canvas
   index suggests a board structure from a plain-language description, and

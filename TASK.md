@@ -6866,7 +6866,7 @@ Status: DONE (2026-08-26) — billing_transactions with unique provider_transact
 ### P24-009 — Billing Event Model
 Status: DONE (2026-08-26) — billing_events unique (provider,event_id), payload_hash only (PII minimized — raw payload not stored), processing_status/attempts/error fields.
 ### P24-010 — Backend Checkout Creation
-- Status: BLOCKED (sandbox credentials + merchant recurring activation required per ADR prerequisites)
+- Status: DONE (2026-08-27) — POST /billing/checkout live-verified against sandbox in P24-035 (created provider subscription 2d60abaa-…, local row pending); BillingCheckoutTest 5/5 green (create, idempotency, gateway-down, free-plan reject, one-active guard). Prior BLOCKED superseded by P24-012 (production keys provided).
 ### P24-011 — Checkout Idempotency
 Status: DONE (2026-08-26) — pending row reuse per user+plan prevents duplicate provider subscriptions; operation_id unique. BillingCheckoutTest idempotency case green.
 
@@ -6888,17 +6888,15 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 
 ### P24-017 — Billing Reconciliation
 - Status: DONE (2026-08-26) — billing:reconcile --dry-run/--user command; detects uncertain subscriptions, resolves via live gateway lookup, syncs P23 entitlement; auditable output.
-- Status: TODO
 ### P24-018 — Renewal Processing
 - Status: DONE-by-design — Midtrans manages recurring charges server-side; no local cron charging (ADR-012).
-- Status: DONE-by-design decision (provider-managed recurring selected; no local cron charging) — documented in ADR-012 Decision.
 ### P24-019 — Failed Payment / Grace Period
-- Status: PARTIAL (2026-08-26) — payment_failed → past_due transition tested; Midtrans auto-retry handles dunning; explicit grace duration is product decision deferred to P30. Cancel path downgrades to free safely.
+- Status: DONE (2026-08-27) — payment_failed → past_due transition tested; past_due → active recovery on next settlement proven (entitlement restored end-to-end, uncertain cleared); grace-window entitlement granted via grantsPaidAccess(); Midtrans auto-retry handles dunning; explicit grace duration is product decision deferred to P30. Cancel path downgrades to free safely.
 ### P24-020 — DONE (2026-08-26) — POST /billing/cancel disables provider subscription + downgrades to free; POST /billing/resume re-enables + restores paid entitlement. BillingCancelResumeTest 3/3.
 ### P24-021 — Upgrade / Downgrade
 - Status: DONE (2026-08-26) — upgrade = new checkout to higher plan; downgrade = cancel + free fallback (data preserved per P24-024); proration DEFERRED to provider verification.
 ### P24-022/023 — Refund / Chargeback Handling
-- Status: DEFERRED (capability UNKNOWN until verified against provider docs/merchant contract)
+- Status: DONE (2026-08-27) — capability verified against official docs (Refund API `POST /v2/{order_id}/refund` for settled credit_card; chargeback notification via payment webhook; sandbox simulator). Gateway.refundTransaction() → Core API; webhook maps `refund`/`partial_refund` → transaction refunded, `chargeback`/`partial_chargeback` → refunded + subscription `uncertain` (no silent entitlement change). Chargeback resolution stays manual via Midtrans Dashboard. Tests: MidtransGatewayTest mapping 8/8, BillingRefundTest 2/2, BillingWebhookTest 7/7.
 ### P24-024 — Entitlement Synchronization
 - Status: DONE (2026-08-26) — BillingEvent→P23 resolver sync proven end-to-end in sandbox E2E (P24-035): settlement activates `billing_subscriptions` AND flips `subscriptions` to plan personal / active / provider midtrans; cancel downgrades to free.
 ### P24-025..029 — Billing History/Settings UI/Checkout UX/Failure UX/Notifications
@@ -6908,7 +6906,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 ### P24-031 — Billing OpenAPI
 - Status: DONE (2026-08-26) — 128 paths incl. checkout/webhook/cancel/resume; webhook auth model documented as sha512 signature not session.
 ### P24-032..034 — Domain/Adapter/Webhook Test Suites
-- Status: DONE (2026-08-26) — domain 12/12, adapter 6/6, webhook 4/4, checkout 3/3 greens.
+- Status: DONE (2026-08-26) — domain 12/12, adapter 8/8, webhook 7/7, checkout 5/5, refund 2/2 greens (2026-08-27 totals).
 ### P24-035 — Sandbox E2E
 - Status: DONE (2026-08-26) — LIVE against api.sandbox.midtrans.com with real server key:
   - checkout POST /api/v1/billing/checkout (plan personal) → provider created subscription `2d60abaa-583c-4797-b191-db4b826d8a43` (amount 49000 IDR, credit_card, metadata kinevo_user_id=17, plan personal); local row pending. (Adapter payload fixed for Subscription API: `payment_type`, `token`, `schedule{interval,interval_unit,start_time}` — previously 400 `subscription.token/schedule/payment_type is required`.)
@@ -6929,9 +6927,9 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 ### P24-042 — Cross-Platform Purchase Restoration
 - Status: DEFERRED with mobile adapters
 ### P24-043 — Duplicate Subscription Protection
-- Status: TODO (business rule: one active web subscription per user; cross-platform duplicates need product approval)
+- Status: DONE (2026-08-27) — web rule enforced in startCheckout: existing active/past_due/cancel_at_period_end subscription blocks a new checkout (422 ACTIVE_SUBSCRIPTION_EXISTS); same-plan pending remains idempotent-reused; canceled/expired allow fresh checkout. Tests 2/2. Cross-platform (Apple/Google) duplicates remain NOT enforced — product approval required.
 ### P24-044 — Final Production Billing Gate
-- Status: PASSED for WEB scope (2026-08-26) — applicable web set (P24-005..035 minus explicit deferrals) green: checkout/webhook/cancel/resume live-verified against Midtrans sandbox, entitlement sync + cross-device proven, security hardening + test suites + OpenAPI + ops commands + docs complete. Production still gated by merchant activation + production key flip + refund/chargeback verification (P24-022/023 deferred) per docs/billing.md checklist.
+- Status: PASSED for WEB scope (2026-08-27) — applicable web set (P24-005..043, minus explicit deferrals) green: checkout/webhook/cancel/resume live-verified against Midtrans sandbox, refund/chargeback verified + implemented (sandbox), entitlement sync + cross-device proven, one-active-subscription guard, security hardening + test suites + OpenAPI + ops commands + docs complete. Production still gated by merchant activation + production key flip per docs/billing.md checklist.
 
 ## PHASE 25 — AI USAGE / COST CONTROL
 ### P25-001..005 — usage records, request identity, credits, preflight, postflight

@@ -65,4 +65,50 @@ class BillingCheckoutTest extends TestCase
             ->assertStatus(422)
             ->assertJsonPath('error', 'The Free plan does not require checkout.');
     }
+
+    public function test_existing_active_subscription_blocks_second_checkout(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('t')->plainTextToken;
+        config(['billing.midtrans.server_key' => 'test-key', 'billing.midtrans.base_url' => 'https://api.sandbox.midtrans.com']);
+
+        BillingSubscription::query()->create([
+            'user_id' => $user->id, 'plan_code' => 'pro',
+            'price_amount_minor' => 3_490_000, 'provider' => 'midtrans',
+            'operation_id' => 'kinevo-op-active', 'provider_subscription_id' => 'sub-1', 'state' => 'active',
+        ]);
+
+        // TASK-P24-043 — one active web subscription per user; other plan blocked.
+        $this->withToken($token)->postJson('/api/v1/billing/checkout', ['plan_code' => 'power'])
+            ->assertStatus(422)
+            ->assertJsonPath('error', 'ACTIVE_SUBSCRIPTION_EXISTS: cancel the active subscription before checking out another plan.');
+
+        Http::assertNothingSent();
+        $this->assertSame(1, BillingSubscription::count());
+    }
+
+    public function test_canceled_subscription_allows_new_checkout(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('t')->plainTextToken;
+        config(['billing.midtrans.server_key' => 'test-key', 'billing.midtrans.base_url' => 'https://api.sandbox.midtrans.com']);
+
+        BillingSubscription::query()->create([
+            'user_id' => $user->id, 'plan_code' => 'pro',
+            'price_amount_minor' => 3_490_000, 'provider' => 'midtrans',
+            'operation_id' => 'kinevo-op-canceled', 'provider_subscription_id' => 'sub-2', 'state' => 'canceled',
+        ]);
+
+        Http::fake([
+            'api.sandbox.midtrans.com/v1/subscriptions' => Http::response([
+                'id' => 'sub-prov-2', 'status' => 'CREATED', 'payment_type' => 'card',
+            ], 201),
+        ]);
+
+        $this->withToken($token)->postJson('/api/v1/billing/checkout', ['plan_code' => 'power'])
+            ->assertStatus(201)
+            ->assertJsonPath('status', 'pending');
+
+        $this->assertSame(2, BillingSubscription::count());
+    }
 }

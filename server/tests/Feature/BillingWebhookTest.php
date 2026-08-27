@@ -120,4 +120,64 @@ class BillingWebhookTest extends TestCase
 
         $this->assertDatabaseHas('billing_subscriptions', ['id' => $sub->id, 'state' => 'active']);
     }
+
+    public function test_past_due_subscription_recovers_to_active_on_next_settlement(): void
+    {
+        [$user, $sub] = $this->seedBilling();
+        // Grace period (P24-019): entitlement already granted in past_due; a
+        // subsequent settlement restores full active state.
+        $sub->state = 'past_due';
+        $sub->save();
+
+        $this->call('POST', '/api/v1/billing/webhook/midtrans', [], [], [], ['CONTENT_TYPE' => 'application/json'], $this->payload([
+            'transaction_id' => 'tx-2',
+            'metadata' => ['kinevo_user_id' => $user->id, 'kinevo_plan_code' => 'pro'],
+        ]))
+            ->assertOk()
+            ->assertJsonPath('status', 'applied');
+
+        $this->assertDatabaseHas('billing_subscriptions', ['id' => $sub->id, 'state' => 'active', 'uncertain' => false]);
+        $this->assertDatabaseHas('billing_transactions', ['provider_transaction_id' => 'tx-2', 'status' => 'succeeded']);
+        $this->assertDatabaseHas('subscriptions', ['id' => SaasSubscription::query()->where('user_id', $user->id)->first()->id, 'plan_code' => 'pro', 'state' => 'active']);
+    }
+
+    public function test_refund_webhook_marks_transaction_refunded_without_touching_state(): void
+    {
+        [$user, $sub] = $this->seedBilling();
+        // Settle first so a charged transaction exists (TASK-P24-022).
+        $this->call('POST', '/api/v1/billing/webhook/midtrans', [], [], [], ['CONTENT_TYPE' => 'application/json'], $this->payload([
+            'metadata' => ['kinevo_user_id' => $user->id, 'kinevo_plan_code' => 'pro'],
+        ]))->assertOk();
+
+        $this->call('POST', '/api/v1/billing/webhook/midtrans', [], [], [], ['CONTENT_TYPE' => 'application/json'], $this->payload([
+            'transaction_status' => 'refund',
+            'transaction_id' => 'tx-1',
+            'metadata' => ['kinevo_user_id' => $user->id, 'kinevo_plan_code' => 'pro'],
+        ]))
+            ->assertOk()
+            ->assertJsonPath('status', 'applied');
+
+        $this->assertDatabaseHas('billing_transactions', ['provider_transaction_id' => 'tx-1', 'status' => 'refunded']);
+        $this->assertDatabaseHas('billing_subscriptions', ['id' => $sub->id, 'state' => 'active', 'uncertain' => false]);
+    }
+
+    public function test_chargeback_webhook_flags_subscription_uncertain_and_refunds_transaction(): void
+    {
+        [$user, $sub] = $this->seedBilling();
+        $this->call('POST', '/api/v1/billing/webhook/midtrans', [], [], [], ['CONTENT_TYPE' => 'application/json'], $this->payload([
+            'metadata' => ['kinevo_user_id' => $user->id, 'kinevo_plan_code' => 'pro'],
+        ]))->assertOk();
+
+        // TASK-P24-023 — funds reversed; entitlement becomes uncertain, never silently revoked or kept as paid.
+        $this->call('POST', '/api/v1/billing/webhook/midtrans', [], [], [], ['CONTENT_TYPE' => 'application/json'], $this->payload([
+            'transaction_status' => 'chargeback',
+            'transaction_id' => 'tx-1',
+            'metadata' => ['kinevo_user_id' => $user->id, 'kinevo_plan_code' => 'pro'],
+        ]))
+            ->assertOk()
+            ->assertJsonPath('status', 'applied');
+
+        $this->assertDatabaseHas('billing_transactions', ['provider_transaction_id' => 'tx-1', 'status' => 'refunded']);
+        $this->assertDatabaseHas('billing_subscriptions', ['id' => $sub->id, 'uncertain' => true]);
+    }
 }
