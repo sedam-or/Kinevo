@@ -7322,7 +7322,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 
 ## PHASE 27 — NATIVEPHP ANDROID MVP
 
-> **Phase verdict (2026-08-27): IN-REPO MOBILE SHELL PORTED + GATE SCREENS BUILT — device re-run pending.**
+> **Phase verdict (2026-08-27): IN-REPO MOBILE SHELL PORTED + GATE SCREENS BUILT — device content gates blocked by upstream EDGE renderer (UI-021).**
 > The NativePHP shell (P27-001) and screen pipeline were previously device-verified in an
 > out-of-repo PoC (AVD kinevo_emu, Android 14 API 34, embedded PHP 8.5.9). That shell is now ported
 > INTO this repo as a first-class mobile surface: `routes/native.php` (10 Route::native screens),
@@ -7335,9 +7335,14 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 > replaces macOS-only `native:run` (container prep w/ CLI-zip shim + host zip(1) bundle +
 > gradlew assembleDebug). Result: `app-debug.apk` boots on emulator (`Fully drawn`,
 > `BootPlanner: NATIVE_DIRECT (10 native patterns)`), chrome top-bar/bottom-nav render and
-> tabs navigate server-side. Remaining, un-fabricated: screen CONTENT subtrees still not
-> posted by the EDGE renderer (pre-existing PoC-era gap, now recorded as ui-audit UI-021),
-> upstream `text_input` native renderer, a11y body-content surfacing, multi-device matrix
+> tabs navigate server-side; an engaged boot's component mount reaches the real backend
+> (`GET /api/v1/health` → 200 from the embedded runtime) and per-tab visual content
+> differs pixel-wise (~24.6k px Today↔Tasks) via the hybrid WebView path. Remaining,
+> un-fabricated: screen CONTENT subtrees never reach the native element tree/a11y
+> surface AND an upstream boot race can skip mount entirely until a later cold start
+> engages (both recorded as ui-audit UI-021 with repro pipeline + symptoms); runtime-
+> unregistered `text_input` (spike-era device log; vendor class ships but the arm64
+> runtime answers "Unknown native element type: text_input"), multi-device matrix
 > (1 AVD config).
 
 > Objective: implement ONLY the high-value mobile workflows. Every task below follows the §12
@@ -7589,7 +7594,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Verification: aggregate of subtasks (Unit/Integration/E2E/Device)
 - Evidence: keystone + shell + native-first EDGE pipeline DEVICE-VERIFIED on Android 14 (API 34) emulator AVD `kinevo_emu`: full Laravel bundle boots on-device (embedded PHP 8.5.9, config/event/view caches, SQLite migrate path), NATIVE_DIRECT dispatch, five-tab shell renders + navigates (IA order Today·Tasks·Capture·Workspace·More confirmed via uiautomator), authenticated reads `/today` `/tasks` `/workspaces` (server access log + Sanctum last_used), capture WRITE round-trips `@tap`→PHP→`POST /quick-capture`→DB rows #205/#206. Shell branded to Kinevo tokens (skill-consulted) with built-in Material icon set.
   2026-08-27 in-repo re-bundle: `com.developer.lightglowrapid` APK from repo code (NativePHP 4.2.0, embedded PHP 8.4.24 static libs arm64-v8a, bundle_meta.json route manifest ×10). Boot: persistent runtime 394–400ms → `Fully drawn` +12.4s → queue worker; `NATIVE_DIRECT (10 native patterns)`; top-bar/bottom-nav render from repo blades and tab taps dispatch server navigation with tree-version bumps (logcat `PostTreeUpdate nodes=11 ver=2`). Verified clean of fatals end-to-end.
-- Known Limitations: gate is binary per Rule 0.6 → NOT DONE. Remaining gaps: screen-content subtrees absent from the EDGE-rendered element tree on device (chrome interactive only — spike-era gap persists across builds; recorded as ui-audit UI-021 with repro pipeline), upstream `text_input` native renderer (capture = semantic quick-actions until then), entitlement-limited UI, multi-device matrix (1 AVD config), a11y body surfacing (same UI-021 tree gap). All mobile code is now IN-repo; the PoC `kinevo-mobile-spike4` is no longer load-bearing.
+- Known Limitations: gate is binary per Rule 0.6 → NOT DONE. Remaining gaps: screen-content subtrees absent from the native element tree on device + upstream boot race (both ui-audit UI-021 with repro pipeline + symptoms), runtime-unregistered `text_input` (capture = semantic quick-actions until then), entitlement-limited UI, multi-device matrix (1 AVD config), a11y body surfacing (same UI-021 tree gap). All mobile code is now IN-repo; the PoC `kinevo-mobile-spike4` is no longer load-bearing.
 
 ## PHASE 28 — PRODUCT INTELLIGENCE + WRAPPED
 

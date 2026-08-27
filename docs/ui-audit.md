@@ -662,9 +662,17 @@ Repro: install repo-built APK (2026-08-27 18:35 boot), uiautomator dump shows
 only tab bar texts; logcat PostTreeUpdate nodes=11.
 Severity: P1 (device companion content unreadable — not data loss/auth);
 blocks honest completion of P27-002..010 device gates.
-Status: open — root cause suspected in EDGE renderer layout of nested
-native:column content inside scroll-view (upstream NativePHP v4.2 / our
-blade markup); must be reproduced minimally before any fix lands.
+Status: open — two confirmed symptoms while reproducing (2026-08-27):
+(a) per-screen edge elements never reach the posted tree even though the
+component mounts and renders server-side (logcat PostTreeUpdate nodes=18
+flat=0; uiautomator chrome-only); pixel analysis proves per-tab DIFFERENT
+content DOES display (~24.6k differing pixels Today↔Tasks) via the hybrid
+WebView path, so users see real data while the native accessibility/body
+surface stays empty; (b) a boot-time race sometimes skips component mount
+entirely (backend /api/v1/health absent, session exits 200 "Native stack
+empty") until a later cold start engages. Root cause suspected in upstream
+NativePHP v4.2 EDGE element publishing/activation on Android; must be
+reproduced minimally against vendor source before any fix lands.
 Link: infrastructure/nativephp/linux-build/build-android-apk.sh (repro
 pipeline); TASK.md Phase 27 evidence block 2026-08-27.
 ```
