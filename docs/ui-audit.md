@@ -646,6 +646,29 @@ Link: this record.
 No finding above is closed silently; each closes with concrete browser/test/visual
 evidence in a later task.
 
+```text
+UI-021 | 2026-08-27 | Mobile (Android native shell) | P1
+Native screen content subtrees render empty on device (chrome renders)
+Gap: after re-bundling the in-repo NativePHP shell and booting on the
+emulator, BootPlanner dispatches NATIVE_DIRECT with the 10-route manifest,
+the persistent runtime boots (~400ms, Fully drawn, queue worker green), the
+top-bar title + 5-tab bottom-nav from our own blades render interactively
+(tap dispatches server navigation; tree version bumps), but every content
+branch of Today/Tasks (Welcome card, Loading text, NOW/NEXT lists) is absent
+from the posted element tree (nodes=11 = chrome only).
+Expected: design.md §99 first-love loop reads tasks/state on device;
+SRS FR-1/FN-2 device read-path (previously proven in P27-002 spike).
+Repro: install repo-built APK (2026-08-27 18:35 boot), uiautomator dump shows
+only tab bar texts; logcat PostTreeUpdate nodes=11.
+Severity: P1 (device companion content unreadable — not data loss/auth);
+blocks honest completion of P27-002..010 device gates.
+Status: open — root cause suspected in EDGE renderer layout of nested
+native:column content inside scroll-view (upstream NativePHP v4.2 / our
+blade markup); must be reproduced minimally before any fix lands.
+Link: infrastructure/nativephp/linux-build/build-android-apk.sh (repro
+pipeline); TASK.md Phase 27 evidence block 2026-08-27.
+```
+
 ## 7. Anti-pattern scan (design.md §93)
 
 Checklist run on every surface: giant dashboard · cardception · modalception ·

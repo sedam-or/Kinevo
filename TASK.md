@@ -7330,10 +7330,15 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 > `nativephp/mobile:^4.2` dependency (required guzzle ^7.9; repo moved 8.0.2→7.15.5, gates green).
 > All previously-burned gate screens (task execution, Goal, AI breakdown, Review, Notifications,
 > Canvas companion) are BUILT and SERVER-VERIFIED (NativeMobileShellTest registers every native
-> route + locks view mapping; full suite 984 green). Remaining, un-fabricated: re-bundle the repo
-> snapshot into the APK and re-run each new screen on a device (native:run is macOS-only here; the
-> direct-Gradle bundle was built from the PoC), the upstream `text_input` native renderer, a11y
-> body-content surfacing, and the multi-device matrix (1 AVD config).
+> route + locks view mapping; full suite 984 green). Re-bundle from the repo snapshot is DONE
+> on headless Linux (2026-08-27): `infrastructure/nativephp/linux-build/build-android-apk.sh`
+> replaces macOS-only `native:run` (container prep w/ CLI-zip shim + host zip(1) bundle +
+> gradlew assembleDebug). Result: `app-debug.apk` boots on emulator (`Fully drawn`,
+> `BootPlanner: NATIVE_DIRECT (10 native patterns)`), chrome top-bar/bottom-nav render and
+> tabs navigate server-side. Remaining, un-fabricated: screen CONTENT subtrees still not
+> posted by the EDGE renderer (pre-existing PoC-era gap, now recorded as ui-audit UI-021),
+> upstream `text_input` native renderer, a11y body-content surfacing, multi-device matrix
+> (1 AVD config).
 
 > Objective: implement ONLY the high-value mobile workflows. Every task below follows the §12
 > board format; statuses assume the Android environment gate (P26-011) is cleared, otherwise the
@@ -7352,7 +7357,10 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] bottom nav = Today · Tasks · Capture · Workspace · More
 - Verification: Unit(store) / Integration(auth gate) / E2E(shell flow) / Device(screenshot matrix)
 - Evidence: Android 14 (API 34) emulator AVD `kinevo_emu`; APK `com.kinevo.spike` (NativePHP 4.2.0, embedded PHP 8.5.9). Device logcat `BootPlanner: Boot plan for /: NATIVE_DIRECT (5 native patterns)`; native-first dispatch renders all five tabs (`PERF [TodayScreen/TasksScreen/CaptureScreen/WorkspacesScreen/MoreScreen] ~3–143ms publish<8ms`; `MainActivity: First content (native-tree)`; `uiautomator` reads tab labels + titles). Bottom nav = Today · Tasks · Capture · Workspace · More (locked IA). UI restructured to Kinevo brand (design-taste-frontend + ui-ux-pro-max consulted): theme-token parity via `TailwindParser` resolver (`bg/text/border-theme-*` mirror `server/resources/css/app.css`: primary `#DE3005`, bg `#FDFDFC`/`#0a0a0a`, surface `#EDEDEC`/`#131313`, border doctrine + radius), chrome top-bar+nav brand-dark `#0a0a0a`, icons = built-in Material Icons ligature resolver (`today`/`list_alt`/`add`/`folder`/`more_vert`). Build: `./gradlew :app:assembleDebug` → `app-debug.apk`.
-- Known Limitations: interactive chrome (top bar/nav/FAB) verified; body `pressable`/`text` nodes not yet surfaced into the accessibility tree; on-device SQLite offline store empty (sync engine deferred, docs §10 risk #1). Workspace context persisted via server default-workspace flag, not yet a device store.
+  2026-08-27 in-repo re-bundle re-run: repo snapshot rebuilt into `com.developer.lightglowrapid`
+  APK via the Linux pipeline; install+boot green — persistent runtime booted 394ms, Fully drawn
+  +12.4s, PHP queue worker up, route manifest matched, tab taps navigate with tree updates.
+- Known Limitations: interactive chrome (top bar/nav/FAB) verified on BOTH spike and in-repo builds; body `pressable`/`text` nodes still absent from the posted element tree AND the accessibility tree (ui-audit UI-021, open); on-device SQLite offline store empty (sync engine deferred, docs §10 risk #1). Workspace context persisted via server default-workspace flag, not yet a device store.
 
 ### P27-002 — Today
 - Status: DONE (device read-path verified) · Priority: High · Depends On: P27-001
@@ -7389,7 +7397,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Known Limitations: (1) no free-text field — `text_input` element type unregistered on this device image (`render() FAILED … Unknown native element type: text_input`), so capture = semantic quick-actions (device-renderer gap, not app logic); (2) body `pressable` content not surfaced into a11y tree → real tap bounds not machine-discoverable (write path proven via nav/FAB instead). Keep offline queue + idempotency pre-submit for when the free-text renderer lands.
 
 ### P27-004 — Mobile Task Execution
-- Status: PARTIAL (2026-08-27) — execute action built in TasksScreen (POST /tasks/{id}/status mark-done) + native route/view; server-verified by NativeMobileShellTest; device re-run pending re-bundle · Priority: High · Depends On: P27-002
+- Status: PARTIAL (2026-08-27) — execute action built in TasksScreen (POST /tasks/{id}/status mark-done) + native route/view; server-verified by NativeMobileShellTest; APK rebuilt+booted from repo 2026-08-27 (content subtree gated by ui-audit UI-021) · Priority: High · Depends On: P27-002
 - Business Decision: — 
 - SRS: task lifecycle state machine
 - Design: docs/state-machine-ui.md
@@ -7405,7 +7413,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Evidence: — · Known Limitations: server lifecycle contracts exist and are green (status/partial-complete/subtasks). On-device write mechanism proven (P27-003) — execution buttons are NOT device-blocked, simply not yet built (task detail screen + timer wiring required). Timer states follow existing ExecutionTimer contract.
 
 ### P27-005 — Goal View
-- Status: PARTIAL (2026-08-27) — GoalScreen built (GET /goals list + status); server-verified; device re-run pending re-bundle · Priority: High · Depends On: P27-001
+- Status: PARTIAL (2026-08-27) — GoalScreen built (GET /goals list + status); server-verified; APK rebuilt+booted from repo 2026-08-27 (content subtree gated by ui-audit UI-021) · Priority: High · Depends On: P27-001
 - Business Decision: — 
 - SRS: goals/milestones chapters
 - Design: docs/design.md goal surface
@@ -7419,7 +7427,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Evidence: — · Known Limitations: goal read endpoints exist server-side; no mobile Goal screen yet (deferred behind P27-004 UI; `kinevo://goal/{id}` contract documented docs/mobile-architecture.md §8).
 
 ### P27-006 — AI Goal Breakdown
-- Status: PARTIAL (2026-08-27) — proposeBreakdown action built (POST /goals/{id}/breakdown-proposals; surfaces AI_PROVIDER_UNAVAILABLE); server-verified; proposal review stays in the web app; device re-run pending re-bundle · Priority: High · Depends On: P27-005; P23/P25 entitlements
+- Status: PARTIAL (2026-08-27) — proposeBreakdown action built (POST /goals/{id}/breakdown-proposals; surfaces AI_PROVIDER_UNAVAILABLE); server-verified; proposal review stays in the web app; APK rebuilt+booted from repo 2026-08-27 (content subtree gated by ui-audit UI-021) · Priority: High · Depends On: P27-005; P23/P25 entitlements
 - Business Decision: hosted AI consumes Kinevo credits; BYOK uses user credential (no hosted credits);
   ALL credential handling server-side; human approval mandatory (proposal never auto-committed)
 - SRS: AI chapters (FR-60..62)
@@ -7454,7 +7462,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: 
 
 ### P27-008 — Canvas Companion
-- Status: PARTIAL (2026-08-27) — CanvasScreen built (read-only GET /canvases, hand-off to web; never a second editor); server-verified; device re-run pending re-bundle · Priority: Medium · Depends On: P27-001
+- Status: PARTIAL (2026-08-27) — CanvasScreen built (read-only GET /canvases, hand-off to web; never a second editor); server-verified; APK rebuilt+booted from repo 2026-08-27 (content subtree gated by ui-audit UI-021) · Priority: Medium · Depends On: P27-001
 - Business Decision: MVP MUST NOT force full phone canvas authoring
 - SRS: canvas chapter
 - Design: docs/mobile-architecture.md §5 (WebView bridge row)
@@ -7471,7 +7479,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: ownership protected via existing canvas contracts
 
 ### P27-009 — Mobile Review
-- Status: PARTIAL (2026-08-27) — ReviewScreen built (read-only /today capacity + /goals progress); server-verified; device re-run pending re-bundle · Priority: Medium · Depends On: P27-002
+- Status: PARTIAL (2026-08-27) — ReviewScreen built (read-only /today capacity + /goals progress); server-verified; APK rebuilt+booted from repo 2026-08-27 (content subtree gated by ui-audit UI-021) · Priority: Medium · Depends On: P27-002
 - Business Decision: metrics authoritative from backend only — no fabricated calculations
 - SRS: analytics/review chapters
 - Design: docs/design.md review surface
@@ -7488,7 +7496,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: 
 
 ### P27-010 — Notifications
-- Status: PARTIAL (2026-08-27) — NotificationsScreen built (GET /notifications read list + mark-read); server-verified; device re-run pending re-bundle · Priority: Medium · Depends On: P27-001
+- Status: PARTIAL (2026-08-27) — NotificationsScreen built (GET /notifications read list + mark-read); server-verified; APK rebuilt+booted from repo 2026-08-27 (content subtree gated by ui-audit UI-021) · Priority: Medium · Depends On: P27-001
 - Business Decision: privacy-preserving payloads; read state syncs
 - SRS: notifications chapter
 - Design: docs/mobile-architecture.md §5 (push/local rows)
@@ -7571,7 +7579,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: 
 
 ### P27-015 — P27 FINAL GATE
-- Status: PARTIAL (2026-08-27) — read-path MVP + capture write device-proven; NEW: the mobile shell is now ported INTO the repo (routes/native.php, 10 NativeComponents, 10 native views, config/native.php, nativephp/mobile dep) with all gate screens built and server-verified by NativeMobileShellTest (2 tests, 40 assertions). NOT fully done: device re-run of the repo bundle + text_input renderer + a11y body surfacing + multi-device matrix remain. · Priority: High · Depends On: ALL P27 tasks
+- Status: PARTIAL (2026-08-27) — shell ported into repo + ALL gate screens built and server-verified (NativeMobileShellTest); repo snapshot RE-BUNDLED and booted on emulator via the Linux pipeline (`infrastructure/nativephp/linux-build/build-android-apk.sh`). NOT fully done: screen-content subtrees on device (ui-audit UI-021), `text_input` native renderer, a11y body surfacing, multi-device matrix. · Priority: High · Depends On: ALL P27 tasks
 - Business Decision: — 
 - SRS: — · Design: — · Files: TASK.md
 - Acceptance:
@@ -7580,7 +7588,8 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [x] offline/error UX (states) · [ ] entitlement · [x] Android device evidence (1 config)
 - Verification: aggregate of subtasks (Unit/Integration/E2E/Device)
 - Evidence: keystone + shell + native-first EDGE pipeline DEVICE-VERIFIED on Android 14 (API 34) emulator AVD `kinevo_emu`: full Laravel bundle boots on-device (embedded PHP 8.5.9, config/event/view caches, SQLite migrate path), NATIVE_DIRECT dispatch, five-tab shell renders + navigates (IA order Today·Tasks·Capture·Workspace·More confirmed via uiautomator), authenticated reads `/today` `/tasks` `/workspaces` (server access log + Sanctum last_used), capture WRITE round-trips `@tap`→PHP→`POST /quick-capture`→DB rows #205/#206. Shell branded to Kinevo tokens (skill-consulted) with built-in Material icon set.
-- Known Limitations: gate is binary per Rule 0.6 → NOT DONE. Missing: task execution / Goal / AI breakdown / Canvas companion / Review / Notifications screens (not built; write mechanism proven → pending UI), entitlement-limited UI, `text_input` native renderer (capture = semantic quick-actions until upstream), multi-device matrix (1 config), body-content accessibility surfacing. Mobile app code lives in working dev PoC `kinevo-mobile-spike4` (outside this repo); porting into a first-class `mobile/` frontend + remaining screens is the honest remainder of Phase 27.
+  2026-08-27 in-repo re-bundle: `com.developer.lightglowrapid` APK from repo code (NativePHP 4.2.0, embedded PHP 8.4.24 static libs arm64-v8a, bundle_meta.json route manifest ×10). Boot: persistent runtime 394–400ms → `Fully drawn` +12.4s → queue worker; `NATIVE_DIRECT (10 native patterns)`; top-bar/bottom-nav render from repo blades and tab taps dispatch server navigation with tree-version bumps (logcat `PostTreeUpdate nodes=11 ver=2`). Verified clean of fatals end-to-end.
+- Known Limitations: gate is binary per Rule 0.6 → NOT DONE. Remaining gaps: screen-content subtrees absent from the EDGE-rendered element tree on device (chrome interactive only — spike-era gap persists across builds; recorded as ui-audit UI-021 with repro pipeline), upstream `text_input` native renderer (capture = semantic quick-actions until then), entitlement-limited UI, multi-device matrix (1 AVD config), a11y body surfacing (same UI-021 tree gap). All mobile code is now IN-repo; the PoC `kinevo-mobile-spike4` is no longer load-bearing.
 
 ## PHASE 28 — PRODUCT INTELLIGENCE + WRAPPED
 

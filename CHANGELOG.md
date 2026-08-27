@@ -17,7 +17,9 @@ Release governance: see `docs/release-management.md`.
   Review/Notifications/Canvas/Notes/Workspaces/More), all built against the existing OpenAPI —
   including task execution (mark done), AI goal breakdown trigger, review summary, notification
   read app, and a read-only canvas companion that hands off to the web editor. Server-side contract
-  locked by tests; device re-run of the bundled app is the remaining (documented) step.
+  locked by tests. The bundled APK is now reproducibly rebuilt from this repo on headless Linux
+  (`infrastructure/nativephp/linux-build/build-android-apk.sh`) and boots on the emulator; screen
+  content rendering on device is tracked as an open finding (ui-audit UI-021).
 - Analytics "Goal progress" now summarizes (2026-08-25): the chart lists the
   first 8 goals with an explicit "+N more goals" line instead of rendering
   every goal, keeping the surface readable and fast as goal counts grow.
