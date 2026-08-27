@@ -91,7 +91,7 @@ test.describe('P18 AI remote runtime journey', () => {
         await expect(page.getByTestId('proposal-review')).toBeHidden({ timeout: 60_000 });
         // Acceptance lands back on the goals list with a success dialog;
         // open the goal to prove milestones were actually committed.
-        await expect(page.getByText(/Breakdown accepted — milestones were added/i)).toBeVisible({ timeout: 60_000 });
+        await expect(page.getByText(/Breakdown accepted: milestones added/i)).toBeVisible({ timeout: 60_000 });
         await page.getByRole('button', { name: /open goal/i }).click();
         await expect(page.getByTestId('goal-detail')).toBeVisible({ timeout: 30_000 });
         await expect(page.getByTestId('goal-milestones')).toBeVisible();

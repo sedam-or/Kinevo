@@ -346,7 +346,7 @@ async function endBoostTarget(): Promise<void> {
                     <FeatureHelp id="capacity" title="Capacity" body="How full today is compared with the time you actually have. Overload means the plan needs a cut before the day cuts it for you." />
                     <button
                         type="button"
-                        class="flex flex-col items-end gap-1 rounded-sm text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                        class="flex flex-col items-end justify-center gap-1 min-h-[44px] rounded-sm text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                         data-testid="today-capacity"
                         :aria-expanded="today.capacity ? capacityRevealed : undefined"
                         aria-controls="today-capacity-details"
@@ -386,7 +386,7 @@ async function endBoostTarget(): Promise<void> {
             class="rounded-sm border-2 border-border border-l-4 border-l-info bg-surface p-4"
             data-testid="recovery-banner"
         >
-            <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-1">Recovery week</div>
+            <div class="text-sm font-bold tracking-tight mb-1">Recovery week</div>
             <p class="text-sm">
                 This week is tagged as an exceptional recovery period
                 ({{ today.pause.week_start }} to {{ today.pause.week_end }}). Notifications are suppressed and this
@@ -400,7 +400,7 @@ async function endBoostTarget(): Promise<void> {
             class="rounded-sm border-2 border-border border-l-4 border-l-success bg-surface p-4"
             data-testid="break-banner"
         >
-            <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-1">Break Mode</div>
+            <div class="text-sm font-bold tracking-tight mb-1">Break Mode</div>
             <p class="text-sm">
                 You are on break ({{ today.breakPeriod.start_date }} to {{ today.breakPeriod.end_date }}).
                 Notifications are suppressed and the covered weeks are excluded from capacity estimates.
@@ -417,7 +417,7 @@ async function endBoostTarget(): Promise<void> {
                 </KButton>
             </div>
             <div class="mt-3 border-t border-border pt-3">
-                <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-1">Boost Mode (FR-37/FR-38)</div>
+                <div class="text-sm font-bold tracking-tight mb-1">Boost Mode (FR-37/FR-38)</div>
                 <p v-if="boostMessage" class="text-sm" data-testid="boost-message">{{ boostMessage }}</p>
                 <p v-else-if="boostError" class="text-sm text-danger" role="alert" data-testid="boost-error">{{ boostError }}</p>
                 <div class="flex flex-wrap justify-end gap-2 mt-2">
@@ -556,14 +556,14 @@ async function endBoostTarget(): Promise<void> {
             :class="{ 'ring-2': nextEmphasis }"
             data-testid="next-card"
         >
-            <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-0.5">Next</div>
+            <div class="text-sm font-bold tracking-tight mb-0.5">Next</div>
             <div class="font-medium">{{ nextEvent.task?.title ?? 'Untitled' }} at {{ formatTime(nextEvent.assignment.start_at) }}</div>
         </section>
 
         <!-- Timeline -->
         <section class="relative border border-border rounded-sm bg-bg p-4 min-h-32" data-testid="today-timeline">
             <div class="flex items-center gap-2 mb-2">
-                <div class="font-mono text-xs uppercase tracking-widest text-text-muted">Timeline</div>
+                <div class="text-base font-bold tracking-tight">Timeline</div>
                 <FeatureHelp id="hard-landscape" title="Hard Landscape" body="Fixed commitments — appointments, travel, sacred anchors — that block the timeline. Kinevo schedules around them; they never move on their own." />
             </div>
 
@@ -575,7 +575,9 @@ async function endBoostTarget(): Promise<void> {
                 :style="landscapePosition(hl)"
                 :title="hl.title ?? 'Hard landscape'"
                 data-testid="timeline-landscape"
-            ></div>
+            >
+                <span class="sr-only">Hard landscape: {{ hl.title ?? 'fixed commitment' }}</span>
+            </div>
 
             <!-- Empty slots -->
             <div
@@ -585,7 +587,9 @@ async function endBoostTarget(): Promise<void> {
                 :style="slotPosition(slot)"
                 :title="`Empty: ${formatTime(slot.start)}–${formatTime(slot.end)}`"
                 data-testid="timeline-empty"
-            ></div>
+            >
+                <span class="sr-only">Empty slot: {{ formatTime(slot.start) }}–{{ formatTime(slot.end) }}</span>
+            </div>
 
             <!-- Scheduled events -->
             <div
@@ -597,6 +601,7 @@ async function endBoostTarget(): Promise<void> {
                 :title="`${e.task?.title ?? 'Untitled'} ${formatTime(e.assignment.start_at)}–${formatTime(e.assignment.end_at)}`"
                 data-testid="timeline-event"
             >
+                <span class="sr-only">{{ e.task?.title ?? 'Untitled' }} from {{ formatTime(e.assignment.start_at) }} to {{ formatTime(e.assignment.end_at) }}{{ e.locked ? ', locked' : '' }}{{ e.conflict ? ', conflict' : '' }}</span>
                 {{ formatTime(e.assignment.start_at) }} {{ e.task?.title ?? 'Untitled' }}
             </div>
 
@@ -612,7 +617,7 @@ async function endBoostTarget(): Promise<void> {
              Strict hierarchy per design.md §104: NOW → NEXT → Timeline →
              context; nothing above competes with the execution hub. -->
         <section v-if="today.events.length > 0" class="flex items-center gap-3" data-testid="today-progress">
-            <div class="font-mono text-xs uppercase tracking-widest text-text-muted shrink-0">Today's progress</div>
+            <div class="text-sm font-bold tracking-tight shrink-0">Today's progress</div>
             <div class="flex-1 h-2 rounded-sm border border-border/40 bg-surface overflow-hidden" aria-hidden="true">
                 <div class="h-full bg-primary transition-all" :style="{ width: progressPercent + '%' }"></div>
             </div>
@@ -626,7 +631,7 @@ async function endBoostTarget(): Promise<void> {
 
         <!-- Quick Capture: an open L4 supporting group, never a box. -->
         <section class="surface-supporting" data-testid="quick-capture">
-            <h2 class="font-mono text-xs uppercase tracking-widest text-text-muted mb-3">Quick Capture</h2>
+            <h2 class="text-sm font-bold tracking-tight mb-3">Quick Capture</h2>
             <form class="flex flex-col gap-3" @submit.prevent="quickCapture">
                 <div v-if="quickError" class="text-sm text-danger" role="alert">{{ quickError }}</div>
                 <label class="flex flex-col gap-1 text-sm">
@@ -638,7 +643,7 @@ async function endBoostTarget(): Promise<void> {
                         Priority
                         <select
                             v-model.number="quickCaptureForm.priorityTier"
-                            class="rounded-sm border border-border bg-bg px-3 py-2 text-text text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                            class="rounded-sm border border-border bg-bg px-3 py-2 min-h-[44px] text-text text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                             data-testid="qc-priority"
                         >
                             <option :value="1">High</option>
@@ -654,7 +659,7 @@ async function endBoostTarget(): Promise<void> {
                             v-model.number="quickCaptureForm.durationMinutes"
                             type="number"
                             min="1"
-                            class="rounded-sm border border-border bg-bg px-3 py-2 text-text text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                            class="rounded-sm border border-border bg-bg px-3 py-2 min-h-[44px] text-text text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                             data-testid="qc-duration"
                         />
                     </label>

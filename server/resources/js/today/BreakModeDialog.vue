@@ -71,7 +71,7 @@ function cancel(): void {
         <div class="surface-hero w-full max-w-md p-6 sm:p-8">
             <header class="mb-5 flex items-start gap-4 border-b border-border/20 pb-3">
                 <div class="min-w-0">
-                    <div class="font-mono text-[11px] uppercase tracking-widest text-text-muted">Break Mode</div>
+                    <div class="text-xs font-semibold text-text-muted">Break Mode</div>
                     <h2 id="break-mode-title" class="text-lg font-bold">Start a Break</h2>
                 </div>
                 <button

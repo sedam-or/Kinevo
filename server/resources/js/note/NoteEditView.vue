@@ -243,7 +243,7 @@ async function rejectExtraction(): Promise<void> {
         <div v-if="notes.loading" class="text-sm text-text-muted" data-testid="note-detail-loading">Loading…</div>
         <div v-if="notes.error" class="text-sm text-danger" role="alert" data-testid="note-detail-error">
             {{ notes.error.message }}
-            <span v-if="notes.saveState === 'conflict'"> — this note was changed elsewhere; reload to reconcile.</span>
+            <span v-if="notes.saveState === 'conflict'"> This note was changed elsewhere; reload to reconcile.</span>
         </div>
 
         <!-- Unified knowledge desk (design.md §30): desktop shows editor + linked

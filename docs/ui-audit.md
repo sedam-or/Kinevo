@@ -574,7 +574,7 @@ Evidence: vue-tsc clean; vitest 522 passed (74 files); production build green;
 make test 970 passed (PHP untouched). Per-slice suite evidence in task records
 (Today 44, Task 20, Goal 19, knowledge/canvas 95, dialogs/workspace 39,
 analytics/visualstate/ai 61, planner/shared 70).
-Link: this record; docs/design-tokens.md §2.1.
+Link: this record.
 ```
 
 ```text
@@ -604,6 +604,42 @@ by existing prefers-reduced-motion collapse in app.css. Both modes audited:
 outline logo + white type on #DE3005 unchanged in dark.
 Evidence: vue-tsc clean; vitest 522 passed (auth 19); build green; make test
 970 passed; testids/aria contracts untouched.
+Link: this record.
+```
+
+```text
+UI-020 | 2026-08-27 | All non-auth pages (taste/pro-max rule sweep, user-directed) | UX-C4
+Found (mechanical audit against design-taste-frontend + ui-ux-pro-max):
+(1) Eyebrow Restraint violations — the #1 most-tested taste rule — TodayView
+8 / AnalyticsView 12 / AiUsageSummaryCard 7 / AiSettingsView 6 / GoalListView
+5 occurrences vs the max-1-per-3-sections budget; (2) visible em-dashes in
+copy (GoalList statuses/FeatureHelp, CanvasList placeholder/separator,
+NoteEdit conflict message, QuickCapture null options "—") despite the hard
+ban; (3) dead disabled:opacity-50 utility on non-disableable <label> wrappers
+(KrsImport/IcsImport — same class of bug as AttachmentList earlier);
+(4) timeline events/empty slots/hard-landscape carried title-only affordance
+(a11y); (5) scroll containers without keyboard focus (WorkspaceManager modal,
+CommandPalette results; WCAG 2.1.1); (6) AppShell root min-h-screen instead of
+100dvh; (7) FeatureHelp popover arbitrary z-30 vs --z-popover; (8) PlanSettings
+raw row buttons.
+Expected: design-taste-frontend §4.7 eyebrow restraint + §4.9/§9.G copy rules,
+§3.E viewport stability; ui-ux-pro-max forms/a11y High-severity rows.
+Severity: UX-C4 / P2.
+Status: fixed (2026-08-27) — per-page eyebrow budgets enforced and verified by
+grep: TodayView 13→1 (NOW hero only), AnalyticsView 12→2, AiUsageSummaryCard
+7→0 (dl-style stat layout), AiSettingsView 6→1, GoalListView 5→1,
+CanvasList/Notes 1 each, GoalDetail/Boost/Break dialogs demoted to plain
+semibold headings; InterpretationStrip <dt> metadata labels kept as sanctioned
+micro data labels. Em-dashes removed from all user-facing strings (test pins
+updated where they asserted old copy verbatim: ai-remote-journey.spec.ts,
+CanvasListView.test.ts). Dead opacity utilities replaced with condition-bound
+:class on real disabled state. Timeline elements gained sr-only info spans;
+scroll containers tabindex=0 + aria-labels; min-h-[100dvh]; z-popover token;
+PlanSettings buttons → KButton ghost; QuickCapture null options read "None";
+touch targets ≥44px on capacity/capture controls.
+Evidence: vue-tsc clean; vitest 522 passed (74 files); build green; make test
+970 passed; post-sweep grep shows remaining uppercase usages are sanctioned
+nav-group/metadata/chip conventions.
 Link: this record.
 ```
 

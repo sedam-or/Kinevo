@@ -96,7 +96,7 @@ function editingRows(): KrsImportRow[] {
             <p class="text-text-muted mb-2">
                 Upload a KRS PDF to preview its schedule before it is added as Hard Landscape.
             </p>
-            <label class="inline-block border border-dashed border-border/40 hover:border-border rounded-sm px-3 py-1 cursor-pointer text-sm transition-colors disabled:opacity-50" :class="busy ? 'opacity-50' : ''">
+            <label class="inline-block border border-dashed border-border/40 hover:border-border rounded-sm px-3 py-1 cursor-pointer text-sm transition-colors" :class="busy ? 'opacity-50' : ''">
                 {{ busy ? 'Parsing…' : 'Choose PDF' }}
                 <input type="file" accept=".pdf" class="hidden" data-testid="krs-import-file" :disabled="busy" @change="onFileSelected" />
             </label>

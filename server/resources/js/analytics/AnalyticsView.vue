@@ -374,7 +374,7 @@ function run(fn: () => Promise<void>): void {
                 </div>
 
                 <div v-if="analytics.workLifeTrend.length > 0" class="mt-2">
-                    <div class="text-xs uppercase text-text-muted mb-1">Weekly trend</div>
+                    <div class="text-sm font-semibold text-text mb-1">Weekly trend</div>
                     <ul class="space-y-1">
                         <li v-for="week in analytics.workLifeTrend" :key="week.week_start" class="flex items-center justify-between text-xs text-text-muted" data-testid="analytics-worklife-trend">
                             <span>Week of {{ week.week_start }}</span>
@@ -384,7 +384,7 @@ function run(fn: () => Promise<void>): void {
                 </div>
 
                 <div v-if="analytics.workLifeExceptions.length > 0" class="mt-2">
-                    <div class="text-xs uppercase text-text-muted mb-1">Notable days</div>
+                    <div class="text-sm font-semibold text-text mb-1">Notable days</div>
                     <ul class="space-y-1">
                         <li v-for="exception in analytics.workLifeExceptions" :key="exception.date" class="text-xs text-text-muted" data-testid="analytics-worklife-exception">
                             {{ exception.date }} — {{ exception.description }}
@@ -410,7 +410,7 @@ function run(fn: () => Promise<void>): void {
             </div>
 
             <div v-if="analytics.hasGoals" class="surface-primary p-4" data-testid="analytics-goals">
-                <div class="text-xs uppercase font-bold tracking-tight text-text-muted mb-2">Goal progress</div>
+                <div class="text-sm font-semibold text-text mb-2">Goal progress</div>
                 <ChartMeta
                     id="goals"
                     :period="periodLabel"
@@ -452,7 +452,7 @@ function run(fn: () => Promise<void>): void {
                 </div>
 
                 <div v-if="analytics.programs.length > 0" class="mt-4 border-t border-border pt-3">
-                    <div class="text-xs uppercase text-text-muted mb-1">Programs</div>
+                    <div class="text-sm font-semibold text-text mb-1">Programs</div>
                     <ul class="space-y-1">
                         <li v-for="program in analytics.programs" :key="program.id" class="flex items-center justify-between text-sm" data-testid="analytics-program">
                             <span class="truncate text-text">{{ program.name }}</span>
@@ -477,7 +477,7 @@ function run(fn: () => Promise<void>): void {
             </div>
 
             <div v-if="analytics.capacityDays.length > 0" class="surface-primary p-4" data-testid="analytics-capacity">
-                <div class="text-xs uppercase font-bold tracking-tight text-text-muted mb-2">Capacity</div>
+                <div class="text-sm font-semibold text-text mb-2">Capacity</div>
                 <ChartMeta
                     id="capacity"
                     :period="periodLabel"
@@ -516,7 +516,7 @@ function run(fn: () => Promise<void>): void {
                 </ul>
 
                 <div v-if="analytics.capacityWeeks.length > 0" class="mt-4 border-t border-border pt-3">
-                    <div class="text-xs uppercase text-text-muted mb-1">Trend</div>
+                    <div class="text-sm font-semibold text-text mb-1">Trend</div>
                     <ul class="space-y-1">
                         <li v-for="week in analytics.capacityWeeks" :key="week.week_start" class="flex items-center justify-between text-sm" data-testid="analytics-capacity-week">
                             <span class="text-text-muted">Week of {{ week.week_start }}</span>
@@ -544,7 +544,7 @@ function run(fn: () => Promise<void>): void {
             </div>
 
             <div v-if="analytics.taskTotal > 0" class="surface-primary p-4" data-testid="analytics-execution">
-                <div class="text-xs uppercase font-bold tracking-tight text-text-muted mb-2">Execution</div>
+                <div class="text-sm font-semibold text-text mb-2">Execution</div>
                 <ChartMeta
                     id="execution"
                     :period="periodLabel"
@@ -587,7 +587,7 @@ function run(fn: () => Promise<void>): void {
             </div>
 
             <div v-if="analytics.pillars.length > 0" class="surface-supporting" data-testid="analytics-pillars">
-                <div class="text-xs uppercase font-bold tracking-tight text-text-muted mb-2">Life pillars</div>
+                <div class="text-sm font-semibold text-text mb-2">Life pillars</div>
                 <ChartMeta
                     id="pillars"
                     :period="periodLabel"
@@ -623,7 +623,7 @@ function run(fn: () => Promise<void>): void {
             <div class="surface-supporting" data-testid="analytics-heatmap">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <div class="flex items-center gap-2">
-                        <div class="text-xs uppercase font-bold tracking-tight text-text-muted">Activity heatmap</div>
+                        <div class="text-sm font-semibold text-text">Activity heatmap</div>
                         <FeatureHelp id="progress-events" title="Progress Events" body="Completions and focus sessions feed this view. Progress events show movement toward your goals — not just raw hours spent." />
                     </div>
                     <div class="flex flex-wrap items-center gap-2 text-sm">
@@ -705,7 +705,7 @@ function run(fn: () => Promise<void>): void {
             </div>
 
             <div v-if="analytics.days.length > 0" class="surface-supporting" data-testid="analytics-days">
-                <div class="text-xs uppercase font-bold tracking-tight text-text-muted mb-2">Per day</div>
+                <div class="text-sm font-semibold text-text mb-2">Per day</div>
                 <ChartMeta
                     id="days"
                     :period="periodLabel"

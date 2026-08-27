@@ -84,7 +84,7 @@ function conflictLabel(row: IcsImportRow): string {
             <p class="text-text-muted mb-2">
                 Upload an .ics calendar (e.g. public holiday calendar) to preview its events before they are added as Hard Landscape.
             </p>
-            <label class="inline-block border border-dashed border-border/40 hover:border-border rounded-sm px-3 py-1 cursor-pointer text-sm transition-colors disabled:opacity-50" :class="busy ? 'opacity-50' : ''">
+            <label class="inline-block border border-dashed border-border/40 hover:border-border rounded-sm px-3 py-1 cursor-pointer text-sm transition-colors" :class="busy ? 'opacity-50' : ''">
                 {{ busy ? 'Parsing…' : 'Choose .ics' }}
                 <input type="file" accept=".ics,.ical" class="hidden" data-testid="ics-import-file" :disabled="busy" @change="onFileSelected" />
             </label>

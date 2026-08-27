@@ -212,9 +212,9 @@ async function removeKey(): Promise<void> {
 
             <!-- Section 1 · Runtime Status -->
             <section class="surface-secondary p-4 flex flex-col gap-2" data-testid="ai-section-status">
-                <h2 class="text-sm font-semibold uppercase tracking-wide">Runtime status</h2>
+                <h2 class="text-sm font-semibold text-text">Runtime status</h2>
                 <p class="text-sm flex items-baseline gap-2" :class="statusView.tone" data-testid="ai-status-banner">
-                    <span class="font-medium uppercase tracking-wide text-xs" data-testid="ai-status-state">{{ statusState.replaceAll('_', ' ') }}</span>
+                    <span class="font-medium text-xs" data-testid="ai-status-state">{{ statusState.replaceAll('_', ' ') }}</span>
                     <span>{{ statusView.label }}</span>
                     <span v-if="statusDetail" class="text-xs opacity-80">{{ statusDetail }}</span>
                 </p>
@@ -253,7 +253,7 @@ async function removeKey(): Promise<void> {
 
             <!-- Section 3 · Credential -->
             <section v-if="form.provider !== 'disabled'" class="surface-secondary p-4 flex flex-col gap-3" data-testid="ai-section-credential">
-                <h2 class="text-sm font-semibold uppercase tracking-wide">API key</h2>
+                <h2 class="text-sm font-semibold text-text">API key</h2>
                 <template v-if="needsKey">
                     <SecretField
                         v-model="apiKeyInput"
@@ -275,7 +275,7 @@ async function removeKey(): Promise<void> {
 
             <!-- Section 4 · Connection -->
             <section class="surface-secondary p-4 flex flex-col gap-2" data-testid="ai-section-test">
-                <h2 class="text-sm font-semibold uppercase tracking-wide">Connection</h2>
+                <h2 class="text-sm font-semibold text-text">Connection</h2>
                 <KButton type="button" variant="ghost" :disabled="testing" data-testid="ai-test-button" @click.prevent="runTest">
                     {{ testing ? 'Testing…' : 'Test connection' }}
                 </KButton>
@@ -286,7 +286,7 @@ async function removeKey(): Promise<void> {
 
             <!-- Section 5 · Privacy -->
             <section class="surface-secondary p-4 flex flex-col gap-1 text-xs text-text-muted" data-testid="ai-section-privacy">
-                <h2 class="text-sm font-semibold uppercase tracking-wide">Privacy</h2>
+                <h2 class="text-sm font-semibold text-text">Privacy</h2>
                 <p data-testid="ai-privacy-copy">
                     Your API key is encrypted on the Kinevo server and is never sent back to your browser after saving — only a masked hint is shown.
                     Note and task content leaves your machine only when you explicitly run an AI action, and only the minimal context needed for that action.

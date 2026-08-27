@@ -76,7 +76,7 @@ async function saveEdit(): Promise<void> {
 
 <template>
     <div ref="root" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="ws-title" data-testid="workspace-manager" @click.self="emit('close')">
-        <div class="surface-hero w-full max-w-md p-6 sm:p-8 flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
+        <div tabindex="0" aria-label="Workspace list and forms" class="surface-hero w-full max-w-md p-6 sm:p-8 flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b border-border/20 pb-3">
                 <h2 id="ws-title" class="text-lg font-bold">Workspaces</h2>
                 <button type="button" class="ml-auto rounded-sm p-1 transition-colors hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="workspace-manager-close" aria-label="Close" @click="emit('close')"><KIcon name="x-mark" :size="18" /></button>

@@ -158,14 +158,14 @@ useFocusTrap(root, close);
                     <label class="flex flex-col gap-1 text-sm font-semibold">
                         Program
                         <select v-model="form.programId" :class="fieldClass" data-testid="qc-program">
-                            <option :value="null">—</option>
+                            <option :value="null">None</option>
                             <option v-for="p in qc.programs" :key="p.id" :value="p.id">{{ p.name }}</option>
                         </select>
                     </label>
                     <label class="flex flex-col gap-1 text-sm font-semibold">
                         Goal
                         <select v-model="form.goalId" :class="fieldClass" data-testid="qc-goal">
-                            <option :value="null">—</option>
+                            <option :value="null">None</option>
                             <option v-for="g in qc.goals" :key="g.id" :value="g.id">{{ g.title }}</option>
                         </select>
                     </label>
@@ -173,7 +173,7 @@ useFocusTrap(root, close);
                 <label v-if="form.goalId !== null" class="flex flex-col gap-1 text-sm font-semibold">
                     Milestone
                     <select v-model="form.milestoneId" :class="fieldClass" data-testid="qc-milestone">
-                        <option :value="null">—</option>
+                        <option :value="null">None</option>
                         <option v-for="m in qc.milestones" :key="m.id" :value="m.id">{{ m.title }}</option>
                     </select>
                 </label>

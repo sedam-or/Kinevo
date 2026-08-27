@@ -203,13 +203,13 @@ function workloadLabel(w: string): string {
             class="surface-hero p-5"
             data-testid="goal-breakdown-suggestion"
         >
-            <div class="text-xs uppercase tracking-wide text-text-muted mb-1">Goal created</div>
+            <h2 class="text-sm font-semibold mb-1">Goal created</h2>
             <p class="text-sm text-text-muted mb-3 max-w-prose">
                 “{{ suggestionGoal.title }}” is saved. Would you like Kinevo to break it down
                 into actionable milestones?
             </p>
             <div v-if="proposalReady && !breakdownAccepted && hasPendingProposal" class="text-sm text-primary mb-3" data-testid="goal-proposal-ready" role="status">
-                AI proposal generated — review it right here.
+                AI proposal generated. Review it right here.
             </div>
             <div v-if="suggestionError" class="text-sm text-danger mb-3" role="alert" data-testid="goal-proposal-error">
                 {{ suggestionError }}
@@ -217,7 +217,7 @@ function workloadLabel(w: string): string {
             <!-- TASK-P17-028: unconfigured AI routes to Settings, not an error. -->
             <AiNotConfiguredNotice v-if="aiGateShown && !hasPendingProposal" class="mb-3" />
             <div v-if="breakdownAccepted" class="text-sm text-text-muted mb-3" data-testid="goal-proposal-accepted" role="status">
-                Breakdown accepted — milestones were added to “{{ suggestionGoal.title }}”.
+                Breakdown accepted: milestones added to “{{ suggestionGoal.title }}”.
             </div>
             <!-- Inline review (TASK-P17-026): nothing is accepted without review,
                  and reviewing does not leave the page. -->
@@ -243,7 +243,7 @@ function workloadLabel(w: string): string {
 
         <!-- Goal list -->
         <section data-testid="goal-list">
-            <div class="text-xs uppercase tracking-wide text-text-muted mb-2">Goals</div>
+            <h2 class="text-sm font-semibold mb-2">Goals</h2>
             <div
                 v-if="goals.goals.length === 0 && !goals.loading"
                 class="border-2 border-dashed border-border/40 rounded-sm p-6 flex flex-col items-center gap-2 text-center text-sm text-text-muted"
@@ -254,7 +254,7 @@ function workloadLabel(w: string): string {
                     id="goal-roadmap"
                     variant="block"
                     title="Goals are the start of the roadmap"
-                    body="A goal captures where you're heading. Kinevo can break it into milestones, programs, and tasks — you approve every step before anything is scheduled."
+                    body="A goal captures where you're heading. Kinevo can break it into milestones, programs, and tasks: you approve every step before anything is scheduled."
                 />
             </div>
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -301,7 +301,7 @@ function workloadLabel(w: string): string {
 
         <!-- Create program -->
         <section class="surface-secondary p-5" data-testid="program-create">
-            <div class="text-xs uppercase tracking-wide text-text-muted mb-3">New program</div>
+            <h2 class="text-sm font-semibold mb-3">New program</h2>
             <form class="flex flex-wrap gap-3 items-end" @submit.prevent="createProgram">
                 <label class="flex flex-col gap-1 text-sm flex-1 min-w-40">
                     Name
@@ -319,7 +319,7 @@ function workloadLabel(w: string): string {
 
         <!-- Program list -->
         <section data-testid="program-list">
-            <div class="text-xs uppercase tracking-wide text-text-muted mb-2">Programs</div>
+            <h2 class="text-sm font-semibold mb-2">Programs</h2>
             <div v-if="goals.programs.length === 0 && !goals.loading" class="border-2 border-dashed border-border/40 rounded-sm p-6 text-center text-sm text-text-muted">No programs yet.</div>
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                 <article v-for="program in goals.programs" :key="program.id" class="surface-secondary p-4 flex flex-col gap-2" data-testid="program-item">

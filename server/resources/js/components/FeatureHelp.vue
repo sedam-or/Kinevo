@@ -108,7 +108,7 @@ function dismiss(): void {
             v-if="open"
             :id="`feature-help-${id}-panel`"
             role="note"
-            class="absolute z-30 right-0 top-7 w-72 border border-border bg-bg rounded-sm shadow-rest p-3 flex flex-col gap-2 text-left"
+            class="absolute z-[var(--z-popover)] right-0 top-7 w-72 border border-border bg-bg rounded-sm shadow-rest p-3 flex flex-col gap-2 text-left"
             :data-testid="`feature-help-${id}-panel`"
         >
             <span class="text-sm font-medium">{{ title }}</span>

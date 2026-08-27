@@ -231,7 +231,7 @@ function milestoneNodeClass(status: string): string {
         <template v-if="goals.currentGoal">
             <!-- Outcome -->
             <section class="surface-supporting" data-testid="goal-outcome">
-                <div class="text-xs uppercase tracking-wide text-text-muted mb-1">Outcome</div>
+                <h2 class="text-sm font-semibold text-text mb-1">Outcome</h2>
                 <p class="text-sm max-w-prose">{{ goals.currentGoal.description || 'No description.' }}</p>
             </section>
 
@@ -274,7 +274,7 @@ function milestoneNodeClass(status: string): string {
 
             <!-- Milestones timeline -->
             <section class="surface-primary p-5" data-testid="goal-milestones">
-                <div class="text-xs uppercase tracking-wide text-text-muted mb-3">Milestones</div>
+                <h2 class="text-sm font-semibold text-text mb-3">Milestones</h2>
                 <!-- Empty-milestone state: explicit AI entry point (TASK-P17-005). -->
                 <div
                     v-if="milestoneCount === 0 && !hasPendingProposal"

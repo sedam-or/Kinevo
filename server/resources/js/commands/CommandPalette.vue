@@ -129,7 +129,7 @@ onBeforeUnmount(() => {
                 @input="onInput"
             />
 
-            <ul class="flex flex-col gap-1 max-h-72 overflow-y-auto">
+            <ul tabindex="0" aria-label="Command results" class="flex flex-col gap-1 max-h-72 overflow-y-auto">
                 <li v-for="command in filteredCommands" :key="command.id">
                     <button
                         type="button"

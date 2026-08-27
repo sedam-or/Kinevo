@@ -71,7 +71,7 @@ function selectView(view: ShellView): void {
 </script>
 
 <template>
-    <div class="kinevo-app-shell min-h-screen bg-bg text-text">
+    <div class="kinevo-app-shell min-h-[100dvh] bg-bg text-text">
         <!-- Skip link (WCAG 2.2 2.4.1 Bypass Blocks): first focusable element. -->
         <a
             href="#main-content"

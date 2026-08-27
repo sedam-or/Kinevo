@@ -112,7 +112,7 @@ async function complete(): Promise<void> {
     >
         <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
             <div class="min-w-0">
-                <div class="font-mono text-xs uppercase tracking-widest text-text-muted">Recharge</div>
+                <div class="text-xs font-semibold text-text-muted">Recharge</div>
                 <div class="mt-0.5 truncate text-sm text-text-muted">Recovery · 15 min recommended</div>
                 <div v-if="ratioLabel" class="text-xs text-text-muted tabular-nums" data-testid="recharge-ratio">{{ ratioLabel }}</div>
             </div>
@@ -121,7 +121,7 @@ async function complete(): Promise<void> {
                     <div class="font-mono text-xl leading-none tabular-nums" data-testid="recharge-elapsed">
                         {{ formatSeconds(recharge.elapsedSeconds) }}
                     </div>
-                    <div class="mt-1 text-xs uppercase tracking-wide text-text-muted" data-testid="recharge-status">{{ statusLabel }}</div>
+                    <div class="mt-1 text-xs font-semibold text-text-muted" data-testid="recharge-status">{{ statusLabel }}</div>
                 </template>
                 <div v-else-if="recharge.cueAvailable" class="text-sm font-medium text-success" data-testid="recharge-cue">Time to recharge</div>
             </div>

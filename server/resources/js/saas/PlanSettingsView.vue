@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { apiClient } from '../api/client';
+import KButton from '../components/KButton.vue';
 
 /**
  * TASK-P23-008 — Settings → Plan: current plan, entitlements, metered usage,
@@ -132,17 +133,17 @@ onMounted(load);
                         <li>{{ p.code === overview.plan.code ? currentEntitlements() : summaryFor(p.code) }}</li>
                     </ul>
                     <div class="flex flex-col gap-1">
-                        <button type="button" class="underline self-start min-h-[44px] disabled:opacity-50"
+                        <KButton variant="ghost" class="self-start underline"
                             :disabled="p.code === overview.plan.code || switching !== null"
                             :data-testid="`plan-switch-${p.code}`" @click="switchTo(p.code)">
                             {{ switching === p.code ? 'Switching…' : 'Switch to this plan' }}
-                        </button>
+                        </KButton>
                         <!-- TASK-P24-027 — paid plans go through Midtrans checkout. -->
-                        <button v-if="p.code !== overview.plan.code && p.code !== 'free'" type="button"
-                            class="underline self-start min-h-[44px] text-primary disabled:opacity-50"
+                        <KButton v-if="p.code !== overview.plan.code && p.code !== 'free'" variant="ghost"
+                            class="self-start underline text-primary"
                             :disabled="switching !== null" :data-testid="`plan-subscribe-${p.code}`" @click="subscribe(p.code)">
                             {{ switching === p.code ? 'Preparing…' : 'Subscribe (Midtrans)' }}
-                        </button>
+                        </KButton>
                         <a v-if="checkoutUrl && lastPlan === p.code" :href="checkoutUrl" target="_blank" rel="noopener"
                             class="underline self-start min-h-[44px]" data-testid="plan-checkout-link">
                             Complete payment →

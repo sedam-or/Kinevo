@@ -102,12 +102,12 @@ async function complete(): Promise<void> {
     <div class="surface-metadata border-t border-border pt-3" data-testid="execution-timer">
         <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
             <div class="min-w-0">
-                <div class="font-mono text-xs uppercase tracking-widest text-text-muted">Execution</div>
+                <div class="text-xs font-semibold text-text-muted">Execution</div>
                 <div class="mt-0.5 truncate text-sm text-text-muted">{{ taskTitle ?? 'Timer' }}</div>
             </div>
             <div class="text-right">
                 <div class="font-mono text-xl leading-none tabular-nums" data-testid="execution-elapsed">{{ formatSeconds(execution.elapsedSeconds) }}</div>
-                <div class="mt-1 text-xs uppercase tracking-wide text-text-muted" data-testid="execution-status">{{ statusLabel }}</div>
+                <div class="mt-1 text-xs font-semibold text-text-muted" data-testid="execution-status">{{ statusLabel }}</div>
             </div>
         </div>
 

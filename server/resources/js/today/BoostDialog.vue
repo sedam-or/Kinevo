@@ -102,7 +102,7 @@ function cancel(): void {
         <div class="surface-hero w-full max-w-md p-6 sm:p-8">
             <header class="mb-5 flex items-start gap-4 border-b border-border/20 pb-3">
                 <div class="min-w-0">
-                    <div class="font-mono text-[11px] uppercase tracking-widest text-text-muted">Boost Mode</div>
+                    <div class="text-xs font-semibold text-text-muted">Boost Mode</div>
                     <h2 id="boost-title" class="text-lg font-bold">Holiday Boost Target</h2>
                 </div>
                 <button

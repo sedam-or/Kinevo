@@ -165,7 +165,7 @@ describe('CanvasListView suggest structure (TASK-P17-029)', () => {
         expect(wrapper.emitted('select')).toBeUndefined();
         const proposal = wrapper.find('[data-testid="canvas-suggest-proposal"]');
         expect(proposal.text()).toContain('Conference planning');
-        expect(proposal.text()).toContain('Sponsors — Outreach and contracts');
+        expect(proposal.text()).toContain('Sponsors · Outreach and contracts');
 
         await wrapper.find('[data-testid="canvas-suggest-accept"]').trigger('click');
         await flushPromises();

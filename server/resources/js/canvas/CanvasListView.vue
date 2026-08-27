@@ -127,14 +127,14 @@ async function rejectSuggestion(): Promise<void> {
         </section>
 
         <section class="surface-secondary p-5" data-testid="canvas-suggest">
-            <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-3">Suggest structure with AI</div>
+            <h2 class="text-sm font-semibold mb-3">Suggest structure with AI</h2>
             <AiNotConfiguredNotice v-if="suggestGateShown" class="mb-3" />
             <div v-if="suggestError" class="text-sm text-danger mb-3" role="alert" data-testid="canvas-suggest-error">{{ suggestError }}</div>
             <form class="flex flex-col gap-2" @submit.prevent="suggestStructure">
                 <textarea
                     v-model="suggestForm.prompt"
                     rows="2"
-                    placeholder="Describe what this board is for — e.g. 'Plan a 3-day conference: talks, sponsors, logistics'"
+                    placeholder="Describe what this board is for, e.g. 'Plan a 3-day conference: talks, sponsors, logistics'"
                     class="border border-border rounded-sm px-3 py-2 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                     data-testid="canvas-suggest-prompt"
                 ></textarea>
@@ -151,7 +151,7 @@ async function rejectSuggestion(): Promise<void> {
                 <div class="text-sm font-medium">{{ suggestionView.title }}</div>
                 <ul class="list-disc list-inside text-sm mt-1" data-testid="canvas-suggest-sections">
                     <li v-for="(section, i) in suggestionView.sections" :key="i">
-                        {{ section.name }}<template v-if="section.description"> — {{ section.description }}</template>
+                        {{ section.name }}<template v-if="section.description"> · {{ section.description }}</template>
                     </li>
                 </ul>
                 <div class="flex gap-2 mt-3">

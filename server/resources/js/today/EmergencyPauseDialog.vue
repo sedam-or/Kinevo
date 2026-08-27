@@ -141,7 +141,7 @@ function cancel(): void {
         <div class="surface-hero w-full max-w-lg p-6 sm:p-8">
             <header class="mb-5 flex items-start gap-4 border-b border-border/20 pb-3">
                 <div class="min-w-0">
-                    <div class="font-mono text-[11px] uppercase tracking-widest text-text-muted">Recovery week</div>
+                    <div class="text-[11px] font-semibold text-text-muted">Recovery week</div>
                     <h2 id="ep-title" class="text-lg font-bold" data-testid="ep-title">Emergency Pause</h2>
                 </div>
                 <button
