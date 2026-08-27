@@ -58,7 +58,7 @@ onBeforeUnmount(() => {
     <div ref="root" class="relative" data-testid="workspace-switcher">
         <button
             type="button"
-            class="flex items-center gap-2 rounded-sm border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm min-h-[44px]"
+            class="flex items-center gap-2 rounded-sm border border-border px-3 py-1.5 text-sm min-h-[44px] transition-colors hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             :aria-expanded="open"
             aria-haspopup="listbox"
             data-testid="workspace-switcher-trigger"
@@ -71,13 +71,13 @@ onBeforeUnmount(() => {
                 aria-hidden="true"
             />
             <span class="font-medium" data-testid="workspace-current-name">{{ current?.name ?? 'Workspace' }}</span>
-            <span v-if="current?.is_default" class="text-xs text-gray-500 dark:text-gray-400" data-testid="workspace-default-badge">default</span>
+            <span v-if="current?.is_default" class="text-xs text-text-muted" data-testid="workspace-default-badge">default</span>
             <span aria-hidden="true" class="text-xs">▾</span>
         </button>
 
         <div
             v-if="open"
-            class="absolute right-0 z-[var(--z-dropdown)] mt-1 w-64 rounded-sm border border-gray-200 dark:border-gray-700 bg-surface shadow-rest p-2 flex flex-col gap-1"
+            class="absolute right-0 z-[var(--z-dropdown)] mt-1 w-64 rounded-sm border border-border bg-surface shadow-rest p-2 flex flex-col gap-1"
             role="listbox"
             aria-label="Workspaces"
             data-testid="workspace-switcher-menu"
@@ -87,7 +87,7 @@ onBeforeUnmount(() => {
                 type="button"
                 role="option"
                 :aria-selected="store.activeWorkspaceId === null"
-                class="flex items-center justify-between gap-2 rounded-sm px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px] border-b border-gray-200 dark:border-gray-700 mb-1"
+                class="flex items-center justify-between gap-2 rounded-sm px-3 py-2 text-left text-sm hover:bg-surface dark:hover:bg-surface-raised min-h-[44px] border-b border-border/20 mb-1"
                 data-testid="workspace-option-all"
                 @click="store.switchToGlobal(); open = false; reloadIntoContext()"
             >
@@ -101,7 +101,7 @@ onBeforeUnmount(() => {
                 type="button"
                 role="option"
                 :aria-selected="w.id === current?.id"
-                class="flex items-center justify-between gap-2 rounded-sm px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px]"
+                class="flex items-center justify-between gap-2 rounded-sm px-3 py-2 text-left text-sm hover:bg-surface dark:hover:bg-surface-raised min-h-[44px]"
                 :data-testid="`workspace-option-${w.slug}`"
                 @click="choose(w.id)"
             >
@@ -113,7 +113,7 @@ onBeforeUnmount(() => {
                         aria-hidden="true"
                     />
                     <span>{{ w.name }}</span>
-                    <span v-if="w.is_default" class="text-xs text-gray-500 dark:text-gray-400">(default)</span>
+                    <span v-if="w.is_default" class="text-xs text-text-muted">(default)</span>
                 </span>
                 <span v-if="w.id === current?.id" aria-hidden="true" data-testid="workspace-active-check">✓</span>
             </button>

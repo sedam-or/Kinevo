@@ -10,11 +10,11 @@ const props = defineProps<{
 const def = computed<VisualStateDefinition>(() => visualState(props.state));
 
 const toneClasses: Record<VisualStateDefinition['tone'], string> = {
-    neutral: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+    neutral: 'bg-surface text-text-muted',
     danger: 'bg-danger-tint text-danger',
-    warning: 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300',
-    info: 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300',
-    success: 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300',
+    warning: 'bg-warning-tint text-warning',
+    info: 'bg-info-tint text-info',
+    success: 'bg-success-tint text-success',
 };
 </script>
 

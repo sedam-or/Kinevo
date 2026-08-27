@@ -6,6 +6,8 @@ import { TASK_TRANSITIONS, type Task, type TaskStatusValue } from './types';
 import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
 import { taskStates } from '../visualstate/derive';
 import KButton from '../components/KButton.vue';
+import KInput from '../components/KInput.vue';
+import KIcon from '../components/KIcon.vue';
 import type { VisualStateValue } from '../visualstate/types';
 
 const emit = defineEmits<{
@@ -71,20 +73,23 @@ async function applyStatus(task: Task, status: TaskStatusValue): Promise<void> {
 
 <template>
     <div class="flex flex-col gap-4" data-testid="task-view">
-        <h1 class="text-xl font-semibold">Tasks</h1>
+        <header class="flex flex-col gap-1">
+            <div class="font-mono text-xs uppercase tracking-widest text-text-muted">Tasks</div>
+            <h1 class="text-xl font-semibold">Tasks</h1>
+        </header>
 
-        <!-- Create -->
-        <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="task-create">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">New task</div>
+        <!-- Create (§P17-010: the page's ONE primary action) -->
+        <section class="surface-secondary p-4" data-testid="task-create">
+            <div class="text-xs uppercase text-text-muted mb-2">New task</div>
             <form class="flex flex-wrap gap-3 items-end" @submit.prevent="createTask">
                 <div v-if="createError" class="w-full text-sm text-danger" role="alert">{{ createError }}</div>
                 <label class="flex flex-col gap-1 text-sm flex-1 min-w-40">
                     Title
-                    <input v-model="createForm.title" type="text" required class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-create-title" />
+                    <KInput v-model="createForm.title" required class="flex-1 min-w-40" data-testid="task-create-title" />
                 </label>
                 <label class="flex flex-col gap-1 text-sm">
                     Priority
-                    <select v-model.number="createForm.priorityTier" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-create-priority">
+                    <select v-model.number="createForm.priorityTier" class="border border-border rounded-sm px-3 py-2 bg-bg text-text" data-testid="task-create-priority">
                         <option :value="1">High</option>
                         <option :value="2">Medium</option>
                         <option :value="3">Low</option>
@@ -92,20 +97,21 @@ async function applyStatus(task: Task, status: TaskStatusValue): Promise<void> {
                 </label>
                 <label class="flex flex-col gap-1 text-sm">
                     Due
-                    <input v-model="createForm.dueAt" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-create-due" />
+                    <KInput v-model="createForm.dueAt" type="date" data-testid="task-create-due" />
                 </label>
                 <KButton type="submit" variant="primary" data-testid="task-create-submit">
+                    <KIcon name="plus" :size="16" />
                     Add
                 </KButton>
             </form>
         </section>
 
-        <div v-if="tasks.loading" class="text-sm text-gray-500" data-testid="task-loading">Loading tasks…</div>
+        <div v-if="tasks.loading" class="text-sm text-text-muted" data-testid="task-loading">Loading tasks…</div>
         <div v-if="tasks.error" class="text-sm text-danger" role="alert" data-testid="task-error">{{ tasks.error.message }}</div>
 
         <!-- List -->
         <section data-testid="task-list">
-            <div v-if="tasks.tasks.length === 0 && !tasks.loading" class="text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4 flex flex-col gap-2" data-testid="task-empty">
+            <div v-if="tasks.tasks.length === 0 && !tasks.loading" class="text-sm text-text-muted border border-dashed border-border/30 rounded-sm p-4 flex flex-col gap-2" data-testid="task-empty">
                 <span>No tasks yet.</span>
                 <FeatureHelp
                     id="tasks-feed-schedule"
@@ -117,26 +123,26 @@ async function applyStatus(task: Task, status: TaskStatusValue): Promise<void> {
             <article
                 v-for="task in tasks.tasks"
                 :key="task.id"
-                class="border border-gray-300 dark:border-gray-600 rounded-sm p-3 mb-2"
+                class="surface-metadata border-b border-border/20 py-4 last:border-b-0"
                 data-testid="task-item"
             >
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between gap-2">
                     <button
                         type="button"
-                        class="font-medium text-left"
+                        class="font-semibold text-left hover:underline underline-offset-2 rounded-sm"
                         data-testid="task-open"
                         @click="emit('select', task.id)"
                     >
                         {{ task.title }}
                     </button>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 shrink-0">
                         <VisualStateBadge v-for="s in taskBadges(task)" :key="s" :state="s" />
-                        <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5" data-testid="task-status">
+                        <span class="text-xs rounded-sm bg-surface border border-border text-text px-2 py-0.5" data-testid="task-status">
                             {{ statusLabel(task.status) }}
                         </span>
                     </div>
                 </div>
-                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                <div class="text-xs text-text-muted mt-1">
                     {{ task.priority_tier === 1 ? 'High' : task.priority_tier === 2 ? 'Medium' : 'Low' }}
                     <span v-if="task.estimated_minutes"> · {{ task.estimated_minutes }}m</span>
                     <span v-if="task.due_at"> · due {{ task.due_at.slice(0, 10) }}</span>
@@ -144,17 +150,16 @@ async function applyStatus(task: Task, status: TaskStatusValue): Promise<void> {
                 </div>
 
                 <!-- Status transitions (present valid actions only; backend is authority) -->
-                <div v-if="transitionsFor(task).length > 0" class="flex gap-2 mt-2">
-                    <button
+                <div v-if="transitionsFor(task).length > 0" class="flex flex-wrap gap-2 mt-3">
+                    <KButton
                         v-for="next in transitionsFor(task)"
                         :key="next"
-                        type="button"
-                        class="text-xs border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-0.5"
+                        variant="ghost"
                         :data-testid="`task-to-${next}`"
                         @click="applyStatus(task, next)"
                     >
                         {{ statusLabel(next) }}
-                    </button>
+                    </KButton>
                 </div>
             </article>
         </section>

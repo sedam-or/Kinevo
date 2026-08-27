@@ -19,11 +19,11 @@ defineProps<{
 
 <template>
     <div
-        class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400"
+        class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted"
         :data-testid="`chart-meta-${id}`"
     >
-        <span :data-testid="`chart-period-${id}`">
-            Period <span class="text-gray-600 dark:text-gray-300">{{ period }}</span>
+        <span :data-testid="`chart-period-${id}`" class="font-mono">
+            Period <span class="text-text">{{ period }}</span>
         </span>
         <span aria-hidden="true">·</span>
         <span :data-testid="`chart-unit-${id}`">{{ unit }}</span>

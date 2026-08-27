@@ -17,14 +17,14 @@ defineEmits<{
 
 <template>
     <div
-        class="flex items-center justify-between gap-3 rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 px-3 py-2 text-sm"
+        class="flex items-center justify-between gap-3 border-l-4 border-primary bg-bg px-4 py-3"
         data-testid="next-action"
         :data-action="action.id"
     >
-        <span class="text-gray-700 dark:text-gray-300">{{ action.label }}</span>
+        <span class="font-semibold">{{ action.label }}</span>
         <button
             type="button"
-            class="shrink-0 underline underline-offset-2 text-[var(--color-primary)] hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-sm"
+            class="shrink-0 font-semibold underline underline-offset-2 text-[var(--color-primary)] hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-sm"
             data-testid="next-action-button"
             @click="$emit('act', action.id)"
         >

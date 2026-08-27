@@ -68,15 +68,15 @@ function cancel(): void {
             <FeatureHelp id="dynamic-rescheduler" title="Dynamic Rescheduler" body="Re-fits unfinished tasks into the rest of your week based on priorities and real capacity. Nothing changes until you review and accept the proposal." />
         </header>
 
-        <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="reschedule-controls">
+        <section class="surface-secondary p-4" data-testid="reschedule-controls">
             <div class="flex flex-wrap gap-3 items-end">
                 <label class="flex flex-col gap-1 text-sm">
                     From
-                    <input v-model="range.from" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="reschedule-from" />
+                    <input v-model="range.from" type="date" class="border border-border bg-bg text-text rounded-sm px-3 py-2 text-sm" data-testid="reschedule-from" />
                 </label>
                 <label class="flex flex-col gap-1 text-sm">
                     To
-                    <input v-model="range.to" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="reschedule-to" />
+                    <input v-model="range.to" type="date" class="border border-border bg-bg text-text rounded-sm px-3 py-2 text-sm" data-testid="reschedule-to" />
                 </label>
                 <KButton variant="primary" type="button" :disabled="sd.busy" data-testid="reschedule-propose" @click="propose">
                     {{ sd.busy ? 'Proposing…' : 'Propose Reschedule' }}
@@ -88,31 +88,31 @@ function cancel(): void {
         <template v-if="proposed && sd.proposal">
             <div v-if="appliedMessage" class="text-sm text-success" data-testid="reschedule-applied">{{ appliedMessage }}</div>
 
-            <div v-if="!sd.proposalHasChanges" class="text-sm text-gray-600 dark:text-gray-400" data-testid="reschedule-no-changes">
+            <div v-if="!sd.proposalHasChanges" class="text-sm text-text-muted" data-testid="reschedule-no-changes">
                 No tasks need to move for this range.
             </div>
 
             <!-- Moves: BEFORE / AFTER / REASON -->
-            <section v-if="sd.proposal.moves.length > 0" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="reschedule-moves">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Proposed changes</div>
-                <article v-for="move in sd.proposal.moves" :key="move.task_id" class="border border-gray-200 dark:border-gray-700 rounded-sm p-3 mb-2" data-testid="reschedule-move">
+            <section v-if="sd.proposal.moves.length > 0" data-testid="reschedule-moves">
+                <div class="text-xs uppercase text-text-muted mb-2">Proposed changes</div>
+                <article v-for="move in sd.proposal.moves" :key="move.task_id" class="surface-secondary p-3 mb-2" data-testid="reschedule-move">
                     <div class="font-medium text-sm mb-1">{{ move.title }}</div>
                     <div class="text-sm">
-                        <span class="text-gray-500 dark:text-gray-400">BEFORE: </span>
+                        <span class="font-mono text-text-muted uppercase">BEFORE: </span>
                         <span data-testid="move-before">{{ move.from ? `${formatDate(move.from.start)} ${formatTime(move.from.start)}` : 'not scheduled' }}</span>
                     </div>
                     <div class="text-sm">
-                        <span class="text-gray-500 dark:text-gray-400">AFTER: </span>
+                        <span class="font-mono text-text-muted uppercase">AFTER: </span>
                         <span data-testid="move-after">{{ formatDate(move.to.start) }} {{ formatTime(move.to.start) }}</span>
                     </div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400" data-testid="move-reason">
+                    <div class="text-xs font-mono text-text-muted mt-1" data-testid="move-reason">
                         REASON: freed a slot for higher-priority work / the prior slot is no longer feasible.
                     </div>
                 </article>
             </section>
 
             <!-- Conflicts -->
-            <section v-if="sd.proposal.conflict_task_ids.length > 0" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="reschedule-conflicts">
+            <section v-if="sd.proposal.conflict_task_ids.length > 0" class="bg-danger-tint border-l-4 border-danger p-4" data-testid="reschedule-conflicts">
                 <div class="text-xs uppercase text-danger mb-2">Conflicts ({{ sd.proposal.conflict_task_ids.length }})</div>
                 <p class="text-sm text-danger">Tasks could not be placed and remain flagged for manual review.</p>
             </section>

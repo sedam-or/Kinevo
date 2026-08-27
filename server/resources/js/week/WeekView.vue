@@ -89,17 +89,17 @@ function isOverloaded(date: string): boolean {
         <header class="flex items-center justify-between">
             <h1 class="text-xl font-semibold" data-testid="week-title">Week</h1>
             <div class="flex items-center gap-2 text-sm">
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="week-prev" aria-label="Previous page" @click="shiftWeek(-1)"><KIcon name="chevron-left" :size="16" /></button>
+                <button type="button" class="border border-border rounded-sm px-2 py-1 hover:bg-surface" data-testid="week-prev" aria-label="Previous page" @click="shiftWeek(-1)"><KIcon name="chevron-left" :size="16" /></button>
                 <span data-testid="week-range">{{ week.weekStart }} – {{ week.weekEnd }}</span>
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="week-next" aria-label="Next page" @click="shiftWeek(1)"><KIcon name="chevron-right" :size="16" /></button>
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="week-today" @click="goToToday">Today</button>
+                <button type="button" class="border border-border rounded-sm px-2 py-1 hover:bg-surface" data-testid="week-next" aria-label="Next page" @click="shiftWeek(1)"><KIcon name="chevron-right" :size="16" /></button>
+                <button type="button" class="border border-border rounded-sm px-2 py-1 hover:bg-surface" data-testid="week-today" @click="goToToday">Today</button>
             </div>
         </header>
 
         <!-- Workload summary -->
         <section class="flex gap-4 text-sm" data-testid="week-summary">
-            <span class="rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-1">Tasks: {{ totalTasks }}</span>
-            <span class="rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-1">Scheduled: {{ totalScheduled }}m</span>
+            <span class="rounded-sm bg-surface border border-border px-2 py-1">Tasks: {{ totalTasks }}</span>
+            <span class="rounded-sm bg-surface border border-border px-2 py-1">Scheduled: {{ totalScheduled }}m</span>
             <span
                 v-if="overloadedDays.length > 0"
                 class="rounded-sm bg-danger-tint text-danger px-2 py-1"
@@ -109,7 +109,7 @@ function isOverloaded(date: string): boolean {
             </span>
         </section>
 
-        <div v-if="week.loading" class="text-sm text-gray-500" data-testid="week-loading">Loading week…</div>
+        <div v-if="week.loading" class="text-sm text-text-muted" data-testid="week-loading">Loading week…</div>
         <div v-if="week.error" class="text-sm text-danger border border-danger rounded-sm p-3" role="alert" data-testid="week-error">
             <span class="font-medium">We couldn't load your schedule.</span>
             <span> {{ week.error.message }} Nothing is changed in your plan; retry when you're online.</span>
@@ -120,13 +120,13 @@ function isOverloaded(date: string): boolean {
             <div
                 v-for="day in week.weekDays"
                 :key="day.date"
-                class="border border-gray-300 dark:border-gray-600 rounded-sm p-2"
-                :class="isOverloaded(day.date) ? 'bg-danger-tint' : ''"
+                class="border border-border/30 rounded-sm p-2"
+                :class="[isOverloaded(day.date) ? 'bg-danger-tint' : '', day.date === anchorDate ? 'border-2 border-primary' : '']"
                 data-testid="week-day"
             >
-                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ weekdays[day.weekday - 1] }} {{ day.date.slice(8) }}</div>
+                <div class="text-xs font-medium text-text-muted">{{ weekdays[day.weekday - 1] }} {{ day.date.slice(8) }}</div>
                 <div class="text-sm font-semibold" data-testid="week-day-tasks">{{ day.task_count }} task(s)</div>
-                <div class="text-xs text-gray-600 dark:text-gray-400">{{ day.scheduled_minutes }}m</div>
+                <div class="text-xs text-text-muted">{{ day.scheduled_minutes }}m</div>
 
                 <!-- Deadlines due that day -->
                 <div v-if="dayDeadlines(day.date).length > 0" class="mt-1 text-xs text-danger" data-testid="week-deadlines">
@@ -134,7 +134,7 @@ function isOverloaded(date: string): boolean {
                 </div>
 
                 <!-- Assignments -->
-                <ul class="mt-1 text-xs text-gray-700 dark:text-gray-300 space-y-1" data-testid="week-assignments">
+                <ul class="mt-1 text-xs text-text space-y-1" data-testid="week-assignments">
                     <li v-for="e in eventsByDay[day.date] ?? []" :key="e.assignment.id" class="flex flex-col gap-0.5">
                         {{ e.task?.title ?? 'Untitled' }}
                         <!-- FR-63 (P17-015): per-placement explanation, collapsed. -->

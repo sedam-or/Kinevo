@@ -40,11 +40,14 @@ const pillarOptions: { key: PillarKey; label: string }[] = [
     { key: 'uncategorized', label: 'Uncategorized' },
 ];
 
+// Single-accent intensity ramp: empty cells ride on the border token at low
+// opacity; activity steps climb the primary token via opacity utilities so
+// light and dark themes stay coherent without per-theme variants.
 const heatmapColor = computed(() => [
-    'bg-gray-200 dark:bg-gray-700',
-    'bg-orange-100 dark:bg-orange-900/40',
-    'bg-orange-300 dark:bg-orange-700',
-    'bg-primary/70',
+    'bg-border/20',
+    'bg-primary/15',
+    'bg-primary/35',
+    'bg-primary/60',
     'bg-primary',
 ]);
 
@@ -185,7 +188,7 @@ const signal = computed(() => executiveSignal({
 
 const signalClass = computed(() => ({
     danger: 'border-danger/40 text-danger',
-    warn: 'border-amber-500/40 text-amber-600 dark:text-amber-400',
+    warn: 'border-warning/40 text-warning',
     ok: 'border-success/40 text-success',
 }[signal.value.severity]));
 
@@ -293,8 +296,8 @@ function run(fn: () => Promise<void>): void {
                 v-for="preset in presets"
                 :key="preset.key"
                 type="button"
-                class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
-                :class="activePreset === preset.key ? 'bg-gray-200 dark:bg-gray-700' : ''"
+                class="border rounded-sm px-3 py-1 text-sm"
+                :class="activePreset === preset.key ? 'border-border bg-surface-raised font-semibold text-text' : 'border-transparent text-text-muted hover:text-text'"
                 :disabled="analytics.loading"
                 data-testid="analytics-preset"
                 @click="run(() => load(preset.key))"
@@ -303,7 +306,7 @@ function run(fn: () => Promise<void>): void {
             </button>
         </div>
 
-        <div v-if="analytics.loading" class="text-sm text-gray-500 dark:text-gray-400" data-testid="analytics-loading">
+        <div v-if="analytics.loading" class="text-sm text-text-muted" data-testid="analytics-loading">
             Loading…
         </div>
 
@@ -311,7 +314,7 @@ function run(fn: () => Promise<void>): void {
             {{ (analytics.error as ApiError).message }}
         </div>
 
-        <div v-else-if="!analytics.hasData" class="text-sm text-gray-500 dark:text-gray-400 flex flex-col gap-2" data-testid="analytics-empty">
+        <div v-else-if="!analytics.hasData" class="text-sm text-text-muted flex flex-col gap-2" data-testid="analytics-empty">
             <span>No tracked time in this period yet.</span>
             <FeatureHelp
                 id="analytics-accumulates"
@@ -342,8 +345,8 @@ function run(fn: () => Promise<void>): void {
                 </button>
             </div>
 
-            <div class="surface-primary p-3" data-testid="analytics-summary">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Work-Life Ratio</div>
+            <div class="surface-primary p-4" data-testid="analytics-summary">
+                <div class="text-xs uppercase font-bold tracking-tight text-text-muted">Work-Life Ratio</div>
                 <ChartMeta
                     id="summary"
                     :period="periodLabel"
@@ -356,24 +359,24 @@ function run(fn: () => Promise<void>): void {
                 <div class="text-lg font-semibold" data-testid="analytics-ratio">
                     Work {{ workPercent }}% · Recharge {{ rechargePercent }}%
                 </div>
-                <div class="text-sm text-gray-600 dark:text-gray-400" data-testid="analytics-band">{{ bandLabel }}</div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
+                <div class="text-sm text-text-muted" data-testid="analytics-band">{{ bandLabel }}</div>
+                <div class="text-xs text-text-muted">
                     {{ minutesLabel(analytics.productiveMinutes) }} focus · {{ minutesLabel(analytics.rechargeMinutes) }} recharge
                 </div>
-                <div class="mt-2 flex h-3 w-full overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700" data-testid="analytics-bar">
+                <div class="mt-2 flex h-3 w-full overflow-hidden rounded-sm bg-surface" data-testid="analytics-bar">
                     <div class="bg-primary" :style="{ width: `${workPercent}%` }" data-testid="analytics-work-segment" />
                     <div class="bg-success" :style="{ width: `${rechargePercent}%` }" data-testid="analytics-recharge-segment" />
                 </div>
 
-                <div v-if="analytics.previous" class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-period-comparison">
+                <div v-if="analytics.previous" class="mt-2 text-xs text-text-muted" data-testid="analytics-period-comparison">
                     vs previous period ({{ analytics.previous.from }} – {{ analytics.previous.to }}):
                     Work {{ Math.round(analytics.previous.work_ratio * 100) }}% · Recharge {{ Math.round(analytics.previous.recharge_ratio * 100) }}%
                 </div>
 
                 <div v-if="analytics.workLifeTrend.length > 0" class="mt-2">
-                    <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Weekly trend</div>
+                    <div class="text-xs uppercase text-text-muted mb-1">Weekly trend</div>
                     <ul class="space-y-1">
-                        <li v-for="week in analytics.workLifeTrend" :key="week.week_start" class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400" data-testid="analytics-worklife-trend">
+                        <li v-for="week in analytics.workLifeTrend" :key="week.week_start" class="flex items-center justify-between text-xs text-text-muted" data-testid="analytics-worklife-trend">
                             <span>Week of {{ week.week_start }}</span>
                             <span>Work {{ Math.round(week.work_ratio * 100) }}% · Recharge {{ Math.round(week.recharge_ratio * 100) }}%</span>
                         </li>
@@ -381,15 +384,15 @@ function run(fn: () => Promise<void>): void {
                 </div>
 
                 <div v-if="analytics.workLifeExceptions.length > 0" class="mt-2">
-                    <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Notable days</div>
+                    <div class="text-xs uppercase text-text-muted mb-1">Notable days</div>
                     <ul class="space-y-1">
-                        <li v-for="exception in analytics.workLifeExceptions" :key="exception.date" class="text-xs text-gray-600 dark:text-gray-400" data-testid="analytics-worklife-exception">
+                        <li v-for="exception in analytics.workLifeExceptions" :key="exception.date" class="text-xs text-text-muted" data-testid="analytics-worklife-exception">
                             {{ exception.date }} — {{ exception.description }}
                         </li>
                     </ul>
                 </div>
 
-                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-disclaimer">
+                <p class="mt-2 text-xs text-text-muted" data-testid="analytics-disclaimer">
                     {{ analytics.disclaimer }}
                 </p>
 
@@ -406,8 +409,8 @@ function run(fn: () => Promise<void>): void {
                 </button>
             </div>
 
-            <div v-if="analytics.hasGoals" class="surface-primary p-3" data-testid="analytics-goals">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Goal progress</div>
+            <div v-if="analytics.hasGoals" class="surface-primary p-4" data-testid="analytics-goals">
+                <div class="text-xs uppercase font-bold tracking-tight text-text-muted mb-2">Goal progress</div>
                 <ChartMeta
                     id="goals"
                     :period="periodLabel"
@@ -416,14 +419,14 @@ function run(fn: () => Promise<void>): void {
                 />
 
                 <div class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm" data-testid="analytics-goal-summary">
-                    <span class="text-gray-600 dark:text-gray-400">
+                    <span class="text-text-muted">
                         {{ Math.round(analytics.goalCompletionRate * 100) }}% complete
                     </span>
-                    <span v-if="goalHealthLabel" class="text-gray-500 dark:text-gray-400" data-testid="analytics-goal-health">{{ goalHealthLabel }}</span>
-                    <span class="text-gray-500 dark:text-gray-400">
+                    <span v-if="goalHealthLabel" class="text-text-muted" data-testid="analytics-goal-health">{{ goalHealthLabel }}</span>
+                    <span class="text-text-muted">
                         {{ analytics.goalCompletedMilestones }}/{{ analytics.goalTotalMilestones }} milestones
                     </span>
-                    <span v-if="analytics.goalWorkloadCompletion > 0" class="text-gray-500 dark:text-gray-400">
+                    <span v-if="analytics.goalWorkloadCompletion > 0" class="text-text-muted">
                         {{ Math.round(analytics.goalWorkloadCompletion * 100) }}% tasks completed
                     </span>
                 </div>
@@ -431,29 +434,29 @@ function run(fn: () => Promise<void>): void {
                 <ul class="space-y-2">
                     <li v-for="goal in visibleGoals" :key="goal.id" class="text-sm" data-testid="analytics-goal">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="truncate text-gray-700 dark:text-gray-300">{{ goal.title }}</span>
-                            <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-goal-deadline">
+                            <span class="truncate text-text">{{ goal.title }}</span>
+                            <span class="shrink-0 text-xs text-text-muted" data-testid="analytics-goal-deadline">
                                 {{ deadlineLabel(goal.deadline_health, goal.days_remaining) }}
                             </span>
                         </div>
-                        <div class="mt-1 flex h-2 w-full overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
+                        <div class="mt-1 flex h-2 w-full overflow-hidden rounded-sm bg-surface">
                             <div class="bg-primary" :style="{ width: `${goal.progress}%` }" data-testid="analytics-goal-bar" />
                         </div>
-                        <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        <div class="mt-0.5 text-xs text-text-muted">
                             {{ goal.progress }}% · {{ goal.milestones_completed }}/{{ goal.milestones_total }} milestones · {{ goal.tasks_completed }}/{{ goal.tasks_total }} tasks
                         </div>
                     </li>
                 </ul>
-                <div v-if="hiddenGoalCount > 0" class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-goals-more">
+                <div v-if="hiddenGoalCount > 0" class="mt-2 text-xs text-text-muted" data-testid="analytics-goals-more">
                     +{{ hiddenGoalCount }} more goals
                 </div>
 
-                <div v-if="analytics.programs.length > 0" class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-2">
-                    <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Programs</div>
+                <div v-if="analytics.programs.length > 0" class="mt-4 border-t border-border pt-3">
+                    <div class="text-xs uppercase text-text-muted mb-1">Programs</div>
                     <ul class="space-y-1">
                         <li v-for="program in analytics.programs" :key="program.id" class="flex items-center justify-between text-sm" data-testid="analytics-program">
-                            <span class="truncate text-gray-700 dark:text-gray-300">{{ program.name }}</span>
-                            <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                            <span class="truncate text-text">{{ program.name }}</span>
+                            <span class="shrink-0 text-xs text-text-muted">
                                 {{ Math.round(program.workload_completion * 100) }}% · {{ program.tasks_completed }}/{{ program.tasks_total }}
                             </span>
                         </li>
@@ -473,8 +476,8 @@ function run(fn: () => Promise<void>): void {
                 </button>
             </div>
 
-            <div v-if="analytics.capacityDays.length > 0" class="surface-primary p-3" data-testid="analytics-capacity">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Capacity</div>
+            <div v-if="analytics.capacityDays.length > 0" class="surface-primary p-4" data-testid="analytics-capacity">
+                <div class="text-xs uppercase font-bold tracking-tight text-text-muted mb-2">Capacity</div>
                 <ChartMeta
                     id="capacity"
                     :period="periodLabel"
@@ -486,19 +489,19 @@ function run(fn: () => Promise<void>): void {
                 />
 
                 <div class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm" data-testid="analytics-capacity-summary">
-                    <span class="text-gray-600 dark:text-gray-400">
+                    <span class="text-text-muted">
                         {{ Math.round(analytics.capacityRealization * 100) }}% realized
                     </span>
-                    <span class="text-gray-500 dark:text-gray-400">
+                    <span class="text-text-muted">
                         {{ analytics.capacityDays.filter((d) => d.status === 'overload').length }} overloaded days
                     </span>
-                    <span class="text-gray-500 dark:text-gray-400">{{ recommendationLabel }} ({{ analytics.capacityConfidence }})</span>
+                    <span class="text-text-muted">{{ recommendationLabel }} ({{ analytics.capacityConfidence }})</span>
                 </div>
 
                 <ul class="space-y-1">
                     <li v-for="day in analytics.capacityDays" :key="day.date" class="flex items-center gap-2 text-sm" data-testid="analytics-capacity-day">
-                        <span class="w-24 shrink-0 text-gray-600 dark:text-gray-400">{{ day.date }}</span>
-                        <div class="flex h-2.5 flex-1 overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
+                        <span class="w-24 shrink-0 text-text-muted">{{ day.date }}</span>
+                        <div class="flex h-2.5 flex-1 overflow-hidden rounded-sm bg-surface">
                             <div
                                 class="h-full"
                                 :class="day.status === 'overload' ? 'bg-danger' : 'bg-primary'"
@@ -506,25 +509,25 @@ function run(fn: () => Promise<void>): void {
                                 data-testid="analytics-capacity-load"
                             />
                         </div>
-                        <span class="w-32 shrink-0 text-right text-xs" :class="day.status === 'overload' ? 'text-danger' : 'text-gray-500 dark:text-gray-400'">
+                        <span class="w-32 shrink-0 text-right text-xs" :class="day.status === 'overload' ? 'text-danger' : 'text-text-muted'">
                             {{ minutesLabel(day.scheduled_minutes) }}{{ day.status === 'overload' ? ` / ${minutesLabel(day.overload_minutes)} overload` : '' }}
                         </span>
                     </li>
                 </ul>
 
-                <div v-if="analytics.capacityWeeks.length > 0" class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-2">
-                    <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Trend</div>
+                <div v-if="analytics.capacityWeeks.length > 0" class="mt-4 border-t border-border pt-3">
+                    <div class="text-xs uppercase text-text-muted mb-1">Trend</div>
                     <ul class="space-y-1">
                         <li v-for="week in analytics.capacityWeeks" :key="week.week_start" class="flex items-center justify-between text-sm" data-testid="analytics-capacity-week">
-                            <span class="text-gray-600 dark:text-gray-400">Week of {{ week.week_start }}</span>
-                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                            <span class="text-text-muted">Week of {{ week.week_start }}</span>
+                            <span class="text-xs text-text-muted">
                                 {{ Math.round(week.realization * 100) }}% · {{ minutesLabel(week.completed_minutes) }} / {{ minutesLabel(week.planned_minutes) }}
                             </span>
                         </li>
                     </ul>
                 </div>
 
-                <p v-if="analytics.capacityReason" class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-capacity-reason">
+                <p v-if="analytics.capacityReason" class="mt-2 text-xs text-text-muted" data-testid="analytics-capacity-reason">
                     {{ analytics.capacityReason }}
                 </p>
 
@@ -540,8 +543,8 @@ function run(fn: () => Promise<void>): void {
                 </button>
             </div>
 
-            <div v-if="analytics.taskTotal > 0" class="surface-primary p-3" data-testid="analytics-execution">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Execution</div>
+            <div v-if="analytics.taskTotal > 0" class="surface-primary p-4" data-testid="analytics-execution">
+                <div class="text-xs uppercase font-bold tracking-tight text-text-muted mb-2">Execution</div>
                 <ChartMeta
                     id="execution"
                     :period="periodLabel"
@@ -550,18 +553,18 @@ function run(fn: () => Promise<void>): void {
                 />
 
                 <div class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm" data-testid="analytics-execution-summary">
-                    <span :class="lowCompletion ? 'text-danger' : 'text-gray-600 dark:text-gray-400'" data-testid="analytics-execution-rate">
+                    <span :class="lowCompletion ? 'text-danger' : 'text-text-muted'" data-testid="analytics-execution-rate">
                         {{ Math.round(analytics.taskCompletionRate * 100) }}% complete
                     </span>
-                    <span class="text-gray-500 dark:text-gray-400">
+                    <span class="text-text-muted">
                         {{ analytics.taskCompleted }}/{{ analytics.taskTotal }} tasks
                     </span>
-                    <span class="text-gray-500 dark:text-gray-400">
+                    <span class="text-text-muted">
                         {{ analytics.taskCompletedInPeriod }} completed in period
                     </span>
                 </div>
 
-                <div class="flex h-2.5 w-full overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
+                <div class="flex h-2.5 w-full overflow-hidden rounded-sm bg-surface">
                     <div
                         class="h-full"
                         :class="lowCompletion ? 'bg-danger' : 'bg-primary'"
@@ -584,7 +587,7 @@ function run(fn: () => Promise<void>): void {
             </div>
 
             <div v-if="analytics.pillars.length > 0" class="surface-supporting" data-testid="analytics-pillars">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Life pillars</div>
+                <div class="text-xs uppercase font-bold tracking-tight text-text-muted mb-2">Life pillars</div>
                 <ChartMeta
                     id="pillars"
                     :period="periodLabel"
@@ -595,12 +598,12 @@ function run(fn: () => Promise<void>): void {
                 <ul class="space-y-2">
                     <li v-for="pillar in analytics.pillars" :key="pillar.key" class="text-sm" data-testid="analytics-pillar">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="text-gray-700 dark:text-gray-300">{{ pillar.label }}</span>
-                            <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-pillar-percent">
+                            <span class="text-text">{{ pillar.label }}</span>
+                            <span class="shrink-0 text-xs text-text-muted" data-testid="analytics-pillar-percent">
                                 {{ percentLabel(pillar.percent) }}
                             </span>
                         </div>
-                        <div class="mt-1 flex h-2 w-full overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
+                        <div class="mt-1 flex h-2 w-full overflow-hidden rounded-sm bg-surface">
                             <div
                                 v-if="pillar.percent !== null"
                                 class="h-full bg-primary"
@@ -608,7 +611,7 @@ function run(fn: () => Promise<void>): void {
                                 data-testid="analytics-pillar-bar"
                             />
                         </div>
-                        <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        <div class="mt-0.5 text-xs text-text-muted">
                             {{ minutesLabel(pillar.realization_minutes) }} completed{{ pillar.target_minutes > 0 ? ` vs ${minutesLabel(pillar.target_minutes)} target` : ' · no target' }}
                         </div>
                     </li>
@@ -620,7 +623,7 @@ function run(fn: () => Promise<void>): void {
             <div class="surface-supporting" data-testid="analytics-heatmap">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <div class="flex items-center gap-2">
-                        <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Activity heatmap</div>
+                        <div class="text-xs uppercase font-bold tracking-tight text-text-muted">Activity heatmap</div>
                         <FeatureHelp id="progress-events" title="Progress Events" body="Completions and focus sessions feed this view. Progress events show movement toward your goals — not just raw hours spent." />
                     </div>
                     <div class="flex flex-wrap items-center gap-2 text-sm">
@@ -629,19 +632,19 @@ function run(fn: () => Promise<void>): void {
                                 v-for="range in heatmapRanges"
                                 :key="range.key"
                                 type="button"
-                                class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-0.5 text-xs"
-                                :class="activeHeatmapRange === range.key ? 'bg-gray-200 dark:bg-gray-700' : ''"
+                                class="border rounded-sm px-2 py-0.5 text-xs"
+                                :class="activeHeatmapRange === range.key ? 'border-border bg-surface-raised font-semibold text-text' : 'border-transparent text-text-muted hover:text-text'"
                                 data-testid="analytics-heatmap-range"
                                 @click="activeHeatmapRange = range.key"
                             >
                                 {{ range.label }}
                             </button>
                         </div>
-                        <label class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                        <label class="flex items-center gap-1 text-xs text-text-muted">
                             Pillar
                             <select
                                 v-model="heatmapPillarFilter"
-                                class="border border-gray-300 dark:border-gray-600 rounded-sm px-1 py-0.5 text-xs bg-transparent"
+                                class="border border-border rounded-sm px-1 py-0.5 text-xs bg-transparent"
                                 data-testid="analytics-heatmap-pillar"
                             >
                                 <option value="">All</option>
@@ -651,7 +654,7 @@ function run(fn: () => Promise<void>): void {
                     </div>
                 </div>
 
-                <div v-if="analytics.heatmapLoading" class="text-sm text-gray-500 dark:text-gray-400" data-testid="analytics-heatmap-loading">
+                <div v-if="analytics.heatmapLoading" class="text-sm text-text-muted" data-testid="analytics-heatmap-loading">
                     Loading…
                 </div>
                 <div v-else-if="analytics.heatmapError" class="text-sm text-danger" role="alert" data-testid="analytics-heatmap-error">
@@ -661,7 +664,7 @@ function run(fn: () => Promise<void>): void {
                     <div class="overflow-x-auto">
                         <div class="inline-flex flex-col gap-1" data-testid="analytics-heatmap-grid">
                             <div v-for="week in heatmapWeeks()" :key="week.weekStart" class="flex gap-1" data-testid="analytics-heatmap-week">
-                                <span class="w-8 shrink-0 text-[10px] text-gray-400" />
+                                <span class="w-8 shrink-0 text-[10px] text-text-muted" />
                                 <button
                                     v-for="day in week.days"
                                     :key="day.date"
@@ -676,23 +679,23 @@ function run(fn: () => Promise<void>): void {
                         </div>
                     </div>
 
-                    <div class="mt-2 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-heatmap-legend">
+                    <div class="mt-2 flex items-center gap-1 text-xs text-text-muted" data-testid="analytics-heatmap-legend">
                         <span>Less</span>
                         <span v-for="item in analytics.heatmapLegend" :key="item.level" class="h-3 w-3 rounded-sm" :class="heatmapColor[item.level]" :title="item.label" />
                         <span>More</span>
-                        <span class="ml-1 text-gray-400">{{ analytics.heatmapLegend.filter((i) => i.level > 0).map((i) => i.label).join(' · ') }}</span>
+                        <span class="ml-1 text-text-muted">{{ analytics.heatmapLegend.filter((i) => i.level > 0).map((i) => i.label).join(' · ') }}</span>
                     </div>
 
                     <button
                         type="button"
-                        class="mt-2 text-xs underline text-gray-500 dark:text-gray-400"
+                        class="mt-2 text-xs underline text-text-muted"
                         data-testid="analytics-heatmap-list-toggle"
                         @click="showHeatmapList = !showHeatmapList"
                     >
                         {{ showHeatmapList ? 'Hide' : 'Show' }} list view (accessible)
                     </button>
                     <ul v-if="showHeatmapList" class="mt-2 space-y-1" data-testid="analytics-heatmap-list">
-                        <li v-for="day in analytics.heatmapDays" :key="day.date" class="text-xs text-gray-600 dark:text-gray-400">
+                        <li v-for="day in analytics.heatmapDays" :key="day.date" class="text-xs text-text-muted">
                             {{ heatmapDayLabel(day) }}
                         </li>
                     </ul>
@@ -702,7 +705,7 @@ function run(fn: () => Promise<void>): void {
             </div>
 
             <div v-if="analytics.days.length > 0" class="surface-supporting" data-testid="analytics-days">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Per day</div>
+                <div class="text-xs uppercase font-bold tracking-tight text-text-muted mb-2">Per day</div>
                 <ChartMeta
                     id="days"
                     :period="periodLabel"
@@ -719,12 +722,12 @@ function run(fn: () => Promise<void>): void {
                         class="flex items-center gap-2 text-sm"
                         data-testid="analytics-day"
                     >
-                        <span class="w-24 shrink-0 text-gray-600 dark:text-gray-400">{{ day.date }}</span>
-                        <div class="flex h-2.5 flex-1 overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
+                        <span class="w-24 shrink-0 text-text-muted">{{ day.date }}</span>
+                        <div class="flex h-2.5 flex-1 overflow-hidden rounded-sm bg-surface">
                             <div class="bg-primary" :style="{ width: `${Math.round(day.work_ratio * 100)}%` }" data-testid="analytics-day-work" />
                             <div class="bg-success" :style="{ width: `${Math.round(day.recharge_ratio * 100)}%` }" data-testid="analytics-day-recharge" />
                         </div>
-                        <span class="w-28 shrink-0 text-right text-xs text-gray-500 dark:text-gray-400">
+                        <span class="w-28 shrink-0 text-right text-xs text-text-muted">
                             {{ minutesLabel(day.productive_minutes) }} / {{ minutesLabel(day.recharge_minutes) }}
                         </span>
                     </li>

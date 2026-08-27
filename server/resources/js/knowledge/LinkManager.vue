@@ -4,6 +4,7 @@ import { useKnowledgeLinkStore } from './store';
 import { KNOWLEDGE_LINK_TYPES, type KnowledgeLinkType, type KnowledgeTargetType } from './types';
 import type { ApiError } from '../api/types';
 import { useShellStore } from '../shell/store';
+import KButton from '../components/KButton.vue';
 
 const props = defineProps<{
     noteId: number;
@@ -170,17 +171,17 @@ function isNavigable(type: KnowledgeTargetType): boolean {
 
 <template>
     <div data-testid="knowledge-links">
-        <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Linked entities</div>
+        <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-3">Linked entities</div>
 
         <div v-if="links.error && !formError" class="text-sm text-danger" role="alert" data-testid="links-load-error">
             {{ links.error.message }}
         </div>
 
-        <ul v-if="links.links.length > 0" class="space-y-1 mb-3">
+        <ul v-if="links.links.length > 0" class="mb-3">
             <li
                 v-for="link in links.links"
                 :key="link.id"
-                class="flex items-center justify-between gap-2 border border-gray-200 dark:border-gray-700 rounded-sm px-3 py-2"
+                class="surface-metadata flex items-center justify-between gap-2 py-2 border-b border-border/20"
                 data-testid="knowledge-link-item"
             >
                 <span class="text-sm">
@@ -188,32 +189,30 @@ function isNavigable(type: KnowledgeTargetType): boolean {
                     <button
                         v-if="isNavigable(link.target_type)"
                         type="button"
-                        class="underline text-gray-600 dark:text-gray-300 hover:text-[var(--color-text)]"
+                        class="underline underline-offset-2 text-text-muted hover:text-text transition-colors rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                         :data-testid="`link-open-${link.target_type}-${link.target_id}`"
                         @click="goTo(link.target_type, link.target_id)"
                     >
                         {{ linkLabel(link.target_type, link.target_id) }}
                     </button>
-                    <span v-else class="text-gray-600 dark:text-gray-300">{{ linkLabel(link.target_type, link.target_id) }}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400"> · {{ link.link_type.replace('_', ' ') }}</span>
+                    <span v-else class="text-text-muted">{{ linkLabel(link.target_type, link.target_id) }}</span>
+                    <span class="font-mono text-[11px] text-text-muted"> · {{ link.link_type.replace('_', ' ') }}</span>
                 </span>
-                <button
-                    type="button"
-                    class="text-xs border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-0.5"
+                <KButton
+                    variant="ghost"
+                    class="!min-h-0 !px-2 !py-0.5 text-xs shrink-0"
                     :data-testid="`link-remove-${link.id}`"
                     @click="removeLink(link.id)"
-                >
-                    Remove
-                </button>
+                >Remove</KButton>
             </li>
         </ul>
-        <div v-else class="text-sm text-gray-500 dark:text-gray-400 mb-3" data-testid="no-links">No links yet.</div>
+        <div v-else class="text-sm text-text-muted mb-3" data-testid="no-links">No links yet.</div>
 
         <form class="flex flex-col gap-2" @submit.prevent="createLink">
             <div class="flex flex-wrap gap-2">
-                <label class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
+                <label class="flex flex-col gap-1 text-xs text-text-muted">
                     Type
-                    <select v-model="form.targetType" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm" data-testid="link-target-type">
+                    <select v-model="form.targetType" class="border border-border rounded-sm px-2 py-1 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="link-target-type">
                         <option value="">Select type…</option>
                         <option v-for="t in ['goal', 'milestone', 'program', 'task', 'canvas']" :key="t" :value="t">
                             {{ targetLabel(t as KnowledgeTargetType) }}
@@ -221,25 +220,25 @@ function isNavigable(type: KnowledgeTargetType): boolean {
                     </select>
                 </label>
 
-                <label v-if="form.targetType === 'milestone'" class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
+                <label v-if="form.targetType === 'milestone'" class="flex flex-col gap-1 text-xs text-text-muted">
                     Goal
-                    <select v-model="form.goalId" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm" data-testid="link-goal">
+                    <select v-model="form.goalId" class="border border-border rounded-sm px-2 py-1 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="link-goal">
                         <option value="">Select goal…</option>
                         <option v-for="g in links.goals" :key="g.id" :value="g.id">{{ g.title }}</option>
                     </select>
                 </label>
 
-                <label v-if="form.targetType !== ''" class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
+                <label v-if="form.targetType !== ''" class="flex flex-col gap-1 text-xs text-text-muted">
                     Entity
-                    <select v-model="form.targetId" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm" data-testid="link-target-id">
+                    <select v-model="form.targetId" class="border border-border rounded-sm px-2 py-1 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="link-target-id">
                         <option value="">Select {{ targetLabel(form.targetType) }}…</option>
                         <option v-for="o in targetOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
                     </select>
                 </label>
 
-                <label v-if="form.targetType !== ''" class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
+                <label v-if="form.targetType !== ''" class="flex flex-col gap-1 text-xs text-text-muted">
                     Link type
-                    <select v-model="form.linkType" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm" data-testid="link-type">
+                    <select v-model="form.linkType" class="border border-border rounded-sm px-2 py-1 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="link-type">
                         <option value="">Select link type…</option>
                         <option v-for="t in KNOWLEDGE_LINK_TYPES" :key="t" :value="t">{{ t.replace('_', ' ') }}</option>
                     </select>
@@ -249,14 +248,15 @@ function isNavigable(type: KnowledgeTargetType): boolean {
             <div v-if="formError" class="text-sm text-danger" role="alert" data-testid="link-form-error">{{ formError }}</div>
 
             <div class="flex items-center gap-2">
-                <button
+                <KButton
                     type="submit"
+                    variant="ghost"
+                    class="self-start !min-h-0 !px-3 !py-1 text-sm"
                     :disabled="!canSubmit || submitting"
-                    class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-1 text-sm font-medium disabled:opacity-50"
                     data-testid="link-submit"
                 >
                     {{ submitting ? 'Linking…' : 'Add link' }}
-                </button>
+                </KButton>
             </div>
         </form>
     </div>

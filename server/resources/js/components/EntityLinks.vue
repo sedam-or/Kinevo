@@ -37,12 +37,12 @@ function go(link: EntityLink): void {
         data-testid="entity-links"
         class="flex items-center gap-2 flex-wrap"
     >
-        <span class="text-xs uppercase text-gray-500 dark:text-gray-400">Related</span>
+        <span class="text-xs uppercase text-text-muted">Related</span>
         <button
             v-for="link in props.links"
             :key="`${link.view}-${link.focusId ?? ''}`"
             type="button"
-            class="text-xs border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+            class="text-xs border border-border rounded-sm px-2 py-1 hover:bg-surface"
             :data-testid="`entity-link-${link.view}`"
             @click="go(link)"
         >

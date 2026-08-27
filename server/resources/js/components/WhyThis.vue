@@ -67,14 +67,14 @@ const slotLine = computed(() => {
     <div class="text-xs">
         <button
             type="button"
-            class="text-gray-500 dark:text-gray-400 underline underline-offset-2 hover:text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-sm"
+            class="text-text-muted underline underline-offset-2 hover:text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-sm"
             :aria-expanded="open"
             data-testid="why-this-toggle"
             @click="toggle"
         >
             {{ open ? 'Hide why' : 'Why this task now?' }}
         </button>
-        <ul v-if="open" class="mt-1 space-y-0.5 text-gray-600 dark:text-gray-400" data-testid="why-this-content">
+        <ul v-if="open" class="mt-1 space-y-0.5 text-text-muted" data-testid="why-this-content">
             <li data-testid="why-tier">{{ tierLine }}</li>
             <li data-testid="why-deadline">{{ deadlineLine }}</li>
             <li data-testid="why-slot">{{ slotLine }}</li>

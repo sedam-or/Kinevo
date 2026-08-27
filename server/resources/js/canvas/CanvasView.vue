@@ -20,7 +20,7 @@ const focused = shell.consumeFocus('canvas');
 const CanvasWorkspaceView = defineAsyncComponent({
     loader: () => import('./CanvasWorkspaceView.vue'),
     loadingComponent: {
-        template: `<div class="text-sm text-gray-500 dark:text-gray-400" data-testid="canvas-workspace-loading">Loading Canvas…</div>`,
+        template: `<div class="text-sm text-text-muted" data-testid="canvas-workspace-loading">Loading Canvas…</div>`,
     },
 });
 

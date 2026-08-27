@@ -51,17 +51,17 @@ const cells = computed<{ date: string; day: number | null; task_count: number }[
         <header class="flex items-center justify-between">
             <h1 class="text-xl font-semibold" data-testid="calendar-title">Calendar</h1>
             <div class="flex items-center gap-2 text-sm">
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="calendar-prev" aria-label="Previous page" @click="shiftMonth(-1)"><KIcon name="chevron-left" :size="16" /></button>
+                <button type="button" class="border border-border rounded-sm px-2 py-1 hover:bg-surface" data-testid="calendar-prev" aria-label="Previous page" @click="shiftMonth(-1)"><KIcon name="chevron-left" :size="16" /></button>
                 <span data-testid="calendar-month">{{ week.calendarYear }}-{{ String(week.calendarMonth).padStart(2, '0') }}</span>
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="calendar-next" aria-label="Next page" @click="shiftMonth(1)"><KIcon name="chevron-right" :size="16" /></button>
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="calendar-today" @click="goToThisMonth">This month</button>
+                <button type="button" class="border border-border rounded-sm px-2 py-1 hover:bg-surface" data-testid="calendar-next" aria-label="Next page" @click="shiftMonth(1)"><KIcon name="chevron-right" :size="16" /></button>
+                <button type="button" class="border border-border rounded-sm px-2 py-1 hover:bg-surface" data-testid="calendar-today" @click="goToThisMonth">This month</button>
             </div>
         </header>
 
-        <div v-if="week.loading" class="text-sm text-gray-500" data-testid="calendar-loading">Loading calendar…</div>
+        <div v-if="week.loading" class="text-sm text-text-muted" data-testid="calendar-loading">Loading calendar…</div>
         <div v-if="week.error" class="text-sm text-danger" role="alert" data-testid="calendar-error">{{ week.error.message }}</div>
 
-        <div class="grid grid-cols-7 gap-1 text-center text-xs text-gray-500 dark:text-gray-400">
+        <div class="grid grid-cols-7 gap-1 text-center text-xs text-text-muted">
             <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
         </div>
 
@@ -69,13 +69,13 @@ const cells = computed<{ date: string; day: number | null; task_count: number }[
             <div
                 v-for="(cell, i) in cells"
                 :key="i"
-                class="aspect-square border border-gray-200 dark:border-gray-700 rounded-sm p-1 text-sm"
-                :class="cell.day !== null && cell.task_count > 0 ? 'bg-gray-100 dark:bg-gray-800' : ''"
+                class="aspect-square border border-border/20 rounded-sm p-1 text-sm"
+                :class="[cell.day !== null && cell.task_count > 0 ? 'bg-surface' : '', cell.date === anchorDate ? 'border-2 border-primary' : '']"
                 data-testid="calendar-cell"
             >
                 <template v-if="cell.day !== null">
                     <div>{{ cell.day }}</div>
-                    <div v-if="cell.task_count > 0" class="text-[10px] text-gray-600 dark:text-gray-400" data-testid="calendar-task-count">
+                    <div v-if="cell.task_count > 0" class="text-[10px] text-text-muted" data-testid="calendar-task-count">
                         {{ cell.task_count }} task(s)
                     </div>
                 </template>

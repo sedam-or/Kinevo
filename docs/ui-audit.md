@@ -527,6 +527,56 @@ AuthScreen root) and E2E button-name contracts unchanged.
 Link: this record.
 ```
 
+```text
+UI-018 | 2026-08-27 | All surfaces (full brand redesign, user-directed) | UX-C4
+Found (user-reported): post-UI-015 the app was token-clean but visually flat —
+the login was a bare form and interior pages carried generic gray chrome with
+no brand presence; the official Kinevo mark (docs/assets/banner-kinevo-dark.svg)
+appeared nowhere in the product.
+Expected: design.md §4–§7 Neo-Brutalist border/shadow doctrine across every
+surface; §67 brand consistency; design-tokens.md §4a L1–L5 adoption beyond
+Analytics.
+Severity: UX-C4 / P2 (product-wide visual identity gap).
+Status: fixed (2026-08-27) — full-page redesign sweep:
+• components/KLogo.vue renders the official banner mark geometry (primary
+  square + white stem/steps/leg) with variants brand/outline, token-driven;
+  placed in auth gate (both panels), shell topbar wordmark row.
+• Auth gate split-screen (UI-017) retained; login/register forms inside
+  surface-hero card.
+• TodayView flagship: NOW = .surface-hero + mono NOW eyebrow; NEXT =
+  .surface-secondary; capacity reveal converted clickable-div → <button>
+  (a11y fix); banners unified (2px box + 4px semantic left accent); timeline
+  locked/conflict/empty all tokenized; ExecutionTimer/RechargeTimer unified as
+  sibling L5 strips (mono tabular).
+• Task list/detail, Goal list/detail, Notes edit/list, Canvas list/workspace/
+  host/context panel: eyebrow+bold page headers, .surface-primary/-secondary
+  cards, metadata hairline rows, dashed empty states, staged CTA rules intact;
+  Goal milestone rail node states tokenized (success/focus/danger) keeping §39
+  glyphs.
+• Dialog template standardized on ALL modals (Boost/Break/EmergencyPause/
+  QuickCapture/WorkspaceManager): z-modal overlay bg-bg/80, surface-hero
+  panel, x-mark close w/ aria-label, danger variant for destructive confirms,
+  warning accents via tokens (amber hex removed); QuickCapture hand-painted
+  theme hexes eliminated.
+• AnalyticsView de-grayed (~66 lines): pill actives tokenized, heatmap ladder
+  rebuilt as single-accent primary opacity ramp [0..solid], warn/ok tones →
+  warning/success token pairs; VisualStateBadge soft tints → new
+  --color-{success,info,warning}-tint tokens (app.css light+dark; danger-tint
+  was referenced-but-undefined and is now defined too);
+  AiUsageSummaryCard byok chip → info-tint pair.
+• Remaining pages (Week, Calendar, Schedule draft/reschedule, imports/
+  exports, Profile, Plan settings, AI settings, Command palette, canvas chrome)
+  fully tokenized; today-marker treatment consistent (border-2 border-primary)
+  across Week+Calendar; CommandPalette z corrected to --z-command-palette.
+Post-sweep repo state: ZERO gray-* or raw hex color literals remain in
+resources/js/*.vue (grep-verified); layout/IA/data contracts unchanged.
+Evidence: vue-tsc clean; vitest 522 passed (74 files); production build green;
+make test 970 passed (PHP untouched). Per-slice suite evidence in task records
+(Today 44, Task 20, Goal 19, knowledge/canvas 95, dialogs/workspace 39,
+analytics/visualstate/ai 61, planner/shared 70).
+Link: this record; docs/design-tokens.md §2.1.
+```
+
 No finding above is closed silently; each closes with concrete browser/test/visual
 evidence in a later task.
 

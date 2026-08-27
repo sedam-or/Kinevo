@@ -71,6 +71,14 @@
     --color-info: #2C5FA8;
     --color-focus: #2C5FA8;
 
+    /* Soft-tint semantic surfaces (docs/design-tokens.md §2.1): pale washes
+       that pair with the matching semantic text token (e.g. bg-success-tint +
+       text-success). Dark values are deep near-black echoes of the tint family. */
+    --color-danger-tint: #FFF2F2;
+    --color-success-tint: #E9F6EE;
+    --color-info-tint: #EDF3FB;
+    --color-warning-tint: #FDF3E2;
+
     --radius-none: 0px;
     --radius-sm: 4px;
     --radius-md: 8px;
@@ -108,6 +116,10 @@
     --color-danger-contrast: #1D0002;
     --color-info: #7FA6E0;
     --color-focus: #EDEDEC;
+    --color-danger-tint: #1D0002;
+    --color-success-tint: #06170F;
+    --color-info-tint: #101B2B;
+    --color-warning-tint: #221604;
 }
 
 /* Reduced motion (design.md §47). prefers-reduced-motion always wins over the

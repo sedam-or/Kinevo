@@ -36,18 +36,18 @@ function onInput(event: Event): void {
                 :placeholder="placeholder ?? '••••••••'"
                 autocomplete="new-password"
                 spellcheck="false"
-                class="w-full border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2 pr-12"
+                class="w-full border border-border rounded-sm px-3 py-2 pr-12 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                 data-testid="secret-input"
                 @input="onInput"
             />
             <button
                 type="button"
-                class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-muted hover:text-text transition-colors"
                 :aria-label="revealed ? 'Hide secret' : 'Reveal secret'"
                 data-testid="secret-reveal"
                 @click="revealed = !revealed"
             >{{ revealed ? 'Hide' : 'Show' }}</button>
         </span>
-        <span v-if="hint" class="text-xs text-gray-500 dark:text-gray-400" data-testid="secret-hint">{{ hint }}</span>
+        <span v-if="hint" class="text-xs text-text-muted" data-testid="secret-hint">{{ hint }}</span>
     </label>
 </template>

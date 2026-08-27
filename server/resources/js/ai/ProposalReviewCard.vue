@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import FeatureHelp from '../components/FeatureHelp.vue';
+import KButton from '../components/KButton.vue';
 import { aiApi, type AiProposal, type BreakdownMilestone } from './api';
 
 /**
@@ -137,21 +138,21 @@ defineExpose({ load });
 </script>
 
 <template>
-    <section v-if="breakdown" class="border border-[var(--color-primary)] rounded-sm p-4" data-testid="proposal-review">
+    <section v-if="breakdown" class="surface-secondary p-4 border-primary" data-testid="proposal-review">
         <div class="flex items-center justify-between mb-2">
-            <div class="flex flex-wrap items-center gap-2 text-xs uppercase text-gray-500 dark:text-gray-400">
+            <div class="flex flex-wrap items-center gap-2 text-xs uppercase text-text-muted">
                 AI Breakdown Proposal
-                <span class="ml-2 rounded-sm bg-[var(--color-primary)]/10 text-[var(--color-primary)] px-1.5 py-0.5 normal-case font-medium" data-testid="proposal-ai-generated-badge">AI GENERATED</span>
-                <span class="rounded-sm bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 normal-case" data-testid="proposal-not-committed-badge">NOT YET COMMITTED</span>
+                <span class="ml-2 rounded-sm bg-primary/10 text-primary px-1.5 py-0.5 normal-case font-medium" data-testid="proposal-ai-generated-badge">AI GENERATED</span>
+                <span class="rounded-sm bg-surface border border-border/30 text-text-muted px-1.5 py-0.5 normal-case" data-testid="proposal-not-committed-badge">NOT YET COMMITTED</span>
                 <FeatureHelp id="ai-proposal" title="AI Breakdown Proposal" class="normal-case" body="AI suggests, you decide. Nothing is applied until you accept — edit milestones freely before accepting." />
-                <span v-if="proposal?.decision === 'edited'" class="ml-2 normal-case text-[var(--color-primary)]" data-testid="proposal-edited-badge">edited</span>
+                <span v-if="proposal?.decision === 'edited'" class="ml-2 normal-case text-primary" data-testid="proposal-edited-badge">edited</span>
             </div>
-            <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5">{{ breakdown.milestones.length }} milestones</span>
+            <span class="text-xs rounded-sm bg-surface border border-border/30 px-2 py-0.5">{{ breakdown.milestones.length }} milestones</span>
         </div>
 
         <div v-if="breakdown.rationale" class="mb-3">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Decision summary</div>
-            <p class="text-sm text-gray-700 dark:text-gray-300" data-testid="proposal-rationale">
+            <div class="text-xs uppercase text-text-muted mb-1">Decision summary</div>
+            <p class="text-sm text-text" data-testid="proposal-rationale">
                 {{ breakdown.rationale }}
             </p>
         </div>
@@ -162,14 +163,14 @@ defineExpose({ load });
                     <input
                         v-model="m.title"
                         type="text"
-                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm flex-1 min-w-[12rem]"
+                        class="border border-border rounded-sm px-2 py-1 text-sm flex-1 min-w-[12rem] bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                         :data-testid="`proposal-milestone-title-${i}`"
                         :aria-label="`Milestone ${i + 1} title`"
                     />
                     <input
                         v-model="m.target_date"
                         type="date"
-                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm"
+                        class="border border-border rounded-sm px-2 py-1 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                         :data-testid="`proposal-milestone-date-${i}`"
                         :aria-label="`Milestone ${i + 1} target date`"
                     />
@@ -178,14 +179,14 @@ defineExpose({ load });
                         type="number"
                         min="0"
                         step="15"
-                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm w-24"
+                        class="border border-border rounded-sm px-2 py-1 text-sm w-24 bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                         :data-testid="`proposal-milestone-minutes-${i}`"
                         :aria-label="`Milestone ${i + 1} estimated minutes`"
                     />
                 </div>
                 <div v-else class="flex items-start justify-between gap-3">
                     <span>{{ m.title }}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    <span class="text-xs text-text-muted whitespace-nowrap">
                         <span v-if="m.target_date">{{ m.target_date }}</span>
                         <span v-if="formatMinutes(m.estimated_minutes)"> · {{ formatMinutes(m.estimated_minutes) }}</span>
                     </span>
@@ -193,27 +194,27 @@ defineExpose({ load });
             </li>
         </ul>
 
-        <ul v-if="breakdown.risks && breakdown.risks.length > 0" class="list-disc ml-5 mb-3 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-risks">
+        <ul v-if="breakdown.risks && breakdown.risks.length > 0" class="list-disc ml-5 mb-3 text-sm text-text-muted" data-testid="proposal-risks">
             <li v-for="(risk, i) in breakdown.risks" :key="i">{{ risk }}</li>
         </ul>
 
         <!-- Explainability (TASK-P17-027): high-level assumptions, inputs used
              and constraints honoured — concise, never chain-of-thought. -->
         <div v-if="breakdown.assumptions && breakdown.assumptions.length > 0" class="mb-3">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Assumptions</div>
-            <ul class="list-disc ml-5 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-assumptions">
+            <div class="text-xs uppercase text-text-muted mb-1">Assumptions</div>
+            <ul class="list-disc ml-5 text-sm text-text-muted" data-testid="proposal-assumptions">
                 <li v-for="(item, i) in breakdown.assumptions" :key="i">{{ item }}</li>
             </ul>
         </div>
         <div v-if="breakdown.inputs && breakdown.inputs.length > 0" class="mb-3">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Inputs used</div>
-            <ul class="list-disc ml-5 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-inputs">
+            <div class="text-xs uppercase text-text-muted mb-1">Inputs used</div>
+            <ul class="list-disc ml-5 text-sm text-text-muted" data-testid="proposal-inputs">
                 <li v-for="(item, i) in breakdown.inputs" :key="i">{{ item }}</li>
             </ul>
         </div>
         <div v-if="breakdown.constraints && breakdown.constraints.length > 0" class="mb-3">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Constraints honoured</div>
-            <ul class="list-disc ml-5 text-sm text-gray-600 dark:text-gray-400" data-testid="proposal-constraints">
+            <div class="text-xs uppercase text-text-muted mb-1">Constraints honoured</div>
+            <ul class="list-disc ml-5 text-sm text-text-muted" data-testid="proposal-constraints">
                 <li v-for="(item, i) in breakdown.constraints" :key="i">{{ item }}</li>
             </ul>
         </div>
@@ -222,47 +223,47 @@ defineExpose({ load });
 
         <div class="flex gap-2 flex-wrap">
             <template v-if="!editing">
-                <button
-                    type="button"
-                    class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 disabled:opacity-50"
+                <KButton
+                    variant="secondary"
+                    class="!min-h-0 !px-3 !py-1 text-sm"
                     data-testid="proposal-edit"
                     :disabled="busy"
                     @click="startEditing"
-                >Edit</button>
+                >Edit</KButton>
             </template>
             <template v-else>
-                <button
-                    type="button"
-                    class="text-sm border border-[var(--color-primary)] rounded-sm px-3 py-1 disabled:opacity-50"
+                <KButton
+                    variant="primary"
+                    class="!min-h-0 !px-3 !py-1 text-sm"
                     data-testid="proposal-save-edits"
                     :disabled="busy"
                     @click="saveEdits"
-                >Save edits</button>
-                <button
-                    type="button"
-                    class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 disabled:opacity-50"
+                >Save edits</KButton>
+                <KButton
+                    variant="ghost"
+                    class="!min-h-0 !px-3 !py-1 text-sm"
                     data-testid="proposal-cancel-edits"
                     :disabled="busy"
                     @click="cancelEditing"
-                >Cancel</button>
+                >Cancel</KButton>
             </template>
-            <button
-                type="button"
-                class="text-sm bg-[var(--color-primary)] text-white rounded-sm px-3 py-1 disabled:opacity-50"
+            <KButton
+                variant="primary"
+                class="!min-h-0 !px-3 !py-1 text-sm"
                 data-testid="proposal-accept"
                 :disabled="busy"
                 @click="accept"
-            >Accept</button>
-            <button
-                type="button"
-                class="text-sm border border-danger text-danger rounded-sm px-3 py-1 disabled:opacity-50"
+            >Accept</KButton>
+            <KButton
+                variant="danger"
+                class="!min-h-0 !px-3 !py-1 text-sm"
                 data-testid="proposal-reject"
                 :disabled="busy"
                 @click="reject"
-            >Reject</button>
+            >Reject</KButton>
         </div>
 
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+        <p class="text-xs text-text-muted mt-2">
             Nothing is applied until you accept. Accepting creates these milestones on the goal.
         </p>
     </section>

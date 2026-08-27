@@ -233,14 +233,14 @@ async function rejectExtraction(): Promise<void> {
                 <input
                     v-model="title"
                     type="text"
-                    class="text-xl font-semibold bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-600 rounded-sm px-2 py-1 min-w-0 flex-1"
+                    class="text-xl font-semibold bg-transparent border border-transparent focus:border-border rounded-sm px-2 py-1 min-w-0 flex-1"
                     data-testid="note-title-input"
                 />
             </div>
             <span data-testid="note-save-state"><VisualStateBadge :state="saveStateBadge" /></span>
         </header>
 
-        <div v-if="notes.loading" class="text-sm text-gray-500" data-testid="note-detail-loading">Loading…</div>
+        <div v-if="notes.loading" class="text-sm text-text-muted" data-testid="note-detail-loading">Loading…</div>
         <div v-if="notes.error" class="text-sm text-danger" role="alert" data-testid="note-detail-error">
             {{ notes.error.message }}
             <span v-if="notes.saveState === 'conflict'"> — this note was changed elsewhere; reload to reconcile.</span>
@@ -250,7 +250,7 @@ async function rejectExtraction(): Promise<void> {
              entities side by side; mobile stacks them (list → editor → context). -->
         <div v-if="notes.current" class="grid gap-4 lg:grid-cols-[1fr_320px]">
             <!-- Edit content (Tiptap via the replaceable EditorAdapter) -->
-            <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="note-editor">
+            <section class="surface-primary p-4" data-testid="note-editor">
                 <EditorHost
                     :document="editorDocument"
                     :read-only="false"
@@ -259,13 +259,11 @@ async function rejectExtraction(): Promise<void> {
                     @ready="onEditorReady"
                     @change="onEditorChange"
                 />
-                <button type="button" class="mt-2 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="note-save-now" @click="flush">
-                    Save now
-                </button>
+                <KButton variant="secondary" class="mt-2" data-testid="note-save-now" @click="flush">Save now</KButton>
             </section>
 
             <!-- Linked-knowledge context sidebar (design.md §33) -->
-            <aside class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="note-links">
+            <aside class="surface-secondary p-4" data-testid="note-links">
                 <LinkManager :note-id="notes.current.id" />
             </aside>
         </div>
@@ -273,8 +271,8 @@ async function rejectExtraction(): Promise<void> {
         <!-- Contextual AI (TASK-P17-029): summarize / extract tasks where the
              note lives — never an omnibus AI page; nothing applies without
              explicit acceptance (FR-62). -->
-        <section v-if="notes.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="note-ai">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">AI</div>
+        <section v-if="notes.current" class="surface-secondary p-5" data-testid="note-ai">
+            <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-3">AI</div>
             <AiNotConfiguredNotice v-if="aiGateShown" class="mb-3" />
             <div v-if="aiError" class="text-sm text-danger mb-3" role="alert" data-testid="note-ai-error">{{ aiError }}</div>
             <div v-if="extractedCount !== null" class="text-sm text-success mb-3" role="status" data-testid="note-ai-extract-done">
@@ -287,35 +285,23 @@ async function rejectExtraction(): Promise<void> {
                 <KButton variant="secondary" :disabled="aiBusy" data-testid="note-ai-extract" @click="runNoteAi('extract')">
                     Extract tasks with AI
                 </KButton>
-                <span v-if="aiBusy" class="text-sm text-gray-500 self-center" data-testid="note-ai-stage">{{ aiStage }}</span>
+                <span v-if="aiBusy" class="text-sm text-text-muted self-center" data-testid="note-ai-stage">{{ aiStage }}</span>
             </div>
 
-            <div v-if="summaryView" class="mt-3 border border-gray-200 dark:border-gray-700 rounded-sm p-3" data-testid="note-ai-summary">
+            <div v-if="summaryView" class="mt-3 border border-border/30 rounded-sm p-3" data-testid="note-ai-summary">
                 <p class="text-sm">{{ summaryView.summary }}</p>
-                <ul class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300 mt-2" data-testid="note-ai-summary-points">
+                <ul class="list-disc list-inside text-sm mt-2" data-testid="note-ai-summary-points">
                     <li v-for="(point, i) in summaryView.key_points" :key="i">{{ point }}</li>
                 </ul>
             </div>
 
-            <div v-if="extractionView" class="mt-3 border border-gray-200 dark:border-gray-700 rounded-sm p-3" data-testid="note-ai-extraction-proposal">
+            <div v-if="extractionView" class="mt-3 border border-border/30 rounded-sm p-3" data-testid="note-ai-extraction-proposal">
                 <ul class="list-disc list-inside text-sm" data-testid="note-ai-extraction-tasks">
                     <li v-for="(task, i) in extractionView.tasks" :key="i">{{ task.title }}</li>
                 </ul>
                 <div class="flex gap-2 mt-3">
-                    <button
-                        type="button"
-                        class="text-sm border border-[var(--color-primary)] text-[var(--color-primary)] rounded-sm px-3 py-1 disabled:opacity-50"
-                        :disabled="aiBusy"
-                        data-testid="note-ai-extract-accept"
-                        @click="acceptExtraction"
-                    >Add {{ extractionView.tasks.length }} {{ extractionView.tasks.length === 1 ? 'task' : 'tasks' }}</button>
-                    <button
-                        type="button"
-                        class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 disabled:opacity-50"
-                        :disabled="aiBusy"
-                        data-testid="note-ai-extract-reject"
-                        @click="rejectExtraction"
-                    >Reject</button>
+                    <KButton variant="secondary" :disabled="aiBusy" data-testid="note-ai-extract-accept" @click="acceptExtraction">Add {{ extractionView.tasks.length }} {{ extractionView.tasks.length === 1 ? 'task' : 'tasks' }}</KButton>
+                    <KButton variant="ghost" :disabled="aiBusy" data-testid="note-ai-extract-reject" @click="rejectExtraction">Reject</KButton>
                 </div>
             </div>
         </section>

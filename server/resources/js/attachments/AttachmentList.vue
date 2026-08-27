@@ -106,13 +106,13 @@ function allowedHint(): string {
 </script>
 
 <template>
-    <div class="mt-4 border border-gray-300 dark:border-gray-700 rounded-sm p-3" data-testid="attachments">
+    <div class="surface-supporting mt-4" data-testid="attachments">
         <div class="flex items-center justify-between mb-2">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Evidence attachments</div>
-            <span v-if="rules" class="text-xs text-gray-400">{{ attachments.length }}/{{ rules.max_per_task }}</span>
+            <div class="text-xs uppercase text-text-muted">Evidence attachments</div>
+            <span v-if="rules" class="text-xs text-text-muted">{{ attachments.length }}/{{ rules.max_per_task }}</span>
         </div>
 
-        <div v-if="loading" class="text-sm text-gray-500 dark:text-gray-400" data-testid="attachments-loading">
+        <div v-if="loading" class="text-sm text-text-muted" data-testid="attachments-loading">
             Loading…
         </div>
 
@@ -121,33 +121,28 @@ function allowedHint(): string {
         </div>
 
         <template v-else>
-            <ul v-if="attachments.length > 0" class="space-y-1">
-                <li v-for="attachment in attachments" :key="attachment.id" class="flex items-center justify-between gap-2 text-sm" data-testid="attachment-item">
+            <ul v-if="attachments.length > 0" class="space-y-2">
+                <li
+                    v-for="attachment in attachments"
+                    :key="attachment.id"
+                    class="surface-metadata flex items-center justify-between gap-2 border-b border-border/20 pb-2 last:border-b-0 last:pb-0 text-sm"
+                    data-testid="attachment-item"
+                >
                     <div class="min-w-0">
-                        <div class="truncate text-gray-700 dark:text-gray-300">{{ attachment.filename }}</div>
-                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ formatBytes(attachment.size_bytes) }} · {{ attachment.mime_type }}</div>
+                        <div class="truncate font-medium">{{ attachment.filename }}</div>
+                        <div class="text-xs text-text-muted">{{ formatBytes(attachment.size_bytes) }} · {{ attachment.mime_type }}</div>
                     </div>
                     <div class="flex shrink-0 gap-2">
-                        <button
-                            type="button"
-                            class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-0.5 text-xs"
-                            data-testid="attachment-download"
-                            @click="download(attachment)"
-                        >
+                        <KButton variant="ghost" data-testid="attachment-download" @click="download(attachment)">
                             Download
-                        </button>
-                        <button
-                            type="button"
-                            class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-0.5 text-xs"
-                            data-testid="attachment-delete"
-                            @click="remove(attachment)"
-                        >
+                        </KButton>
+                        <KButton variant="ghost" data-testid="attachment-delete" @click="remove(attachment)">
                             Delete
-                        </button>
+                        </KButton>
                     </div>
                 </li>
             </ul>
-            <p v-else class="text-sm text-gray-500 dark:text-gray-400" data-testid="attachments-empty">
+            <p v-else class="text-sm text-text-muted" data-testid="attachments-empty">
                 No attachments yet.
             </p>
 
@@ -155,11 +150,14 @@ function allowedHint(): string {
                 {{ uploadError }}
             </div>
 
-            <div v-if="props.completed" class="mt-3">
+            <!-- Upload row (L3 secondary container; opacity tracks the input's
+                 disabled state — no dead disabled:* on the label) -->
+            <div v-if="props.completed" class="surface-secondary p-3 mt-3 flex flex-col gap-2">
                 <label
-                    class="inline-block border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm cursor-pointer disabled:opacity-50"
-                    :class="uploading ? 'opacity-50' : ''"
+                    class="inline-flex items-center gap-1.5 border-2 border-border bg-bg rounded-sm px-4 py-2 min-h-[44px] text-sm cursor-pointer shadow-rest hover:shadow-hover active:translate-x-0.5 active:translate-y-0.5 active:shadow-active"
+                    :class="{ 'opacity-50': uploading }"
                 >
+                    <KIcon name="plus" :size="16" />
                     {{ uploading ? 'Uploading…' : 'Add attachment' }}
                     <input
                         type="file"
@@ -170,9 +168,9 @@ function allowedHint(): string {
                         @change="onFileSelected"
                     />
                 </label>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ allowedHint() }}</p>
+                <p class="text-xs text-text-muted">{{ allowedHint() }}</p>
             </div>
-            <p v-else class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <p v-else class="mt-2 text-xs text-text-muted">
                 Attachments can be added once the task is completed.
             </p>
         </template>

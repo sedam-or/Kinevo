@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRechargeStore } from './store';
 import type { ApiError } from '../api/types';
+import KButton from '../components/KButton.vue';
 
 const props = defineProps<{
     date?: string;
@@ -102,81 +103,80 @@ async function complete(): Promise<void> {
 </script>
 
 <template>
+    <!-- Embedded L5 metadata strip of the NOW hero: same structure, paddings
+         and typography as ExecutionTimer so they read as siblings. -->
     <div
         v-if="canStart || recharge.hasActive || ratioLabel !== ''"
-        class="border border-success/40 rounded-sm p-3"
+        class="surface-metadata border-t border-border pt-3"
         data-testid="recharge-timer"
     >
-        <div class="flex items-center justify-between">
-            <div>
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Recharge</div>
-                <div class="text-sm text-gray-600 dark:text-gray-400">Recovery · 15 min recommended</div>
-                <div v-if="ratioLabel" class="text-xs text-gray-500 dark:text-gray-400" data-testid="recharge-ratio">{{ ratioLabel }}</div>
+        <div class="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+            <div class="min-w-0">
+                <div class="font-mono text-xs uppercase tracking-widest text-text-muted">Recharge</div>
+                <div class="mt-0.5 truncate text-sm text-text-muted">Recovery · 15 min recommended</div>
+                <div v-if="ratioLabel" class="text-xs text-text-muted tabular-nums" data-testid="recharge-ratio">{{ ratioLabel }}</div>
             </div>
             <div class="text-right">
-                <div v-if="recharge.hasActive" class="text-lg font-mono tabular-nums" data-testid="recharge-elapsed">
-                    {{ formatSeconds(recharge.elapsedSeconds) }}
-                </div>
-                <div v-if="recharge.hasActive" class="text-xs text-gray-500 dark:text-gray-400" data-testid="recharge-status">{{ statusLabel }}</div>
-                <div v-else-if="recharge.cueAvailable" class="text-sm text-success" data-testid="recharge-cue">Time to recharge</div>
+                <template v-if="recharge.hasActive">
+                    <div class="font-mono text-xl leading-none tabular-nums" data-testid="recharge-elapsed">
+                        {{ formatSeconds(recharge.elapsedSeconds) }}
+                    </div>
+                    <div class="mt-1 text-xs uppercase tracking-wide text-text-muted" data-testid="recharge-status">{{ statusLabel }}</div>
+                </template>
+                <div v-else-if="recharge.cueAvailable" class="text-sm font-medium text-success" data-testid="recharge-cue">Time to recharge</div>
             </div>
         </div>
 
-        <div v-if="actionError" class="text-sm text-danger" role="alert" data-testid="recharge-error">
+        <div v-if="actionError" class="mt-2 text-sm text-danger" role="alert" data-testid="recharge-error">
             {{ actionError.message }}
         </div>
 
-        <div class="flex gap-2 mt-2">
-            <button
+        <div class="mt-3 flex flex-wrap gap-2">
+            <KButton
                 v-if="canStart"
-                type="button"
-                class="border border-success/50 rounded-sm px-3 py-1 text-sm"
+                variant="secondary"
                 :disabled="busy || recharge.loading"
                 data-testid="recharge-start"
                 @click="start"
             >
                 Start recharge
-            </button>
-            <button
+            </KButton>
+            <KButton
                 v-if="canPause"
-                type="button"
-                class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                variant="secondary"
                 :disabled="busy"
                 data-testid="recharge-pause"
                 @click="pause"
             >
                 Pause
-            </button>
-            <button
+            </KButton>
+            <KButton
                 v-if="canResume"
-                type="button"
-                class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                variant="secondary"
                 :disabled="busy"
                 data-testid="recharge-resume"
                 @click="resume"
             >
                 Resume
-            </button>
-            <button
+            </KButton>
+            <KButton
                 v-if="canFinish"
-                type="button"
-                class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                variant="secondary"
                 :disabled="busy"
                 data-testid="recharge-complete"
                 @click="complete"
             >
                 Complete
-            </button>
-            <button
+            </KButton>
+            <KButton
                 v-if="canFinish"
-                type="button"
-                class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                variant="ghost"
                 :disabled="busy"
                 data-testid="recharge-abandon"
                 @click="abandon"
             >
                 Abandon
-            </button>
+            </KButton>
         </div>
     </div>
 </template>

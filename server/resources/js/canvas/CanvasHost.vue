@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, toRaw, watch } from 'vue';
 import { ExcalidrawCanvasAdapter } from './ExcalidrawCanvasAdapter';
 import type { CanvasAdapter, CanvasScene, CanvasTheme } from './types';
+import KButton from '../components/KButton.vue';
 
 const props = withDefaults(
     defineProps<{
@@ -151,18 +152,18 @@ onBeforeUnmount(() => {
         ></div>
 
         <!-- Loading editor… entry state (design.md §34.2) -->
-        <div v-if="editorState === 'loading'" class="absolute inset-0 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400" data-testid="canvas-editor-loading">
+        <div v-if="editorState === 'loading'" class="absolute inset-0 flex items-center justify-center bg-surface text-sm text-text-muted" data-testid="canvas-editor-loading">
             Loading editor…
         </div>
 
         <!-- Failure surface — never a blank page (design.md §34.2/§35) -->
-        <div v-else-if="editorState === 'error'" class="absolute inset-0 border border-dashed border-danger rounded-sm px-4 py-4 text-sm" data-testid="canvas-editor-error" role="alert" aria-live="polite">
+        <div v-else-if="editorState === 'error'" class="absolute inset-0 border-2 border-dashed border-danger rounded-sm px-4 py-4 text-sm" data-testid="canvas-editor-error" role="alert" aria-live="polite">
             <p class="font-medium">Canvas editor failed to initialize.</p>
-            <p v-if="mountError" class="text-gray-600 dark:text-gray-400">{{ mountError }}</p>
-            <p class="mt-1 text-gray-600 dark:text-gray-400">Your saved canvas data is still safe.</p>
+            <p v-if="mountError" class="text-text-muted">{{ mountError }}</p>
+            <p class="mt-1 text-text-muted">Your saved canvas data is still safe.</p>
             <div class="flex gap-2 mt-3">
-                <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="canvas-editor-retry" @click="retry">Retry</button>
-                <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="canvas-editor-readonly" @click="openReadOnly">Open read-only</button>
+                <KButton variant="secondary" class="!min-h-0 !px-3 !py-1 text-sm" data-testid="canvas-editor-retry" @click="retry">Retry</KButton>
+                <KButton variant="secondary" class="!min-h-0 !px-3 !py-1 text-sm" data-testid="canvas-editor-readonly" @click="openReadOnly">Open read-only</KButton>
             </div>
         </div>
     </div>

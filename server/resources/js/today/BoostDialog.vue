@@ -3,6 +3,8 @@ import { onMounted, ref, watch } from 'vue';
 import { useToastStore } from '../components/toast';
 import { todayApi } from './api';
 import { useFocusTrap } from '../shell/focus-trap';
+import KButton from '../components/KButton.vue';
+import KIcon from '../components/KIcon.vue';
 import type { BoostSetupResponse, SetBoostTargetResponse } from './types';
 
 /**
@@ -91,17 +93,27 @@ function cancel(): void {
 <template>
     <div
         ref="root"
-        class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-[var(--z-modal)]"
+        class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-[2px]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="boost-title"
         data-testid="boost-dialog"
     >
-        <div class="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-sm p-6 max-w-md w-full">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Boost Mode</div>
-            <h2 id="boost-title" class="text-lg font-semibold mb-1">Holiday Boost Target</h2>
+        <div class="surface-hero w-full max-w-md p-6 sm:p-8">
+            <header class="mb-5 flex items-start gap-4 border-b border-border/20 pb-3">
+                <div class="min-w-0">
+                    <div class="font-mono text-[11px] uppercase tracking-widest text-text-muted">Boost Mode</div>
+                    <h2 id="boost-title" class="text-lg font-bold">Holiday Boost Target</h2>
+                </div>
+                <button
+                    type="button"
+                    class="ml-auto rounded-sm p-1 transition-colors hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                    aria-label="Close"
+                    @click="cancel"
+                ><KIcon name="x-mark" :size="18" /></button>
+            </header>
 
-            <div v-if="loading" class="text-sm text-gray-500 dark:text-gray-400 py-4" data-testid="boost-loading">
+            <div v-if="loading" class="py-4 text-sm text-text-muted" data-testid="boost-loading">
                 Loading setup…
             </div>
 
@@ -110,56 +122,45 @@ function cancel(): void {
             </div>
 
             <template v-else-if="setup">
-                <p v-if="setup.recommendation.eligible" class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                <p v-if="setup.recommendation.eligible" class="mb-3 text-sm text-text-muted">
                     Recommendation: set a target around
                     <strong data-testid="boost-recommended">{{ setup.recommendation.recommended_target_percent }}%</strong>
                     of daily capacity. {{ setup.recommendation.reason }}
                 </p>
-                <p v-else class="text-sm text-gray-600 dark:text-gray-400 mb-3" data-testid="boost-recommendation-text">
+                <p v-else class="mb-3 text-sm text-text-muted" data-testid="boost-recommendation-text">
                     {{ setup.recommendation.reason }}
                 </p>
 
                 <div class="flex flex-col gap-3">
-                    <label class="flex flex-col gap-1 text-sm">
+                    <label class="flex flex-col gap-1 text-sm font-semibold">
                         Target (% of daily capacity)
                         <input
                             v-model.number="targetPercent"
                             type="range"
                             min="1"
                             max="100"
-                            class="w-full"
+                            class="w-full accent-primary"
                             data-testid="boost-slider"
                         />
-                        <span class="text-sm" data-testid="boost-percent">{{ targetPercent }}%</span>
+                        <span class="font-mono text-sm font-semibold" data-testid="boost-percent">{{ targetPercent }}%</span>
                     </label>
-                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                    <div class="text-xs text-text-muted">
                         Validity: {{ props.startDate }} to {{ props.endDate }}
                     </div>
-                    <div v-if="warning" class="text-sm text-[#E8A13A]" role="alert" data-testid="boost-warning">
+                    <div v-if="warning" class="block border-l-4 border-warning bg-surface px-3 py-2 text-sm text-warning" role="alert" data-testid="boost-warning">
                         {{ warning }}
                     </div>
                     <div v-if="error" class="text-sm text-danger" role="alert" data-testid="boost-error">
                         {{ error }}
                     </div>
 
-                    <div class="flex justify-end gap-2 mt-2">
-                        <button
-                            type="button"
-                            class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
-                            data-testid="boost-cancel"
-                            @click="cancel"
-                        >
+                    <div class="flex justify-end gap-3 pt-1 mt-2">
+                        <KButton variant="ghost" data-testid="boost-cancel" @click="cancel">
                             Cancel
-                        </button>
-                        <button
-                            type="button"
-                            class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm font-medium"
-                            :disabled="busy"
-                            data-testid="boost-save"
-                            @click="save"
-                        >
+                        </KButton>
+                        <KButton variant="primary" :disabled="busy" data-testid="boost-save" @click="save">
                             {{ busy ? 'Saving…' : 'Save Boost Target' }}
-                        </button>
+                        </KButton>
                     </div>
                 </div>
             </template>

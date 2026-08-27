@@ -72,11 +72,11 @@ function dismiss(): void {
     <!-- Block variant: always-visible explanation inside an empty state. -->
     <span
         v-if="variant === 'block' && !dismissed"
-        class="flex flex-col gap-1 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-3"
+        class="flex flex-col gap-1 border border-dashed border-border/30 rounded-sm p-3"
         :data-testid="`feature-help-${id}`"
     >
         <span class="text-sm font-medium">{{ title }}</span>
-        <span class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ body }}</span>
+        <span class="text-xs text-text-muted leading-relaxed">{{ body }}</span>
         <span class="flex justify-end">
             <button
                 type="button"
@@ -93,7 +93,7 @@ function dismiss(): void {
     <span v-else-if="!dismissed" class="relative inline-flex" :data-testid="`feature-help-${id}`">
         <button
             type="button"
-            class="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-text dark:hover:text-text rounded-sm px-1 min-h-[24px] focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+            class="inline-flex items-center gap-1 text-xs text-text-muted hover:text-text rounded-sm px-1 min-h-[24px] focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             :aria-expanded="open"
             :aria-controls="`feature-help-${id}-panel`"
             :data-testid="`feature-help-${id}-trigger`"
@@ -112,7 +112,7 @@ function dismiss(): void {
             :data-testid="`feature-help-${id}-panel`"
         >
             <span class="text-sm font-medium">{{ title }}</span>
-            <span class="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{{ body }}</span>
+            <span class="text-xs text-text-muted leading-relaxed">{{ body }}</span>
             <span class="flex justify-end">
                 <button
                     type="button"

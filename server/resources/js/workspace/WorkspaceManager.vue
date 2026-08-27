@@ -5,6 +5,10 @@ import { useWorkspaceStore } from './store';
 import UpgradeNotice from '../saas/UpgradeNotice.vue';
 import KButton from '../components/KButton.vue';
 import KIcon from '../components/KIcon.vue';
+import KInput from '../components/KInput.vue';
+
+// Native controls follow the theme tokens (TASK-P17-013).
+const fieldClass = 'border border-border rounded-sm bg-bg px-3 py-2 text-sm text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus';
 
 /**
  * Workspace management surface (TASK-P19-010): create, edit (name/description/
@@ -71,22 +75,22 @@ async function saveEdit(): Promise<void> {
 </script>
 
 <template>
-    <div ref="root" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="ws-title" data-testid="workspace-manager" @click.self="emit('close')">
-        <div class="w-full max-w-md rounded-sm border border-gray-300 dark:border-gray-600 bg-surface shadow-rest p-4 flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
-            <div class="flex items-center justify-between">
-                <h2 id="ws-title" class="font-semibold">Workspaces</h2>
-                <button type="button" class="text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200" data-testid="workspace-manager-close" aria-label="Close" @click="emit('close')"><KIcon name="x-mark" :size="16" /></button>
+    <div ref="root" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="ws-title" data-testid="workspace-manager" @click.self="emit('close')">
+        <div class="surface-hero w-full max-w-md p-6 sm:p-8 flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-border/20 pb-3">
+                <h2 id="ws-title" class="text-lg font-bold">Workspaces</h2>
+                <button type="button" class="ml-auto rounded-sm p-1 transition-colors hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="workspace-manager-close" aria-label="Close" @click="emit('close')"><KIcon name="x-mark" :size="18" /></button>
             </div>
 
             <!-- Create -->
             <UpgradeNotice v-if="limitHit" :message="limitHit.message" :plan="limitHit.plan" :entitlement="limitHit.entitlement" data-testid="workspace-upgrade-notice" />
-            <form class="flex flex-col gap-2 border-b border-gray-200 dark:border-gray-700 pb-4" @submit.prevent="submitCreate" data-testid="workspace-create-form">
-                <label class="text-sm flex flex-col gap-1">
+            <form class="flex flex-col gap-2 border-b border-border/20 pb-4" @submit.prevent="submitCreate" data-testid="workspace-create-form">
+                <label class="text-sm font-semibold flex flex-col gap-1">
                     New workspace
-                    <input v-model="newName" type="text" placeholder="e.g. Research" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="workspace-create-name" />
+                    <KInput v-model="newName" type="text" placeholder="e.g. Research" data-testid="workspace-create-name" />
                 </label>
                 <div class="flex items-center gap-2">
-                    <select v-model="newType" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1.5 text-sm" data-testid="workspace-create-type" aria-label="Workspace type">
+                    <select v-model="newType" :class="fieldClass + ' py-1.5'" data-testid="workspace-create-type" aria-label="Workspace type">
                         <option value="personal">Personal</option>
                         <option value="work">Work</option>
                         <option value="research">Research</option>
@@ -100,28 +104,28 @@ async function saveEdit(): Promise<void> {
 
             <!-- Active list -->
             <ul class="flex flex-col gap-3" data-testid="workspace-list">
-                <li v-for="w in store.workspaces" :key="w.id" class="rounded-sm border border-gray-200 dark:border-gray-700 p-3 flex flex-col gap-2" :data-testid="`workspace-row-${w.slug}`">
+                <li v-for="w in store.workspaces" :key="w.id" class="surface-metadata border-b border-border/20 pb-3 flex flex-col gap-2 last:border-b-0" :data-testid="`workspace-row-${w.slug}`">
                     <template v-if="editingId === w.id">
-                        <input v-model="editName" type="text" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm" data-testid="workspace-edit-name" />
-                        <textarea v-model="editDescription" rows="2" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm" data-testid="workspace-edit-description" placeholder="Description"></textarea>
+                        <KInput v-model="editName" type="text" data-testid="workspace-edit-name" />
+                        <textarea v-model="editDescription" rows="2" :class="fieldClass" data-testid="workspace-edit-description" placeholder="Description"></textarea>
                         <div class="flex gap-2">
-                            <button type="button" class="text-sm underline" data-testid="workspace-edit-save" @click="saveEdit">Save</button>
-                            <button type="button" class="text-sm underline text-gray-500" @click="editingId = null">Cancel</button>
+                            <KButton variant="secondary" :disabled="busy" data-testid="workspace-edit-save" @click="saveEdit">Save</KButton>
+                            <KButton variant="ghost" data-testid="workspace-edit-cancel" @click="editingId = null">Cancel</KButton>
                         </div>
                     </template>
                     <template v-else>
                         <div class="flex items-center justify-between gap-2">
                             <span class="font-medium text-sm flex items-center gap-2">
-                                <span v-if="w.accent" class="inline-block h-2 w-2 rounded-full" :style="{ backgroundColor: w.accent }" aria-hidden="true" />
+                                <span v-if="w.accent" class="inline-block h-2 w-2 rounded-full border border-border/40" :style="{ backgroundColor: w.accent }" aria-hidden="true" />
                                 {{ w.name }}
-                                <span v-if="w.is_default" class="text-xs text-gray-500 dark:text-gray-400" data-testid="workspace-row-default">(default)</span>
+                                <span v-if="w.is_default" class="text-xs text-text-muted" data-testid="workspace-row-default">(default)</span>
                             </span>
-                            <span class="text-xs uppercase text-gray-400">{{ w.type }}</span>
+                            <span class="font-mono text-[10px] uppercase tracking-widest text-text-muted">{{ w.type }}</span>
                         </div>
-                        <p v-if="w.description" class="text-xs text-gray-500 dark:text-gray-400">{{ w.description }}</p>
+                        <p v-if="w.description" class="text-xs text-text-muted">{{ w.description }}</p>
                         <div class="flex flex-wrap gap-2 text-sm">
-                            <button type="button" class="underline" :data-testid="`workspace-edit-${w.slug}`" @click="startEdit(w.id, w.name, w.description)">Rename</button>
-                            <button v-if="!w.is_default" type="button" class="underline" :data-testid="`workspace-default-${w.slug}`" @click="store.setDefault(w.id)">Set default</button>
+                            <button type="button" class="underline hover:text-primary" :data-testid="`workspace-edit-${w.slug}`" @click="startEdit(w.id, w.name, w.description)">Rename</button>
+                            <button v-if="!w.is_default" type="button" class="underline hover:text-primary" :data-testid="`workspace-default-${w.slug}`" @click="store.setDefault(w.id)">Set default</button>
                             <button v-if="!w.is_default" type="button" class="underline text-danger" :data-testid="`workspace-archive-${w.slug}`" @click="store.archive(w.id)">Archive</button>
                         </div>
                     </template>
@@ -129,11 +133,11 @@ async function saveEdit(): Promise<void> {
             </ul>
 
             <!-- Archived -->
-            <div v-if="store.archived.length > 0" class="flex flex-col gap-2 border-t border-gray-200 dark:border-gray-700 pt-3">
-                <h3 class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Archived</h3>
-                <div v-for="w in store.archived" :key="w.id" class="flex items-center justify-between gap-2 text-sm" :data-testid="`workspace-archived-${w.slug}`">
+            <div v-if="store.archived.length > 0" class="flex flex-col gap-2 border-t border-border/20 pt-3">
+                <h3 class="font-mono text-[11px] uppercase tracking-widest text-text-muted">Archived</h3>
+                <div v-for="w in store.archived" :key="w.id" class="surface-metadata flex items-center justify-between gap-2 text-sm" :data-testid="`workspace-archived-${w.slug}`">
                     <span>{{ w.name }}</span>
-                    <button type="button" class="underline" :data-testid="`workspace-restore-${w.slug}`" @click="store.restore(w.id)">Restore</button>
+                    <button type="button" class="underline hover:text-primary" :data-testid="`workspace-restore-${w.slug}`" @click="store.restore(w.id)">Restore</button>
                 </div>
             </div>
         </div>

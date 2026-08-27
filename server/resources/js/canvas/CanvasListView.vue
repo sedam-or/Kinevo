@@ -2,6 +2,9 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useCanvasStore } from './store';
 import AiNotConfiguredNotice from '../ai/AiNotConfiguredNotice.vue';
+import KButton from '../components/KButton.vue';
+import KInput from '../components/KInput.vue';
+import KIcon from '../components/KIcon.vue';
 import { useAiSettingsStore } from '../ai/store';
 import { aiApi, type AiProposal } from '../ai/api';
 
@@ -108,20 +111,23 @@ async function rejectSuggestion(): Promise<void> {
 </script>
 
 <template>
-    <div class="flex flex-col gap-4" data-testid="canvas-view">
-        <h1 class="text-xl font-semibold">Canvas</h1>
+    <div class="flex flex-col gap-6" data-testid="canvas-view">
+        <div>
+            <h1 class="text-xl font-semibold">Canvas</h1>
+            <p class="text-sm text-text-muted">Visual thinking boards for planning and synthesis.</p>
+        </div>
 
-        <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="canvas-create">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">New canvas</div>
+        <section class="surface-primary p-5" data-testid="canvas-create">
+            <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-3">New canvas</div>
             <form class="flex gap-2" @submit.prevent="createCanvas">
-                <div v-if="createError" class="text-sm text-danger" role="alert">{{ createError }}</div>
-                <input v-model="createForm.title" type="text" placeholder="Canvas title" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2 text-sm flex-1" data-testid="canvas-create-title" />
-                <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" data-testid="canvas-create-submit">Create</button>
+                <div v-if="createError" class="w-full text-sm text-danger" role="alert">{{ createError }}</div>
+                <KInput v-model="createForm.title" placeholder="Canvas title" class="flex-1" data-testid="canvas-create-title" />
+                <KButton type="submit" variant="primary" data-testid="canvas-create-submit">Create</KButton>
             </form>
         </section>
 
-        <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="canvas-suggest">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Suggest structure with AI</div>
+        <section class="surface-secondary p-5" data-testid="canvas-suggest">
+            <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-3">Suggest structure with AI</div>
             <AiNotConfiguredNotice v-if="suggestGateShown" class="mb-3" />
             <div v-if="suggestError" class="text-sm text-danger mb-3" role="alert" data-testid="canvas-suggest-error">{{ suggestError }}</div>
             <form class="flex flex-col gap-2" @submit.prevent="suggestStructure">
@@ -129,56 +135,66 @@ async function rejectSuggestion(): Promise<void> {
                     v-model="suggestForm.prompt"
                     rows="2"
                     placeholder="Describe what this board is for — e.g. 'Plan a 3-day conference: talks, sponsors, logistics'"
-                    class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2 text-sm"
+                    class="border border-border rounded-sm px-3 py-2 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
                     data-testid="canvas-suggest-prompt"
                 ></textarea>
-                <button
+                <KButton
                     type="submit"
-                    class="self-start border border-[var(--color-primary)] text-[var(--color-primary)] rounded-sm px-4 py-1.5 font-medium disabled:opacity-50"
+                    variant="primary"
+                    class="self-start"
                     :disabled="suggesting || suggestForm.prompt.trim() === ''"
                     data-testid="canvas-suggest-submit"
-                >{{ suggesting ? 'Thinking…' : 'Suggest structure' }}</button>
+                >{{ suggesting ? 'Thinking…' : 'Suggest structure' }}</KButton>
             </form>
             <!-- Nothing is created until acceptance (FR-62). -->
-            <div v-if="suggestionView" class="mt-3 border border-gray-200 dark:border-gray-700 rounded-sm p-3" data-testid="canvas-suggest-proposal">
+            <div v-if="suggestionView" class="mt-3 surface-primary p-3" data-testid="canvas-suggest-proposal">
                 <div class="text-sm font-medium">{{ suggestionView.title }}</div>
-                <ul class="list-disc list-inside text-sm text-gray-700 dark:text-gray-300 mt-1" data-testid="canvas-suggest-sections">
+                <ul class="list-disc list-inside text-sm mt-1" data-testid="canvas-suggest-sections">
                     <li v-for="(section, i) in suggestionView.sections" :key="i">
                         {{ section.name }}<template v-if="section.description"> — {{ section.description }}</template>
                     </li>
                 </ul>
                 <div class="flex gap-2 mt-3">
-                    <button
+                    <KButton
                         type="button"
-                        class="text-sm border border-[var(--color-primary)] text-[var(--color-primary)] rounded-sm px-3 py-1 disabled:opacity-50"
+                        variant="primary"
                         :disabled="suggesting"
                         data-testid="canvas-suggest-accept"
                         @click="acceptSuggestion"
-                    >Create canvas</button>
-                    <button
+                    >Create canvas</KButton>
+                    <KButton
                         type="button"
-                        class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 disabled:opacity-50"
+                        variant="ghost"
                         :disabled="suggesting"
                         data-testid="canvas-suggest-reject"
                         @click="rejectSuggestion"
-                    >Reject</button>
+                    >Reject</KButton>
                 </div>
             </div>
         </section>
 
-        <div v-if="canvas.loading" class="text-sm text-gray-500" data-testid="canvas-loading">Loading…</div>
+        <div v-if="canvas.loading" class="text-sm text-text-muted" data-testid="canvas-loading">Loading…</div>
         <div v-if="canvas.error" class="text-sm text-danger" role="alert" data-testid="canvas-error">{{ canvas.error.message }}</div>
 
-        <section data-testid="canvas-list">
-            <div v-if="canvas.canvases.length === 0 && !canvas.loading" class="text-sm text-gray-500 dark:text-gray-400">No canvases yet.</div>
+        <section data-testid="canvas-list" class="surface-supporting flex flex-col">
+            <div
+                v-if="canvas.canvases.length === 0 && !canvas.loading"
+                class="border-2 border-dashed border-border/40 rounded-sm p-6 text-center text-sm text-text-muted"
+            >No canvases yet.</div>
             <article
                 v-for="item in canvas.canvases"
                 :key="item.id"
-                class="border border-gray-300 dark:border-gray-600 rounded-sm p-3 mb-2"
+                class="surface-metadata border-b border-border/20 py-3"
                 data-testid="canvas-item"
             >
-                <button type="button" class="font-medium text-left" data-testid="canvas-open" @click="emit('select', item.id)">
+                <button
+                    type="button"
+                    class="group inline-flex items-center gap-1 font-medium text-left rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                    data-testid="canvas-open"
+                    @click="emit('select', item.id)"
+                >
                     {{ item.title }}
+                    <KIcon name="arrow-up-right" :size="14" class="opacity-40 transition-opacity group-hover:opacity-100" />
                 </button>
             </article>
         </section>

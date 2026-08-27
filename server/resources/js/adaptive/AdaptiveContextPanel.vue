@@ -62,21 +62,21 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-    <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="adaptive-context">
+    <section class="border border-border rounded-sm p-4" data-testid="adaptive-context">
         <div class="flex items-center gap-2 mb-2">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Context check-in</div>
+            <div class="font-mono text-xs uppercase tracking-widest text-text-muted">Context check-in</div>
             <FeatureHelp id="adaptive-context" title="Adaptive Context" body="A one-tap energy check-in. Kinevo uses it to bend today's plan around how you actually feel — and to warn you before burnout builds up." />
         </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+        <p class="text-sm text-text-muted mb-3">
             How's your energy right now? One tap is enough — no questionnaire.
         </p>
 
         <div v-if="adaptive.burnout && adaptive.burnout.level !== 'none'" class="text-sm mb-3" data-testid="burnout-signal">
             <span class="font-medium">Protect your capacity.</span>
-            <span class="text-gray-600 dark:text-gray-400"> {{ adaptive.burnout.reason }}</span>
+            <span class="text-text-muted"> {{ adaptive.burnout.reason }}</span>
         </div>
 
-        <div v-if="localError" class="text-sm text-[#D20812]" role="alert" data-testid="adaptive-error">{{ localError }}</div>
+        <div v-if="localError" class="text-sm text-danger" role="alert" data-testid="adaptive-error">{{ localError }}</div>
 
         <form class="flex flex-wrap items-end gap-3" @submit.prevent="submit">
             <fieldset>
@@ -86,10 +86,10 @@ async function submit(): Promise<void> {
                         v-for="level in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
                         :key="level"
                         type="button"
-                        class="h-8 w-8 text-xs border border-gray-300 dark:border-gray-600 rounded-sm"
+                        class="h-8 w-8 text-xs border border-border rounded-sm"
                         :class="
                             form.energyLevel === level
-                                ? 'bg-[var(--color-primary)] text-[var(--color-primary-contrast)] border-[var(--color-border)]'
+                                ? 'bg-primary text-primary-contrast'
                                 : 'bg-bg text-text'
                         "
                         :aria-pressed="form.energyLevel === level"
@@ -99,7 +99,7 @@ async function submit(): Promise<void> {
                         {{ level }}
                     </button>
                 </div>
-                <span class="text-xs text-gray-500 dark:text-gray-400 mt-1 block" data-testid="adaptive-energy-label">
+                <span class="text-xs text-text-muted mt-1 block" data-testid="adaptive-energy-label">
                     {{ form.energyLevel === null ? 'Pick a level' : `${energyLabel(form.energyLevel)} (${form.energyLevel}/10)` }}
                 </span>
             </fieldset>

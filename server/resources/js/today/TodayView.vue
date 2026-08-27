@@ -12,6 +12,7 @@ import BreakModeDialog from './BreakModeDialog.vue';
 import BoostDialog from './BoostDialog.vue';
 import { taskStates } from '../visualstate/derive';
 import KButton from '../components/KButton.vue';
+import KInput from '../components/KInput.vue';
 import FeatureHelp from '../components/FeatureHelp.vue';
 import { useToastStore } from '../components/toast';
 import WhyThis from '../components/WhyThis.vue';
@@ -323,38 +324,50 @@ async function endBoostTarget(): Promise<void> {
 <template>
     <div class="flex flex-col gap-4" data-testid="today-view">
         <!-- Header: date + sync state -->
-        <header class="flex items-center justify-between">
+        <header class="flex items-start justify-between gap-4">
             <div>
                 <h1 class="text-xl font-semibold" data-testid="today-date">{{ formattedDate }}</h1>
                 <p class="text-sm flex items-center gap-2">
                     <span
                         v-if="workspaces.activeWorkspace"
-                        class="inline-flex items-center gap-1 rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs"
+                        class="inline-flex items-center gap-1 rounded-sm border border-border/40 bg-surface px-2 py-0.5 text-xs"
                         data-testid="today-workspace-chip"
                     >
                         <span v-if="workspaces.activeWorkspace.accent" class="inline-block h-2 w-2 rounded-full" :style="{ backgroundColor: workspaces.activeWorkspace.accent }" aria-hidden="true" />
                         {{ workspaces.activeWorkspace.name }}
                     </span>
-                    <span v-else class="text-gray-500 dark:text-gray-400" data-testid="today-sync">Status: {{ statusLabel }}</span>
+                    <span v-else class="text-text-muted" data-testid="today-sync">Status: {{ statusLabel }}</span>
                 </p>
             </div>
-            <!-- Capacity feedback (design.md §22): a load bar; click reveals details. -->
-            <div class="flex flex-col items-end gap-1" data-testid="today-capacity" :class="{ 'cursor-pointer': today.capacity }" @click="today.capacity && (capacityRevealed = !capacityRevealed)">
-                <div class="flex items-center gap-2 text-sm">
+            <!-- Capacity feedback (design.md §22): a load bar; the reveal row is a
+                 real <button> so keyboard users can expand the details too. -->
+            <div class="flex flex-col items-end gap-1">
+                <div class="flex items-center gap-1 text-sm">
                     <FeatureHelp id="capacity" title="Capacity" body="How full today is compared with the time you actually have. Overload means the plan needs a cut before the day cuts it for you." />
-                    <span :class="capacityStatus === 'overload' ? 'text-danger' : 'text-gray-600 dark:text-gray-300'">
-                        {{ today.capacity ? `${capacityPercent}% of capacity used` : 'No capacity data' }}
-                    </span>
-                    <span v-if="today.capacity?.overload_minutes" class="text-xs text-danger">({{ today.capacity.overload_minutes }}m overload)</span>
+                    <button
+                        type="button"
+                        class="flex flex-col items-end gap-1 rounded-sm text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                        data-testid="today-capacity"
+                        :aria-expanded="today.capacity ? capacityRevealed : undefined"
+                        aria-controls="today-capacity-details"
+                        @click="today.capacity && (capacityRevealed = !capacityRevealed)"
+                    >
+                        <span class="inline-flex items-center gap-2 text-sm">
+                            <span :class="capacityStatus === 'overload' ? 'text-danger' : 'text-text'">
+                                {{ today.capacity ? `${capacityPercent}% of capacity used` : 'No capacity data' }}
+                            </span>
+                            <span v-if="today.capacity?.overload_minutes" class="text-xs text-danger">({{ today.capacity.overload_minutes }}m overload)</span>
+                        </span>
+                        <span v-if="today.capacity" class="block w-40 h-2 rounded-sm border border-border/40 bg-surface overflow-hidden" role="img" :aria-label="`${capacityPercent}% capacity used`">
+                            <span
+                                class="block h-full transition-all"
+                                :class="capacityStatus === 'overload' ? 'bg-primary' : 'bg-info'"
+                                :style="{ width: `${capacityPercent}%` }"
+                            ></span>
+                        </span>
+                    </button>
                 </div>
-                <div v-if="today.capacity" class="w-40 h-2 rounded-sm bg-gray-200 dark:bg-gray-700 overflow-hidden" role="img" :aria-label="`${capacityPercent}% capacity used`">
-                    <div
-                        class="h-full transition-all"
-                        :class="capacityStatus === 'overload' ? 'bg-primary' : 'bg-info'"
-                        :style="{ width: `${capacityPercent}%` }"
-                    ></div>
-                </div>
-                <dl v-if="today.capacity && capacityRevealed" class="text-xs text-gray-600 dark:text-gray-400 text-right space-y-0.5">
+                <dl v-if="today.capacity && capacityRevealed" id="today-capacity-details" class="text-xs text-text-muted text-right space-y-0.5 tabular-nums">
                     <div><dt class="inline">Scheduled load:</dt> <dd class="inline">{{ today.capacity.scheduled_minutes }}m</dd></div>
                     <div><dt class="inline">Available capacity:</dt> <dd class="inline">{{ today.capacity.available_minutes }}m</dd></div>
                     <div v-if="today.capacity.overload_minutes"><dt class="inline">Overload:</dt> <dd class="inline">{{ today.capacity.overload_minutes }}m</dd></div>
@@ -363,16 +376,17 @@ async function endBoostTarget(): Promise<void> {
         </header>
 
         <!-- Loading / error -->
-        <div v-if="today.loading" class="text-sm text-gray-500" data-testid="today-loading">Loading Today…</div>
+        <div v-if="today.loading" class="text-sm text-text-muted" data-testid="today-loading">Loading Today…</div>
         <div v-if="today.error" class="text-sm text-danger" role="alert" data-testid="today-error">{{ today.error.message }}</div>
 
-        <!-- Emergency Pause recovery banner (FR-07): the week is exceptional. -->
+        <!-- Emergency Pause recovery banner (FR-07): the week is exceptional.
+             Shared banner pattern: left accent bar + open tint surface. -->
         <section
             v-if="today.pause"
-            class="border border-gray-300 dark:border-gray-600 rounded-sm p-4 bg-gray-100 dark:bg-gray-800"
+            class="rounded-sm border-2 border-border border-l-4 border-l-info bg-surface p-4"
             data-testid="recovery-banner"
         >
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Recovery week</div>
+            <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-1">Recovery week</div>
             <p class="text-sm">
                 This week is tagged as an exceptional recovery period
                 ({{ today.pause.week_start }} to {{ today.pause.week_end }}). Notifications are suppressed and this
@@ -383,91 +397,89 @@ async function endBoostTarget(): Promise<void> {
         <!-- Break Mode banner (FR-36/FR-49): an active break covers this week. -->
         <section
             v-if="today.breakPeriod"
-            class="border border-gray-300 dark:border-gray-600 rounded-sm p-4 bg-gray-100 dark:bg-gray-800"
+            class="rounded-sm border-2 border-border border-l-4 border-l-success bg-surface p-4"
             data-testid="break-banner"
         >
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Break Mode</div>
+            <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-1">Break Mode</div>
             <p class="text-sm">
                 You are on break ({{ today.breakPeriod.start_date }} to {{ today.breakPeriod.end_date }}).
                 Notifications are suppressed and the covered weeks are excluded from capacity estimates.
             </p>
-            <div class="mt-3 flex items-center justify-between gap-2">
-                <span class="text-sm text-gray-600 dark:text-gray-400">End the break to resume scheduling.</span>
-                <button
-                    type="button"
-                    class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+                <span class="text-sm text-text-muted">End the break to resume scheduling.</span>
+                <KButton
+                    variant="primary"
                     :disabled="endBreakBusy"
                     data-testid="end-break-button"
                     @click="endBreak"
                 >
                     {{ endBreakBusy ? 'Ending…' : 'End Break' }}
-                </button>
+                </KButton>
             </div>
-            <div class="mt-3 border-t border-gray-300 dark:border-gray-600 pt-3">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Boost Mode (FR-37/FR-38)</div>
+            <div class="mt-3 border-t border-border pt-3">
+                <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-1">Boost Mode (FR-37/FR-38)</div>
                 <p v-if="boostMessage" class="text-sm" data-testid="boost-message">{{ boostMessage }}</p>
                 <p v-else-if="boostError" class="text-sm text-danger" role="alert" data-testid="boost-error">{{ boostError }}</p>
-                <div class="flex justify-end gap-2 mt-2">
-                    <button
-                        type="button"
-                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                <div class="flex flex-wrap justify-end gap-2 mt-2">
+                    <KButton
+                        variant="secondary"
                         data-testid="boost-mode-button"
                         @click="openBoostDialog"
                     >
                         Boost Mode
-                    </button>
-                    <button
-                        type="button"
-                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
+                    </KButton>
+                    <KButton
+                        variant="secondary"
                         data-testid="end-boost-button"
                         @click="endBoostTarget"
                     >
                         End Boost
-                    </button>
+                    </KButton>
                 </div>
             </div>
         </section>
 
-        <!-- NOW card (design.md §12.2: highest-priority surface — thick border, offset shadow, large title/time) -->
+        <!-- NOW card (design.md §12.2: the flagship hero — L1 surface-hero,
+             thick border + offset shadow at rest; never animates on hover). -->
         <section
             v-if="currentEvent"
-            class="border-2 border-gray-300 dark:border-gray-600 rounded-sm p-5 shadow-[4px_4px_0_rgba(0,0,0,0.06)] dark:shadow-[4px_4px_0_rgba(255,255,255,0.06)]"
-            :class="{ 'border-[var(--color-primary)] dark:border-[var(--color-primary)]': currentEvent.locked }"
+            class="surface-hero p-5 sm:p-6"
+            :class="{ 'border-primary': currentEvent.locked }"
             data-testid="now-card"
         >
-            <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Now</div>
-            <div class="flex items-center justify-between gap-4">
-                <div class="min-w-0">
-                    <div class="text-lg font-semibold leading-snug" data-testid="now-title">{{ currentEvent.task?.title ?? 'Untitled' }}</div>
-                    <div class="text-sm text-gray-600 dark:text-gray-400">
-                        {{ formatTime(currentEvent.assignment.start_at) }} – {{ formatTime(currentEvent.assignment.end_at) }}
-                        · {{ formatDuration(currentEvent.assignment.duration_minutes) }}
-                    </div>
-                    <div v-if="contextLabel(currentEvent)" class="text-sm text-gray-600 dark:text-gray-400">{{ contextLabel(currentEvent) }}</div>
-                    <div class="flex gap-2 mt-1 text-xs">
-                        <VisualStateBadge v-for="s in nowStates" :key="s" :state="s" />
-                        <!-- Workflow continuity (TASK-P17-002): the executing task
-                             links back to the goal it serves. -->
-                        <button
-                            v-if="currentEvent.task?.goal_id"
-                            type="button"
-                            class="underline text-gray-600 dark:text-gray-300 hover:text-[var(--color-text)]"
-                            data-testid="now-goal-link"
-                            @click="shell.setView('goals', currentEvent.task!.goal_id!)"
-                        >
-                            Goal <KIcon name="arrow-up-right" :size="14" />
-                        </button>
-                    </div>
-                    <!-- FR-63: expandable scheduling explanation, collapsed by
-                         default so the NOW card stays uncluttered (P17-015). -->
-                    <WhyThis
-                        v-if="currentEvent.task"
-                        class="mt-1"
-                        :task="{ priority_tier: currentEvent.task.priority_tier, due_at: currentEvent.task.due_at, estimated_minutes: currentEvent.task.estimated_minutes }"
-                        :assignment="currentEvent.assignment"
-                        :energy-note="adaptive.latest?.energy_level != null ? `Latest energy check-in (${adaptive.latest.energy_level}/10) informed today's ordering.` : null"
-                    />
-                </div>
+            <div class="font-mono text-xs uppercase tracking-widest text-text-muted">NOW</div>
+            <h2 class="mt-1 text-2xl font-bold leading-snug tracking-tight break-words" data-testid="now-title">{{ currentEvent.task?.title ?? 'Untitled' }}</h2>
+            <div class="mt-1 text-sm text-text-muted tabular-nums">
+                {{ formatTime(currentEvent.assignment.start_at) }} – {{ formatTime(currentEvent.assignment.end_at) }}
+                · {{ formatDuration(currentEvent.assignment.duration_minutes) }}
+            </div>
+            <div v-if="contextLabel(currentEvent)" class="text-sm text-text-muted">{{ contextLabel(currentEvent) }}</div>
+            <div class="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                <VisualStateBadge v-for="s in nowStates" :key="s" :state="s" />
+                <!-- Workflow continuity (TASK-P17-002): the executing task
+                     links back to the goal it serves. Kept as a text-link. -->
+                <button
+                    v-if="currentEvent.task?.goal_id"
+                    type="button"
+                    class="underline text-text-muted hover:text-text rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                    data-testid="now-goal-link"
+                    @click="shell.setView('goals', currentEvent.task!.goal_id!)"
+                >
+                    Goal <KIcon name="arrow-up-right" :size="14" />
+                </button>
+            </div>
+            <!-- FR-63: expandable scheduling explanation, collapsed by
+                 default so the NOW card stays uncluttered (P17-015). -->
+            <WhyThis
+                v-if="currentEvent.task"
+                class="mt-2"
+                :task="{ priority_tier: currentEvent.task.priority_tier, due_at: currentEvent.task.due_at, estimated_minutes: currentEvent.task.estimated_minutes }"
+                :assignment="currentEvent.assignment"
+                :energy-note="adaptive.latest?.energy_level != null ? `Latest energy check-in (${adaptive.latest.energy_level}/10) informed today's ordering.` : null"
+            />
+            <!-- Execution / Recharge read as embedded L5 metadata strips of the
+                 hero (unified structure across both timers). -->
+            <div class="mt-4 flex flex-col gap-2">
                 <ExecutionTimer
                     v-if="currentEvent.task"
                     :task-id="currentEvent.task.id"
@@ -475,21 +487,20 @@ async function endBoostTarget(): Promise<void> {
                     data-testid="now-execution"
                     @completed="onExecutionCompleted"
                 />
+                <RechargeTimer
+                    :date="today.date ?? props.date"
+                    data-testid="now-recharge"
+                    @completed="onRechargeCompleted"
+                />
             </div>
-            <RechargeTimer
-                class="mt-3"
-                :date="today.date ?? props.date"
-                data-testid="now-recharge"
-                @completed="onRechargeCompleted"
-            />
-            <div class="mt-3 border-t border-gray-200 dark:border-gray-700 pt-3 flex flex-wrap items-center justify-between gap-2">
-                <div class="text-sm text-gray-600 dark:text-gray-400">
+            <div class="mt-4 border-t border-border pt-3 flex flex-wrap items-center justify-between gap-2">
+                <div class="text-sm text-text-muted">
                     <span v-if="miniPauseMessage" data-testid="mini-pause-message">{{ miniPauseMessage }}</span>
                     <span v-else>Move today's remaining tasks to tomorrow.</span>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <KButton
-                        variant="secondary"
+                        variant="primary"
                         :disabled="miniPauseBusy"
                         data-testid="mini-pause-button"
                         @click="miniPause"
@@ -512,23 +523,23 @@ async function endBoostTarget(): Promise<void> {
                     </KButton>
                 </div>
             </div>
-            <div v-if="miniPauseError" class="text-sm text-danger" role="alert" data-testid="mini-pause-error">
+            <div v-if="miniPauseError" class="mt-2 text-sm text-danger" role="alert" data-testid="mini-pause-error">
                 {{ miniPauseError }}
             </div>
-            <div v-if="emergencyMessage" class="text-sm text-gray-600 dark:text-gray-400 mt-2" data-testid="emergency-pause-message">
+            <div v-if="emergencyMessage" class="mt-2 text-sm text-text-muted" data-testid="emergency-pause-message">
                 {{ emergencyMessage }}
             </div>
-            <div v-if="emergencyError" class="text-sm text-danger" role="alert" data-testid="emergency-pause-error">
+            <div v-if="emergencyError" class="mt-2 text-sm text-danger" role="alert" data-testid="emergency-pause-error">
                 {{ emergencyError }}
             </div>
-            <div v-if="breakMessage" class="text-sm text-gray-600 dark:text-gray-400 mt-2" data-testid="break-message">
+            <div v-if="breakMessage" class="mt-2 text-sm text-text-muted" data-testid="break-message">
                 {{ breakMessage }}
             </div>
-            <div v-if="breakError" class="text-sm text-danger" role="alert" data-testid="break-error">
+            <div v-if="breakError" class="mt-2 text-sm text-danger" role="alert" data-testid="break-error">
                 {{ breakError }}
             </div>
         </section>
-        <section v-else-if="today.hasData" class="flex flex-col gap-2 text-sm text-gray-500 dark:text-gray-400 border border-dashed border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="no-now">
+        <section v-else-if="today.hasData" class="flex flex-col gap-2 rounded-sm border border-dashed border-border/40 bg-transparent p-4 text-sm text-text-muted" data-testid="no-now">
             <span>No task in progress right now.</span>
             <FeatureHelp
                 id="today-flow"
@@ -539,15 +550,20 @@ async function endBoostTarget(): Promise<void> {
         </section>
 
         <!-- NEXT -->
-        <section v-if="nextEvent" class="text-sm rounded-sm transition-shadow" :class="nextEmphasis ? 'ring-2 ring-[var(--color-primary)] p-2' : 'p-2'" data-testid="next-card">
-            <span class="uppercase text-xs text-gray-500 dark:text-gray-400 mr-2">Next</span>
-            {{ nextEvent.task?.title ?? 'Untitled' }} at {{ formatTime(nextEvent.assignment.start_at) }}
+        <section
+            v-if="nextEvent"
+            class="surface-secondary text-sm p-3 transition-shadow"
+            :class="{ 'ring-2': nextEmphasis }"
+            data-testid="next-card"
+        >
+            <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-0.5">Next</div>
+            <div class="font-medium">{{ nextEvent.task?.title ?? 'Untitled' }} at {{ formatTime(nextEvent.assignment.start_at) }}</div>
         </section>
 
         <!-- Timeline -->
-        <section class="relative border border-gray-300 dark:border-gray-600 rounded-sm p-4 min-h-32" data-testid="today-timeline">
+        <section class="relative border border-border rounded-sm bg-bg p-4 min-h-32" data-testid="today-timeline">
             <div class="flex items-center gap-2 mb-2">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Timeline</div>
+                <div class="font-mono text-xs uppercase tracking-widest text-text-muted">Timeline</div>
                 <FeatureHelp id="hard-landscape" title="Hard Landscape" body="Fixed commitments — appointments, travel, sacred anchors — that block the timeline. Kinevo schedules around them; they never move on their own." />
             </div>
 
@@ -555,7 +571,7 @@ async function endBoostTarget(): Promise<void> {
             <div
                 v-for="hl in today.hardLandscape"
                 :key="hl.id"
-                class="absolute top-8 bottom-8 rounded-sm bg-gray-200 dark:bg-gray-700 opacity-60"
+                class="absolute top-8 bottom-8 rounded-sm bg-surface opacity-60"
                 :style="landscapePosition(hl)"
                 :title="hl.title ?? 'Hard landscape'"
                 data-testid="timeline-landscape"
@@ -565,7 +581,7 @@ async function endBoostTarget(): Promise<void> {
             <div
                 v-for="(slot, i) in today.emptySlots"
                 :key="i"
-                class="absolute top-8 h-2 bg-green-200 dark:bg-green-800 rounded-sm"
+                class="absolute top-8 h-2 rounded-sm border border-dashed border-border/40 bg-transparent"
                 :style="slotPosition(slot)"
                 :title="`Empty: ${formatTime(slot.start)}–${formatTime(slot.end)}`"
                 data-testid="timeline-empty"
@@ -575,8 +591,8 @@ async function endBoostTarget(): Promise<void> {
             <div
                 v-for="e in sortedEvents"
                 :key="e.assignment.id"
-                class="absolute top-12 rounded-sm px-2 py-1 overflow-hidden text-xs"
-                :class="e.locked ? 'bg-blue-200 dark:bg-blue-800' : e.conflict ? 'bg-danger-tint text-danger' : 'bg-gray-100 dark:bg-gray-800'"
+                class="absolute top-12 rounded-sm border bg-surface-raised text-text px-2 py-1 overflow-hidden text-xs"
+                :class="e.locked ? 'border-primary' : e.conflict ? 'border-danger bg-danger-tint text-danger' : 'border-border'"
                 :style="eventPosition(e)"
                 :title="`${e.task?.title ?? 'Untitled'} ${formatTime(e.assignment.start_at)}–${formatTime(e.assignment.end_at)}`"
                 data-testid="timeline-event"
@@ -584,7 +600,7 @@ async function endBoostTarget(): Promise<void> {
                 {{ formatTime(e.assignment.start_at) }} {{ e.task?.title ?? 'Untitled' }}
             </div>
 
-            <div class="absolute bottom-2 left-4 right-4 flex justify-between text-[10px] text-gray-600 dark:text-gray-400">
+            <div class="absolute bottom-2 left-4 right-4 flex justify-between text-[10px] text-text-muted tabular-nums">
                 <span>06:00</span>
                 <span>12:00</span>
                 <span>18:00</span>
@@ -596,11 +612,11 @@ async function endBoostTarget(): Promise<void> {
              Strict hierarchy per design.md §104: NOW → NEXT → Timeline →
              context; nothing above competes with the execution hub. -->
         <section v-if="today.events.length > 0" class="flex items-center gap-3" data-testid="today-progress">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 shrink-0">Today's progress</div>
-            <div class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-sm overflow-hidden" aria-hidden="true">
-                <div class="h-full bg-[var(--color-primary)] transition-all" :style="{ width: progressPercent + '%' }"></div>
+            <div class="font-mono text-xs uppercase tracking-widest text-text-muted shrink-0">Today's progress</div>
+            <div class="flex-1 h-2 rounded-sm border border-border/40 bg-surface overflow-hidden" aria-hidden="true">
+                <div class="h-full bg-primary transition-all" :style="{ width: progressPercent + '%' }"></div>
             </div>
-            <span class="text-xs text-gray-600 dark:text-gray-400 tabular-nums" data-testid="today-progress-count">
+            <span class="text-xs text-text-muted tabular-nums" data-testid="today-progress-count">
                 {{ completedCount }}/{{ today.events.length }} done
             </span>
         </section>
@@ -608,19 +624,23 @@ async function endBoostTarget(): Promise<void> {
         <!-- Lightweight adaptive-context check-in (design.md §23) -->
         <AdaptiveContextPanel v-if="!today.loading && !today.error && today.date" />
 
-        <!-- Quick Capture -->
-        <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="quick-capture">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Quick Capture</div>
+        <!-- Quick Capture: an open L4 supporting group, never a box. -->
+        <section class="surface-supporting" data-testid="quick-capture">
+            <h2 class="font-mono text-xs uppercase tracking-widest text-text-muted mb-3">Quick Capture</h2>
             <form class="flex flex-col gap-3" @submit.prevent="quickCapture">
                 <div v-if="quickError" class="text-sm text-danger" role="alert">{{ quickError }}</div>
                 <label class="flex flex-col gap-1 text-sm">
                     Title
-                    <input v-model="quickCaptureForm.title" type="text" required class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="qc-title" />
+                    <KInput v-model="quickCaptureForm.title" type="text" required data-testid="qc-title" />
                 </label>
                 <div class="flex gap-3">
                     <label class="flex flex-col gap-1 text-sm">
                         Priority
-                        <select v-model.number="quickCaptureForm.priorityTier" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="qc-priority">
+                        <select
+                            v-model.number="quickCaptureForm.priorityTier"
+                            class="rounded-sm border border-border bg-bg px-3 py-2 text-text text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                            data-testid="qc-priority"
+                        >
                             <option :value="1">High</option>
                             <option :value="2">Medium</option>
                             <option :value="3">Low</option>
@@ -628,7 +648,15 @@ async function endBoostTarget(): Promise<void> {
                     </label>
                     <label class="flex flex-col gap-1 text-sm">
                         Duration (min)
-                        <input v-model.number="quickCaptureForm.durationMinutes" type="number" min="1" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="qc-duration" />
+                        <!-- Number input stays native: v-model.number coercion must
+                             keep sending an integer payload to the API. -->
+                        <input
+                            v-model.number="quickCaptureForm.durationMinutes"
+                            type="number"
+                            min="1"
+                            class="rounded-sm border border-border bg-bg px-3 py-2 text-text text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                            data-testid="qc-duration"
+                        />
                     </label>
                 </div>
                 <KButton type="submit" variant="primary" data-testid="qc-submit">

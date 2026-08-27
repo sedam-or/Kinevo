@@ -2,6 +2,8 @@
 import { computed, onMounted, ref } from 'vue';
 import { todayApi } from './api';
 import { useFocusTrap } from '../shell/focus-trap';
+import KButton from '../components/KButton.vue';
+import KIcon from '../components/KIcon.vue';
 import type { EmergencyPauseResponse } from './types';
 
 /**
@@ -135,23 +137,34 @@ function cancel(): void {
 </script>
 
 <template>
-    <div ref="root" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="ep-title" data-testid="emergency-pause-dialog" @click.self="cancel">
-        <div class="w-full max-w-lg border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-900 p-4 shadow-lg">
-            <h2 class="text-lg font-semibold" data-testid="ep-title">Emergency Pause</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+    <div ref="root" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-bg/80 p-4 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="ep-title" data-testid="emergency-pause-dialog" @click.self="cancel">
+        <div class="surface-hero w-full max-w-lg p-6 sm:p-8">
+            <header class="mb-5 flex items-start gap-4 border-b border-border/20 pb-3">
+                <div class="min-w-0">
+                    <div class="font-mono text-[11px] uppercase tracking-widest text-text-muted">Recovery week</div>
+                    <h2 id="ep-title" class="text-lg font-bold" data-testid="ep-title">Emergency Pause</h2>
+                </div>
+                <button
+                    type="button"
+                    class="ml-auto rounded-sm p-1 transition-colors hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                    aria-label="Close"
+                    @click="cancel"
+                ><KIcon name="x-mark" :size="18" /></button>
+            </header>
+            <p class="text-sm text-text-muted">
                 Tag the week <span class="font-mono" data-testid="ep-week">{{ weekLabel }}</span> as an exceptional recovery
                 period. Tasks you keep stay in place; every other eligible task moves to the same weekday next week.
             </p>
 
-            <div v-if="loading" class="text-sm text-gray-500 mt-3" data-testid="ep-loading">Loading this week&rsquo;s tasks…</div>
+            <div v-if="loading" class="mt-3 text-sm text-text-muted" data-testid="ep-loading">Loading this week&rsquo;s tasks…</div>
             <div v-if="loadError" class="text-sm text-danger mt-3" role="alert" data-testid="ep-load-error">{{ loadError }}</div>
 
-            <ul v-if="!loading && !loadError" class="mt-3 max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-sm">
-                <li v-for="c in candidates" :key="c.taskId" class="flex items-center gap-3 px-3 py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+            <ul v-if="!loading && !loadError" class="mt-3 max-h-64 overflow-y-auto rounded-sm border border-border/20 divide-y divide-border/20">
+                <li v-for="c in candidates" :key="c.taskId" class="flex items-center gap-3 px-3 py-2">
                     <input
                         :id="`ep-keep-${c.taskId}`"
                         type="checkbox"
-                        class="shrink-0"
+                        class="shrink-0 accent-primary"
                         :checked="keepTaskIds.has(c.taskId)"
                         :disabled="busy"
                         data-testid="ep-keep"
@@ -159,38 +172,26 @@ function cancel(): void {
                     />
                     <label :for="`ep-keep-${c.taskId}`" class="flex-1 text-sm" :data-testid="`ep-candidate-${c.taskId}`">
                         <span class="font-medium">{{ c.title }}</span>
-                        <span class="block text-xs text-gray-500 dark:text-gray-400">
+                        <span class="block text-xs text-text-muted">
                             {{ c.date }} {{ c.start.slice(11, 16) }}–{{ c.end.slice(11, 16) }}
                             <span v-if="c.locked"> · locked (never auto-moved)</span>
                         </span>
                     </label>
                 </li>
-                <li v-if="candidates.length === 0" class="px-3 py-2 text-sm text-gray-500" data-testid="ep-empty">
+                <li v-if="candidates.length === 0" class="px-3 py-2 text-sm text-text-muted" data-testid="ep-empty">
                     No tasks scheduled this week.
                 </li>
             </ul>
 
             <div v-if="error" class="text-sm text-danger mt-3" role="alert" data-testid="ep-error">{{ error }}</div>
 
-            <div class="mt-4 flex justify-end gap-2">
-                <button
-                    type="button"
-                    class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm"
-                    :disabled="busy"
-                    data-testid="ep-cancel"
-                    @click="cancel"
-                >
+            <div class="mt-4 flex justify-end gap-3 pt-1">
+                <KButton variant="secondary" :disabled="busy" data-testid="ep-cancel" @click="cancel">
                     Cancel
-                </button>
-                <button
-                    type="button"
-                    class="rounded-sm px-3 py-1 text-sm bg-[#1f2937] text-white dark:bg-gray-200 dark:text-gray-900"
-                    :disabled="busy || loading || loadError !== null"
-                    data-testid="ep-confirm"
-                    @click="confirm"
-                >
+                </KButton>
+                <KButton variant="danger" :disabled="busy || loading || loadError !== null" data-testid="ep-confirm" @click="confirm">
                     {{ busy ? 'Pausing…' : 'Confirm Emergency Pause' }}
-                </button>
+                </KButton>
             </div>
         </div>
     </div>

@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useKnowledgeLinkStore } from '../knowledge/store';
 import { KNOWLEDGE_LINK_TYPES, type KnowledgeLinkType, type KnowledgeTargetType } from '../knowledge/types';
 import type { ApiError } from '../api/types';
+import KButton from '../components/KButton.vue';
 
 const props = defineProps<{
     canvasId: number;
@@ -144,41 +145,39 @@ function linkLabel(type: KnowledgeTargetType, id: number): string {
 
 <template>
     <div data-testid="canvas-context">
-        <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Context</div>
+        <div class="font-mono text-xs uppercase tracking-widest text-text-muted mb-2">Context</div>
 
         <div v-if="links.error && !formError" class="text-sm text-danger" role="alert" data-testid="canvas-context-load-error">
             {{ links.error.message }}
         </div>
 
-        <ul v-if="links.links.length > 0" class="space-y-1 mb-3">
+        <ul v-if="links.links.length > 0" class="mb-3">
             <li
                 v-for="link in links.links"
                 :key="link.id"
-                class="flex items-center justify-between gap-2 border border-gray-200 dark:border-gray-700 rounded-sm px-3 py-2"
+                class="surface-metadata flex items-center justify-between gap-2 py-2 border-b border-border/20"
                 data-testid="canvas-context-item"
             >
                 <span class="text-sm">
                     <span class="font-medium">{{ targetLabel(link.target_type) }}:</span>
-                    <span class="text-gray-600 dark:text-gray-300">{{ linkLabel(link.target_type, link.target_id) }}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400"> · {{ link.link_type.replace('_', ' ') }}</span>
+                    <span>{{ linkLabel(link.target_type, link.target_id) }}</span>
+                    <span class="font-mono text-[11px] text-text-muted"> · {{ link.link_type.replace('_', ' ') }}</span>
                 </span>
-                <button
-                    type="button"
-                    class="text-xs border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-0.5"
+                <KButton
+                    variant="ghost"
+                    class="!min-h-0 !px-2 !py-0.5 text-xs shrink-0"
                     :data-testid="`canvas-context-remove-${link.id}`"
                     @click="removeLink(link.id)"
-                >
-                    Remove
-                </button>
+                >Remove</KButton>
             </li>
         </ul>
-        <div v-else class="text-sm text-gray-500 dark:text-gray-400 mb-3" data-testid="canvas-context-empty">No context links yet.</div>
+        <div v-else class="text-sm text-text-muted mb-3" data-testid="canvas-context-empty">No context links yet.</div>
 
         <form class="flex flex-col gap-2" @submit.prevent="createLink">
             <div class="flex flex-wrap gap-2">
-                <label class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
+                <label class="flex flex-col gap-1 text-xs text-text-muted">
                     Type
-                    <select v-model="form.targetType" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm" data-testid="canvas-context-target-type">
+                    <select v-model="form.targetType" class="border border-border rounded-sm px-2 py-1 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="canvas-context-target-type">
                         <option value="">Select type…</option>
                         <option v-for="t in CANVAS_TARGET_TYPES" :key="t" :value="t">
                             {{ targetLabel(t) }}
@@ -186,25 +185,25 @@ function linkLabel(type: KnowledgeTargetType, id: number): string {
                     </select>
                 </label>
 
-                <label v-if="form.targetType === 'milestone'" class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
+                <label v-if="form.targetType === 'milestone'" class="flex flex-col gap-1 text-xs text-text-muted">
                     Goal
-                    <select v-model="form.goalId" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm" data-testid="canvas-context-goal">
+                    <select v-model="form.goalId" class="border border-border rounded-sm px-2 py-1 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="canvas-context-goal">
                         <option value="">Select goal…</option>
                         <option v-for="g in links.goals" :key="g.id" :value="g.id">{{ g.title }}</option>
                     </select>
                 </label>
 
-                <label v-if="form.targetType !== ''" class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
+                <label v-if="form.targetType !== ''" class="flex flex-col gap-1 text-xs text-text-muted">
                     Entity
-                    <select v-model="form.targetId" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm" data-testid="canvas-context-target-id">
+                    <select v-model="form.targetId" class="border border-border rounded-sm px-2 py-1 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="canvas-context-target-id">
                         <option value="">Select {{ targetLabel(form.targetType) }}…</option>
                         <option v-for="o in targetOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
                     </select>
                 </label>
 
-                <label v-if="form.targetType !== ''" class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
+                <label v-if="form.targetType !== ''" class="flex flex-col gap-1 text-xs text-text-muted">
                     Link type
-                    <select v-model="form.linkType" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1 text-sm" data-testid="canvas-context-link-type">
+                    <select v-model="form.linkType" class="border border-border rounded-sm px-2 py-1 text-sm bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="canvas-context-link-type">
                         <option value="">Select link type…</option>
                         <option v-for="t in KNOWLEDGE_LINK_TYPES" :key="t" :value="t">{{ t.replace('_', ' ') }}</option>
                     </select>
@@ -214,14 +213,15 @@ function linkLabel(type: KnowledgeTargetType, id: number): string {
             <div v-if="formError" class="text-sm text-danger" role="alert" data-testid="canvas-context-form-error">{{ formError }}</div>
 
             <div class="flex items-center gap-2">
-                <button
+                <KButton
                     type="submit"
+                    variant="ghost"
+                    class="self-start !min-h-0 !px-3 !py-1 text-sm"
                     :disabled="!canSubmit || submitting"
-                    class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-1 text-sm font-medium disabled:opacity-50"
                     data-testid="canvas-context-submit"
                 >
                     {{ submitting ? 'Linking…' : 'Add context' }}
-                </button>
+                </KButton>
             </div>
         </form>
     </div>

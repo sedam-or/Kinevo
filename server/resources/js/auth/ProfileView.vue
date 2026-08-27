@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { useAuthStore } from './store';
 import { ALLOWED_LOCALES, ALLOWED_TIMEZONES, ALLOWED_WEEK_START_DAYS, type ApiError } from './types';
+import KButton from '../components/KButton.vue';
 
 const auth = useAuthStore();
 
@@ -49,7 +50,7 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-    <form class="max-w-md flex flex-col gap-4" @submit.prevent="submit" data-testid="profile-form">
+    <form class="surface-secondary p-6 max-w-md flex flex-col gap-4" @submit.prevent="submit" data-testid="profile-form">
         <h1 class="text-xl font-semibold">Settings</h1>
 
         <div v-if="saved" class="text-sm text-success" data-testid="profile-saved">
@@ -61,32 +62,32 @@ async function submit(): Promise<void> {
 
         <label class="flex flex-col gap-1 text-sm">
             Display name
-            <input v-model="form.displayName" type="text" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="profile-display-name" />
+            <input v-model="form.displayName" type="text" class="border border-border rounded-sm px-3 py-2 bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="profile-display-name" />
         </label>
 
         <label class="flex flex-col gap-1 text-sm">
             Locale
-            <select v-model="form.locale" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="profile-locale">
+            <select v-model="form.locale" class="border border-border rounded-sm px-3 py-2 bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="profile-locale">
                 <option v-for="l in ALLOWED_LOCALES" :key="l" :value="l">{{ l }}</option>
             </select>
         </label>
 
         <label class="flex flex-col gap-1 text-sm">
             Timezone
-            <select v-model="form.timezone" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="profile-timezone">
+            <select v-model="form.timezone" class="border border-border rounded-sm px-3 py-2 bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="profile-timezone">
                 <option v-for="t in ALLOWED_TIMEZONES" :key="t" :value="t">{{ t }}</option>
             </select>
         </label>
 
         <label class="flex flex-col gap-1 text-sm">
             Week starts on
-            <select v-model="form.weekStartDay" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="profile-week-start">
+            <select v-model="form.weekStartDay" class="border border-border rounded-sm px-3 py-2 bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="profile-week-start">
                 <option v-for="d in ALLOWED_WEEK_START_DAYS" :key="d" :value="d">{{ d }}</option>
             </select>
         </label>
 
-        <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" data-testid="profile-submit">
+        <KButton type="submit" variant="primary" data-testid="profile-submit">
             Save settings
-        </button>
+        </KButton>
     </form>
 </template>

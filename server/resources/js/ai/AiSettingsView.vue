@@ -35,19 +35,19 @@ const catalog = ref<AiProviderCatalogEntry[]>([]);
 // Single source of truth: render the server's canonical state (P17-007),
 // never re-derive availability from raw fields in components.
 const STATUS_VIEW: Record<AiStatusState, { tone: string; label: string }> = {
-    disabled: { tone: 'text-gray-600 dark:text-gray-400', label: 'AI is off.' },
+    disabled: { tone: 'text-text-muted', label: 'AI is off.' },
     not_configured: {
-        tone: 'text-warning dark:text-yellow-400',
+        tone: 'text-warning',
         label: 'Not configured — finish provider setup to use AI.',
     },
     configured: {
-        tone: 'text-gray-600 dark:text-gray-400',
+        tone: 'text-text-muted',
         label: 'Saved — not yet verified.',
     },
-    testing: { tone: 'text-gray-600 dark:text-gray-400', label: 'Testing connection…' },
+    testing: { tone: 'text-text-muted', label: 'Testing connection…' },
     connected: { tone: 'text-success', label: 'Connected.' },
     degraded: {
-        tone: 'text-warning dark:text-yellow-400',
+        tone: 'text-warning',
         label: 'Connected, but slow — responses may lag.',
     },
     unavailable: { tone: 'text-danger', label: 'Provider unreachable.' },
@@ -201,7 +201,7 @@ async function removeKey(): Promise<void> {
 
 <template>
     <div class="max-w-lg flex flex-col gap-4" data-testid="ai-settings-view">
-        <div v-if="store.loading" class="text-sm text-gray-500 dark:text-gray-400" data-testid="ai-settings-loading">Loading…</div>
+        <div v-if="store.loading" class="text-sm text-text-muted" data-testid="ai-settings-loading">Loading…</div>
 
         <template v-else>
             <!-- TASK-P25-009 — Settings → AI Usage, summary-first. -->
@@ -211,49 +211,48 @@ async function removeKey(): Promise<void> {
             <div v-if="formError" class="text-sm text-danger" role="alert" data-testid="ai-settings-error">{{ formError }}</div>
 
             <!-- Section 1 · Runtime Status -->
-            <section class="flex flex-col gap-2" data-testid="ai-section-status">
+            <section class="surface-secondary p-4 flex flex-col gap-2" data-testid="ai-section-status">
                 <h2 class="text-sm font-semibold uppercase tracking-wide">Runtime status</h2>
                 <p class="text-sm flex items-baseline gap-2" :class="statusView.tone" data-testid="ai-status-banner">
                     <span class="font-medium uppercase tracking-wide text-xs" data-testid="ai-status-state">{{ statusState.replaceAll('_', ' ') }}</span>
                     <span>{{ statusView.label }}</span>
                     <span v-if="statusDetail" class="text-xs opacity-80">{{ statusDetail }}</span>
                 </p>
-                <p v-if="verificationNote" class="text-xs text-gray-500 dark:text-gray-400" data-testid="ai-verification-note">{{ verificationNote }}</p>
+                <p v-if="verificationNote" class="text-xs text-text-muted" data-testid="ai-verification-note">{{ verificationNote }}</p>
             </section>
 
             <!-- Section 2 · Provider -->
-            <section class="flex flex-col gap-3" data-testid="ai-section-provider">
+            <section class="surface-secondary p-4 flex flex-col gap-3" data-testid="ai-section-provider">
                 <h2 class="text-sm font-semibold uppercase tracking-wide">Provider</h2>
                 <label class="flex flex-col gap-1 text-sm">
                     Provider
-                    <select v-model="form.provider" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="ai-provider-select">
+                    <select v-model="form.provider" class="border border-border rounded-sm px-3 py-2 bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="ai-provider-select">
                         <option v-for="opt in PROVIDER_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                     </select>
                 </label>
 
                 <label class="flex flex-col gap-1 text-sm">
                     Model
-                    <input v-model="form.model" type="text" placeholder="llama3.1 / gpt-4o-mini" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="ai-model-input" />
+                    <input v-model="form.model" type="text" placeholder="llama3.1 / gpt-4o-mini" class="border border-border rounded-sm px-3 py-2 bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="ai-model-input" />
                 </label>
 
                 <label v-if="capabilities?.supports_remote || capabilities?.supports_local" class="flex flex-col gap-1 text-sm">
                     Base URL
-                    <input v-model="form.baseUrl" type="url" placeholder="http://localhost:11434" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="ai-base-url-input" />
+                    <input v-model="form.baseUrl" type="url" placeholder="http://localhost:11434" class="border border-border rounded-sm px-3 py-2 bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="ai-base-url-input" />
                 </label>
 
                 <div class="flex items-center gap-2 text-sm">
-                    <button
-                        type="button"
-                        class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1.5"
+                    <KButton
+                        variant="secondary"
                         :data-testid="form.enabled ? 'ai-disable-button' : 'ai-enable-button'"
                         @click.prevent="toggleEnabled"
-                    >{{ form.enabled ? 'Disable AI' : 'Enable AI' }}</button>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ form.enabled ? 'AI actions are available.' : 'AI actions are paused.' }}</span>
+                    >{{ form.enabled ? 'Disable AI' : 'Enable AI' }}</KButton>
+                    <span class="text-xs text-text-muted">{{ form.enabled ? 'AI actions are available.' : 'AI actions are paused.' }}</span>
                 </div>
             </section>
 
             <!-- Section 3 · Credential -->
-            <section v-if="form.provider !== 'disabled'" class="flex flex-col gap-3" data-testid="ai-section-credential">
+            <section v-if="form.provider !== 'disabled'" class="surface-secondary p-4 flex flex-col gap-3" data-testid="ai-section-credential">
                 <h2 class="text-sm font-semibold uppercase tracking-wide">API key</h2>
                 <template v-if="needsKey">
                     <SecretField
@@ -262,10 +261,10 @@ async function removeKey(): Promise<void> {
                         :hint="hasStoredKey ? `A key is stored (${storedHint ?? 'masked'}). Enter a new key to replace it.` : null"
                     />
                 </template>
-                <p v-else class="text-sm text-gray-600 dark:text-gray-400" data-testid="ai-ollama-no-key">
+                <p v-else class="text-sm text-text-muted" data-testid="ai-ollama-no-key">
                     This provider does not require an API key.
                 </p>
-                <p v-if="hasStoredKey" class="text-xs text-gray-500 dark:text-gray-400" data-testid="ai-api-key-hint">
+                <p v-if="hasStoredKey" class="text-xs text-text-muted" data-testid="ai-api-key-hint">
                     Stored key: {{ storedHint ?? 'masked' }}
                 </p>
                 <div v-if="hasStoredKey" class="flex gap-2">
@@ -275,7 +274,7 @@ async function removeKey(): Promise<void> {
             </section>
 
             <!-- Section 4 · Connection -->
-            <section class="flex flex-col gap-2" data-testid="ai-section-test">
+            <section class="surface-secondary p-4 flex flex-col gap-2" data-testid="ai-section-test">
                 <h2 class="text-sm font-semibold uppercase tracking-wide">Connection</h2>
                 <KButton type="button" variant="ghost" :disabled="testing" data-testid="ai-test-button" @click.prevent="runTest">
                     {{ testing ? 'Testing…' : 'Test connection' }}
@@ -286,7 +285,7 @@ async function removeKey(): Promise<void> {
             </section>
 
             <!-- Section 5 · Privacy -->
-            <section class="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400" data-testid="ai-section-privacy">
+            <section class="surface-secondary p-4 flex flex-col gap-1 text-xs text-text-muted" data-testid="ai-section-privacy">
                 <h2 class="text-sm font-semibold uppercase tracking-wide">Privacy</h2>
                 <p data-testid="ai-privacy-copy">
                     Your API key is encrypted on the Kinevo server and is never sent back to your browser after saving — only a masked hint is shown.

@@ -12,6 +12,7 @@ import { resolvedTheme } from '../shell/theme';
 import type { CanvasAdapter, CanvasScene, CanvasTheme } from './types';
 import NextActionBanner from '../components/NextActionBanner.vue';
 import KIcon from '../components/KIcon.vue';
+import KButton from '../components/KButton.vue';
 import { resolveCanvasNextAction } from '../next-action';
 
 const props = withDefaults(
@@ -185,11 +186,11 @@ async function conflictRecover(): Promise<void> {
                     :action="canvasNextAction"
                     data-testid="canvas-next-action"
                 />
-                <button type="button" class="shrink-0 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="canvas-back" @click="emit('back')"><KIcon name="arrow-left" :size="16" /> Back</button>
+                <KButton variant="ghost" class="!min-h-0 !px-2 !py-1 text-sm shrink-0" data-testid="canvas-back" @click="emit('back')"><KIcon name="arrow-left" :size="16" /> Back</KButton>
                 <input
                     v-model="title"
                     type="text"
-                    class="min-w-0 max-w-full text-xl font-semibold bg-transparent border border-transparent focus:border-gray-300 dark:focus:border-gray-600 rounded-sm px-2 py-1"
+                    class="min-w-0 max-w-full text-xl font-semibold bg-transparent border border-transparent focus:border-border focus:outline-none rounded-sm px-2 py-1"
                     data-testid="canvas-title-input"
                     @change="saveTitle"
                     @keyup.enter="saveTitle"
@@ -200,25 +201,25 @@ async function conflictRecover(): Promise<void> {
                      announced politely; the badge label is the announced text. -->
                 <span data-testid="canvas-save-state" role="status" aria-live="polite"><VisualStateBadge :state="saveStateBadge" /></span>
                 <!-- Offline next action (P17-016): point at the queued sync. -->
-                <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="canvas-theme-toggle" @click="cycleTheme">
+                <KButton variant="ghost" class="!min-h-0 !px-2 !py-1 text-sm" data-testid="canvas-theme-toggle" @click="cycleTheme">
                     Theme: {{ theme }}
-                </button>
+                </KButton>
                 <label class="flex items-center gap-1 text-sm" data-testid="canvas-readonly-toggle">
                     <input v-model="readOnly" type="checkbox" class="accent-current" />
                     Read-only
                 </label>
-                <button
-                    type="button"
-                    class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1"
+                <KButton
+                    variant="ghost"
+                    class="!min-h-0 !px-2 !py-1 text-sm"
                     data-testid="canvas-archive"
                     @click="confirmArchive = !confirmArchive"
                 >
                     Archive
-                </button>
+                </KButton>
             </div>
         </header>
 
-        <div v-if="canvas.loading" class="text-sm text-gray-500" data-testid="canvas-loading">Loading…</div>
+        <div v-if="canvas.loading" class="text-sm text-text-muted" data-testid="canvas-loading">Loading…</div>
         <div v-if="canvas.error && !canvas.current" class="text-sm text-danger" role="alert" data-testid="canvas-error">
             {{ canvas.error.message }}
         </div>
@@ -230,7 +231,7 @@ async function conflictRecover(): Promise<void> {
             <button type="button" class="ml-2 underline" data-testid="canvas-conflict-reload" @click="conflictRecover">Reload server copy</button>
         </div>
 
-        <section v-if="canvas.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-2" style="height: 60vh" data-testid="canvas-surface">
+        <section v-if="canvas.current" class="border border-border rounded-sm p-2" style="height: 60vh" data-testid="canvas-surface">
             <CanvasHost
                 :scene="scene"
                 :read-only="readOnly"
@@ -241,15 +242,15 @@ async function conflictRecover(): Promise<void> {
             />
         </section>
 
-        <div v-if="confirmArchive" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="canvas-archive-confirm">
+        <div v-if="confirmArchive" class="surface-secondary p-4" data-testid="canvas-archive-confirm">
             <p class="text-sm mb-2">Archive this canvas? It will be hidden from your list.</p>
             <div class="flex gap-2">
-                <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="canvas-archive-cancel" @click="confirmArchive = false">Cancel</button>
-                <button type="button" class="text-sm border border-danger text-danger rounded-sm px-3 py-1" data-testid="canvas-archive-confirm-action" @click="doArchive">Archive</button>
+                <KButton variant="secondary" class="!min-h-0 !px-3 !py-1 text-sm" data-testid="canvas-archive-cancel" @click="confirmArchive = false">Cancel</KButton>
+                <KButton variant="danger" class="!min-h-0 !px-3 !py-1 text-sm" data-testid="canvas-archive-confirm-action" @click="doArchive">Archive</KButton>
             </div>
         </div>
 
-        <section v-if="canvas.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="canvas-context-section">
+        <section v-if="canvas.current" class="border border-border rounded-sm p-4" data-testid="canvas-context-section">
             <CanvasContextPanel :canvas-id="props.canvasId" />
         </section>
     </div>

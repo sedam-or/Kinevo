@@ -76,15 +76,15 @@ function reasonLabel(reason: string): string {
         <h1 class="text-xl font-semibold">Schedule Draft</h1>
 
         <!-- Range + generate -->
-        <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="draft-controls">
+        <section class="surface-secondary p-4" data-testid="draft-controls">
             <div class="flex flex-wrap gap-3 items-end">
                 <label class="flex flex-col gap-1 text-sm">
                     From
-                    <input v-model="range.from" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="draft-from" />
+                    <input v-model="range.from" type="date" class="border border-border bg-bg text-text rounded-sm px-3 py-2 text-sm" data-testid="draft-from" />
                 </label>
                 <label class="flex flex-col gap-1 text-sm">
                     To
-                    <input v-model="range.to" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="draft-to" />
+                    <input v-model="range.to" type="date" class="border border-border bg-bg text-text rounded-sm px-3 py-2 text-sm" data-testid="draft-to" />
                 </label>
                 <KButton variant="primary" type="button" :disabled="sd.busy" data-testid="draft-generate" @click="generate">
                     {{ sd.busy ? 'Generating…' : 'Generate Draft' }}
@@ -98,36 +98,36 @@ function reasonLabel(reason: string): string {
             <div v-if="appliedMessage" class="text-sm text-success" data-testid="draft-applied">{{ appliedMessage }}</div>
 
             <!-- Accepted tasks -->
-            <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="draft-accepted">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Accepted ({{ sd.draft.assignments.length }})</div>
+            <section class="border-l-4 border-success p-4" data-testid="draft-accepted">
+                <div class="text-xs uppercase text-text-muted mb-2">Accepted ({{ sd.draft.assignments.length }})</div>
                 <ul v-if="sd.draft.assignments.length > 0" class="space-y-1">
                     <li v-for="a in sd.draft.assignments" :key="a.task_id" class="text-sm flex items-center justify-between" data-testid="draft-accepted-item">
                         <span>{{ a.title }}</span>
-                        <span class="text-xs text-gray-600 dark:text-gray-400">{{ formatDate(a.start) }} {{ formatTime(a.start) }}–{{ formatTime(a.end) }}</span>
+                        <span class="text-xs font-mono text-text-muted">{{ formatDate(a.start) }} {{ formatTime(a.start) }}–{{ formatTime(a.end) }}</span>
                     </li>
                 </ul>
-                <div v-else class="text-sm text-gray-500 dark:text-gray-400">No tasks accepted.</div>
+                <div v-else class="text-sm text-text-muted">No tasks accepted.</div>
             </section>
 
             <!-- Rejected / unassigned tasks with reason -->
-            <section v-if="sd.draft.unassigned.length > 0" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="draft-rejected">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Not scheduled ({{ sd.draft.unassigned.length }})</div>
+            <section v-if="sd.draft.unassigned.length > 0" class="bg-danger-tint border-l-4 border-danger p-4" data-testid="draft-rejected">
+                <div class="text-xs uppercase text-danger mb-2">Not scheduled ({{ sd.draft.unassigned.length }})</div>
                 <ul class="space-y-1">
-                    <li v-for="u in sd.draft.unassigned" :key="u.task_id" class="text-sm" data-testid="draft-rejected-item">
-                        {{ u.title }} — <span class="text-danger">{{ reasonLabel(u.reason) }}</span>
+                    <li v-for="u in sd.draft.unassigned" :key="u.task_id" class="text-sm text-danger" data-testid="draft-rejected-item">
+                        {{ u.title }} — {{ reasonLabel(u.reason) }}
                     </li>
                 </ul>
             </section>
 
             <!-- Reasoning note -->
-            <p class="text-xs text-gray-500 dark:text-gray-400" data-testid="draft-reasoning">
+            <p class="text-xs text-text-muted" data-testid="draft-reasoning">
                 This plan fits around your Hard Landscape events, locked tasks, deadlines, and your 30% safety reserve.
                 If your schedule changed while you were reviewing, you'll be asked to check the latest plan first.
             </p>
 
             <!-- Scheduler explanation reason codes (FR-63) -->
-            <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-3" data-testid="draft-reason-codes">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-1">Scheduler reason codes</div>
+            <section class="surface-metadata border-t border-border pt-3" data-testid="draft-reason-codes">
+                <div class="text-xs uppercase text-text-muted mb-1">Scheduler reason codes</div>
                 <SchedulerExplanation :codes="SCHEDULER_REASONS.map((r) => r.code)" />
             </section>
 

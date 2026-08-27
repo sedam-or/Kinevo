@@ -4,6 +4,7 @@
  * actions are announced without stealing focus.
  */
 import { useToastStore } from './toast';
+import KIcon from './KIcon.vue';
 
 const toast = useToastStore();
 </script>
@@ -25,12 +26,12 @@ const toast = useToastStore();
             <span>{{ item.message }}</span>
             <button
                 type="button"
-                class="text-xs text-gray-500 hover:text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-sm px-1"
+                class="text-xs text-text-muted hover:text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus rounded-sm px-1"
                 :data-testid="`toast-dismiss-${item.id}`"
                 aria-label="Dismiss notification"
                 @click="toast.dismiss(item.id)"
             >
-                ✕
+                <KIcon name="x-mark" :size="14" />
             </button>
         </div>
     </div>

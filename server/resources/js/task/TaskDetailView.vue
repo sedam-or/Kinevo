@@ -289,22 +289,21 @@ const relatedLinks = computed<EntityLink[]>(() => {
                 <h1 class="text-xl font-semibold min-w-0 flex-1 break-words" data-testid="task-detail-title">{{ tasks.current?.title ?? 'Task' }}</h1>
             </div>
             <div class="flex items-center gap-2">
-                <span class="text-xs rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-0.5" data-testid="task-detail-status">
+                <span class="text-xs rounded-sm bg-surface border border-border text-text px-2 py-0.5" data-testid="task-detail-status">
                     {{ tasks.current ? statusLabel(tasks.current.status) : '' }}
                 </span>
-                <button
-                    type="button"
-                    class="text-sm border border-[var(--color-primary)] text-[var(--color-primary)] rounded-sm px-3 py-1 disabled:opacity-50"
+                <KButton
+                    variant="secondary"
                     :disabled="clarifying"
                     data-testid="task-detail-clarify"
                     @click="clarifyTask"
-                >{{ clarifying ? 'Clarifying…' : 'Clarify task' }}</button>
+                >{{ clarifying ? 'Clarifying…' : 'Clarify task' }}</KButton>
             </div>
         </header>
         <!-- TASK-P17-029: non-mutating clarification, shown in place. -->
         <AiNotConfiguredNotice v-if="clarifyGateShown" />
         <div v-if="clarifyError" class="text-sm text-danger" role="alert" data-testid="task-detail-clarify-error">{{ clarifyError }}</div>
-        <section v-if="clarifyText" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4 text-sm whitespace-pre-line" data-testid="task-detail-clarify-result">
+        <section v-if="clarifyText" class="surface-secondary p-4 text-sm whitespace-pre-line" data-testid="task-detail-clarify-result">
             {{ clarifyText }}
         </section>
         <NextActionBanner
@@ -313,7 +312,7 @@ const relatedLinks = computed<EntityLink[]>(() => {
             @act="onTaskNextAction"
         />
 
-        <div v-if="tasks.loading" class="text-sm text-gray-500" data-testid="task-detail-loading">Loading…</div>
+        <div v-if="tasks.loading" class="text-sm text-text-muted" data-testid="task-detail-loading">Loading…</div>
         <div v-if="tasks.error" class="text-sm text-danger" role="alert" data-testid="task-detail-error">{{ tasks.error.message }}</div>
 
         <EntityLinks :links="relatedLinks" />
@@ -331,8 +330,8 @@ const relatedLinks = computed<EntityLink[]>(() => {
         <p v-if="canvasError" class="text-sm text-danger" role="alert" data-testid="task-canvas-error">{{ canvasError }}</p>
 
         <!-- Editform -->
-        <section v-if="tasks.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="task-edit">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Edit</div>
+        <section v-if="tasks.current" class="surface-secondary p-4" data-testid="task-edit">
+            <div class="text-xs uppercase text-text-muted mb-2">Edit</div>
             <form class="flex flex-col gap-3" @submit.prevent="saveEdit">
                 <label class="flex flex-col gap-1 text-sm">
                     Title
@@ -340,12 +339,12 @@ const relatedLinks = computed<EntityLink[]>(() => {
                 </label>
                 <label class="flex flex-col gap-1 text-sm">
                     Description
-                    <textarea v-model="editForm.description" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-edit-description"></textarea>
+                    <textarea v-model="editForm.description" rows="3" class="border border-border rounded-sm px-3 py-2 bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="task-edit-description"></textarea>
                 </label>
-                <div class="flex gap-3">
+                <div class="flex flex-wrap gap-3">
                     <label class="flex flex-col gap-1 text-sm">
                         Priority
-                        <select v-model.number="editForm.priorityTier" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-edit-priority">
+                        <select v-model.number="editForm.priorityTier" class="border border-border rounded-sm px-3 py-2 bg-bg text-text" data-testid="task-edit-priority">
                             <option :value="1">High</option>
                             <option :value="2">Medium</option>
                             <option :value="3">Low</option>
@@ -353,11 +352,13 @@ const relatedLinks = computed<EntityLink[]>(() => {
                     </label>
                     <label class="flex flex-col gap-1 text-sm">
                         Duration (min)
-                        <input v-model.number="editForm.estimatedMinutes" type="number" min="1" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-edit-duration" />
+                        <!-- Native input: KInput would break the .number coercion
+                             contract (string over the wire) — behavior preserved. -->
+                        <input v-model.number="editForm.estimatedMinutes" type="number" min="1" class="border border-border rounded-sm px-3 py-2 bg-bg text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-focus" data-testid="task-edit-duration" />
                     </label>
                     <label class="flex flex-col gap-1 text-sm">
                         Due
-                        <input v-model="editForm.dueAt" type="date" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="task-edit-due" />
+                        <KInput v-model="editForm.dueAt" type="date" data-testid="task-edit-due" />
                     </label>
                 </div>
                 <!-- Secondary: the page's ONE primary is the state transition (§19). -->
@@ -398,20 +399,20 @@ const relatedLinks = computed<EntityLink[]>(() => {
         </section>
 
         <!-- Subtasks -->
-        <section v-if="tasks.current" class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="task-subtasks">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">Subtasks</div>
-            <form class="flex gap-2 mb-2" @submit.prevent="addSubtask">
-                <input v-model="newSubtaskTitle" type="text" placeholder="Add subtask" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1 text-sm flex-1" data-testid="subtask-title" />
-                <button type="submit" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-1" data-testid="subtask-add">Add</button>
+        <section v-if="tasks.current" class="surface-supporting" data-testid="task-subtasks">
+            <div class="text-xs uppercase text-text-muted mb-2">Subtasks</div>
+            <form class="flex flex-wrap gap-2 items-center mb-2" @submit.prevent="addSubtask">
+                <KInput v-model="newSubtaskTitle" placeholder="Add subtask" class="flex-1 min-w-40" data-testid="subtask-title" />
+                <KButton type="submit" variant="secondary" data-testid="subtask-add">Add</KButton>
             </form>
             <div v-if="subtaskError" class="text-sm text-danger">{{ subtaskError }}</div>
             <ul class="space-y-1">
                 <li v-for="sub in tasks.subtasks" :key="sub.id" class="flex items-center gap-2 text-sm" data-testid="subtask-item">
                     <input type="checkbox" :checked="sub.completed" class="accent-current" data-testid="subtask-toggle" @change="toggle(sub.id)" />
-                    <span :class="sub.completed ? 'line-through text-gray-400' : ''">{{ sub.title }}</span>
-                    <button type="button" class="ml-auto text-xs underline" data-testid="subtask-promote" @click="promote(sub.id)">Promote</button>
+                    <span :class="sub.completed ? 'line-through text-text-muted' : ''">{{ sub.title }}</span>
+                    <button type="button" class="ml-auto text-xs underline underline-offset-2 hover:text-primary rounded-sm" data-testid="subtask-promote" @click="promote(sub.id)">Promote</button>
                 </li>
-                <li v-if="tasks.subtasks.length === 0" class="text-sm text-gray-500 dark:text-gray-400">No subtasks.</li>
+                <li v-if="tasks.subtasks.length === 0" class="text-sm text-text-muted">No subtasks.</li>
             </ul>
         </section>
 

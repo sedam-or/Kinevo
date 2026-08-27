@@ -95,14 +95,14 @@ onMounted(load);
 
 <template>
     <section class="flex flex-col gap-4" data-testid="ai-usage-card">
-        <div v-if="loading" class="text-sm text-gray-500 dark:text-gray-400" data-testid="ai-usage-loading">Loading usage…</div>
+        <div v-if="loading" class="text-sm text-text-muted" data-testid="ai-usage-loading">Loading usage…</div>
 
         <template v-else-if="summary">
             <h2 class="text-sm font-semibold uppercase tracking-wide">AI usage — {{ periodLabel }}</h2>
 
             <!-- Alerts banner (TASK-P25-010) -->
             <div v-if="summary.alerts.unread_count > 0" class="flex items-center justify-between gap-3 rounded-sm border border-warning/40 bg-warning/5 px-3 py-2" role="alert" data-testid="ai-alert-banner">
-                <span class="text-sm text-warning dark:text-yellow-400" data-testid="ai-alert-text">{{ alertText }}</span>
+                <span class="text-sm text-warning" data-testid="ai-alert-text">{{ alertText }}</span>
                 <button type="button" class="text-xs underline whitespace-nowrap min-h-[44px] disabled:opacity-50" :disabled="dismissing" data-testid="ai-alert-dismiss" @click="dismissAlerts">
                     {{ dismissing ? 'Dismissing…' : 'Dismiss' }}
                 </button>
@@ -112,26 +112,26 @@ onMounted(load);
 
             <!-- Summary block -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="rounded-sm border border-gray-300 dark:border-gray-600 p-4 flex flex-col gap-2" data-testid="ai-usage-credits">
-                    <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">AI credits</span>
+                <div class="rounded-sm border border-border p-4 flex flex-col gap-2" data-testid="ai-usage-credits">
+                    <span class="text-xs uppercase tracking-wide text-text-muted">AI credits</span>
                     <span class="text-lg font-medium" data-testid="ai-usage-credits-value">{{ summary.credits.used }} / {{ summary.credits.limit }}</span>
-                    <div class="h-2 rounded-sm bg-gray-100 dark:bg-gray-800 overflow-hidden" role="progressbar" :aria-valuenow="summary.credits.used" aria-valuemin="0" :aria-valuemax="summary.credits.limit">
+                    <div class="h-2 rounded-sm bg-surface overflow-hidden" role="progressbar" :aria-valuenow="summary.credits.used" aria-valuemin="0" :aria-valuemax="summary.credits.limit">
                         <div class="h-full bg-[var(--color-primary)]" :style="{ width: creditsPercent + '%' }" />
                     </div>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ summary.credits.remaining }} left this month</span>
+                    <span class="text-xs text-text-muted">{{ summary.credits.remaining }} left this month</span>
                 </div>
 
-                <div class="rounded-sm border border-gray-300 dark:border-gray-600 p-4 flex flex-col gap-2" data-testid="ai-usage-kinevo">
-                    <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Kinevo AI cost (est.)</span>
+                <div class="rounded-sm border border-border p-4 flex flex-col gap-2" data-testid="ai-usage-kinevo">
+                    <span class="text-xs uppercase tracking-wide text-text-muted">Kinevo AI cost (est.)</span>
                     <span class="text-lg font-medium" data-testid="ai-usage-kinevo-value">{{ money(summary.kinevo.estimated_cost_minor, summary.kinevo.currency) }}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ summary.kinevo.request_count }} hosted {{
+                    <span class="text-xs text-text-muted">{{ summary.kinevo.request_count }} hosted {{
                         summary.kinevo.request_count === 1 ? 'request' : 'requests' }}</span>
                 </div>
 
-                <div class="rounded-sm border border-gray-300 dark:border-gray-600 p-4 flex flex-col gap-2" data-testid="ai-usage-byok">
-                    <span class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">BYOK usage</span>
+                <div class="rounded-sm border border-border p-4 flex flex-col gap-2" data-testid="ai-usage-byok">
+                    <span class="text-xs uppercase tracking-wide text-text-muted">BYOK usage</span>
                     <span class="text-lg font-medium" data-testid="ai-usage-byok-value">{{ summary.byok.request_count }}</span>
-                    <span class="text-xs text-gray-500 dark:text-gray-400">{{ summary.byok.request_count === 1 ? 'request' : 'requests' }} via your own key</span>
+                    <span class="text-xs text-text-muted">{{ summary.byok.request_count === 1 ? 'request' : 'requests' }} via your own key</span>
                 </div>
             </div>
 
@@ -140,13 +140,13 @@ onMounted(load);
                 <h3 class="text-sm font-semibold uppercase tracking-wide">This month by feature</h3>
                 <ul v-if="summary.breakdown.length > 0" class="flex flex-col gap-1">
                     <li v-for="row in summary.breakdown" :key="row.type" class="flex items-center justify-between text-sm" :data-testid="`ai-usage-breakdown-${row.type}`">
-                        <span class="text-gray-800 dark:text-gray-100">{{ featureLabel(row.type) }}</span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                        <span class="text-text">{{ featureLabel(row.type) }}</span>
+                        <span class="text-xs text-text-muted">
                             {{ row.count }} {{ row.count === 1 ? 'call' : 'calls' }}<template v-if="row.kinevo_cost_minor > 0"> · {{ money(row.kinevo_cost_minor, summary.kinevo.currency) }}</template>
                         </span>
                     </li>
                 </ul>
-                <p v-else class="text-sm text-gray-500 dark:text-gray-400" data-testid="ai-usage-breakdown-empty">
+                <p v-else class="text-sm text-text-muted" data-testid="ai-usage-breakdown-empty">
                     No hosted AI calls this month yet — every Kinevo AI action runs on 1 credit.
                 </p>
             </div>
@@ -159,17 +159,17 @@ onMounted(load);
                         <span class="flex items-center gap-2 min-w-0">
                             <span class="truncate">{{ featureLabel(run.proposal_type) }}</span>
                             <span class="rounded-sm px-1.5 py-0.5 text-[10px] uppercase tracking-wide"
-                                :class="run.billing_ledger === 'byok' ? 'bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'">
+                                :class="run.billing_ledger === 'byok' ? 'border border-info/40 bg-info-tint text-info' : 'border border-border/30 bg-surface text-text-muted'">
                                 {{ run.billing_ledger }}
                             </span>
                         </span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                        <span class="text-xs text-text-muted whitespace-nowrap">
                             {{ new Date(run.created_at).toLocaleDateString() }}
                             <template v-if="run.credits_consumed > 0"> · {{ run.credits_consumed }} credit</template>
                         </span>
                     </li>
                 </ul>
-                <p v-else class="text-sm text-gray-500 dark:text-gray-400" data-testid="ai-usage-runs-empty">No AI runs yet.</p>
+                <p v-else class="text-sm text-text-muted" data-testid="ai-usage-runs-empty">No AI runs yet.</p>
             </div>
         </template>
     </section>

@@ -4,6 +4,7 @@ import { useShellStore } from './store';
 import { isShellView, NAV_GROUPS, MOBILE_PRIMARY_KEYS, type ShellView } from './navigation';
 import { useFocusTrap } from './focus-trap';
 import SyncStatusPanel from './SyncStatusPanel.vue';
+import KLogo from '../components/KLogo.vue';
 import ToastHost from '../components/ToastHost.vue';
 import DiagnosticsPanel from '../diagnostics/DiagnosticsPanel.vue';
 import NotificationCenter from '../notifications/NotificationCenter.vue';
@@ -83,7 +84,10 @@ function selectView(view: ShellView): void {
         <!-- Sync + notification topbar -->
         <header class="flex items-center justify-between gap-2 border-b border-border/20 px-4 py-3">
             <div class="flex items-center gap-3 min-w-0">
-                <span class="font-semibold shrink-0">Kinevo</span>
+                <span class="flex shrink-0 items-center gap-2">
+                    <KLogo :size="24" />
+                    <span class="font-semibold">Kinevo</span>
+                </span>
                 <span data-testid="current-section" class="text-sm text-text-muted truncate">
                     / {{ currentSection }}
                 </span>

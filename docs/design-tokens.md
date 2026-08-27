@@ -57,6 +57,9 @@ where applicable, Tailwind v4 theme mapping.
 | `--color-danger`        | Danger / destructive semantics         |
 | `--color-danger-contrast` | Text on danger fills (buttons)       |
 | `--color-danger-tint`   | Danger alert surface background        |
+| `--color-success-tint`  | Success alert surface background       |
+| `--color-info-tint`     | Information alert surface background   |
+| `--color-warning-tint`  | Warning alert surface background       |
 | `--color-info`          | Information semantics                  |
 | `--color-focus`         | Visible focus indicator                |
 

@@ -8,6 +8,7 @@
  * one headline + one sub-line, no trust-strip filler.
  */
 import { useShellStore } from '../shell/store';
+import KLogo from '../components/KLogo.vue';
 
 const shell = useShellStore();
 </script>
@@ -20,10 +21,11 @@ const shell = useShellStore();
             aria-hidden="true"
         >
             <div class="flex items-center gap-3 p-10">
-                <span class="flex size-10 items-center justify-center border-2 border-primary-contrast bg-transparent text-lg font-black">
-                    K
-                </span>
+                <KLogo :size="44" variant="outline" />
                 <span class="text-lg font-black tracking-[0.28em]">KINEVO</span>
+                <span class="mt-1 border border-primary-contrast/60 px-2 py-0.5 font-mono text-[10px] tracking-[0.2em] opacity-80">
+                    PERSONAL OPERATING SYSTEM
+                </span>
             </div>
 
             <div class="max-w-md p-10 pb-16">
@@ -54,9 +56,7 @@ const shell = useShellStore();
 
             <!-- Mobile mini-brand (desktop uses the accent panel) -->
             <div class="absolute top-4 left-5 flex items-center gap-2 lg:hidden" aria-hidden="true">
-                <span class="flex size-7 items-center justify-center border-2 border-border bg-primary text-sm font-black text-primary-contrast">
-                    K
-                </span>
+                <KLogo :size="30" />
                 <span class="text-sm font-black tracking-[0.24em]">KINEVO</span>
             </div>
 
