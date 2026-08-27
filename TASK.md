@@ -7298,6 +7298,16 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 
 ## PHASE 27 — NATIVEPHP ANDROID MVP
 
+> **Phase verdict (2026-08-26): BLOCKED by environment.** Every P27 task is an Android-runtime
+> task (NativePHP shell + EDGE screens) that requires the Android toolchain (P26-011) — absent in
+> this environment (`no-android-toolchain`; no `server-mobile/` package). Per master-prompt
+> Rules 0.3/0.5/0.6, DONE requires device evidence; fabricating it is forbidden, so these tasks
+> stay **BLOCKED**, not "failed". The server-side prerequisites they depend on are ALREADY
+> satisfied and evidenced: `/today`, AI proposal + accept/breakdown, `/workspaces`, notifications
+> read, billing/subscription snapshots, and the BYOK/ledger metering (P23/P24/P25 suites green).
+> Phase 27 becomes executable the moment an Android SDK/emulator/device is available; nothing here
+> blocks it except that toolchain.
+
 > Objective: implement ONLY the high-value mobile workflows. Every task below follows the §12
 > board format; statuses assume the Android environment gate (P26-011) is cleared, otherwise the
 > owning task remains device-blocked. Android MUST NOT become a shrunken desktop clone.
