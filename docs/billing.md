@@ -16,12 +16,57 @@ notifications move billing state — never the browser, never a client-supplied
 success flag. Money moves in integer minor units (IDR ×100). No card/CVV/bank
 data ever touches Kinevo storage.
 
+## Pricing Delta (owner decision 2026-08-28 — `revisi-finance.md`)
+
+Commercial delta patch supersedes ADR-013 prices. Authoritative statuses:
+
+- `PRICING DECISION = LOCKED` — Free = IDR 0/month; **Pro = IDR 49,900/month**;
+  **Power = IDR 89,900/month**. These are LAUNCH PRICE HYPOTHESES subject to
+  beta validation (activation; conversion; retention; cancellation;
+  willingness-to-pay; AI COGS; contribution margin). Never claim "final market
+  price".
+- `AI QUOTA NUMBERS = NOT YET LOCKED (DECISION_REQUIRED)` — the 20/150/500
+  credit baselines are DEPRECATED BASELINE; the new allowance MUST be derived
+  from the AI cost simulation (provider/model pricing; cache behavior; P50–P99
+  usage; target contribution margin), never invented. Current runtime values
+  in `server/config/saas.php` remain functional but are not final policy.
+- AI credits are an internal economic abstraction: a credit is NOT a token and
+  NOT a provider billing unit; tokens are telemetry. Markup ≠ margin (25%
+  markup = 20% margin); AI contribution margin target ~30–50% is CONFIGURABLE —
+  no hardcoded universal markup.
+- TWO SEPARATE LEDGERS — never merge: the SUBSCRIPTION ledger (plan; billing
+  period; amount; payment state) and the AI USAGE ledger (included allowance;
+  consumed credits; optional prepaid balance; hosted vs BYOK usage;
+  provider/model; token telemetry; estimated provider cost with a versioned
+  price catalog). BYOK never consumes hosted credits and remains subject to
+  rate/request/context/output/timeout/abuse safeguards; BYOK: Free = NO,
+  Pro/Power = YES.
+- AI request budget firewall (BEFORE any provider call): auth → entitlement →
+  available allowance → rate limit → estimated request budget → max
+  input/output token guard → provider. Insufficient budget ⇒ do not call the
+  provider. Reserve the maximum permitted budget, settle ACTUAL usage after
+  the response, release the unused reservation.
+- Downgrade safety: Power→Pro and Pro→Free never silently delete user data —
+  creation/edit limits apply, advanced capabilities become unavailable, history
+  follows entitlement, existing data stays readable where safe.
+- Power positioning: higher capacity/deeper history/deeper intelligence/richer
+  reflection/advanced Wrapped & share — NEVER "Pro + random features" and never
+  Teams/Organizations/RBAC/Enterprise.
+- Pricing/upgrade UX must let the user answer: What do I get? Why upgrade? Why
+  is Power worth the extra Rp40,000? No deceptive urgency, fake scarcity, or
+  destructive lockouts.
+
+Implementation of this delta is tracked in `TASK.md` § COMMERCIAL PRICING DELTA
+(D-001…D-008).
+
 ## Normative links
 
 - `docs/adr/ADR-012-payment-gateway.md` — why Midtrans (Core API Subscription), Xendit-ready seam.
-- `docs/adr/ADR-013-product-tiers-pricing.md` — LOCKED tiers & prices (Free Rp0; Pro IDR 34,900/mo;
-  Power IDR 49,900/mo; annual unpriced until an explicit owner decision; web-first billing — no
-  Google Play checkout in Android v1; one subscription covers Web + Android).
+- `docs/adr/ADR-013-product-tiers-pricing.md` — tiers & prices AS RECORDED 2026-08-26 (Free Rp0;
+  Pro IDR 34,900/mo; Power IDR 49,900/mo). **Prices SUPERSEDED 2026-08-28 by `revisi-finance.md`
+  (see §Pricing Delta below)**; ADR body is preserved history. Annual unpriced until an explicit
+  owner decision; web-first billing — no Google Play checkout in Android v1; one subscription
+  covers Web + Android.
 - `docs/billing-capability-matrix.md` — verified per-provider capabilities.
 - `docs/api/openapi.yaml` — API contract of record (checkout / webhook / cancel / resume / subscription snapshot).
 - `database/migrations/` — `billing_subscriptions`, `billing_transactions`, `billing_events` (P24).

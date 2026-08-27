@@ -179,6 +179,16 @@ AI settings discoverability (FR-60)      ✅ DONE (TASK-P17-028: unconfigured/of
                                            PHASE 28/29/30 renumbered to 31/37/39
                                            with zero status/evidence changes; new
                                            PHASE 28 UX Audit active, P28-001 READY)
+ Commercial pricing delta                  🟡 REGISTERED (2026-08-28: revisi-finance.md
+                                           adopted — Pro IDR 49,900 / Power IDR 89,900
+                                           LOCKED as launch hypotheses; AI quota
+                                           20/150/500 → DEPRECATED BASELINE pending
+                                           FinOps simulation; tasks D-001…D-008 in
+                                           TASK.md § COMMERCIAL PRICING DELTA;
+                                           docs/billing.md § Pricing Delta +
+                                           ADR-013 superseded note + master prompt
+                                           §2 delta banner; config/tests sweep =
+                                           D-001/D-002 READY, not yet executed)
 ```
 
 ### Evidence rule

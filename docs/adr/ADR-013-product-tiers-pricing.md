@@ -1,5 +1,12 @@
 # ADR-013 — Product Tiers & Pricing (Locked Business Decisions)
 
+> **STATUS: SUPERSEDED (prices only) — 2026-08-28** by owner delta patch
+> `revisi-finance.md`: Pro = IDR 49,900/month; Power = IDR 89,900/month
+> (launch hypotheses, beta-validated). AI credit baselines 20/150/500 are
+> DEPRECATED BASELINE pending FinOps simulation. The body below is preserved
+> decision history; current contract: `docs/billing.md` § Pricing Delta +
+> `TASK.md` § COMMERCIAL PRICING DELTA.
+
 ### Decision
 Adopt the owner-locked commercial model for P26–P30 exactly as decided (2026-08-26):
 

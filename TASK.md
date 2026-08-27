@@ -11,6 +11,152 @@ old PHASE 30 (Release) → **PHASE 39**. Tidak ada status DONE/evidence yang ber
 dan penempatan. Keputusan bisnis terkunci (tier/price/entitlement/AI accounting/mobile billing) ada
 di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
 
+## COMMERCIAL PRICING DELTA — POST-P27
+
+> Sumber: `revisi-finance.md` (owner, 2026-08-28) — DELTA PATCH ke roadmap P28–P39; TIDAK
+> meregenerasi/mengurutkan ulang roadmap. Scope HANYA pricing/entitlement/AI economics.
+>
+> STATUS (patch §23):
+> - `PRICING DECISION = LOCKED` — Free IDR 0; **Pro = IDR 49.900/bulan**; **Power = IDR 89.900/bulan**
+>   (menggantikan Pro 34.900 / Power 49.900). Status: LAUNCH PRICE HYPOTHESES — tunduk validasi beta
+>   (activation; conversion; retention; cancellation; willingness-to-pay; AI COGS; contribution margin).
+> - `AI QUOTA NUMBERS = NOT YET LOCKED (DECISION_REQUIRED)` — angka lama 20/150/500 kredit
+>   direklasifikasi **DEPRECATED BASELINE**; kuota baru WAJIB diturunkan dari simulasi FinOps
+>   (P32-007/P38-002 diperluas: P50/P75/P90/P95/P99/abuse; cache-hit ratio; kontribusi margin),
+>   BUKAN diganti angka arbitrer. Nilai runtime saat ini (config/saas.php: 20/300/1000) tetap
+>   berfungsi tetapi direklasifikasi deprecated-baseline, bukan kebijakan final.
+> - Entitlement matrix target (patch §2): max_workspaces 1/5/15 (Free/Pro/Power); BYOK Free=NO,
+>   Pro/Power=YES; dua ledger TERPISAH (subscription ledger vs AI usage ledger, jangan digabung).
+> - AI credit ≠ token ≠ unit billing provider; token = telemetri. Markup ≠ margin (25% markup =
+>   20% margin); target margin AI ~30–50% KONFIGURABEL — tanpa markup hardcoded.
+> - Klasifikasi kemunculan nilai lama (patch §13/§21): `config/billing.php` + `config/saas.php`
+>   (+ mirror `server/nativephp/android/laravel/config/`) = REPLACE; ADR-013 + CHANGELOG/master
+>   prompt §2 = HISTORICAL + catatan supersedes; migration history = PRESERVE.
+
+### D-001 — Pricing/Entitlement Config & Data Sweep
+- Status: READY · Priority: P0 · Depends On: —
+- Business Decision: harga baru LOCKED (revisi-finance §0); annual/trial/coupon TETAP DECISION_REQUIRED
+- SRS: billing · Design: docs/billing.md §Pricing Delta · Files: server/config/billing.php;
+  server/config/saas.php; mirror server/nativephp/android/laravel/config/*; plan records/seeders
+- Acceptance:
+  - [ ] config/billing.php: pro = 4_990_000; power = 8_990_000 (IDR minor units)
+  - [ ] config/saas.php: max_workspaces 1/5/15; komentar harga + ai_credits direklasifikasi
+        DEPRECATED BASELINE (bukan kebijakan final; menunggu FinOps sim D-004)
+  - [ ] mirror nativephp configs selaras
+  - [ ] plan records/seeders (jika menyimpan harga) selaras — tanpa migrasi churn baru; migrasi
+        lama TIDAK disentuh
+  - [ ] klasifikasi tiap kemunculan 34.900/49.900 terdokumentasi (ganti/histori/preserve)
+- Verification: [ ] Unit(config) · [ ] Integration(EntitlementService + price catalog)
+- Evidence: — · Known Limitations: — · Notes: TIDAK membuat sistem plan/entitlement kedua (RULE 3.2)
+
+### D-002 — Plan/Entitlement/Ledger Test Updates
+- Status: TODO · Priority: P0 · Depends On: D-001
+- Business Decision: —
+- SRS: billing/AI chapters · Design: docs/billing.md · Files: SaasApiTest; AiUsageTest; AiAlertsTest;
+  + test downgrade baru
+- Acceptance (patch §22):
+  - [ ] Free price = 0 · Pro = 49.900 · Power = 89.900
+  - [ ] entitlement per tier (workspace/BYOK/matrix) + BYOK Free ditolak, Pro/Power diterima
+  - [ ] AI ledger: hosted memakan allowance; BYOK TIDAK; allowance kurang → TANPA panggil provider;
+        reservasi rilis; aktual yang disettle (billing_source ∈ INCLUDED_HOSTED/PREPAID_HOSTED/BYOK)
+  - [ ] downgrade Power→Pro dan Pro→Free: data TIDAK dihapus; creation/edit dibatasi; riwayat
+        mengikuti entitlement
+  - [ ] pricing UX: harga baru dirender; harga lama absen dari UI aktif; CTA upgrade benar
+- Verification: [ ] Unit · [ ] Integration · [ ] E2E(web)
+- Evidence: — · Known Limitations: — · Notes: —
+
+### D-003 — Pricing & Upgrade/Downgrade UX
+- Status: TODO · Priority: P0 · Depends On: D-001
+- Business Decision: Power TIDAK boleh tampak palsu — nilai = kapasitas; kedalaman; kecerdasan;
+  riwayat; allowance; refleksi lanjutan (bukan kosmetik)
+- SRS: billing · Design: docs/design.md pricing surfaces · Files: pricing UI + upgrade/downgrade UX
+- Acceptance (patch §14–§16):
+  - [ ] kartu pricing: FREE "Experience the system." · PRO "For serious personal use." ·
+        POWER "For intensive personal use."
+  - [ ] pengguna bisa jawab: apa yang saya dapat? mengapa upgrade? mengapa Power layak +Rp40.000?
+  - [ ] paywall menjelaskan limit apa yang tercapai + jalan keluar; TANPA urgency palsu/scarcity
+        palsu/countdown manipulatif/lockout destruktif
+  - [ ] downgrade: data lama dipertahankan; bila state > limit baru → read access bila aman,
+        blok penggunaan baru
+- Verification: [ ] Browser evidence · [ ] copy review
+- Evidence: — · Known Limitations: — · Notes: WAJIB konsultasi skill taste + ui-ux-pro-max (AGENTS.md)
+
+### D-004 — AI Cost Simulator Extension + FinOps Simulation (PREREQUISITE QUOTA LOCK)
+- Status: READY · Priority: P0 · Depends On: — (simulator; keputusan kuota menunggu hasil)
+- Business Decision: KUOTA AI = DECISION_REQUIRED sampai simulasi selesai (revisi-finance §3/§7)
+- SRS: AI economics · Design: docs/ai-architecture.md · Files: perluasan simulator P32-007 (SATU
+  subsistem — jangan duplikat dengan P38-002)
+- Acceptance:
+  - [ ] input: provider; model; FEATURE; request count; input/cached/output tokens; cache-hit ratio;
+        tier; periode billing
+  - [ ] profil pemakaian per fitur: Goal Breakdown; Note Summary; Task Extraction; Weekly/Daily
+        Planning; Deep Analysis; Wrapped Narrative
+  - [ ] skenario: P50 · P75 · P90 · P95 · P99 · abuse/heavy
+  - [ ] output: provider COGS · normalized Kinevo cost · included budget exposure · expected
+        overage · contribution margin
+  - [ ] keputusan kuota per tier dicatat owner (DECISION_REQUIRED → LOCKED)
+- Verification: [ ] Unit(skenario) · [ ] Integration(pricing catalog)
+- Evidence: — · Known Limitations: — · Notes: feeds P38-002; katalog harga provider HARUS terverifikasi
+  vs sumber resmi; dev gateway (OpenCode Go) ≠ ekonomi API produksi (§19)
+
+### D-005 — Reserve→Settle Budget Firewall + Ledger Separation
+- Status: TODO · Priority: P0 · Depends On: D-001
+- Business Decision: budget kurang → JANGAN panggil provider; jangan permanen-charge max output
+- SRS: AI economics/security · Design: docs/ai-architecture.md · Files: perluasan ledger P25
+  (SATU subsistem) + gate pre-provider
+- Acceptance (patch §5/§10/§11/§12):
+  - [ ] urutan: auth → entitlement → allowance → rate limit → estimasi budget → guard token
+        max in/out → provider
+  - [ ] RESERVE max permitted budget → SETTLE aktual → rilis sisa reservasi
+  - [ ] metering: input/cached/output/total tokens + provider; model; pricing_version;
+        estimated_provider_cost; billing_source; status; latency; request_id
+  - [ ] billing_source enum: INCLUDED_HOSTED · PREPAID_HOSTED · BYOK; BYOK tak pernah menyentuh
+        bucket hosted
+  - [ ] katalog harga provider TERVERSI (effective_from/until; pricing_version; sumber); harga model
+        tidak hardcoded di business logic; pemakaian historis reproducible
+- Verification: [ ] Unit(gate) · [ ] Integration(reserve/settle) · [ ] E2E(hosted vs BYOK)
+- Evidence: — · Known Limitations: — · Notes: extends P25/P32-008 — no duplicate subsystem
+
+### D-006 — Unit Economics + Midtrans Fee Model + Beta Pricing Metrics
+- Status: TODO · Priority: P1 · Depends On: D-001; D-004
+- Business Decision: biaya pembayaran TIDAK boleh diasumsikan flat per user (§20)
+- SRS: billing/growth · Design: docs/billing.md · Files: perluasan P32-005/P32-006 (SATU subsistem)
+- Acceptance:
+  - [ ] unit economics per plan: revenue; AI revenue; payment fees; hosted AI COGS; infra;
+        storage/bandwidth; support → gross contribution; contribution margin
+  - [ ] skenario: FREE expected/heavy/abuse · PRO P50/P95/P99 · POWER P50/P95/P99
+  - [ ] fee Midtrans dimodelkan per metode pembayaran (fixed + persentase) utk subscription &
+        AI top-up; produksi ≠ sandbox
+  - [ ] metrik beta (§17): view pricing; klik CTA upgrade; checkout start/completion; first paid
+        action; D7/D30; cancellation; downgrade; Power selection rate; AI COGS/paid user;
+        Pro→Power upgrade rate + "Mengapa memilih Power?"
+- Verification: [ ] Integration · Evidence: — · Known Limitations: top-up minimum = DECISION_REQUIRED ·
+  Notes: konversi Power rendah → klasifikasi dulu (nilai/kebutuhan/komunikasi/harga/kedalaman), bukan
+  tambah fitur acak
+
+### D-007 — Regression Search Evidence
+- Status: TODO · Priority: P1 · Depends On: D-001
+- Business Decision: —
+- SRS: — · Design: — · Files: klasifikasi kemunculan (catatan di seksi ini)
+- Acceptance (patch §21):
+  - [ ] pola: 34.900 · 49.900 · 20 credits · 150 credits · 500 credits · 25% markup — tiap
+        kemunculan diklasifikasi (correct/preserve)
+  - [ ] migration history & CHANGELOG TIDAK dikorupsi
+- Verification: [ ] grep audit terdokumentasi · Evidence: — · Known Limitations: — · Notes: —
+
+### D-008 — DELTA FINAL GATE
+- Status: GATED · Priority: P0 · Depends On: D-001..D-007
+- Business Decision: — · SRS: — · Design: — · Files: TASK.md sign-off
+- Acceptance (patch §25 DoD):
+  - [ ] harga lama hilang dari konfigurasi komersial aktif · [ ] harga baru aktif ·
+  - [ ] pricing page + upgrade UX terupdate · [ ] plan/entitlement tests terupdate ·
+  - [ ] dokumentasi + TASK.md sinkron · [ ] kuota AI tidak ditandai final secara keliru ·
+  - [ ] simulator + bukti P50/P95/P99 · [ ] katalog harga provider terversi ·
+  - [ ] ledger hosted-vs-BYOK tested · [ ] preflight budget gate tested ·
+  - [ ] regresi Midtrans sandbox lulus (evidence = SANDBOX saja) · [ ] tanpa asumsi produksi dari
+        sandbox · [ ] tanpa secret provider di sisi klien
+- Verification: gate report · Evidence: — · Known Limitations: — · Notes: gate binary
+
 ### Status vocabulary
 - `TODO`: belum dimulai.
 - `READY`: dependency terpenuhi dan dapat dikerjakan.
