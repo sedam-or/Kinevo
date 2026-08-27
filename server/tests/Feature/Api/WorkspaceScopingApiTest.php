@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Models\SaasSubscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -21,6 +22,14 @@ class WorkspaceScopingApiTest extends TestCase
         $user = User::factory()->create();
         $token = $user->createToken('owner')->plainTextToken;
         $this->withToken($token)->getJson('/api/v1/workspaces'); // provision Personal
+        // These tests exercise workspace SCOPING semantics, not entitlement;
+        // a paid plan keeps multi-workspace scenarios valid under the
+        // COMMERCIAL PRICING DELTA matrix (Free = 1 workspace).
+        SaasSubscription::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['plan_code' => 'power', 'provider' => 'manual', 'state' => 'active'],
+        );
+        $this->app['auth']->forgetGuards();
 
         return [$user, $token];
     }

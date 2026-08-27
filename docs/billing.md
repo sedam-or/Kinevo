@@ -57,7 +57,10 @@ Commercial delta patch supersedes ADR-013 prices. Authoritative statuses:
   destructive lockouts.
 
 Implementation of this delta is tracked in `TASK.md` § COMMERCIAL PRICING DELTA
-(D-001…D-008).
+(D-001…D-008). Status 2026-08-28: D-001…D-008 DONE (gate green —
+995 tests, phpstan OK, pint PASS, npm audit 0, chromium delta-pricing spec).
+AI quota numbers remain DECISION_REQUIRED (D-004 simulation evidence in
+`docs/ai-economics/`).
 
 ## Normative links
 

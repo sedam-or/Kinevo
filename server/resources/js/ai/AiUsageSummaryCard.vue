@@ -56,9 +56,9 @@ const alertText = computed(() => {
     if (item.kind === 'user.usage_threshold') {
         const pct = Math.round(Number(item.context.percent ?? 0));
         if (item.threshold === 100 || pct >= 100) {
-            return `You have used all ${s.credits.limit} AI credits this month.`;
+            return `You have used all ${s.credits.limit} included AI credits this period. Upgrade for a larger allowance, or connect BYOK.`;
         }
-        return `You have used ${pct}% of your monthly AI credits.`;
+        return `You have used ${pct}% of your included AI credits this period.`;
     }
     return 'AI budget warning.';
 });
@@ -147,7 +147,8 @@ onMounted(load);
                     </li>
                 </ul>
                 <p v-else class="text-sm text-text-muted" data-testid="ai-usage-breakdown-empty">
-                    No hosted AI calls this month yet — every Kinevo AI action runs on 1 credit.
+                    No hosted AI calls this month yet — hosted AI uses your included
+                    monthly AI credit allowance.
                 </p>
             </div>
 

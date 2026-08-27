@@ -1,0 +1,157 @@
+{
+    "generated_at": "2026-08-27T19:55:48+00:00",
+    "payment_method": "credit_card",
+    "payment_fee_assumptions": {
+        "fixed_minor": 100,
+        "percentage_bps": 290,
+        "verified": false
+    },
+    "assumptions_note": "DEPRECATED-BASELINE assumptions until measurement. AI COGS shares must be replaced by simulator/ops numbers as they become available.",
+    "plans": {
+        "free": {
+            "expected_cogs_share": {
+                "revenue_minor": 0,
+                "payment_fee_minor": 0,
+                "ai_cogs_minor": 0,
+                "infra_minor": 25000,
+                "storage_minor": 5000,
+                "support_minor": 10000,
+                "total_cost_minor": 40000,
+                "gross_contribution_minor": -40000,
+                "margin": null
+            },
+            "heavy_cogs_share": {
+                "revenue_minor": 0,
+                "payment_fee_minor": 0,
+                "ai_cogs_minor": 0,
+                "infra_minor": 25000,
+                "storage_minor": 5000,
+                "support_minor": 10000,
+                "total_cost_minor": 40000,
+                "gross_contribution_minor": -40000,
+                "margin": null
+            },
+            "abuse_cogs_share": {
+                "revenue_minor": 0,
+                "payment_fee_minor": 0,
+                "ai_cogs_minor": 0,
+                "infra_minor": 25000,
+                "storage_minor": 5000,
+                "support_minor": 10000,
+                "total_cost_minor": 40000,
+                "gross_contribution_minor": -40000,
+                "margin": null
+            }
+        },
+        "pro": {
+            "p50_cogs_share": {
+                "revenue_minor": 4990000,
+                "payment_fee_minor": 144810,
+                "ai_cogs_minor": 49900,
+                "infra_minor": 25000,
+                "storage_minor": 5000,
+                "support_minor": 10000,
+                "total_cost_minor": 234710,
+                "gross_contribution_minor": 4755290,
+                "margin": 0.953
+            },
+            "p95_cogs_share": {
+                "revenue_minor": 4990000,
+                "payment_fee_minor": 144810,
+                "ai_cogs_minor": 149700,
+                "infra_minor": 25000,
+                "storage_minor": 5000,
+                "support_minor": 10000,
+                "total_cost_minor": 334510,
+                "gross_contribution_minor": 4655490,
+                "margin": 0.933
+            },
+            "p99_cogs_share": {
+                "revenue_minor": 4990000,
+                "payment_fee_minor": 144810,
+                "ai_cogs_minor": 399200,
+                "infra_minor": 25000,
+                "storage_minor": 5000,
+                "support_minor": 10000,
+                "total_cost_minor": 584010,
+                "gross_contribution_minor": 4405990,
+                "margin": 0.883
+            },
+            "heavy_cogs_share": {
+                "revenue_minor": 4990000,
+                "payment_fee_minor": 144810,
+                "ai_cogs_minor": 998000,
+                "infra_minor": 25000,
+                "storage_minor": 5000,
+                "support_minor": 10000,
+                "total_cost_minor": 1182810,
+                "gross_contribution_minor": 3807190,
+                "margin": 0.763
+            }
+        },
+        "power": {
+            "p50_cogs_share": {
+                "revenue_minor": 8990000,
+                "payment_fee_minor": 260810,
+                "ai_cogs_minor": 89900,
+                "infra_minor": 25000,
+                "storage_minor": 5000,
+                "support_minor": 10000,
+                "total_cost_minor": 390710,
+                "gross_contribution_minor": 8599290,
+                "margin": 0.9565
+            },
+            "p95_cogs_share": {
+                "revenue_minor": 8990000,
+                "payment_fee_minor": 260810,
+                "ai_cogs_minor": 269700,
+                "infra_minor": 25000,
+                "storage_minor": 5000,
+                "support_minor": 10000,
+                "total_cost_minor": 570510,
+                "gross_contribution_minor": 8419490,
+                "margin": 0.9365
+            },
+            "p99_cogs_share": {
+                "revenue_minor": 8990000,
+                "payment_fee_minor": 260810,
+                "ai_cogs_minor": 719200,
+                "infra_minor": 25000,
+                "storage_minor": 5000,
+                "support_minor": 10000,
+                "total_cost_minor": 1020010,
+                "gross_contribution_minor": 7969990,
+                "margin": 0.8865
+            },
+            "heavy_cogs_share": {
+                "revenue_minor": 8990000,
+                "payment_fee_minor": 260810,
+                "ai_cogs_minor": 1798000,
+                "infra_minor": 25000,
+                "storage_minor": 5000,
+                "support_minor": 10000,
+                "total_cost_minor": 2098810,
+                "gross_contribution_minor": 6891190,
+                "margin": 0.7665
+            }
+        }
+    },
+    "beta_pricing_metrics": {
+        "definitions": [
+            "pricing_page_view",
+            "upgrade_cta_click",
+            "checkout_start",
+            "checkout_completion",
+            "first_paid_action",
+            "d7_retention",
+            "d30_retention",
+            "cancellation",
+            "downgrade",
+            "power_selection_rate",
+            "ai_cogs_per_paid_user",
+            "pro_to_power_upgrade_rate",
+            "qualitative_power_reason"
+        ],
+        "note": "Instrumentation lands with P32-001 taxonomy/P37 metrics; definitions recorded here now."
+    }
+}

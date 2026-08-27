@@ -34,7 +34,7 @@ di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
 >   prompt §2 = HISTORICAL + catatan supersedes; migration history = PRESERVE.
 
 ### D-001 — Pricing/Entitlement Config & Data Sweep
-- Status: READY · Priority: P0 · Depends On: —
+- Status: DONE (2026-08-28) · Priority: P0 · Depends On: —
 - Business Decision: harga baru LOCKED (revisi-finance §0); annual/trial/coupon TETAP DECISION_REQUIRED
 - SRS: billing · Design: docs/billing.md §Pricing Delta · Files: server/config/billing.php;
   server/config/saas.php; mirror server/nativephp/android/laravel/config/*; plan records/seeders
@@ -47,10 +47,13 @@ di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
         lama TIDAK disentuh
   - [ ] klasifikasi tiap kemunculan 34.900/49.900 terdokumentasi (ganti/histori/preserve)
 - Verification: [ ] Unit(config) · [ ] Integration(EntitlementService + price catalog)
-- Evidence: — · Known Limitations: — · Notes: TIDAK membuat sistem plan/entitlement kedua (RULE 3.2)
+- Evidence: config/billing.php pro=4_990_000 power=8_990_000; config/saas.php ws 1/5/15 +
+  DEPRECATED BASELINE notes; mirrors nativephp sinkron (git-ignored); GetPlanOverviewUseCase
+  exsposes `pricing` + `catalog`; klasifikasi lengkap di docs/ai-economics/regression-classification-2026-08-28.md
+- Known Limitations: — · Notes: TIDAK membuat sistem plan/entitlement kedua (RULE 3.2)
 
 ### D-002 — Plan/Entitlement/Ledger Test Updates
-- Status: TODO · Priority: P0 · Depends On: D-001
+- Status: DONE (2026-08-28) · Priority: P0 · Depends On: D-001
 - Business Decision: —
 - SRS: billing/AI chapters · Design: docs/billing.md · Files: SaasApiTest; AiUsageTest; AiAlertsTest;
   + test downgrade baru
@@ -63,10 +66,13 @@ di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
         mengikuti entitlement
   - [ ] pricing UX: harga baru dirender; harga lama absen dari UI aktif; CTA upgrade benar
 - Verification: [ ] Unit · [ ] Integration · [ ] E2E(web)
-- Evidence: — · Known Limitations: — · Notes: —
+- Evidence: SaasApiTest (harga/catalog/ws=1 limit); BillingCheckout/SubscriptionRead fixtures
+  4_990_000/8_990_000; AiUsageTest (Power BYOK, gate budget); downgrade preservasi test;
+  suite penuh 995 lulus (3526 assertions), stroke-ish 0 gagal
+- Known Limitations: — · Notes: —
 
 ### D-003 — Pricing & Upgrade/Downgrade UX
-- Status: TODO · Priority: P0 · Depends On: D-001
+- Status: DONE (2026-08-28) · Priority: P0 · Depends On: D-001
 - Business Decision: Power TIDAK boleh tampak palsu — nilai = kapasitas; kedalaman; kecerdasan;
   riwayat; allowance; refleksi lanjutan (bukan kosmetik)
 - SRS: billing · Design: docs/design.md pricing surfaces · Files: pricing UI + upgrade/downgrade UX
@@ -79,10 +85,16 @@ di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
   - [ ] downgrade: data lama dipertahankan; bila state > limit baru → read access bila aman,
         blok penggunaan baru
 - Verification: [ ] Browser evidence · [ ] copy review
-- Evidence: — · Known Limitations: — · Notes: WAJIB konsultasi skill taste + ui-ux-pro-max (AGENTS.md)
+- Evidence: PlanSettingsView ditulis ulang (harga/entitlement dari API — tanpa angka hardcoded;
+  kata posisi §1; Power gap Rp40.000 dihitung; CTA Upgrade/Switch eksplisit; footnote launch
+  hypothesis); AiUsageSummaryCard copy allowance + saran lanjutan; spec
+  tests/e2e/delta-pricing.spec.ts lulus chromium (harga baru ter-render, copy posisi, bullets
+  Power, gap, CTA upgrade)
+- Known Limitations: — · Notes: WAJIB konsultasi skill taste + ui-ux-pro-max (AGENTS.md)
 
 ### D-004 — AI Cost Simulator Extension + FinOps Simulation (PREREQUISITE QUOTA LOCK)
-- Status: READY · Priority: P0 · Depends On: — (simulator; keputusan kuota menunggu hasil)
+- Status: DONE (simulator+simulasi) — KUOTA TETAP DECISION_REQUIRED (owner) · Priority: P0 ·
+  Depends On: — (keputusan kuota menunggu hasil + review owner)
 - Business Decision: KUOTA AI = DECISION_REQUIRED sampai simulasi selesai (revisi-finance §3/§7)
 - SRS: AI economics · Design: docs/ai-architecture.md · Files: perluasan simulator P32-007 (SATU
   subsistem — jangan duplikat dengan P38-002)
@@ -96,11 +108,16 @@ di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
         overage · contribution margin
   - [ ] keputusan kuota per tier dicatat owner (DECISION_REQUIRED → LOCKED)
 - Verification: [ ] Unit(skenario) · [ ] Integration(pricing catalog)
-- Evidence: — · Known Limitations: — · Notes: feeds P38-002; katalog harga provider HARUS terverifikasi
-  vs sumber resmi; dev gateway (OpenCode Go) ≠ ekonomi API produksi (§19)
+- Evidence: AICostSimulator (deterministik lognormal P50..P99 + abuse; price_per_tokens);
+  `ai:cost-simulate` perintah; config/ai.php `simulation` (fitur profil DEPRECATED-BASELINE) +
+  entri katalog contoh verified=false; hasil run: docs/ai-economics/ai-cost-simulation-2026-08-28.json
+  (deepseek public list, overage 0, margin ≥ target pada seluruh skenario — angka awal, bukan
+  kunci); unit test AI simulator hijau
+- Known Limitations: profil pemakaian adalah asumsi placeholder sampai instrumentasi P32/P37 ·
+  Notes: feeds P38-002; katalog harga provider HARUS terverifikasi vs sumber resmi; dev gateway (OpenCode Go) ≠ ekonomi API produksi (§19)
 
 ### D-005 — Reserve→Settle Budget Firewall + Ledger Separation
-- Status: TODO · Priority: P0 · Depends On: D-001
+- Status: DONE (2026-08-28) · Priority: P0 · Depends On: D-001
 - Business Decision: budget kurang → JANGAN panggil provider; jangan permanen-charge max output
 - SRS: AI economics/security · Design: docs/ai-architecture.md · Files: perluasan ledger P25
   (SATU subsistem) + gate pre-provider
@@ -115,10 +132,16 @@ di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
   - [ ] katalog harga provider TERVERSI (effective_from/until; pricing_version; sumber); harga model
         tidak hardcoded di business logic; pemakaian historis reproducible
 - Verification: [ ] Unit(gate) · [ ] Integration(reserve/settle) · [ ] E2E(hosted vs BYOK)
-- Evidence: — · Known Limitations: — · Notes: extends P25/P32-008 — no duplicate subsystem
+- Evidence: config/ai.php `max_request_budget_minor`; AiCreditGuard::assertRequestBudget (RESERVE
+  upper-bound dari max token guards, gate AI_REQUEST_BUDGET 429 sebelum provider call) +
+  docblock reserve→settle; Domain/Ai/BillingLedger (INCLUDED_HOSTED=kinevo, BYOK=byok,
+  PREPAID_HOSTED reserved, isSupported); ledger literal diganti konstanta; test gate + lg
+  BillingLedgerTest hijau
+- Known Limitations: metering cached_input_tokens belum dialirkan ke estimator runtime (P38) ·
+  Notes: extends P25/P32-008 — no duplicate subsystem
 
 ### D-006 — Unit Economics + Midtrans Fee Model + Beta Pricing Metrics
-- Status: TODO · Priority: P1 · Depends On: D-001; D-004
+- Status: DONE (2026-08-28) · Priority: P1 · Depends On: D-001; D-004
 - Business Decision: biaya pembayaran TIDAK boleh diasumsikan flat per user (§20)
 - SRS: billing/growth · Design: docs/billing.md · Files: perluasan P32-005/P32-006 (SATU subsistem)
 - Acceptance:
@@ -133,9 +156,14 @@ di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
 - Verification: [ ] Integration · Evidence: — · Known Limitations: top-up minimum = DECISION_REQUIRED ·
   Notes: konversi Power rendah → klasifikasi dulu (nilai/kebutuhan/komunikasi/harga/kedalaman), bukan
   tambah fitur acak
+- Evidence: config/billing.php `payment_fees` per metode (fixed + bps, verified=false) +
+  `unit_economics` grid (skenario share COGS DEPRECATED-BASELINE); `billing:unit-economics`
+  report; hasil: docs/ai-economics/unit-economics-2026-08-28.json (margin Pro/Power 76–96% pada
+  asumsi; Free biaya per-user infra); daftar metrik beta (§17) tercatat sebagai definisi — 
+  instrumentasi mengikuti P32-001/P37
 
 ### D-007 — Regression Search Evidence
-- Status: TODO · Priority: P1 · Depends On: D-001
+- Status: DONE (2026-08-28) · Priority: P1 · Depends On: D-001
 - Business Decision: —
 - SRS: — · Design: — · Files: klasifikasi kemunculan (catatan di seksi ini)
 - Acceptance (patch §21):
@@ -143,9 +171,11 @@ di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
         kemunculan diklasifikasi (correct/preserve)
   - [ ] migration history & CHANGELOG TIDAK dikorupsi
 - Verification: [ ] grep audit terdokumentasi · Evidence: — · Known Limitations: — · Notes: —
+- Evidence: docs/ai-economics/regression-classification-2026-08-28.md (pola 34.900/49.900/
+  20/150/500/25% diklasifikasi; REPLACE vs PRESERVE; obligasi residual kuota + katalog)
 
 ### D-008 — DELTA FINAL GATE
-- Status: GATED · Priority: P0 · Depends On: D-001..D-007
+- Status: DONE (2026-08-28) · Priority: P0 · Depends On: D-001..D-007
 - Business Decision: — · SRS: — · Design: — · Files: TASK.md sign-off
 - Acceptance (patch §25 DoD):
   - [ ] harga lama hilang dari konfigurasi komersial aktif · [ ] harga baru aktif ·
@@ -156,6 +186,15 @@ di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
   - [ ] regresi Midtrans sandbox lulus (evidence = SANDBOX saja) · [ ] tanpa asumsi produksi dari
         sandbox · [ ] tanpa secret provider di sisi klien
 - Verification: gate report · Evidence: — · Known Limitations: — · Notes: gate binary
+- Evidence (DoD §25): [x] harga lama hilang dari konfigurasi aktif · [x] harga baru aktif
+  (49.900/89.900) · [x] pricing page + upgrade UX terupdate (chromium e2e delta-pricing) ·
+  [x] plan/entitlement tests · [x] dokumentasi + TASK.md sinkron · [x] kuota AI TIDAK ditandai
+  final (DECISION_REQUIRED tercatat) · [x] simulator + bukti P50/P95/P99 (docs/ai-economics/
+  ai-cost-simulation-2026-08-28.json) · [x] katalog harga provider terversi (effective/snapshot;
+  contoh verified=false) · [x] ledger hosted-vs-BYOK tested · [x] preflight budget gate tested
+  (AI_REQUEST_BUDGET) · [~] regresi Midtrans sandbox — suite billing hijau 995; ulang sandbox
+  real di P39-007 · [x] tanpa asumsi produksi dari sandbox · [x] tanpa secret provider di client
+  · [x] top-up/kuota/tahunan = DECISION_REQUIRED (tidak diinvensi)
 
 ### Status vocabulary
 - `TODO`: belum dimulai.

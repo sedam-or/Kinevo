@@ -4,6 +4,7 @@ namespace App\Application\Ai;
 
 use App\Application\Saas\EntitlementService;
 use App\Domain\Ai\AiRuntimeLimitException;
+use App\Domain\Ai\BillingLedger;
 use App\Domain\Ai\Contracts\AiRunRepository;
 use App\Domain\Ai\Entities\AiRun;
 use App\Domain\Ai\ValueObjects\AiResponse;
@@ -12,17 +13,28 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 
 /**
- * TASK-P25-003..005/007/008 — AI request guard: metered preflight before any
- * provider call, postflight accounting on success, daily runtime safeguards
- * (P25-007), and the Kinevo-hosted vs BYOK ledger split (P25-008).
+ * TASK-P25-003..005/007/008 + COMMERCIAL PRICING DELTA D-005 — AI request
+ * guard: metered preflight before any provider call, postflight accounting on
+ * success, daily runtime safeguards (P25-007), the per-request estimated
+ * budget (RESERVE layer), and the Kinevo-hosted vs BYOK ledger split
+ * (P25-008, biLLing-source semantics via BillingLedger).
+ *
+ * Reserve -> settle semantics (revisi-finance §10):
+ *  - RESERVE: preflight checks allowance + daily caps + an upper-bound
+ *    estimated cost for the configured model at the max token guards
+ *    (`AI_REQUEST_BUDGET`); a request predicted beyond that bound is refused
+ *    BEFORE any provider call.
+ *  - SETTLE: on success the actual credits consumed and the ACTUAL token cost
+ *    from the price catalog are recorded; on failure `credits_consumed = 0`
+ *    (the reservation is released, nothing is burned).
  *
  * - Kinevo-hosted (byok=false): spends one ai_credit, costs the run against
- *   the price catalog, ledger `kinevo` — Kinevo bears the inference cost.
- * - BYOK (byok=true): spends nothing and stores no Kinevo cost (ledger
- *   `byok`) — the user bears their provider's spend. Runtime safeguards apply
- *   to BOTH (no abuse bypass). P25-010 cost alerts are evaluated after every
- *   metered success (user thresholds + ops daily cost/anomaly).
- *   Called from inference use cases, not controllers; CLI diagnostics
+ *   the price catalog, ledger INCLUDED_HOSTED (`kinevo`) — Kinevo bears the
+ *   inference cost.
+ * - BYOK (byok=true): spends nothing and stores no Kinevo cost (ledger `byok`)
+ *   — the user bears their provider's spend. Runtime safeguards apply to BOTH
+ *   (no abuse bypass). P25-010 cost alerts evaluated after every metered
+ *   success. Called from inference use cases, not controllers; CLI diagnostics
  *   (ai:smoke) bypass entirely.
  */
 final readonly class AiCreditGuard
@@ -81,6 +93,46 @@ final readonly class AiCreditGuard
                 'limit' => $maxCost,
             ]);
         }
+
+        $this->assertRequestBudget();
+    }
+
+    /**
+     * COMMERCIAL PRICING DELTA D-005 — per-request estimated budget (RESERVE).
+     * Estimates the configured provider/model worst-case cost at the max token
+     * guards; refuses the request before any provider call when that reservation
+     * would exceed the cap. No catalog price or no token guards => gate skipped.
+     */
+    private function assertRequestBudget(): void
+    {
+        $cap = (int) (config('ai.limits.max_request_budget_minor') ?: 0);
+        $driver = (string) config('ai.driver');
+        if ($cap <= 0 || $driver === '' || $driver === 'disabled') {
+            return;
+        }
+
+        $model = (string) config("ai.{$driver}.model");
+        if ($model === '') {
+            return;
+        }
+
+        $maxIn = (int) (config('ai.limits.max_input_tokens') ?: 0);
+        $maxOut = (int) (config('ai.limits.max_output_tokens') ?: 0);
+        if ($maxIn <= 0 && $maxOut <= 0) {
+            return;
+        }
+
+        $worst = $this->costEstimator->estimate($driver, $model, $maxIn > 0 ? $maxIn : null, $maxOut > 0 ? $maxOut : null);
+        if (($worst['estimated_cost_minor'] ?? null) === null) {
+            return; // unpriced model — nothing to reserve against
+        }
+
+        if ((int) $worst['estimated_cost_minor'] >= $cap) {
+            throw new AiRuntimeLimitException('Per-request estimated cost would exceed the configured budget.', 'AI_REQUEST_BUDGET', [
+                'limit' => $cap,
+                'estimated_minor' => $worst['estimated_cost_minor'],
+            ]);
+        }
     }
 
     /**
@@ -99,7 +151,7 @@ final readonly class AiCreditGuard
     ): void {
         $creditsConsumed = 0;
         $cost = ['estimated_cost_minor' => null, 'cost_currency' => null, 'pricing_source' => 'unpriced', 'pricing_snapshot_id' => null];
-        $ledger = 'byok';
+        $ledger = BillingLedger::BYOK;
 
         if (! $byok) {
             $this->entitlements->consume($userId, 'ai_credits');
@@ -110,7 +162,7 @@ final readonly class AiCreditGuard
                 $response->promptTokens,
                 $response->completionTokens,
             );
-            $ledger = 'kinevo';
+            $ledger = BillingLedger::INCLUDED_HOSTED;
         }
 
         $this->runs->record(AiRun::success(

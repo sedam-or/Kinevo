@@ -294,6 +294,94 @@ class AiUsageTest extends TestCase
         $this->assertSame('kinevo', AiRunModel::query()->where('user_id', $user->id)->latest()->first()->billing_ledger);
     }
 
+    public function test_per_request_estimated_budget_is_denied_before_provider(): void
+    {
+        config([
+            'ai.driver' => 'openai',
+            'ai.openai.base_url' => 'https://api.openai.com/v1',
+            'ai.openai.api_key' => 'sk-test',
+            'ai.openai.model' => 'gpt-4o-mini',
+            'ai.cost.catalog' => [
+                'openai.gpt-4o-mini' => [
+                    'currency' => 'USD',
+                    'input_price_minor' => 1000,
+                    'output_price_minor' => 1000,
+                    'price_per_tokens' => 1000,
+                    'effective_from' => '2026-01-01',
+                ],
+            ],
+            'ai.limits.max_input_tokens' => 1000,
+            'ai.limits.max_output_tokens' => 1000,
+            'ai.limits.max_request_budget_minor' => 1000,
+        ]);
+        [$user, $token] = $this->userWithToken();
+
+        // Worst-case reservation (2,000,000 minor) exceeds the 1000 cap ->
+        // refused BEFORE any provider call, nothing recorded.
+        $this->withToken($token)->postJson('/api/v1/ai/generate', [
+            'role' => 'task_extraction', 'prompt' => 'Anything',
+        ])->assertStatus(429)
+            ->assertJsonPath('code', 'AI_REQUEST_BUDGET');
+
+        $this->assertSame(0, AiRunModel::query()->where('user_id', $user->id)->count());
+        Http::assertNothingSent();
+    }
+
+    public function test_generous_request_budget_allows_the_call(): void
+    {
+        config([
+            'ai.driver' => 'openai',
+            'ai.openai.base_url' => 'https://api.openai.com/v1',
+            'ai.openai.api_key' => 'sk-test',
+            'ai.openai.model' => 'gpt-4o-mini',
+            'ai.cost.catalog' => [
+                'openai.gpt-4o-mini' => [
+                    'currency' => 'USD',
+                    'input_price_minor' => 1,
+                    'output_price_minor' => 1,
+                    'price_per_tokens' => 1000,
+                    'effective_from' => '2026-01-01',
+                ],
+            ],
+            'ai.limits.max_input_tokens' => 1000,
+            'ai.limits.max_output_tokens' => 1000,
+            'ai.limits.max_request_budget_minor' => 1000,
+        ]);
+        [, $token] = $this->userWithToken();
+
+        Http::fake(['api.openai.com/*' => Http::response([
+            'choices' => [['message' => ['content' => 'ok']]],
+            'usage' => ['prompt_tokens' => 10, 'completion_tokens' => 10],
+        ], 200)]);
+
+        $this->withToken($token)->postJson('/api/v1/ai/generate', [
+            'role' => 'task_extraction', 'prompt' => 'Anything',
+        ])->assertStatus(200);
+    }
+
+    public function test_power_plan_accepts_byok_and_keeps_hosted_allowance_intact(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        $this->withToken($token)->patchJson('/api/v1/saas/plan', ['plan_code' => 'power'])->assertOk();
+        $this->app['auth']->forgetGuards();
+
+        // BYOK matrix (COMMERCIAL PRICING DELTA §6): Power = YES.
+        $this->withToken($token)->putJson('/api/v1/ai/byok', [
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'base_url' => 'https://api.example.com/v1',
+            'api_key' => 'sk-power-secret',
+        ])->assertStatus(201)->assertJsonPath('byok.provider', 'openai');
+
+        // Hosted allowance untouched by the BYOK roundtrip (prepaid not used).
+        $this->withToken($token)->getJson('/api/v1/saas/plan')
+            ->assertOk()
+            ->assertJsonPath('plan.code', 'power')
+            ->assertJsonPath('usage.ai_credits.allowance', 1000)
+            ->assertJsonPath('usage.ai_credits.used', 0);
+    }
+
     public function test_proposal_paths_also_spend_credits(): void
     {
         config([

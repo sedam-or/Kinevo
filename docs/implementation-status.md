@@ -189,6 +189,17 @@ AI settings discoverability (FR-60)      ✅ DONE (TASK-P17-028: unconfigured/of
                                            ADR-013 superseded note + master prompt
                                            §2 delta banner; config/tests sweep =
                                            D-001/D-002 READY, not yet executed)
+ Commercial pricing delta — implementasi  🟢 IMPLEMENTED (2026-08-28: D-001…D-007 DONE —
+                                           harga baru + ws 1/5/15 + pricing/catalog API;
+                                           test entitlement/downgrade/BYOK/budget-gate;
+                                           PlanSettings UI baru + bukti browser chromium
+                                           (delta-pricing.spec); simulator FinOps
+                                           deterministik + evidence ai-cost-simulation +
+                                           unit-economics (docs/ai-economics/); fee model
+                                           Midtrans; klasifikasi regresi terdokumentasi;
+                                           KUOTA AI = DECISION_REQUIRED (owner) —
+                                           simulasi = titik awal, bukan kunci; gate
+                                           D-008 menyusul dengan hasil gate penuh)
 ```
 
 ### Evidence rule

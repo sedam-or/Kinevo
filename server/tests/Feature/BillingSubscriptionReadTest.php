@@ -35,14 +35,14 @@ class BillingSubscriptionReadTest extends TestCase
         $token = $user->createToken('t')->plainTextToken;
         $sub = BillingSubscription::query()->create([
             'user_id' => $user->id, 'plan_code' => 'pro',
-            'price_amount_minor' => 3_490_000, 'price_currency' => 'IDR',
+            'price_amount_minor' => 4_990_000, 'price_currency' => 'IDR',
             'provider' => 'midtrans', 'operation_id' => 'kinevo-op-read',
             'provider_subscription_id' => 'sub-r1', 'state' => 'active',
         ]);
         BillingTransaction::query()->create([
             'user_id' => $user->id, 'billing_subscription_id' => $sub->id,
             'provider' => 'midtrans', 'provider_transaction_id' => 'tx-r1',
-            'amount_minor' => 3_490_000, 'currency' => 'IDR',
+            'amount_minor' => 4_990_000, 'currency' => 'IDR',
             'status' => 'succeeded', 'occurred_at' => now(),
         ]);
         SaasSubscription::query()->create([
@@ -54,12 +54,12 @@ class BillingSubscriptionReadTest extends TestCase
             ->assertOk()
             ->assertJsonPath('subscription.plan_code', 'pro')
             ->assertJsonPath('subscription.status', 'active')
-            ->assertJsonPath('subscription.price_amount_minor', 3_490_000)
+            ->assertJsonPath('subscription.price_amount_minor', 4_990_000)
             ->assertJsonPath('subscription.currency', 'IDR');
 
         $this->assertSame(['plan_code', 'status', 'price_amount_minor', 'currency', 'uncertain'], array_keys($res->json('subscription')));
         $this->assertSame('succeeded', $res->json('transactions.0.status'));
-        $this->assertSame(3_490_000, $res->json('transactions.0.amount_minor'));
+        $this->assertSame(4_990_000, $res->json('transactions.0.amount_minor'));
         // Mobile-safe shape: no provider id, no provider name, no raw payload.
         $this->assertArrayNotHasKey('provider_transaction_id', $res->json('transactions.0'));
         $this->assertArrayNotHasKey('provider', $res->json('transactions.0'));
@@ -71,14 +71,14 @@ class BillingSubscriptionReadTest extends TestCase
         $token = $user->createToken('t')->plainTextToken;
         $sub = BillingSubscription::query()->create([
             'user_id' => $user->id, 'plan_code' => 'power',
-            'price_amount_minor' => 4_990_000, 'provider' => 'midtrans',
+            'price_amount_minor' => 8_990_000, 'provider' => 'midtrans',
             'operation_id' => 'kinevo-op-cap', 'provider_subscription_id' => 'sub-r2', 'state' => 'active',
         ]);
         for ($i = 1; $i <= 25; $i++) {
             BillingTransaction::query()->create([
                 'user_id' => $user->id, 'billing_subscription_id' => $sub->id,
                 'provider' => 'midtrans', 'provider_transaction_id' => 'tx-cap-'.$i,
-                'amount_minor' => 4_990_000, 'currency' => 'IDR',
+                'amount_minor' => 8_990_000, 'currency' => 'IDR',
                 'status' => 'succeeded', 'occurred_at' => now()->subDays($i),
             ]);
         }

@@ -72,6 +72,10 @@ return [
         'max_requests_per_minute' => env('AI_MAX_REQUESTS_PER_MINUTE'),
         'max_requests_per_day' => env('AI_MAX_REQUESTS_PER_DAY'),
         'max_estimated_daily_cost_minor' => env('AI_MAX_ESTIMATED_DAILY_COST'),
+        // Per-request estimated budget (RESERVE layer, D-005): the configured
+        // driver/model worst-case cost at the max token guards must stay below
+        // this cap or the request is refused before any provider call.
+        'max_request_budget_minor' => env('AI_MAX_REQUEST_BUDGET'),
         'max_input_tokens' => env('AI_MAX_INPUT_TOKENS'),
         'max_output_tokens' => env('AI_MAX_OUTPUT_TOKENS'),
     ],
@@ -91,20 +95,35 @@ return [
     'cost' => [
         'default_currency' => env('AI_COST_CURRENCY', 'USD'),
         'catalog' => [
+            // Example versioned entries (COMMERCIAL PRICING DELTA D-004). Rates
+            // are integer minor units (currency / 100) per `price_per_tokens`
+            // tokens. verified=false: MUST be re-verified against the current
+            // official provider source before any production economics.
             // 'openai.gpt-4o-mini' => [
             //     'currency' => 'USD',
-            //     'input_price_minor' => 1,   // minor units per 1K input tokens
-            //     'output_price_minor' => 3,  // minor units per 1K output tokens
+            //     'input_price_minor' => 15,       // $0.15 / 1M tokens
+            //     'output_price_minor' => 60,      // $0.60 / 1M tokens
+            //     'cached_input_price_minor' => 15, // no verified cache discount
+            //     'price_per_tokens' => 1_000_000,
             //     'effective_from' => '2026-01-01',
             //     'effective_until' => null,
+            //     'pricing_version' => '2026.08.28-example',
+            //     'source' => 'public list price',
+            //     'verified' => false,
             // ],
-            // 'ollama.llama3.1' => [
+            // 'deepseek.deepseek-chat' => [
             //     'currency' => 'USD',
-            //     'input_price_minor' => 0,
-            //     'output_price_minor' => 0,
+            //     'input_price_minor' => 28,        // $0.28 / 1M (cache miss)
+            //     'output_price_minor' => 42,       // $0.42 / 1M
+            //     'cached_input_price_minor' => 3,  // $0.028 / 1M cache hit
+            //     'price_per_tokens' => 1_000_000,
             //     'effective_from' => '2026-01-01',
             //     'effective_until' => null,
+            //     'pricing_version' => '2026.08.28-example',
+            //     'source' => 'public list price',
+            //     'verified' => false,
             // ],
+            // Falls back to none:
         ],
     ],
 
@@ -127,5 +146,36 @@ return [
         'usage_thresholds' => [50, 75, 90, 100],
         'ops_daily_cost_minor' => (int) (env('AI_OPS_DAILY_COST_LIMIT') ?: 0),
         'user_anomaly_daily_requests' => (int) (env('AI_ANOMALY_DAILY_REQUESTS') ?: 0),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI Cost Simulation (COMMERCIAL PRICING DELTA D-004 / P32-007)
+    |--------------------------------------------------------------------------
+    | Deterministic planning model used by `ai:cost-simulate`. FEATURE PROFILES
+    | ARE DEPRECATED-BASELINE ASSUMPTIONS until real usage is instrumented
+    | (P32/P37) — they exist so the quota decision has a starting economics
+    | shape, NOT because they describe observed behaviour. Replace with
+    | observed distributions before locking any quota. costs computed from the
+    | versioned catalog above (config/ai.php `cost.catalog`).
+    */
+    'simulation' => [
+        'cache_hit_ratio' => 0.5,
+        'target_margin_low' => 0.30,
+        'target_margin_high' => 0.50,
+        'abuse_multiplier' => 15,
+        'requests_per_month' => [
+            'free' => ['mean' => 15, 'cv' => 0.6],
+            'pro' => ['mean' => 60, 'cv' => 0.5],
+            'power' => ['mean' => 120, 'cv' => 0.5],
+        ],
+        'features' => [
+            'goal_breakdown' => ['input_tokens_mean' => 6000, 'cached_input_share' => 0.2, 'output_tokens_mean' => 1500, 'cv' => 0.5],
+            'note_summary' => ['input_tokens_mean' => 4000, 'cached_input_share' => 0.2, 'output_tokens_mean' => 800, 'cv' => 0.5],
+            'task_extraction' => ['input_tokens_mean' => 2500, 'cached_input_share' => 0.2, 'output_tokens_mean' => 600, 'cv' => 0.5],
+            'planning' => ['input_tokens_mean' => 5000, 'cached_input_share' => 0.25, 'output_tokens_mean' => 1200, 'cv' => 0.5],
+            'deep_analysis' => ['input_tokens_mean' => 12000, 'cached_input_share' => 0.3, 'output_tokens_mean' => 2500, 'cv' => 0.6],
+            'wrapped_narrative' => ['input_tokens_mean' => 8000, 'cached_input_share' => 0.2, 'output_tokens_mean' => 2000, 'cv' => 0.5],
+        ],
     ],
 ];

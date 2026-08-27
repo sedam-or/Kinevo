@@ -44,7 +44,12 @@ class SaasApiTest extends TestCase
             ->assertJsonPath('subscription.state', 'active')
             ->assertJsonPath('usage.ai_credits.allowance', 20)
             ->assertJsonPath('usage.ai_credits.used', 0)
-            ->assertJsonPath('usage.ai_credits.remaining', 20);
+            ->assertJsonPath('usage.ai_credits.remaining', 20)
+            // COMMERCIAL PRICING DELTA — new launch-hypothesis prices surfaced.
+            ->assertJsonPath('pricing.free.amount_minor', 0)
+            ->assertJsonPath('pricing.pro.amount_minor', 4_990_000)
+            ->assertJsonPath('pricing.power.amount_minor', 8_990_000)
+            ->assertJsonPath('pricing.pro.launch_hypothesis', true);
     }
 
     public function test_switching_plan_updates_entitlements(): void
@@ -62,22 +67,22 @@ class SaasApiTest extends TestCase
 
     public function test_max_workspaces_is_enforced_on_free_and_upgraded_on_paid(): void
     {
-        [, $token] = $this->userWithToken(); // free: max 2 (Personal default + 1)
+        [, $token] = $this->userWithToken(); // free: max 1 (Personal default only)
 
-        $this->withToken($token)->postJson('/api/v1/workspaces', ['name' => 'Second'])
-            ->assertStatus(201);
-
-        $denied = $this->withToken($token)->postJson('/api/v1/workspaces', ['name' => 'Third']);
+        $denied = $this->withToken($token)->postJson('/api/v1/workspaces', ['name' => 'Second']);
         $denied->assertStatus(403)
             ->assertJsonPath('code', 'ENTITLEMENT_LIMIT')
             ->assertJsonPath('entitlement', 'max_workspaces')
-            ->assertJsonPath('limit', 2);
+            ->assertJsonPath('limit', 1);
 
-        // Upgrade unlocks it.
+        // Upgrade unlocks it (COMMERCIAL PRICING DELTA matrix: Pro = 5).
         $this->withToken($token)->patchJson('/api/v1/saas/plan', ['plan_code' => 'pro']);
         $this->app['auth']->forgetGuards();
-        $this->withToken($token)->postJson('/api/v1/workspaces', ['name' => 'Third'])
+        $this->withToken($token)->postJson('/api/v1/workspaces', ['name' => 'Second'])
             ->assertStatus(201);
+        $this->withToken($token)->postJson('/api/v1/workspaces', ['name' => 'Third'])
+            ->assertStatus(201)
+            ->assertJsonPath('workspace.name', 'Third');
     }
 
     public function test_ai_credits_are_consumed_then_exhausted(): void
@@ -134,6 +139,37 @@ class SaasApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('plan.code', 'free') // degraded
             ->assertJsonPath('subscription.state', 'expired');
+    }
+
+    public function test_downgrade_never_deletes_existing_data_but_blocks_new_usage(): void
+    {
+        [$user, $token] = $this->userWithToken();
+
+        $this->withToken($token)->patchJson('/api/v1/saas/plan', ['plan_code' => 'power']);
+        $this->app['auth']->forgetGuards();
+
+        // Build workspace state while on Power (max 15).
+        $this->withToken($token)->postJson('/api/v1/workspaces', ['name' => 'A'])->assertStatus(201);
+        $this->withToken($token)->postJson('/api/v1/workspaces', ['name' => 'B'])->assertStatus(201);
+
+        // Downgrade Power -> Pro -> Free (COMMERCIAL PRICING DELTA §16).
+        $this->withToken($token)->patchJson('/api/v1/saas/plan', ['plan_code' => 'free']);
+        $this->app['auth']->forgetGuards();
+
+        // Existing workspaces survive the downgrade (never silently deleted).
+        $this->withToken($token)->getJson('/api/v1/workspaces')
+            ->assertOk()
+            ->assertJsonCount(3, 'workspaces') // Personal default + A + B
+            ->assertJsonFragment(['name' => 'A'])
+            ->assertJsonFragment(['name' => 'B'])
+            ->assertJsonStructure(['default_workspace_id']);
+
+        // New creation beyond the Free limit (1) is blocked, not data-destroying.
+        $this->withToken($token)->postJson('/api/v1/workspaces', ['name' => 'C'])
+            ->assertStatus(403)
+            ->assertJsonPath('code', 'ENTITLEMENT_LIMIT')
+            ->assertJsonPath('entitlement', 'max_workspaces')
+            ->assertJsonPath('limit', 1);
     }
 }
 

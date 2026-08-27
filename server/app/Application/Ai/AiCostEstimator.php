@@ -12,9 +12,11 @@ use Illuminate\Support\Carbon;
  * feeds hard cost caps (P25-007) and reporting (P25-010). BYOK runs (P25-008)
  * are never costed here — the user bears that spend.
  *
- * Per request: cost = input_tokens × input_rate + output_tokens × output_rate
- * (rates are integer minor units per 1K tokens). Active entry is the one whose
- * effective_from/until window contains now; a `provider.*` key matches any model.
+ * Per request: cost = input_tokens x input_rate + output_tokens x output_rate
+ * (rates are integer minor units per 1K tokens by default; `price_per_tokens`
+ * e.g. 1_000_000 for provider-sheet rates scales the divisor accordingly).
+ * Active entry is the one whose effective_from/until window contains now; a
+ * `provider.*` key matches any model.
  */
 final readonly class AiCostEstimator
 {
@@ -33,8 +35,9 @@ final readonly class AiCostEstimator
 
         $in = (int) ($inputTokens ?? 0);
         $out = (int) ($outputTokens ?? 0);
+        $per = (int) ($entry['price_per_tokens'] ?? 1000);
         $cost = ((int) ($entry['input_price_minor'] ?? 0) * $in
-            + (int) ($entry['output_price_minor'] ?? 0) * $out) / 1000;
+            + (int) ($entry['output_price_minor'] ?? 0) * $out) / $per;
 
         return [
             'estimated_cost_minor' => (int) round($cost),

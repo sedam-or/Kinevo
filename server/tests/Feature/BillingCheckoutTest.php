@@ -74,7 +74,7 @@ class BillingCheckoutTest extends TestCase
 
         BillingSubscription::query()->create([
             'user_id' => $user->id, 'plan_code' => 'pro',
-            'price_amount_minor' => 3_490_000, 'provider' => 'midtrans',
+            'price_amount_minor' => 4_990_000, 'provider' => 'midtrans',
             'operation_id' => 'kinevo-op-active', 'provider_subscription_id' => 'sub-1', 'state' => 'active',
         ]);
 
@@ -95,7 +95,7 @@ class BillingCheckoutTest extends TestCase
 
         BillingSubscription::query()->create([
             'user_id' => $user->id, 'plan_code' => 'pro',
-            'price_amount_minor' => 3_490_000, 'provider' => 'midtrans',
+            'price_amount_minor' => 4_990_000, 'provider' => 'midtrans',
             'operation_id' => 'kinevo-op-canceled', 'provider_subscription_id' => 'sub-2', 'state' => 'canceled',
         ]);
 

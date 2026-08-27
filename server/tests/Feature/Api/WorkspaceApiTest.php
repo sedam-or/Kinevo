@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Note;
+use App\Models\SaasSubscription;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,14 @@ class WorkspaceApiTest extends TestCase
     {
         $user = User::factory()->create();
         $token = $user->createToken('owner')->plainTextToken;
+        // CRUD-semantics tests exercise multi-workspace flows; a paid plan
+        // keeps them valid under the COMMERCIAL PRICING DELTA matrix
+        // (Free = 1 workspace).
+        SaasSubscription::query()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['plan_code' => 'power', 'provider' => 'manual', 'state' => 'active'],
+        );
+        $this->app['auth']->forgetGuards();
 
         return [$user, $token];
     }

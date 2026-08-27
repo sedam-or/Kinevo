@@ -1,0 +1,258 @@
+{
+    "status": "ok",
+    "provider": "deepseek",
+    "model": "deepseek-chat",
+    "cache_hit_ratio": 0.5,
+    "currency": "USD",
+    "price_per_tokens": 1000000,
+    "catalog_entry": {
+        "currency": "USD",
+        "input_price_minor": 28,
+        "output_price_minor": 42,
+        "cached_input_price_minor": 3,
+        "price_per_tokens": 1000000,
+        "effective_from": "2026-01-01",
+        "pricing_version": "2026.08.28-evidence",
+        "source": "public list price, verify before production",
+        "verified": false
+    },
+    "pricing_snapshot_id": "c0dde827e28c1e9d",
+    "profiles": {
+        "features": {
+            "goal_breakdown": {
+                "input_tokens_mean": 6000,
+                "cached_input_share": 0.2,
+                "output_tokens_mean": 1500,
+                "cv": 0.5
+            },
+            "note_summary": {
+                "input_tokens_mean": 4000,
+                "cached_input_share": 0.2,
+                "output_tokens_mean": 800,
+                "cv": 0.5
+            },
+            "task_extraction": {
+                "input_tokens_mean": 2500,
+                "cached_input_share": 0.2,
+                "output_tokens_mean": 600,
+                "cv": 0.5
+            },
+            "planning": {
+                "input_tokens_mean": 5000,
+                "cached_input_share": 0.25,
+                "output_tokens_mean": 1200,
+                "cv": 0.5
+            },
+            "deep_analysis": {
+                "input_tokens_mean": 12000,
+                "cached_input_share": 0.3,
+                "output_tokens_mean": 2500,
+                "cv": 0.6
+            },
+            "wrapped_narrative": {
+                "input_tokens_mean": 8000,
+                "cached_input_share": 0.2,
+                "output_tokens_mean": 2000,
+                "cv": 0.5
+            }
+        },
+        "plans_requests_per_month": {
+            "free": {
+                "mean": 15,
+                "cv": 0.6
+            },
+            "pro": {
+                "mean": 60,
+                "cv": 0.5
+            },
+            "power": {
+                "mean": 120,
+                "cv": 0.5
+            }
+        },
+        "note": "DEPRECATED-BASELINE assumptions until real usage data is instrumented (P32/P37)."
+    },
+    "feature_costs": {
+        "goal_breakdown": {
+            "cost_per_request": {
+                "P50": 0.14650891303299465,
+                "P95": 0.31864170848178397,
+                "P99": 0.43965926192329685
+            }
+        },
+        "note_summary": {
+            "cost_per_request": {
+                "P50": 0.09016875361759716,
+                "P95": 0.19609611119028475,
+                "P99": 0.2705601396924249
+            }
+        },
+        "task_extraction": {
+            "cost_per_request": {
+                "P50": 0.06011556521319787,
+                "P95": 0.13072708339271358,
+                "P99": 0.18036610476931866
+            }
+        },
+        "planning": {
+            "cost_per_request": {
+                "P50": 0.12333913042639574,
+                "P95": 0.26825816678542713,
+                "P99": 0.3701402095386373
+            }
+        },
+        "deep_analysis": {
+            "cost_per_request": {
+                "P50": 0.2773007571998171,
+                "P95": 0.6903827098227061,
+                "P99": 1.0073884351286064
+            }
+        },
+        "wrapped_narrative": {
+            "cost_per_request": {
+                "P50": 0.1953358840439929,
+                "P95": 0.4248742779757119,
+                "P99": 0.5861843492310622
+            }
+        }
+    },
+    "plans": {
+        "free": {
+            "P50": {
+                "requests": 13,
+                "monthly_cogs_minor": 1,
+                "revenue_minor": 0,
+                "margin": null,
+                "safe": null
+            },
+            "P75": {
+                "requests": 19,
+                "monthly_cogs_minor": 2,
+                "revenue_minor": 0,
+                "margin": null,
+                "safe": null
+            },
+            "P90": {
+                "requests": 26,
+                "monthly_cogs_minor": 4,
+                "revenue_minor": 0,
+                "margin": null,
+                "safe": null
+            },
+            "P95": {
+                "requests": 32,
+                "monthly_cogs_minor": 4,
+                "revenue_minor": 0,
+                "margin": null,
+                "safe": null
+            },
+            "P99": {
+                "requests": 47,
+                "monthly_cogs_minor": 7,
+                "revenue_minor": 0,
+                "margin": null,
+                "safe": null
+            },
+            "ABUSE": {
+                "requests": 701,
+                "monthly_cogs_minor": 104,
+                "revenue_minor": 0,
+                "margin": null,
+                "safe": null
+            }
+        },
+        "pro": {
+            "P50": {
+                "requests": 54,
+                "monthly_cogs_minor": 8,
+                "revenue_minor": 4990000,
+                "margin": 1,
+                "safe": true
+            },
+            "P75": {
+                "requests": 74,
+                "monthly_cogs_minor": 11,
+                "revenue_minor": 4990000,
+                "margin": 1,
+                "safe": true
+            },
+            "P90": {
+                "requests": 98,
+                "monthly_cogs_minor": 14,
+                "revenue_minor": 4990000,
+                "margin": 1,
+                "safe": true
+            },
+            "P95": {
+                "requests": 117,
+                "monthly_cogs_minor": 17,
+                "revenue_minor": 4990000,
+                "margin": 1,
+                "safe": true
+            },
+            "P99": {
+                "requests": 161,
+                "monthly_cogs_minor": 23,
+                "revenue_minor": 4990000,
+                "margin": 1,
+                "safe": true
+            },
+            "ABUSE": {
+                "requests": 2416,
+                "monthly_cogs_minor": 360,
+                "revenue_minor": 4990000,
+                "margin": 1,
+                "safe": true
+            }
+        },
+        "power": {
+            "P50": {
+                "requests": 107,
+                "monthly_cogs_minor": 16,
+                "revenue_minor": 8990000,
+                "margin": 1,
+                "safe": true
+            },
+            "P75": {
+                "requests": 148,
+                "monthly_cogs_minor": 22,
+                "revenue_minor": 8990000,
+                "margin": 1,
+                "safe": true
+            },
+            "P90": {
+                "requests": 197,
+                "monthly_cogs_minor": 29,
+                "revenue_minor": 8990000,
+                "margin": 1,
+                "safe": true
+            },
+            "P95": {
+                "requests": 233,
+                "monthly_cogs_minor": 36,
+                "revenue_minor": 8990000,
+                "margin": 1,
+                "safe": true
+            },
+            "P99": {
+                "requests": 322,
+                "monthly_cogs_minor": 48,
+                "revenue_minor": 8990000,
+                "margin": 1,
+                "safe": true
+            },
+            "ABUSE": {
+                "requests": 4831,
+                "monthly_cogs_minor": 718,
+                "revenue_minor": 8990000,
+                "margin": 1,
+                "safe": true
+            }
+        }
+    },
+    "target_margin_range": [
+        0.3,
+        0.5
+    ],
+    "decision_required": "Hosted AI quota per tier must be locked from this analysis \u2014 see report, then owner decision."
+}
