@@ -7023,27 +7023,37 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 > and `docs/adr/ADR-008-mobile.md`.
 
 ### P26-001 — NativePHP Feasibility Spike
-- Status: BLOCKED (requires Android SDK/emulator/device)
+- Status: PARTIAL DONE (toolchain + emulator + NativePHP scaffold REAL; APK assembly running)
 - Priority: High
-- Depends On: Android Studio toolchain install; NativePHP Mobile v4 (already doc-verified)
+- Depends On: Android Studio toolchain install; NativePHP Mobile v4 (doc-verified + now installed)
 - Business Decision: Android-first release target
 - SRS: AI/chapter boundaries unaffected; see docs/SRS.md §13 (AI optional core, FR-60)
 - Design: docs/mobile-architecture.md
-- Files: docs/mobile-architecture.md (version evidence table); spike app under server-mobile/ (new, isolated)
-- Acceptance:
-  - [ ] exact versions recorded (Laravel, PHP, Node/tooling, NativePHP Mobile version, Android toolchain)
-  - [ ] compatibility result recorded
-  - [ ] Android debug build succeeds
-  - [ ] app launches on tested emulator/device
-  - [ ] HTTPS request reaches Kinevo backend
-  - [ ] no unsupported assumption remains undocumented
+- Files: docs/mobile-architecture.md (version evidence table); spike app under /home/kepolu/kinevo-mobile-spike4 (Laravel 12 + nativephp/mobile 4.2.0), NOT in repo
+- Acceptance (evidence 2026-08-27):
+  - [x] exact versions recorded — Laravel 12, PHP 8.5.9, NativePHP Mobile 4.2.0, JDK 17.0.20.1,
+       Android cmdline-tools 16111833, platform-tools r37.0.1, emulator r37.1.11, system image API 34
+  - [x] Android SDK installed & **checksum-verified** against Google official repo XML
+       (dl.google.com/android/repository/repository2-1.xml sha1 e025545c62a8e64c7559119566a569fb1dec5f60)
+  - [x] emulator booted — AVD `kinevo_emu` (android-34 google_apis x86_64, KVM-accelerated) reached
+       `boot_completed=1` on real `/dev/kvm` (adb devices → emulator-5554)
+  - [~] Android debug build succeeds — `native:build` is macOS-guarded (v4 requires Xcode); built the
+       scaffolded Android Gradle project directly via `./gradlew assembleDebug` with NativePHP's
+       REPLACE_* tokens filled (compileSdk/targetSdk 34, minSdk 24, appId com.kinevo.spike,
+       versionCode 1) — Gradle distribution + Maven deps downloading in background at commit time
+  - [ ] app launches on tested emulator/device — pending APK assembly completion
+  - [ ] HTTPS request reaches Kinevo backend — pending app launch
+  - [x] no unsupported assumption remains undocumented (macOS-guard + token-substitution findings logged here)
 - Verification:
-  - [ ] Unit — n/a (spike)
-  - [ ] Integration — backend HTTPS reachable from device client
-  - [ ] E2E — launch + login reachability
-  - [ ] Browser/Device — emulator/device run log recorded in TASK evidence
-- Evidence: —
-- Known Limitations: doc-level verification only (official NativePHP v4 docs) until toolchain exists
+  - [~] Unit — n/a (spike)
+  - [~] Integration — backend HTTPS reachable from device client (pending launch)
+  - [~] E2E — launch + login reachability (pending launch)
+  - [x] Browser/Device — emulator boot log recorded (boot_completed=1)
+- Evidence: SDK checksum + emulator boot + NativePHP 4.2.0 install + scaffolded Gradle project; APK
+  assembly in progress (background Gradle). Spike app lives OUTSIDE the repo (throwaway).
+- Known Limitations: NativePHP's official `native:build` requires macOS; on Linux we build the
+  Android project directly via Gradle. iconv ext absent in CLI PHP (installed nativephp/mobile 4.x
+  with `--ignore-platform-req=ext-iconv` for the spike only).
 - Notes: never invent NativePHP capabilities; verify against current official docs at execution time
 
 ### P26-002 — Mobile Architecture ADR
