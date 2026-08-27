@@ -11,6 +11,8 @@ import AppShell from '../shell/AppShell.vue';
 import AppErrorBoundary from '../shell/AppErrorBoundary.vue';
 import LoginView from './LoginView.vue';
 import RegisterView from './RegisterView.vue';
+import AuthScreen from './AuthScreen.vue';
+import KButton from '../components/KButton.vue';
 import ProfileView from './ProfileView.vue';
 import AiSettingsView from '../ai/AiSettingsView.vue';
 import TodayView from '../today/TodayView.vue';
@@ -155,41 +157,35 @@ const viewTitle = computed(() => {
 <template>
     <AppErrorBoundary>
         <!-- Session restore in progress -->
-        <div v-if="!ready" class="min-h-screen flex items-center justify-center text-sm text-gray-500 dark:text-gray-400" data-testid="auth-restoring">
+        <div v-if="!ready" class="flex min-h-[100dvh] items-center justify-center bg-bg text-sm text-text-muted" data-testid="auth-restoring">
             Restoring session…
         </div>
 
         <!-- Guest: login / register -->
-        <div v-else-if="!auth.isAuthenticated" class="relative min-h-screen flex flex-col items-center justify-center bg-[#FDFDFC] text-[#1b1b18] dark:bg-[#0a0a0a] dark:text-[#EDEDEC] px-4" data-testid="auth-gate">
-            <!-- Theme is reachable before login too (TASK-P17-013). -->
-            <button
-                type="button"
-                class="absolute top-3 right-3 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1"
-                data-testid="theme-toggle"
-                @click="shell.cycleTheme()"
-            >
-                <span class="hidden sm:inline">Theme: </span>{{ shell.theme }}
-            </button>
+        <AuthScreen v-else-if="!auth.isAuthenticated">
             <LoginView v-if="authMode === 'login'" :on-go-to-register="goToRegister" />
             <RegisterView v-else :on-go-to-login="goToLogin" />
-        </div>
+        </AuthScreen>
 
         <!-- Authenticated: app shell -->
         <AppShell v-else>
-            <div class="flex items-center justify-between mb-4">
-                <h1 class="text-xl font-semibold" data-testid="view-title">{{ viewTitle }}</h1>
+            <div class="mb-5 flex items-center justify-between gap-3">
+                <h1 class="flex items-center gap-2.5 text-xl font-bold tracking-tight" data-testid="view-title">
+                    <span class="size-2.5 bg-primary" aria-hidden="true"></span>
+                    {{ viewTitle }}
+                </h1>
                 <div class="flex items-center gap-3 text-sm">
-                    <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="global-quick-capture" @click="qc.show()">
+                    <KButton variant="primary" data-testid="global-quick-capture" @click="qc.show()">
                         Quick Capture
-                    </button>
-                    <span data-testid="auth-user">{{ auth.displayName }}</span>
-                    <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="logout" @click="auth.logout()">
+                    </KButton>
+                    <span class="hidden text-text-muted sm:inline" data-testid="auth-user">{{ auth.displayName }}</span>
+                    <KButton variant="ghost" data-testid="logout" @click="auth.logout()">
                         Log out
-                    </button>
+                    </KButton>
                 </div>
             </div>
 
-            <div v-if="shell.isLoading" class="text-sm text-gray-500 dark:text-gray-400" data-testid="global-loading">
+            <div v-if="shell.isLoading" class="text-sm text-text-muted" data-testid="global-loading">
                 Loading…
             </div>
 
@@ -207,7 +203,7 @@ const viewTitle = computed(() => {
             <CanvasView v-else-if="shell.activeView === 'canvas'" />
             <AnalyticsView v-else-if="shell.activeView === 'analytics'" />
             <div v-else data-testid="view-content">
-                <p class="text-sm text-gray-600 dark:text-gray-400">
+                <p class="text-sm text-text-muted">
                     The {{ shell.activeView }} view is wired into the shell and will be
                     implemented in its dedicated task.
                 </p>

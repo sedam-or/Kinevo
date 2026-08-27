@@ -26,13 +26,13 @@ function retry(): void {
         <span data-testid="sync-status-badge">
             <VisualStateBadge :state="state" />
         </span>
-        <span v-if="queuedCount > 0" class="text-xs text-gray-500 dark:text-gray-400" data-testid="sync-queued-count">
+        <span v-if="queuedCount > 0" class="text-xs text-text-muted" data-testid="sync-queued-count">
             {{ queuedCount }} queued
         </span>
         <!-- Clamped on small screens (CSS truncation keeps the full text in
              the a11y tree); full prose from lg up. §90 state explanations. -->
         <span
-            class="text-xs text-gray-500 dark:text-gray-400 max-w-24 lg:max-w-none truncate"
+            class="text-xs text-text-muted max-w-24 lg:max-w-none truncate"
             data-testid="sync-explanation"
         >
             {{ explanation }}
@@ -40,7 +40,7 @@ function retry(): void {
         <button
             v-if="showRetry"
             type="button"
-            class="text-xs border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-0.5"
+            class="text-xs border border-border/30 rounded-sm px-2 py-0.5"
             data-testid="sync-retry"
             @click="retry"
         >

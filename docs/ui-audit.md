@@ -498,6 +498,35 @@ Evidence: vue-tsc + vitest suite green after change.
 Link: this record.
 ```
 
+```text
+UI-017 | 2026-08-27 | Auth gate + app shell chrome | UX-C4
+Found (user-reported): the login screen rendered a bare centered form on a flat
+background with zero brand identity — no wordmark, no surface weight, raw gray
+controls before the KButton/KInput migration; AppShell chrome (topbar, side
+nav, mobile bottom bar, more drawer) painted with Tailwind grays and literal
+hex duplicates (#FDFDFC/#1b1b18/#0a0a0a/#EDEDEC) instead of theme tokens.
+Expected: design.md §4–§7 Neo-Brutalist border/shadow language; §67 brand
+consistency; design-tokens.md §2 semantic colors on every visible surface.
+Severity: UX-C4 / P2 (first-login impression is the product's front door).
+Status: fixed (2026-08-27) — new auth/AuthScreen.vue branded split gate:
+desktop left panel in bg-primary with KINEVO wordmark mark, display headline
+"Start today." + one sub-line, brutalist color-block decoration;
+right column hosts both forms inside .surface-hero (L1 4px border + offset
+shadow); fields use font-semibold labels above KInput, inline errors restyled
+border-l-4 danger + bg-danger-tint; submit = tactile KButton primary w-full;
+theme toggle tokenized on-token; restoring state uses tokens. Login/Register
+copy trimmed to real function ("Pick up where you left off." /
+"One workspace to start your day."). AppShell topbar/side-nav/mobile bar/more
+drawer/SyncStatusPanel/shell index migrated from grays+h9x to bg-bg/text-text/
+text-text-muted/border-border(bg-surface actives) so EVERY page inherits
+branded chrome. Authenticated header: view title gains primary square mark,
+Quick Capture → KButton primary, Log out → ghost.
+Evidence: vue-tsc clean; vitest 522 passed (auth suite 19 incl. gate/testid
+contracts); production build green; auth testids (auth-gate moved into
+AuthScreen root) and E2E button-name contracts unchanged.
+Link: this record.
+```
+
 No finding above is closed silently; each closes with concrete browser/test/visual
 evidence in a later task.
 

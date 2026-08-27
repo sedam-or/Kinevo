@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
+import KButton from '../components/KButton.vue';
+import KInput from '../components/KInput.vue';
 import { useAuthStore } from './store';
 import type { ApiError } from './types';
 
@@ -36,36 +38,48 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-    <form class="max-w-sm mx-auto flex flex-col gap-4" @submit.prevent="submit" data-testid="register-form">
-        <h1 class="text-xl font-semibold">Create your Kinevo account</h1>
-
-        <div v-if="formError" class="text-sm text-danger" role="alert" data-testid="register-error">
-            {{ formError }}
+    <form class="flex flex-col gap-5" @submit.prevent="submit" data-testid="register-form">
+        <div>
+            <h1 class="text-2xl font-black tracking-tight">Create your account</h1>
+            <p class="mt-1 text-sm text-text-muted">One workspace to start your day.</p>
         </div>
 
-        <label class="flex flex-col gap-1 text-sm">
+        <p
+            v-if="formError"
+            class="border-l-4 border-danger bg-danger-tint px-3 py-2 text-sm text-danger"
+            role="alert"
+            data-testid="register-error"
+        >
+            {{ formError }}
+        </p>
+
+        <label class="flex flex-col gap-1.5 text-sm font-semibold">
             Name
-            <input v-model="form.name" type="text" required class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="register-name" />
-            <span v-if="fieldErrors.name" class="text-danger text-xs">{{ fieldErrors.name[0] }}</span>
+            <KInput v-model="form.name" type="text" required autocomplete="name" data-testid="register-name" />
+            <span v-if="fieldErrors.name" class="font-normal text-xs text-danger">{{ fieldErrors.name[0] }}</span>
         </label>
 
-        <label class="flex flex-col gap-1 text-sm">
+        <label class="flex flex-col gap-1.5 text-sm font-semibold">
             Email
-            <input v-model="form.email" type="email" required class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="register-email" />
-            <span v-if="fieldErrors.email" class="text-danger text-xs">{{ fieldErrors.email[0] }}</span>
+            <KInput v-model="form.email" type="email" required autocomplete="email" data-testid="register-email" />
+            <span v-if="fieldErrors.email" class="font-normal text-xs text-danger">{{ fieldErrors.email[0] }}</span>
         </label>
 
-        <label class="flex flex-col gap-1 text-sm">
+        <label class="flex flex-col gap-1.5 text-sm font-semibold">
             Password
-            <input v-model="form.password" type="password" required minlength="8" class="border border-gray-300 dark:border-gray-600 rounded-sm px-3 py-2" data-testid="register-password" />
-            <span v-if="fieldErrors.password" class="text-danger text-xs">{{ fieldErrors.password[0] }}</span>
+            <KInput v-model="form.password" type="password" required minlength="8" autocomplete="new-password" data-testid="register-password" />
+            <span v-if="fieldErrors.password" class="font-normal text-xs text-danger">{{ fieldErrors.password[0] }}</span>
         </label>
 
-        <button type="submit" class="border border-gray-300 dark:border-gray-600 rounded-sm px-4 py-2 font-medium" :disabled="auth.busy" data-testid="register-submit">
+        <KButton variant="primary" type="submit" class="w-full" :disabled="auth.busy" data-testid="register-submit">
             {{ auth.busy ? 'Creating…' : 'Create account' }}
-        </button>
+        </KButton>
 
-        <button type="button" class="text-sm underline" @click="props.onGoToLogin">
+        <button
+            type="button"
+            class="-mt-1 self-start text-sm font-semibold underline decoration-border decoration-2 underline-offset-4 hover:text-primary"
+            @click="props.onGoToLogin"
+        >
             Already have an account? Log in
         </button>
     </form>

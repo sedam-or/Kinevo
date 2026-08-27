@@ -70,7 +70,7 @@ function selectView(view: ShellView): void {
 </script>
 
 <template>
-    <div class="kinevo-app-shell min-h-screen bg-[#FDFDFC] text-[#1b1b18] dark:bg-[#0a0a0a] dark:text-[#EDEDEC]">
+    <div class="kinevo-app-shell min-h-screen bg-bg text-text">
         <!-- Skip link (WCAG 2.2 2.4.1 Bypass Blocks): first focusable element. -->
         <a
             href="#main-content"
@@ -81,10 +81,10 @@ function selectView(view: ShellView): void {
         </a>
 
         <!-- Sync + notification topbar -->
-        <header class="flex items-center justify-between gap-2 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        <header class="flex items-center justify-between gap-2 border-b border-border/20 px-4 py-3">
             <div class="flex items-center gap-3 min-w-0">
                 <span class="font-semibold shrink-0">Kinevo</span>
-                <span data-testid="current-section" class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                <span data-testid="current-section" class="text-sm text-text-muted truncate">
                     / {{ currentSection }}
                 </span>
                 <span data-testid="sync-state" class="shrink-0">
@@ -98,7 +98,7 @@ function selectView(view: ShellView): void {
                     <template #footer>
                         <button
                             type="button"
-                            class="text-left text-sm underline px-3 py-2 min-h-[44px] text-gray-600 dark:text-gray-300"
+                            class="text-left text-sm underline px-3 py-2 min-h-[44px] text-text-muted"
                             data-testid="workspace-manage-button"
                             @click="showWorkspaceManager = true"
                         >Manage workspaces…</button>
@@ -106,7 +106,7 @@ function selectView(view: ShellView): void {
                 </WorkspaceSwitcher>
                 <button
                     type="button"
-                    class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1"
+                    class="text-sm border border-border/30 rounded-sm px-2 py-1"
                     @click="shell.cycleTheme()"
                     data-testid="theme-toggle"
                 >
@@ -129,12 +129,12 @@ function selectView(view: ShellView): void {
         <div class="flex flex-col lg:flex-row">
             <!-- Desktop side navigation -->
             <nav
-                class="hidden lg:flex flex-col w-56 border-r border-gray-200 dark:border-gray-700 p-4 gap-4"
+                class="hidden lg:flex flex-col w-56 border-r border-border/20 p-4 gap-4"
                 aria-label="Primary"
                 data-testid="desktop-nav"
             >
                 <div v-for="group in shell.navGroups" :key="group.key" class="flex flex-col gap-1">
-                    <span class="px-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400" data-testid="nav-group-label">
+                    <span class="px-3 text-xs font-semibold uppercase tracking-wide text-text-muted" data-testid="nav-group-label">
                         {{ group.label }}
                     </span>
                     <a
@@ -145,8 +145,8 @@ function selectView(view: ShellView): void {
                         :data-testid="`nav-${item.key}`"
                         :class="
                             resolvedActive === item.key
-                                ? 'bg-gray-100 dark:bg-gray-800 font-medium'
-                                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                                ? 'bg-surface font-medium'
+                                : 'hover:bg-surface'
                         "
                         :aria-current="resolvedActive === item.key ? 'page' : undefined"
                         @click.prevent="selectView(item.key)"
@@ -166,7 +166,7 @@ function selectView(view: ShellView): void {
 
         <!-- Mobile bottom navigation (design.md §8.3): primary subset +
              "More" drawer so the fixed bar never becomes a scroller. -->
-        <nav class="lg:hidden fixed bottom-0 inset-x-0 border-t border-gray-200 dark:border-gray-700 bg-[#FDFDFC] dark:bg-[#0a0a0a] flex justify-around" aria-label="Primary mobile" data-testid="mobile-nav">
+        <nav class="lg:hidden fixed bottom-0 inset-x-0 border-t border-border/20 bg-bg flex justify-around" aria-label="Primary mobile" data-testid="mobile-nav">
             <a
                 v-for="item in shell.mobilePrimaryItems"
                 :key="item.key"
@@ -175,8 +175,8 @@ function selectView(view: ShellView): void {
                 :data-testid="`mobile-nav-${item.key}`"
                 :class="
                     resolvedActive === item.key
-                        ? 'text-[#1b1b18] dark:text-[#EDEDEC] font-medium'
-                        : 'text-gray-500 dark:text-gray-400'
+                        ? 'text-text font-medium'
+                        : 'text-text-muted'
                 "
                 :aria-current="resolvedActive === item.key ? 'page' : undefined"
                 @click.prevent="selectView(item.key)"
@@ -185,7 +185,7 @@ function selectView(view: ShellView): void {
             </a>
             <button
                 type="button"
-                class="flex-1 min-w-0 px-1 py-3 text-center text-xs truncate text-gray-500 dark:text-gray-400"
+                class="flex-1 min-w-0 px-1 py-3 text-center text-xs truncate text-text-muted"
                 :aria-expanded="mobileMoreOpen"
                 aria-haspopup="true"
                 data-testid="mobile-more-toggle"
@@ -206,15 +206,15 @@ function selectView(view: ShellView): void {
             data-testid="mobile-more-drawer"
         >
             <div class="absolute inset-0 bg-black/30" @click="closeMobileMore" />
-            <div class="absolute inset-x-0 bottom-0 bg-[#FDFDFC] dark:bg-[#0a0a0a] border-t border-gray-200 dark:border-gray-700 rounded-t-sm p-4 pb-8 max-h-[75vh] overflow-y-auto">
+            <div class="absolute inset-x-0 bottom-0 bg-bg border-t border-border/20 rounded-t-sm p-4 pb-8 max-h-[75vh] overflow-y-auto">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-sm font-semibold">More</span>
-                    <button type="button" class="text-sm text-gray-500 dark:text-gray-400" data-testid="mobile-more-close" @click="closeMobileMore">
+                    <button type="button" class="text-sm text-text-muted" data-testid="mobile-more-close" @click="closeMobileMore">
                         Close
                     </button>
                 </div>
                 <div v-for="group in mobileMoreGroups" :key="group.key" class="flex flex-col gap-1 mb-3">
-                    <span class="px-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">
+                    <span class="px-3 text-xs font-semibold uppercase tracking-wide text-text-muted">
                         {{ group.label }}
                     </span>
                     <a
@@ -225,8 +225,8 @@ function selectView(view: ShellView): void {
                         :data-testid="`more-${item.key}`"
                         :class="
                             resolvedActive === item.key
-                                ? 'bg-gray-100 dark:bg-gray-800 font-medium'
-                                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                                ? 'bg-surface font-medium'
+                                : 'hover:bg-surface'
                         "
                         :aria-current="resolvedActive === item.key ? 'page' : undefined"
                         @click.prevent="selectView(item.key); closeMobileMore()"
