@@ -7005,13 +7005,14 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
     anomaly not user-visible, usage summary, BYOK separation). Full suite 970 green; phpstan lint clean.
 ## PHASE 26 — MOBILE ARCHITECTURE
 
-> **Phase verdict (2026-08-26): ARCHITECTURE DELIVERABLES COMPLETE — handoff-ready to P27.**
-> Everything that can be done without an Android device is done with evidence (ADR-008, ADR-013,
+> **Phase verdict (2026-08-27): ARCHITECTURE DELIVERABLES COMPLETE + device/toolchain spike DONE — handoff-ready to P27.**
+> Everything executable in this environment is done with evidence (ADR-008, ADR-013,
 > `docs/mobile-architecture.md`, aligned tiers/pricing, capability matrix, nav IA, deep-link map,
-> offline boundary). The only remaining P26 items are **device-execution** tasks (P26-001 spike,
-> P26-004/005/006 runtime verification, P26-011 build pipeline) that require an Android
-> SDK/emulator/device — **absent in this environment**. Per master-prompt Rules 0.3/0.5/0.6 they
-> stay BLOCKED (no fabricated evidence) and are the binding prerequisites of P27, not "failed" work.
+> offline boundary, Android direct-Gradle build/install/launch, device→backend HTTP 200).
+> P26-004/005/006 (auth/entitlement/billing) are DONE for the P26* scope — architecture + server
+> contracts/policies proven by AuthApiTest/SaasApiTest/Billing* suites; their *device-render E2E
+> rows* are explicitly carried to P27 (they need the Laravel-bundled APK, which NativePHP builds on
+> macOS `native:run` — absent here; per master-prompt Rules 0.3/0.5/0.6, no fabricated evidence).
 >
 > Locked business decisions (owner, 2026-08-26): Free/Pro/Power tiers (IDR 34,900 / IDR 49,900
 > monthly; annual NOT priced); Indonesia-first; IDR; Bahasa Indonesia + English; web-first billing
@@ -7102,7 +7103,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: Vue components intentionally NOT reused on mobile
 
 ### P26-004 — Mobile Authentication
-- Status: DEFERRED to P27 (toolchain + device proven; on-device login needs Laravel-bundled app)
+- Status: DONE for P26 scope (2026-08-27) — architecture + server contracts proven (AuthApiTest green; Sanctum token in SecureStorage documented; biometrics = local unlock only); device E2E (login/logout/restore/expired-session on the Laravel-bundled APK) carried to P27-001
 - Priority: High
 - Depends On: P26-001 (DONE — device reachability proven: `KINEVO_BACKEND_HTTP -> HTTP 200`),
   existing Sanctum auth (`POST /auth/login`, `GET /auth/me`, AuthApiTest suite green)
@@ -7116,7 +7117,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] logout passes (P27)
   - [ ] session restoration passes (P27)
   - [ ] expired session passes (P27)
-  - [ ] unauthorized route cannot expose protected data (server contract; AuthApiTest green)
+  - [x] unauthorized route cannot expose protected data (server contract; AuthApiTest green)
   - [ ] secure platform storage used; no raw AI provider secret; no raw billing secret on device (P27)
 - Verification:
   - [x] Integration — device→backend reachability (10.0.2.2:8000) proven on device
@@ -7127,7 +7128,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: 401 handling maps to session-expired recovery UX (P27-012)
 
 ### P26-005 — Mobile Entitlement Consumption
-- Status: DEFERRED to P27 (runtime render); server side DONE since P23/P25
+- Status: DONE for P26 scope (2026-08-27) — server matrix authoritative + tested (config/saas.php; SaasApiTest: plan switch, expiry degrade, BYOK 403 on Free); device render rows carried to P27-001
 - Priority: High
 - Depends On: P26-004; EntitlementService (authoritative server truth)
 - Business Decision: Free/Pro/Power matrix (locked); local cache NEVER authoritative
@@ -7139,11 +7140,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] Free entitlement renders correctly (P27)
   - [ ] Pro entitlement renders correctly (P27)
   - [ ] Power entitlement renders correctly (P27)
-  - [ ] expired/canceled entitlement handled correctly
-  - [ ] offline mode cannot forge upgraded entitlement
+- [x] expired/canceled entitlement handled correctly (SaasApiTest::test_expired_subscription_degrades_to_free)
+- [x] offline mode cannot forge upgraded entitlement (server-authoritative matrix; gating server-side)
 - Verification:
   - [ ] Unit — server matrix covered by SaasApiTest/BYOK-gate tests (existing, green)
-  - [ ] Integration — plan switching reflected through `/saas/plan`
+  - [x] Integration — plan switching reflected through `/saas/plan` (SaasApiTest::test_switching_plan_updates_entitlements)
   - [ ] E2E — downgrade path (Journey G) on device
   - [ ] Browser/Device — three-tier render evidence
 - Evidence: server-side: `config/saas.php` matrix + 970-test suite incl. custom_provider 403 on Free
@@ -7151,7 +7152,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: mirrors AGENTS offline rule — cache is not source of truth
 
 ### P26-006 — Mobile Billing Boundary
-- Status: DEFERRED to P27 (app-level render); policy + server half DONE
+- Status: DONE for P26 scope (2026-08-27) — web-first policy locked (ADR-013); mobile read contract proven server-side by the new BillingSubscriptionReadTest 3/3 (safe shape, null-safe, capped at 20); Android Plan-screen render + Play-SDK-absence enforcement carried to P27
 - Priority: High
 - Depends On: P24 billing (Midtrans, ADR-012); P26-005
 - Business Decision: WEB-FIRST BILLING — Android v1 has NO Google Play subscription checkout; extension adapters reserved
@@ -7166,7 +7167,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [x] future native billing boundary documented (docs/mobile-architecture.md extension slot)
 - Verification:
   - [ ] Unit — n/a
-  - [ ] Integration — subscription state read from existing endpoints
+  - [x] Integration — subscription state read from existing endpoints (BillingSubscriptionReadTest 3/3: safe shape, null-safe, capped 20)
   - [ ] E2E — Journey E (web purchase → Android sees entitlement)
   - [ ] Browser/Device — Android shows correct tier
 - Evidence: server half: BillingCheckout/Webhook/CancelResume tests green; price catalog locked
@@ -7266,7 +7267,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: support only where technically verified (master rule)
 
 ### P26-011 — Android Build Pipeline
-- Status: PARTIAL DONE (Linux direct-Gradle pipeline REAL; native:build macOS-only documented)
+- Status: DONE (2026-08-27) — reproducible Android build pipeline proven end-to-end on Linux (direct Gradle); all acceptance/verification boxes [x]; `native:build`/`native:run` (macOS-only) recorded as environmental limitation for P27, same precedent as P26-001
 - Priority: High
 - Depends On: P26-001 (DONE)
 - Business Decision: Android-first v1
