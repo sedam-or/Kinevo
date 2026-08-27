@@ -577,6 +577,36 @@ analytics/visualstate/ai 61, planner/shared 70).
 Link: this record; docs/design-tokens.md §2.1.
 ```
 
+```text
+UI-019 | 2026-08-27 | Auth gate (design-skill consult, user-directed) | UX-C4
+Found: the UI-017/018 gate was token-clean but failed taste/pro-max review:
+(1) two stacked small elements in the brand strip (wordmark + badge) against
+hero stack discipline; (2) split copy register — marketing voice left
+("Start today.") vs personal voice right; (3) official banner argument chain
+(GOAL→BREAKDOWN→SCHEDULE→TODAY→ADAPT) unused while generic copy was invented;
+(4) meaningless color-cube decoration violating decoration-must-be-motivated;
+(5) opacity-90 subtext on primary approaching AA floor on colored bg;
+(6) dead whitespace right column vs heavy left panel (mass imbalance);
+(7) zero motion at a dial that demands minimal entry/hover feedback.
+Expected: design-taste-frontend §0.B read, §4.7 hero stack + eyebrow restraint,
+§4.10 copy register; ui-ux-pro-max forms rules (labels above, submit feedback —
+already green, kept).
+Severity: UX-C4 / P2.
+Status: fixed (2026-08-27) — brand panel rebuilt: single mono wordmark strip,
+display headline from banner canon "Plan. Schedule. Focus. Adapt." with bold
+underline emphasis on Adapt., GOAL→…→ADAPT mono chain as bottom register,
+ghost outline KLogo texture echoing the banner asset (replaces cubes); subtext
+element removed (headline carries it); form column rebalanced max-w-md p-10,
+h1 raised to text-3xl, unified voice ("Welcome back / Your day is waiting…" ·
+"Start your first day / One workspace. Goals in, today out."); theme toggle
+demoted to quiet mono ghost chip; 160ms transform/opacity entry cascade gated
+by existing prefers-reduced-motion collapse in app.css. Both modes audited:
+outline logo + white type on #DE3005 unchanged in dark.
+Evidence: vue-tsc clean; vitest 522 passed (auth 19); build green; make test
+970 passed; testids/aria contracts untouched.
+Link: this record.
+```
+
 No finding above is closed silently; each closes with concrete browser/test/visual
 evidence in a later task.
 

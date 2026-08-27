@@ -40,8 +40,8 @@ async function submit(): Promise<void> {
 <template>
     <form class="flex flex-col gap-5" @submit.prevent="submit" data-testid="register-form">
         <div>
-            <h1 class="text-2xl font-black tracking-tight">Create your account</h1>
-            <p class="mt-1 text-sm text-text-muted">One workspace to start your day.</p>
+            <h1 class="text-3xl font-black tracking-tight">Start your first day</h1>
+            <p class="mt-1.5 text-sm text-text-muted">One workspace. Goals in, today out.</p>
         </div>
 
         <p

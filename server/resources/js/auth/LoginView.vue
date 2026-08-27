@@ -39,8 +39,8 @@ async function submit(): Promise<void> {
 <template>
     <form class="flex flex-col gap-5" @submit.prevent="submit" data-testid="login-form">
         <div>
-            <h1 class="text-2xl font-black tracking-tight">Log in</h1>
-            <p class="mt-1 text-sm text-text-muted">Pick up where you left off.</p>
+            <h1 class="text-3xl font-black tracking-tight">Welcome back</h1>
+            <p class="mt-1.5 text-sm text-text-muted">Your day is waiting where you left it.</p>
         </div>
 
         <p
