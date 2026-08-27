@@ -7338,7 +7338,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 > owning task remains device-blocked. Android MUST NOT become a shrunken desktop clone.
 
 ### P27-001 — Android Shell
-- Status: TODO · Priority: High · Depends On: P26-011, P26-004
+- Status: DONE (device-verified) · Priority: High · Depends On: P26-011, P26-004
 - Business Decision: capture/decide/execute/review companion; theme matches P20 design tokens
 - SRS: — · Design: docs/design-tokens.md; docs/mobile-architecture.md §5–§6
 - Files: mobile app shell (routes/native.php, shell views, stores)
@@ -7349,10 +7349,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] fatal error boundary has recovery path
   - [ ] bottom nav = Today · Tasks · Capture · Workspace · More
 - Verification: Unit(store) / Integration(auth gate) / E2E(shell flow) / Device(screenshot matrix)
-- Evidence: — · Known Limitations: — · Notes: workspace context persisted across restart
+- Evidence: Android 14 (API 34) emulator AVD `kinevo_emu`; APK `com.kinevo.spike` (NativePHP 4.2.0, embedded PHP 8.5.9). Device logcat `BootPlanner: Boot plan for /: NATIVE_DIRECT (5 native patterns)`; native-first dispatch renders all five tabs (`PERF [TodayScreen/TasksScreen/CaptureScreen/WorkspacesScreen/MoreScreen] ~3–143ms publish<8ms`; `MainActivity: First content (native-tree)`; `uiautomator` reads tab labels + titles). Bottom nav = Today · Tasks · Capture · Workspace · More (locked IA). UI restructured to Kinevo brand (design-taste-frontend + ui-ux-pro-max consulted): theme-token parity via `TailwindParser` resolver (`bg/text/border-theme-*` mirror `server/resources/css/app.css`: primary `#DE3005`, bg `#FDFDFC`/`#0a0a0a`, surface `#EDEDEC`/`#131313`, border doctrine + radius), chrome top-bar+nav brand-dark `#0a0a0a`, icons = built-in Material Icons ligature resolver (`today`/`list_alt`/`add`/`folder`/`more_vert`). Build: `./gradlew :app:assembleDebug` → `app-debug.apk`.
+- Known Limitations: interactive chrome (top bar/nav/FAB) verified; body `pressable`/`text` nodes not yet surfaced into the accessibility tree; on-device SQLite offline store empty (sync engine deferred, docs §10 risk #1). Workspace context persisted via server default-workspace flag, not yet a device store.
 
 ### P27-002 — Today
-- Status: TODO · Priority: High · Depends On: P27-001
+- Status: DONE (device read-path verified) · Priority: High · Depends On: P27-001
 - Business Decision: NOW/NEXT/LATER hierarchy is the mobile spine
 - SRS: scheduling/today chapters (FR-01/11/15 read paths)
 - Design: docs/design.md (Today section)
@@ -7365,10 +7366,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] Reschedule works where allowed
   - [ ] no cross-workspace stale content after switch
 - Verification: Unit / Integration(/today contract) / E2E / Device
-- Evidence: — · Known Limitations: — · Notes: reuse existing `/today` payloads, scoped fetches only
+- Evidence: Device Today renders from live `GET /api/v1/today` on-emulator (backend access log 04:28:11 / 04:45:34 / 05:39:07 = device boots; Sanctum `personal_access_tokens.last_used_at=04:28:12`). NOW/NEXT/LATER spine (`events`), `empty_slots`, `capacity` sections render the real payload; loading/unauthorized/offline(health-probe)/conflict(409)/error/ready states implemented (P27-012). Logcat `PERF [TodayScreen] render≈87–143ms`.
+- Known Limitations: read-only surface (Start/Complete/Reschedule are write actions pending P27-004 UI); dev connectivity uses emulator host-loopback `10.0.2.2:8000`.
 
 ### P27-003 — Quick Capture
-- Status: TODO · Priority: High · Depends On: P27-001
+- Status: PARTIAL — write path proven, no native text field · Priority: High · Depends On: P27-001
 - Business Decision: context = explicit parent > active workspace
 - SRS: capture scope
 - Design: docs/design.md Quick Capture
@@ -7381,10 +7383,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] offline queue where supported (operation_id envelope)
   - [ ] duplicate prevention (idempotency key on repeated submits)
 - Verification: Unit / Integration / E2E / Device(offline toggle)
-- Evidence: — · Known Limitations: — · Notes: mutation queue persists across app close
+- Evidence: DEVICE-WRITE-PROVEN E2E. `CaptureScreen` semantic quick-actions + FAB; state machine idle/saving/saved/queued/error; `operation_id` envelope. On-device FAB `@tap=captureNow` → `POST /api/v1/quick-capture` → DB tasks #205/#206 `Plan tomorrow` (backend access log 05:05:56 / 05:08:31 / 05:40:18; PostgreSQL verified). Generic `onPress`→PHP dispatch works (FAB + nav-`url` + Today FAB `goCapture` navigation all verified).
+- Known Limitations: (1) no free-text field — `text_input` element type unregistered on this device image (`render() FAILED … Unknown native element type: text_input`), so capture = semantic quick-actions (device-renderer gap, not app logic); (2) body `pressable` content not surfaced into a11y tree → real tap bounds not machine-discoverable (write path proven via nav/FAB instead). Keep offline queue + idempotency pre-submit for when the free-text renderer lands.
 
 ### P27-004 — Mobile Task Execution
-- Status: TODO · Priority: High · Depends On: P27-002
+- Status: BLOCKED — not built · Priority: High · Depends On: P27-002
 - Business Decision: — 
 - SRS: task lifecycle state machine
 - Design: docs/state-machine-ui.md
@@ -7397,10 +7400,10 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] progress remains correct
   - [ ] activity/progress events remain correct (server-authored)
 - Verification: Unit / Integration(state transitions) / E2E / Device
-- Evidence: — · Known Limitations: — · Notes: timer states follow existing ExecutionTimer contract
+- Evidence: — · Known Limitations: server lifecycle contracts exist and are green (status/partial-complete/subtasks). On-device write mechanism proven (P27-003) — execution buttons are NOT device-blocked, simply not yet built (task detail screen + timer wiring required). Timer states follow existing ExecutionTimer contract.
 
 ### P27-005 — Goal View
-- Status: TODO · Priority: High · Depends On: P27-001
+- Status: BLOCKED — not built · Priority: High · Depends On: P27-001
 - Business Decision: — 
 - SRS: goals/milestones chapters
 - Design: docs/design.md goal surface
@@ -7411,10 +7414,10 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] workspace correct
   - [ ] next action clear
 - Verification: Unit / Integration / E2E / Device
-- Evidence: — · Known Limitations: — · Notes: deep link `kinevo://goal/{id}` lands here
+- Evidence: — · Known Limitations: goal read endpoints exist server-side; no mobile Goal screen yet (deferred behind P27-004 UI; `kinevo://goal/{id}` contract documented docs/mobile-architecture.md §8).
 
 ### P27-006 — AI Goal Breakdown
-- Status: TODO · Priority: High · Depends On: P27-005; P23/P25 entitlements
+- Status: BLOCKED · Priority: High · Depends On: P27-005; P23/P25 entitlements
 - Business Decision: hosted AI consumes Kinevo credits; BYOK uses user credential (no hosted credits);
   ALL credential handling server-side; human approval mandatory (proposal never auto-committed)
 - SRS: AI chapters (FR-60..62)
@@ -7429,10 +7432,10 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] provider failure yields actionable UX (AI_PROVIDER_UNAVAILABLE surfaced)
   - [ ] usage ledger correct (ai_runs request_id/credits/ledger intact)
 - Verification: Unit(server use cases, existing) / Integration(ledger split) / E2E(proposal cycle) / Device
-- Evidence: — · Known Limitations: — · Notes: Free users without BYOK get hosted credits w/ limits
+- Evidence: — · Known Limitations: server-side entitlement + BYOK/ledger (P23/P25) already green + evidenced; mobile proposal/accept/reject screens + accept/reject write path require the P27-004 UI first. Free users without BYOK get hosted credits with limits (unchanged).
 
 ### P27-007 — Mobile Notes
-- Status: TODO · Priority: Medium · Depends On: P27-001
+- Status: PARTIAL — read path · Priority: Medium · Depends On: P27-001
 - Business Decision: edit only where ergonomically justified on phone
 - SRS: knowledge chapter (Kinevo owns notes semantics)
 - Design: docs/knowledge-layer.md; docs/design.md
@@ -7444,11 +7447,12 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] offline behavior defined (queue mutations, reconcile on reconnect)
   - [ ] link Task/Goal supported
 - Verification: Unit / Integration / E2E / Device
-- Evidence: — · Known Limitations: Tiptap authoring stays desktop; mobile = light edits
+- Evidence: `NotesScreen` + `notes` view implemented (GET `/notes` read path with loading/error/unauthorized/offline states), reachable via /notes native route. Not a shell tab in the locked IA — Notes surfaces from More alongside Review/Notifications.
+- Known Limitations: Tiptap authoring stays desktop (unchanged); mobile browse path shown; edit/409/offline-mutation UX needs the P27-004 UI; detail screen + linking deferred.
 - Notes: 
 
 ### P27-008 — Canvas Companion
-- Status: TODO · Priority: Medium · Depends On: P27-001
+- Status: BLOCKED — not built · Priority: Medium · Depends On: P27-001
 - Business Decision: MVP MUST NOT force full phone canvas authoring
 - SRS: canvas chapter
 - Design: docs/mobile-architecture.md §5 (WebView bridge row)
@@ -7461,11 +7465,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] quick Task/Note action available
   - [ ] no false full-edit affordance
 - Verification: Unit / Integration / E2E / Device
-- Evidence: — · Known Limitations: Excalidraw authoring stays desktop-bound
+- Evidence: — · Known Limitations: Excalidraw authoring stays desktop-bound (unchanged); companion WebView bridge (docs/mobile-architecture.md §5 △) not yet wired — deferred behind P27-004.
 - Notes: ownership protected via existing canvas contracts
 
 ### P27-009 — Mobile Review
-- Status: TODO · Priority: Medium · Depends On: P27-002
+- Status: BLOCKED — not built · Priority: Medium · Depends On: P27-002
 - Business Decision: metrics authoritative from backend only — no fabricated calculations
 - SRS: analytics/review chapters
 - Design: docs/design.md review surface
@@ -7478,11 +7482,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] concise insights (deterministic engine once P28-003 lands)
   - [ ] action links work
 - Verification: Unit / Integration / E2E / Device
-- Evidence: — · Known Limitations: pre-P28 insights limited to existing analytics endpoints
+- Evidence: — · Known Limitations: pre-P28 insights limited to existing analytics endpoints (unchanged); Review screen deferred behind P27-004.
 - Notes: 
 
 ### P27-010 — Notifications
-- Status: TODO · Priority: Medium · Depends On: P27-001
+- Status: BLOCKED — not built · Priority: Medium · Depends On: P27-001
 - Business Decision: privacy-preserving payloads; read state syncs
 - SRS: notifications chapter
 - Design: docs/mobile-architecture.md §5 (push/local rows)
@@ -7493,11 +7497,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] read state consistent across devices
   - [ ] existing relevant notification kinds supported
 - Verification: Unit / Integration(read sync) / E2E / Device(push plugin)
-- Evidence: — · Known Limitations: push provider setup needed (Firebase project)
+- Evidence: — · Known Limitations: push provider setup needed (Firebase project) — unchanged; notification center + deep-link handling deferred.
 - Notes: 
 
 ### P27-011 — Workspace Switching
-- Status: TODO · Priority: High · Depends On: P27-001
+- Status: PARTIAL — read path · Priority: High · Depends On: P27-001
 - Business Decision: workspace provides context, never replaces domain relationships
 - SRS: workspace scoping (P24-000 foundation)
 - Design: docs/mobile-architecture.md §6
@@ -7508,10 +7512,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] prior workspace data does not flash into new workspace
   - [ ] reload restores correct context
 - Verification: Unit / Integration(scope keys) / E2E / Device
-- Evidence: — · Known Limitations: — · Notes: reuse workspace-aware cache keys (P26-009)
+- Evidence: `WorkspacesScreen` renders + lists workspaces from live `GET /api/v1/workspaces` on-device (backend access log 04:46:21 / 05:40:07 = Workspace tab visits); active (default) flag shown; server default-workspace persists context across restart (P24 foundation).
+- Known Limitations: set-default switch UI (POST `/workspaces/{id}/default`) not yet built (write mechanism proven via P27-003); `kinevo://workspace/{id}` deep link contract documented, not yet wired.
 
 ### P27-012 — Mobile State UX
-- Status: TODO · Priority: High · Depends On: P27-001
+- Status: PARTIAL — states built+rendered on device · Priority: High · Depends On: P27-001
 - Business Decision: — 
 - SRS: usability NFRs
 - Design: docs/design.md state patterns
@@ -7526,10 +7531,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] entitlement-limited state exists and tested (upgrade path)
   - [ ] each state has recovery action where applicable
 - Verification: Unit(component) / Integration / E2E / Device
-- Evidence: — · Known Limitations: — · Notes: no silent failures
+- Evidence: loading/unauthorized/offline (health probe, 15s cache)/retryable error/conflict(409)/empty/ready states implemented across TodayScreen/TasksScreen/CaptureScreen/NotesScreen/WorkspacesScreen (`BaseScreen` + per-screen state machines); unauthorized + ready + loading rendered live on-device; recovery actions present (reload/retry); no silent failures.
+- Known Limitations: entitlement-limited state (upgrade path) not yet implemented; offline/409 branches not force-toggled on-device (need network fault injector); component unit tests pending native renderer write-path.
 
 ### P27-013 — Android Accessibility
-- Status: TODO · Priority: Medium · Depends On: P27-001
+- Status: PARTIAL · Priority: Medium · Depends On: P27-001
 - Business Decision: — 
 - SRS: accessibility NFRs
 - Design: docs/design.md accessibility
@@ -7542,10 +7548,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] semantic order sensible in core workflows
   - [ ] core workflows remain usable with TalkBack
 - Verification: Unit(n/a) / Integration(n/a) / E2E(n/a) / Device(accessibility scanner)
-- Evidence: — · Known Limitations: — · Notes: leverage native EDGE accessibility primitives
+- Evidence: interactive elements carry `a11y-label`/`a11y-hint` (pressables, fab, nav, sign-in); native chrome exposed to accessibility tree — `uiautomator` reads top-bar title + all five bottom-nav labels on-device. Touch targets: nav items ~26px dp-equiv (platform 48dp minimum recorded as gap).
+- Known Limitations: body content nodes (text/pressables) not yet surfaced into the a11y tree by the device renderer (uiautomator sees chrome only) — TalkBack usability + AA contrast audit + text scaling pending that renderer fix + P27-004.
 
 ### P27-014 — Android Device Matrix
-- Status: TODO · Priority: Medium · Depends On: P27-015 candidate builds
+- Status: PARTIAL — 1 device · Priority: Medium · Depends On: P27-015 candidate builds
 - Business Decision: Android-first v1
 - SRS: — 
 - Design: —
@@ -7557,19 +7564,21 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
   - [ ] exact models/API versions recorded FROM ACTUAL TESTS
   - [ ] critical flows pass on all three
 - Verification: Device(matrix run logs)
-- Evidence: — · Known Limitations: emulators acceptable if physical devices unavailable (recorded honestly)
+- Evidence: ACTUAL run — AVD `kinevo_emu`, Android 14 (API 34), 1080×2400, KVM, 2026-08-27; APK `com.kinevo.spike` (NativePHP 4.2.0 + embedded PHP 8.5.9). All five tab screens render + navigate (logcat PERF per screen); authenticated backend reads + capture write verified (access log + Sanctum + DB rows). Recorded honestly: ONE device config tested.
+- Known Limitations: small/larger-phone + Android 13/15 not yet run; matrix completion gated on P27-015 + P27-004.
 - Notes: 
 
 ### P27-015 — P27 FINAL GATE
-- Status: TODO · Priority: High · Depends On: ALL P27 tasks
+- Status: PARTIAL — read-path MVP + capture write proven; NOT fully done · Priority: High · Depends On: ALL P27 tasks
 - Business Decision: — 
 - SRS: — · Design: — · Files: TASK.md
 - Acceptance:
-  - [ ] auth · [ ] Today · [ ] capture · [ ] task execution · [ ] Goal · [ ] AI · [ ] Notes
-  - [ ] Canvas companion · [ ] review · [ ] notifications · [ ] Workspace
-  - [ ] offline/error UX · [ ] entitlement · [ ] Android device evidence
+  - [x] auth · [x] Today (read) · [~] capture (write E2E ✓; no native free-text) · [ ] task execution · [ ] Goal · [ ] AI · [x] Notes (read)
+  - [ ] Canvas companion · [ ] review · [ ] notifications · [x] Workspace (read)
+  - [x] offline/error UX (states) · [ ] entitlement · [x] Android device evidence (1 config)
 - Verification: aggregate of subtasks (Unit/Integration/E2E/Device)
-- Evidence: — · Known Limitations: — · Notes: gate is binary per Rule 0.6
+- Evidence: keystone + shell + native-first EDGE pipeline DEVICE-VERIFIED on Android 14 (API 34) emulator AVD `kinevo_emu`: full Laravel bundle boots on-device (embedded PHP 8.5.9, config/event/view caches, SQLite migrate path), NATIVE_DIRECT dispatch, five-tab shell renders + navigates (IA order Today·Tasks·Capture·Workspace·More confirmed via uiautomator), authenticated reads `/today` `/tasks` `/workspaces` (server access log + Sanctum last_used), capture WRITE round-trips `@tap`→PHP→`POST /quick-capture`→DB rows #205/#206. Shell branded to Kinevo tokens (skill-consulted) with built-in Material icon set.
+- Known Limitations: gate is binary per Rule 0.6 → NOT DONE. Missing: task execution / Goal / AI breakdown / Canvas companion / Review / Notifications screens (not built; write mechanism proven → pending UI), entitlement-limited UI, `text_input` native renderer (capture = semantic quick-actions until upstream), multi-device matrix (1 config), body-content accessibility surfacing. Mobile app code lives in working dev PoC `kinevo-mobile-spike4` (outside this repo); porting into a first-class `mobile/` frontend + remaining screens is the honest remainder of Phase 27.
 
 ## PHASE 28 — PRODUCT INTELLIGENCE + WRAPPED
 
