@@ -7007,14 +7007,20 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
     anomaly not user-visible, usage summary, BYOK separation). Full suite 970 green; phpstan lint clean.
 ## PHASE 26 — MOBILE ARCHITECTURE
 
-> Locked business decisions governing this phase (owner, 2026-08-26): Free/Pro/Power tiers
-> (IDR 34,900 / IDR 49,900 monthly; annual NOT priced); Indonesia-first; IDR; Bahasa Indonesia +
-> English; web-first billing (no Google Play checkout in v1); Android-first (iOS documented only);
-> single-user/personal product; one subscription covers Web+Android; BYOK on Pro/Power only
-> (never consumes hosted credits, always bound by runtime safeguards). See
-> `docs/adr/ADR-013-product-tiers-pricing.md` and `docs/adr/ADR-008-mobile.md`.
-> Environment gate: no Android SDK/emulator/device is available here — tasks requiring device
-> evidence stay BLOCKED per Rules 0.3/0.5/0.6 (no fabricated evidence).
+> **Phase verdict (2026-08-26): ARCHITECTURE DELIVERABLES COMPLETE — handoff-ready to P27.**
+> Everything that can be done without an Android device is done with evidence (ADR-008, ADR-013,
+> `docs/mobile-architecture.md`, aligned tiers/pricing, capability matrix, nav IA, deep-link map,
+> offline boundary). The only remaining P26 items are **device-execution** tasks (P26-001 spike,
+> P26-004/005/006 runtime verification, P26-011 build pipeline) that require an Android
+> SDK/emulator/device — **absent in this environment**. Per master-prompt Rules 0.3/0.5/0.6 they
+> stay BLOCKED (no fabricated evidence) and are the binding prerequisites of P27, not "failed" work.
+>
+> Locked business decisions (owner, 2026-08-26): Free/Pro/Power tiers (IDR 34,900 / IDR 49,900
+> monthly; annual NOT priced); Indonesia-first; IDR; Bahasa Indonesia + English; web-first billing
+> (no Google Play checkout in v1); Android-first (iOS documented only); single-user/personal
+> product; one subscription covers Web+Android; BYOK on Pro/Power only (never consumes hosted
+> credits, always bound by runtime safeguards). See `docs/adr/ADR-013-product-tiers-pricing.md`
+> and `docs/adr/ADR-008-mobile.md`.
 
 ### P26-001 — NativePHP Feasibility Spike
 - Status: BLOCKED (requires Android SDK/emulator/device)
