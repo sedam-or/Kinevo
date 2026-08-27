@@ -99,7 +99,7 @@ EodReconcileCommandTest).
 | `pg_dump kinevo \| gzip` | **1 s**, 12 KB artifact |
 | Restore into throwaway DB `drill_restore` | **2 s**, schema + queries verified (`users`, `goals` counts executed) |
 | RPO | ≤ backup interval (continuous dump strategy ⇒ ~0 for this drill) |
-| RTO | seconds at current scale; production sizing revisited in P30-009 |
+| RTO | seconds at current scale; production sizing revisited in P39-012 (backup/restore final drill) |
 
 Production-like restore path is identical (`scripts/backup.sh` /
 `scripts/restore.sh` with `CONFIRM_RESTORE=yes`).

@@ -171,8 +171,14 @@ AI settings discoverability (FR-60)      ✅ DONE (TASK-P17-028: unconfigured/of
                                           walk on all five capabilities + browser
                                           reject path; 6 passed ×3 twice)
  Mobile UX re-audit                        ✅ DONE (TASK-P17-034: width sweep
-                                          375…1440 across all surfaces; note
-                                          header overflow fixed; 18 passed ×3)
+                                           375…1440 across all surfaces; note
+                                           header overflow fixed; 18 passed ×3)
+ Roadmap re-baseline P28–P39               ✅ DONE (2026-08-28: adopted
+                                           KINEVO_POST_P27_MASTER_EXECUTION_PROMPT.md
+                                           as post-P27 execution authority; old
+                                           PHASE 28/29/30 renumbered to 31/37/39
+                                           with zero status/evidence changes; new
+                                           PHASE 28 UX Audit active, P28-001 READY)
 ```
 
 ### Evidence rule
