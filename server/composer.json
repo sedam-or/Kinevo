@@ -15,6 +15,7 @@
         "laravel/framework": "^13.17",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
+        "nativephp/mobile": "^4.2",
         "smalot/pdfparser": "^2.12"
     },
     "require-dev": {

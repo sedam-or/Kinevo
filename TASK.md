@@ -7322,15 +7322,18 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 
 ## PHASE 27 — NATIVEPHP ANDROID MVP
 
-> **Phase verdict (2026-08-26): BLOCKED by environment.** Every P27 task is an Android-runtime
-> task (NativePHP shell + EDGE screens) that requires the Android toolchain (P26-011) — absent in
-> this environment (`no-android-toolchain`; no `server-mobile/` package). Per master-prompt
-> Rules 0.3/0.5/0.6, DONE requires device evidence; fabricating it is forbidden, so these tasks
-> stay **BLOCKED**, not "failed". The server-side prerequisites they depend on are ALREADY
-> satisfied and evidenced: `/today`, AI proposal + accept/breakdown, `/workspaces`, notifications
-> read, billing/subscription snapshots, and the BYOK/ledger metering (P23/P24/P25 suites green).
-> Phase 27 becomes executable the moment an Android SDK/emulator/device is available; nothing here
-> blocks it except that toolchain.
+> **Phase verdict (2026-08-27): IN-REPO MOBILE SHELL PORTED + GATE SCREENS BUILT — device re-run pending.**
+> The NativePHP shell (P27-001) and screen pipeline were previously device-verified in an
+> out-of-repo PoC (AVD kinevo_emu, Android 14 API 34, embedded PHP 8.5.9). That shell is now ported
+> INTO this repo as a first-class mobile surface: `routes/native.php` (10 Route::native screens),
+> `app/NativeComponents/*` (10), `resources/views/native/*` (10), `config/native.php`, and the
+> `nativephp/mobile:^4.2` dependency (required guzzle ^7.9; repo moved 8.0.2→7.15.5, gates green).
+> All previously-burned gate screens (task execution, Goal, AI breakdown, Review, Notifications,
+> Canvas companion) are BUILT and SERVER-VERIFIED (NativeMobileShellTest registers every native
+> route + locks view mapping; full suite 984 green). Remaining, un-fabricated: re-bundle the repo
+> snapshot into the APK and re-run each new screen on a device (native:run is macOS-only here; the
+> direct-Gradle bundle was built from the PoC), the upstream `text_input` native renderer, a11y
+> body-content surfacing, and the multi-device matrix (1 AVD config).
 
 > Objective: implement ONLY the high-value mobile workflows. Every task below follows the §12
 > board format; statuses assume the Android environment gate (P26-011) is cleared, otherwise the
@@ -7386,7 +7389,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Known Limitations: (1) no free-text field — `text_input` element type unregistered on this device image (`render() FAILED … Unknown native element type: text_input`), so capture = semantic quick-actions (device-renderer gap, not app logic); (2) body `pressable` content not surfaced into a11y tree → real tap bounds not machine-discoverable (write path proven via nav/FAB instead). Keep offline queue + idempotency pre-submit for when the free-text renderer lands.
 
 ### P27-004 — Mobile Task Execution
-- Status: BLOCKED — not built · Priority: High · Depends On: P27-002
+- Status: PARTIAL (2026-08-27) — execute action built in TasksScreen (POST /tasks/{id}/status mark-done) + native route/view; server-verified by NativeMobileShellTest; device re-run pending re-bundle · Priority: High · Depends On: P27-002
 - Business Decision: — 
 - SRS: task lifecycle state machine
 - Design: docs/state-machine-ui.md
@@ -7402,7 +7405,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Evidence: — · Known Limitations: server lifecycle contracts exist and are green (status/partial-complete/subtasks). On-device write mechanism proven (P27-003) — execution buttons are NOT device-blocked, simply not yet built (task detail screen + timer wiring required). Timer states follow existing ExecutionTimer contract.
 
 ### P27-005 — Goal View
-- Status: BLOCKED — not built · Priority: High · Depends On: P27-001
+- Status: PARTIAL (2026-08-27) — GoalScreen built (GET /goals list + status); server-verified; device re-run pending re-bundle · Priority: High · Depends On: P27-001
 - Business Decision: — 
 - SRS: goals/milestones chapters
 - Design: docs/design.md goal surface
@@ -7416,7 +7419,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Evidence: — · Known Limitations: goal read endpoints exist server-side; no mobile Goal screen yet (deferred behind P27-004 UI; `kinevo://goal/{id}` contract documented docs/mobile-architecture.md §8).
 
 ### P27-006 — AI Goal Breakdown
-- Status: BLOCKED · Priority: High · Depends On: P27-005; P23/P25 entitlements
+- Status: PARTIAL (2026-08-27) — proposeBreakdown action built (POST /goals/{id}/breakdown-proposals; surfaces AI_PROVIDER_UNAVAILABLE); server-verified; proposal review stays in the web app; device re-run pending re-bundle · Priority: High · Depends On: P27-005; P23/P25 entitlements
 - Business Decision: hosted AI consumes Kinevo credits; BYOK uses user credential (no hosted credits);
   ALL credential handling server-side; human approval mandatory (proposal never auto-committed)
 - SRS: AI chapters (FR-60..62)
@@ -7451,7 +7454,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: 
 
 ### P27-008 — Canvas Companion
-- Status: BLOCKED — not built · Priority: Medium · Depends On: P27-001
+- Status: PARTIAL (2026-08-27) — CanvasScreen built (read-only GET /canvases, hand-off to web; never a second editor); server-verified; device re-run pending re-bundle · Priority: Medium · Depends On: P27-001
 - Business Decision: MVP MUST NOT force full phone canvas authoring
 - SRS: canvas chapter
 - Design: docs/mobile-architecture.md §5 (WebView bridge row)
@@ -7468,7 +7471,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: ownership protected via existing canvas contracts
 
 ### P27-009 — Mobile Review
-- Status: BLOCKED — not built · Priority: Medium · Depends On: P27-002
+- Status: PARTIAL (2026-08-27) — ReviewScreen built (read-only /today capacity + /goals progress); server-verified; device re-run pending re-bundle · Priority: Medium · Depends On: P27-002
 - Business Decision: metrics authoritative from backend only — no fabricated calculations
 - SRS: analytics/review chapters
 - Design: docs/design.md review surface
@@ -7485,7 +7488,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: 
 
 ### P27-010 — Notifications
-- Status: BLOCKED — not built · Priority: Medium · Depends On: P27-001
+- Status: PARTIAL (2026-08-27) — NotificationsScreen built (GET /notifications read list + mark-read); server-verified; device re-run pending re-bundle · Priority: Medium · Depends On: P27-001
 - Business Decision: privacy-preserving payloads; read state syncs
 - SRS: notifications chapter
 - Design: docs/mobile-architecture.md §5 (push/local rows)
@@ -7568,7 +7571,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Notes: 
 
 ### P27-015 — P27 FINAL GATE
-- Status: PARTIAL — read-path MVP + capture write proven; NOT fully done · Priority: High · Depends On: ALL P27 tasks
+- Status: PARTIAL (2026-08-27) — read-path MVP + capture write device-proven; NEW: the mobile shell is now ported INTO the repo (routes/native.php, 10 NativeComponents, 10 native views, config/native.php, nativephp/mobile dep) with all gate screens built and server-verified by NativeMobileShellTest (2 tests, 40 assertions). NOT fully done: device re-run of the repo bundle + text_input renderer + a11y body surfacing + multi-device matrix remain. · Priority: High · Depends On: ALL P27 tasks
 - Business Decision: — 
 - SRS: — · Design: — · Files: TASK.md
 - Acceptance:

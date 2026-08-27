@@ -37,3 +37,8 @@ Route::get('/dev/canvas-diagnostics', function () {
         'canvasCount' => $canvasCount,
     ]);
 });
+
+// P27 — NativePHP Android shell: bottom-nav screens rendered by the embedded
+// runtime. Registered in a separate file so web-only deploys can drop it.
+// Each screen is a Route::native component (resources/views/native/*).
+require __DIR__.'/native.php';

@@ -12,6 +12,12 @@ Release governance: see `docs/release-management.md`.
 
 ## [Unreleased]
 ### Changed
+- The Android shell now lives in this repo (Phase 27, TASK-P27-001..010): the NativePHP mobile
+  surface was ported in as `routes/native.php` + ten native screens (Today/Tasks/Capture/Goals/
+  Review/Notifications/Canvas/Notes/Workspaces/More), all built against the existing OpenAPI —
+  including task execution (mark done), AI goal breakdown trigger, review summary, notification
+  read app, and a read-only canvas companion that hands off to the web editor. Server-side contract
+  locked by tests; device re-run of the bundled app is the remaining (documented) step.
 - Analytics "Goal progress" now summarizes (2026-08-25): the chart lists the
   first 8 goals with an explicit "+N more goals" line instead of rendering
   every goal, keeping the surface readable and fast as goal counts grow.
