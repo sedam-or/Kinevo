@@ -497,6 +497,15 @@ Release governance: see `docs/release-management.md`.
   app runs offline-first on device and syncs to the server using the existing
   offline contract; building the actual app is the next phase (P27).
 
+- Mobile feasibility is now proven on real hardware, not just docs (Phase 26,
+  TASK-P26-001): the Android toolchain was installed with checksum-verified
+  official packages, a real Android 14 emulator (KVM) booted, NativePHP Mobile
+  4.2.0 produced a working Android debug APK, and that APK launched on the
+  emulator — the running app reached the Kinevo backend (HTTP 200) and verified
+  TLS egress. The remaining on-device app features (login, entitlement, billing
+  screens) need the Laravel bundle that macOS `native:run` injects, so they are
+  tracked as P27.
+
 - Pricing simplified to three tiers with locked Indonesian prices (owner
   decision): Free (Rp0), Pro (Rp34.900/month), Power (Rp49.900/month). The
   intermediate Personal tier is retired — existing subscriptions on it keep

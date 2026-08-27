@@ -151,3 +151,33 @@ Reuse, do not reinvent:
 - `docs/offline-sync.md` — operation envelope + reconciliation.
 - `docs/api/openapi.yaml` — shared contracts.
 - NativePHP Mobile v4 docs — nativephp.com/docs/mobile (verified 2026-08-26).
+
+## 12. Phase 26 verification evidence (real runs, 2026-08-27)
+
+The toolchain was actually installed and run on a real Android 14 (API 34) emulator on `/dev/kvm`,
+with every package checksum-verified against its official source.
+
+| Component | Version / artifact | Evidence |
+|---|---|---|
+| Android cmdline-tools | 16111833 (`commandlinetools-linux-16111833_latest.zip`) | SHA1 `e025545c62a8e64c7559119566a569fb1dec5f60` read from Google's official repo XML (`dl.google.com/android/repository/repository2-1.xml`) |
+| platform-tools | r37.0.1 | `adb` present after install |
+| emulator | r37.1.11 | `emulator-5554 device`; AVD `kinevo_emu` booted, `sys.boot_completed=1` |
+| Build tools / NDK / CMake | 34.0.0 / 27.0.12077973 / 3.22.1 | `aapt2`, NDK+CMake binaries present; installed via official `sdkmanager` |
+| API platforms | 34 + 35 | `android.jar` + `source.properties` present |
+| JDK | 17.0.20.1 (Arch) | `gradle --version` launcher JVM 17 |
+| NativePHP Mobile | 4.2.0 (official Packagist `nativephp/mobile`) in Laravel 12 | `native:install` scaffolded the Android Gradle project |
+| Debug builds | `app-debug.apk` ~30 MB (NativePHP app) + bare Java APK | `./gradlew assembleDebug` → `BUILD SUCCESSFUL` |
+| Device run | NativePHP shell launched | logcat: `Fully drawn com.kinevo.spike/com.nativephp.mobile.ui.MainActivity` + `NativePHP module initializing` |
+| Backend reachability | from inside the app on the emulator | `KINEVO_BACKEND_HTTP -> HTTP 200 {"status":"ok",...}` (dev backend is HTTP-only) |
+| TLS egress | from the device | `HTTPS_TLS -> HTTP 200` (`https://api.github.com/zen`) |
+
+**Toolchain realities (honest, repeatable):**
+- NativePHP's official `native:build`/`native:run` requires macOS; on Linux we compile the
+  scaffolded Android Gradle project directly (fill NativePHP `REPLACE_*` tokens, set
+  `local.properties` `sdk.dir`, `compileSdk 35`).
+- The Laravel app bundle inside the APK is injected only by macOS `native:run` — our direct build
+  boots the embedded PHP runtime but cannot `require vendor/nativephp/mobile` yet. Full app boot,
+  and therefore on-device auth/entitlement/billing runtime checks, land in P27 once the bundle is
+  injected (or a release runner is available).
+- First-run gotchas recorded so the pipeline is repeatable: `/tmp` is a 7.5 GB tmpfs — set
+  `TMPDIR` on a real disk or SDK extraction is silently truncated; reinstall any partial package.
