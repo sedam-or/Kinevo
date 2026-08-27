@@ -11,6 +11,7 @@ import { useGenerationStages } from '../components/useGenerationStages';
 import NextActionBanner from '../components/NextActionBanner.vue';
 import { resolveGoalNextAction, type NextAction } from '../next-action';
 import { useShellStore } from '../shell/store';
+import KIcon from '../components/KIcon.vue';
 
 const props = defineProps<{
     goalId: number;
@@ -180,7 +181,7 @@ function milestoneGlyphEmphasis(status: string): string {
     <div class="flex flex-col gap-6" data-testid="goal-detail">
         <header class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="goal-detail-back" @click="emit('back')">← Back</button>
+                <button type="button" class="text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="goal-detail-back" @click="emit('back')"><KIcon name="arrow-left" :size="16" /> Back</button>
                 <h1 class="text-xl font-semibold" data-testid="goal-detail-title">{{ goals.currentGoal?.title ?? 'Goal' }}</h1>
             </div>
             <div class="flex items-center gap-2">

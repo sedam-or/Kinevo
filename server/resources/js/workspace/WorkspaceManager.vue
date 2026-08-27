@@ -4,6 +4,7 @@ import { useFocusTrap } from '../shell/focus-trap';
 import { useWorkspaceStore } from './store';
 import UpgradeNotice from '../saas/UpgradeNotice.vue';
 import KButton from '../components/KButton.vue';
+import KIcon from '../components/KIcon.vue';
 
 /**
  * Workspace management surface (TASK-P19-010): create, edit (name/description/
@@ -70,11 +71,11 @@ async function saveEdit(): Promise<void> {
 </script>
 
 <template>
-    <div ref="root" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="ws-title" data-testid="workspace-manager" @click.self="emit('close')">
+    <div ref="root" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="ws-title" data-testid="workspace-manager" @click.self="emit('close')">
         <div class="w-full max-w-md rounded-sm border border-gray-300 dark:border-gray-600 bg-surface shadow-rest p-4 flex flex-col gap-4 max-h-[85vh] overflow-y-auto">
             <div class="flex items-center justify-between">
                 <h2 id="ws-title" class="font-semibold">Workspaces</h2>
-                <button type="button" class="text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200" data-testid="workspace-manager-close" @click="emit('close')">✕</button>
+                <button type="button" class="text-sm text-gray-500 hover:text-gray-800 dark:hover:text-gray-200" data-testid="workspace-manager-close" aria-label="Close" @click="emit('close')"><KIcon name="x-mark" :size="16" /></button>
             </div>
 
             <!-- Create -->

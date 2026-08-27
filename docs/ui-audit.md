@@ -455,6 +455,49 @@ Evidence: vitest 29 passed on affected suites; full gates re-run at commit.
 Link: TASK-P17-030.
 ```
 
+```text
+UI-015 | 2026-08-27 | Visual system (global, UI-consistency slice) | UX-C4
+Full-page audit found systemic token bypass beyond UI-004's partial close:
+~1,070 gray-* usages in 57 files vs text-muted/surface/border tokens; ~140 raw
+buttons and ~90 raw inputs duplicating KButton/KInput; 6 modals/drawers using
+z-50 instead of --z-modal/--z-toast; 8 groups of stray hex literals
+(including 14× stale pre-R5 primary #F53003 in AnalyticsView); the ad-hoc
+danger-tint pair bg-[#fff2f2] dark:bg-[#1D0002] repeated in 5 files; emoji 🔔
+and unlabeled unicode pager/close glyph buttons (‹ › ✕) as de-facto icons.
+Expected: design.md §65–§67, design-tokens.md §2/§4a/§8; WCAG 2.2 button-name.
+Severity: UX-C4 (visual inconsistency), P2 — scheduled cleanup per §3.
+Status: partially fixed (2026-08-27) — KIcon shared icon component landed
+(Heroicons outline subset, MIT, ledger updated); z-50 → --z-modal on 5 modals
++ --z-toast on ToastHost; danger tint tokenized as --color-danger-tint
+(bg-danger-tint ×6); stale #F53003 → bg-primary (AnalyticsView ×14,
+TodayView ×1); #2C5FA8 → info; green/red/blue standard-palette status colors →
+success/info/warning where they map cleanly; emoji/unicode icons replaced with
+KIcon; ‹ › ✕ buttons given aria-labels; Login/Register migrated to
+KButton/KInput. Remaining open: gray-* scale-down across 50+ files, raw
+button/input consolidation (~130 sites), soft-tint quads in VisualStateBadge /
+AiUsageSummaryCard need success/info/warning -tint tokens, orange heatmap
+ladder unscaled.
+Evidence: vue-tsc clean; vitest 522 passed (74 files); production build green;
+AnalyticsView.test.ts assertions updated from literal bg-red-500 to semantic
+bg-danger (implementation-detail assertion, intent unchanged).
+Link: this record; docs/design-tokens.md §2.1/§11.
+```
+
+```text
+UI-016 | 2026-08-27 | Auth (Login/Register) | UX-C4
+Auth forms predated the component library: raw gray-bordered inputs and a flat
+gray submit button without the offset-shadow tactile language used everywhere
+else since TASK-P17-012.
+Expected: design.md §51 primary CTA language; design-tokens.md (KInput border
+token, KButton tactile offsets).
+Severity: UX-C4 / P2.
+Status: fixed (2026-08-27) — both views now use KInput + KButton primary;
+register password input gained autocomplete="new-password"; first-time links
+kept as plain underline affordances. First-time loop LOGIN is now token-clean.
+Evidence: vue-tsc + vitest suite green after change.
+Link: this record.
+```
+
 No finding above is closed silently; each closes with concrete browser/test/visual
 evidence in a later task.
 

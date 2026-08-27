@@ -95,7 +95,7 @@ function reasonLabel(reason: string): string {
 
         <!-- Draft preview -->
         <template v-if="generated && sd.draft">
-            <div v-if="appliedMessage" class="text-sm text-green-700 dark:text-green-400" data-testid="draft-applied">{{ appliedMessage }}</div>
+            <div v-if="appliedMessage" class="text-sm text-success" data-testid="draft-applied">{{ appliedMessage }}</div>
 
             <!-- Accepted tasks -->
             <section class="border border-gray-300 dark:border-gray-600 rounded-sm p-4" data-testid="draft-accepted">

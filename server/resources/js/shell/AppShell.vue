@@ -118,7 +118,7 @@ function selectView(view: ShellView): void {
         <!-- Error boundary / banner -->
         <div
             v-if="shell.errorMessage"
-            class="bg-[#fff2f2] dark:bg-[#1D0002] text-danger px-4 py-2 text-sm"
+            class="bg-danger-tint text-danger px-4 py-2 text-sm"
             role="alert"
             data-testid="error-banner"
         >

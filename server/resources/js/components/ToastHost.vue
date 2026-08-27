@@ -11,7 +11,7 @@ const toast = useToastStore();
 <template>
     <div
         v-if="toast.items.length"
-        class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"
+        class="fixed bottom-4 right-4 z-[var(--z-toast)] flex flex-col gap-2"
         role="status"
         aria-live="polite"
         data-testid="toast-host"

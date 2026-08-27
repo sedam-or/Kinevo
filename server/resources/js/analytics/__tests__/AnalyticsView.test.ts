@@ -369,7 +369,7 @@ describe('AnalyticsView', () => {
         await flushPromises();
 
         expect(wrapper.get('[data-testid="analytics-execution-rate"]').classes().join(' ')).toContain('text-danger');
-        expect(wrapper.get('[data-testid="analytics-execution-bar"]').classes().join(' ')).toContain('bg-red-500');
+        expect(wrapper.get('[data-testid="analytics-execution-bar"]').classes().join(' ')).toContain('bg-danger');
         await wrapper.get('[data-testid="analytics-reduce-workload"]').trigger('click');
         expect(useShellStore().activeView).toBe('schedule');
     });
@@ -447,8 +447,8 @@ describe('AnalyticsView', () => {
         expect(days).toHaveLength(2);
         expect(wrapper.get('[data-testid="analytics-capacity-summary"]').text()).toContain('70% realized');
         expect(wrapper.get('[data-testid="analytics-capacity-summary"]').text()).toContain('1 overloaded days');
-        expect(wrapper.get('[data-testid="analytics-capacity-day"]').classes()).not.toContain('bg-red-500');
-        expect(days[1].find('[data-testid="analytics-capacity-load"]').classes()).toContain('bg-red-500');
+        expect(wrapper.get('[data-testid="analytics-capacity-day"]').classes()).not.toContain('bg-danger');
+        expect(days[1].find('[data-testid="analytics-capacity-load"]').classes()).toContain('bg-danger');
         expect(wrapper.findAll('[data-testid="analytics-capacity-week"]')).toHaveLength(1);
         expect(wrapper.get('[data-testid="analytics-capacity-reason"]').text()).toContain('Boost');
         expect(wrapper.get('[data-testid="interpretation-capacity-changed"]').text()).toContain('70% realized');

@@ -9,6 +9,7 @@ import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
 import type { VisualStateValue } from '../visualstate/types';
 import LinkManager from '../knowledge/LinkManager.vue';
 import KButton from '../components/KButton.vue';
+import KIcon from '../components/KIcon.vue';
 import AiNotConfiguredNotice from '../ai/AiNotConfiguredNotice.vue';
 import { useAiSettingsStore } from '../ai/store';
 import { aiApi, type AiProposal } from '../ai/api';
@@ -228,7 +229,7 @@ async function rejectExtraction(): Promise<void> {
     <div class="flex flex-col gap-4" data-testid="note-detail">
         <header class="flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-2 min-w-0 flex-1">
-                <KButton variant="ghost" data-testid="note-back" @click="emit('back')">← Back</KButton>
+                <KButton variant="ghost" data-testid="note-back" @click="emit('back')"><KIcon name="arrow-left" :size="16" /> Back</KButton>
                 <input
                     v-model="title"
                     type="text"
@@ -276,7 +277,7 @@ async function rejectExtraction(): Promise<void> {
             <div class="text-xs uppercase text-gray-500 dark:text-gray-400 mb-2">AI</div>
             <AiNotConfiguredNotice v-if="aiGateShown" class="mb-3" />
             <div v-if="aiError" class="text-sm text-danger mb-3" role="alert" data-testid="note-ai-error">{{ aiError }}</div>
-            <div v-if="extractedCount !== null" class="text-sm text-green-700 dark:text-green-400 mb-3" role="status" data-testid="note-ai-extract-done">
+            <div v-if="extractedCount !== null" class="text-sm text-success mb-3" role="status" data-testid="note-ai-extract-done">
                 {{ extractedCount }} {{ extractedCount === 1 ? 'task' : 'tasks' }} added from this note.
             </div>
             <div class="flex gap-2 flex-wrap">

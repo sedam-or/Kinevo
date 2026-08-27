@@ -52,7 +52,7 @@ async function submit(): Promise<void> {
     <form class="max-w-md flex flex-col gap-4" @submit.prevent="submit" data-testid="profile-form">
         <h1 class="text-xl font-semibold">Settings</h1>
 
-        <div v-if="saved" class="text-sm text-green-700 dark:text-green-400" data-testid="profile-saved">
+        <div v-if="saved" class="text-sm text-success" data-testid="profile-saved">
             Saved.
         </div>
         <div v-if="formError" class="text-sm text-danger" role="alert">

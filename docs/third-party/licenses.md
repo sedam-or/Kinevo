@@ -67,3 +67,19 @@ versions. Tiptap and its ProseMirror chain were re-reviewed at integration time
 (TASK-031); Excalidraw/React were re-reviewed at their integration (TASK-040
 architecture spike). Ollama remains unintegrated and MUST be re-reviewed at its
 integration.
+
+## Vendored UI assets
+
+| Component | Version/Commit | License | Source | Modified? | Vendored? | Notice Required? | Notes |
+|---|---|---|---|---|---|---|---|
+| Heroicons (SVG path subset) | heroicons v2.x upstream `master` paths, 2026-08-27 | MIT | https://github.com/tailwindlabs/heroicons | No | Yes (inline in `components/KIcon.vue`) | Yes — MIT notice below | Outline 24px paths embedded verbatim as a name→path map; no npm dependency added |
+
+**MIT license notice (Heroicons):**
+
+> Copyright (c) Tailwind Labs, Inc. ([@tailwindlabs](https://github.com/tailwindlabs))
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

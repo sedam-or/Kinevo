@@ -15,6 +15,7 @@ import KButton from '../components/KButton.vue';
 import FeatureHelp from '../components/FeatureHelp.vue';
 import { useToastStore } from '../components/toast';
 import WhyThis from '../components/WhyThis.vue';
+import KIcon from '../components/KIcon.vue';
 import { useAdaptiveStore } from '../adaptive/store';
 import AdaptiveContextPanel from '../adaptive/AdaptiveContextPanel.vue';
 import type { EmptySlot, EmergencyPauseResponse, EndBreakResponse, EndBoostTargetResponse, HardLandscapeEvent, SetBoostTargetResponse, StartBreakResponse, TodayEvent } from './types';
@@ -349,7 +350,7 @@ async function endBoostTarget(): Promise<void> {
                 <div v-if="today.capacity" class="w-40 h-2 rounded-sm bg-gray-200 dark:bg-gray-700 overflow-hidden" role="img" :aria-label="`${capacityPercent}% capacity used`">
                     <div
                         class="h-full transition-all"
-                        :class="capacityStatus === 'overload' ? 'bg-[#F53003]' : 'bg-[#2C5FA8]'"
+                        :class="capacityStatus === 'overload' ? 'bg-primary' : 'bg-info'"
                         :style="{ width: `${capacityPercent}%` }"
                     ></div>
                 </div>
@@ -454,7 +455,7 @@ async function endBoostTarget(): Promise<void> {
                             data-testid="now-goal-link"
                             @click="shell.setView('goals', currentEvent.task!.goal_id!)"
                         >
-                            Goal ↗
+                            Goal <KIcon name="arrow-up-right" :size="14" />
                         </button>
                     </div>
                     <!-- FR-63: expandable scheduling explanation, collapsed by
@@ -575,7 +576,7 @@ async function endBoostTarget(): Promise<void> {
                 v-for="e in sortedEvents"
                 :key="e.assignment.id"
                 class="absolute top-12 rounded-sm px-2 py-1 overflow-hidden text-xs"
-                :class="e.locked ? 'bg-blue-200 dark:bg-blue-800' : e.conflict ? 'bg-[#fff2f2] dark:bg-[#1D0002] text-danger' : 'bg-gray-100 dark:bg-gray-800'"
+                :class="e.locked ? 'bg-blue-200 dark:bg-blue-800' : e.conflict ? 'bg-danger-tint text-danger' : 'bg-gray-100 dark:bg-gray-800'"
                 :style="eventPosition(e)"
                 :title="`${e.task?.title ?? 'Untitled'} ${formatTime(e.assignment.start_at)}–${formatTime(e.assignment.end_at)}`"
                 data-testid="timeline-event"

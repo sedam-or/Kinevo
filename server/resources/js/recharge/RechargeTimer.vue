@@ -104,7 +104,7 @@ async function complete(): Promise<void> {
 <template>
     <div
         v-if="canStart || recharge.hasActive || ratioLabel !== ''"
-        class="border border-green-600/40 dark:border-green-400/30 rounded-sm p-3"
+        class="border border-success/40 rounded-sm p-3"
         data-testid="recharge-timer"
     >
         <div class="flex items-center justify-between">
@@ -118,7 +118,7 @@ async function complete(): Promise<void> {
                     {{ formatSeconds(recharge.elapsedSeconds) }}
                 </div>
                 <div v-if="recharge.hasActive" class="text-xs text-gray-500 dark:text-gray-400" data-testid="recharge-status">{{ statusLabel }}</div>
-                <div v-else-if="recharge.cueAvailable" class="text-sm text-green-700 dark:text-green-400" data-testid="recharge-cue">Time to recharge</div>
+                <div v-else-if="recharge.cueAvailable" class="text-sm text-success" data-testid="recharge-cue">Time to recharge</div>
             </div>
         </div>
 
@@ -130,7 +130,7 @@ async function complete(): Promise<void> {
             <button
                 v-if="canStart"
                 type="button"
-                class="border border-green-600/50 dark:border-green-400/40 rounded-sm px-3 py-1 text-sm"
+                class="border border-success/50 rounded-sm px-3 py-1 text-sm"
                 :disabled="busy || recharge.loading"
                 data-testid="recharge-start"
                 @click="start"

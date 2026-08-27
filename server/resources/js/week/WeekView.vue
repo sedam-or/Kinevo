@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import WhyThis from '../components/WhyThis.vue';
+import KIcon from '../components/KIcon.vue';
 import { useWeekStore } from './store';
 import type { ScheduleRangeEvent } from './types';
 
@@ -88,9 +89,9 @@ function isOverloaded(date: string): boolean {
         <header class="flex items-center justify-between">
             <h1 class="text-xl font-semibold" data-testid="week-title">Week</h1>
             <div class="flex items-center gap-2 text-sm">
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="week-prev" @click="shiftWeek(-1)">‹</button>
+                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="week-prev" aria-label="Previous page" @click="shiftWeek(-1)"><KIcon name="chevron-left" :size="16" /></button>
                 <span data-testid="week-range">{{ week.weekStart }} – {{ week.weekEnd }}</span>
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="week-next" @click="shiftWeek(1)">›</button>
+                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="week-next" aria-label="Next page" @click="shiftWeek(1)"><KIcon name="chevron-right" :size="16" /></button>
                 <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="week-today" @click="goToToday">Today</button>
             </div>
         </header>
@@ -101,7 +102,7 @@ function isOverloaded(date: string): boolean {
             <span class="rounded-sm bg-gray-100 dark:bg-gray-800 px-2 py-1">Scheduled: {{ totalScheduled }}m</span>
             <span
                 v-if="overloadedDays.length > 0"
-                class="rounded-sm bg-[#fff2f2] dark:bg-[#1D0002] text-danger px-2 py-1"
+                class="rounded-sm bg-danger-tint text-danger px-2 py-1"
                 data-testid="week-overload"
             >
                 {{ overloadedDays.length }} overloaded day(s)
@@ -120,7 +121,7 @@ function isOverloaded(date: string): boolean {
                 v-for="day in week.weekDays"
                 :key="day.date"
                 class="border border-gray-300 dark:border-gray-600 rounded-sm p-2"
-                :class="isOverloaded(day.date) ? 'bg-[#fff2f2] dark:bg-[#1D0002]' : ''"
+                :class="isOverloaded(day.date) ? 'bg-danger-tint' : ''"
                 data-testid="week-day"
             >
                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ weekdays[day.weekday - 1] }} {{ day.date.slice(8) }}</div>

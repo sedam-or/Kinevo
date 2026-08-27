@@ -11,6 +11,7 @@ import { useShellStore } from '../shell/store';
 import { resolvedTheme } from '../shell/theme';
 import type { CanvasAdapter, CanvasScene, CanvasTheme } from './types';
 import NextActionBanner from '../components/NextActionBanner.vue';
+import KIcon from '../components/KIcon.vue';
 import { resolveCanvasNextAction } from '../next-action';
 
 const props = withDefaults(
@@ -184,7 +185,7 @@ async function conflictRecover(): Promise<void> {
                     :action="canvasNextAction"
                     data-testid="canvas-next-action"
                 />
-                <button type="button" class="shrink-0 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="canvas-back" @click="emit('back')">← Back</button>
+                <button type="button" class="shrink-0 text-sm border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="canvas-back" @click="emit('back')"><KIcon name="arrow-left" :size="16" /> Back</button>
                 <input
                     v-model="title"
                     type="text"

@@ -6,6 +6,7 @@ import type { EntityLink } from '../components/EntityLinks.vue';
 import EntityLinks from '../components/EntityLinks.vue';
 import AttachmentList from '../attachments/AttachmentList.vue';
 import KButton from '../components/KButton.vue';
+import KIcon from '../components/KIcon.vue';
 import NextActionBanner from '../components/NextActionBanner.vue';
 import { resolveTaskNextAction, type NextAction } from '../next-action';
 import { useShellStore } from '../shell/store';
@@ -284,7 +285,7 @@ const relatedLinks = computed<EntityLink[]>(() => {
     <div class="flex flex-col gap-4" data-testid="task-detail">
         <header class="flex items-center justify-between flex-wrap gap-2">
             <div class="flex items-center gap-2 min-w-0 flex-1">
-                <KButton variant="ghost" data-testid="task-detail-back" @click="emit('back')">← Back</KButton>
+                <KButton variant="ghost" data-testid="task-detail-back" @click="emit('back')"><KIcon name="arrow-left" :size="16" /> Back</KButton>
                 <h1 class="text-xl font-semibold min-w-0 flex-1 break-words" data-testid="task-detail-title">{{ tasks.current?.title ?? 'Task' }}</h1>
             </div>
             <div class="flex items-center gap-2">

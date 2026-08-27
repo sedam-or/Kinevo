@@ -70,7 +70,7 @@ async function exportIcs(): Promise<void> {
         <p v-if="error" class="mt-2 text-sm text-danger" role="alert" data-testid="ics-export-error">
             {{ error }}
         </p>
-        <p v-if="done" class="mt-2 text-sm text-green-700 dark:text-green-400" data-testid="ics-export-success">
+        <p v-if="done" class="mt-2 text-sm text-success" data-testid="ics-export-success">
             Schedule exported as kinevo-schedule.ics.
         </p>
     </div>

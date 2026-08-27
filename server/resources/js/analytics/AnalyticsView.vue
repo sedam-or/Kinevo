@@ -44,8 +44,8 @@ const heatmapColor = computed(() => [
     'bg-gray-200 dark:bg-gray-700',
     'bg-orange-100 dark:bg-orange-900/40',
     'bg-orange-300 dark:bg-orange-700',
-    'bg-[#F53003]/70',
-    'bg-[#F53003]',
+    'bg-primary/70',
+    'bg-primary',
 ]);
 
 const showHeatmapList = ref(false);
@@ -186,7 +186,7 @@ const signal = computed(() => executiveSignal({
 const signalClass = computed(() => ({
     danger: 'border-danger/40 text-danger',
     warn: 'border-amber-500/40 text-amber-600 dark:text-amber-400',
-    ok: 'border-green-600/40 text-green-700 dark:text-green-400',
+    ok: 'border-success/40 text-success',
 }[signal.value.severity]));
 
 const periodLabel = computed(() => (analytics.from && analytics.to ? `${analytics.from} – ${analytics.to}` : ''));
@@ -349,8 +349,8 @@ function run(fn: () => Promise<void>): void {
                     :period="periodLabel"
                     unit="% of tracked time · minutes"
                     :legend="[
-                        { swatch: 'bg-[#F53003]', label: 'Work' },
-                        { swatch: 'bg-green-600', label: 'Recharge' },
+                        { swatch: 'bg-primary', label: 'Work' },
+                        { swatch: 'bg-success', label: 'Recharge' },
                     ]"
                 />
                 <div class="text-lg font-semibold" data-testid="analytics-ratio">
@@ -361,8 +361,8 @@ function run(fn: () => Promise<void>): void {
                     {{ minutesLabel(analytics.productiveMinutes) }} focus · {{ minutesLabel(analytics.rechargeMinutes) }} recharge
                 </div>
                 <div class="mt-2 flex h-3 w-full overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700" data-testid="analytics-bar">
-                    <div class="bg-[#F53003]" :style="{ width: `${workPercent}%` }" data-testid="analytics-work-segment" />
-                    <div class="bg-green-600" :style="{ width: `${rechargePercent}%` }" data-testid="analytics-recharge-segment" />
+                    <div class="bg-primary" :style="{ width: `${workPercent}%` }" data-testid="analytics-work-segment" />
+                    <div class="bg-success" :style="{ width: `${rechargePercent}%` }" data-testid="analytics-recharge-segment" />
                 </div>
 
                 <div v-if="analytics.previous" class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="analytics-period-comparison">
@@ -412,7 +412,7 @@ function run(fn: () => Promise<void>): void {
                     id="goals"
                     :period="periodLabel"
                     unit="% complete · milestones · tasks"
-                    :legend="[{ swatch: 'bg-[#F53003]', label: 'Progress' }]"
+                    :legend="[{ swatch: 'bg-primary', label: 'Progress' }]"
                 />
 
                 <div class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm" data-testid="analytics-goal-summary">
@@ -437,7 +437,7 @@ function run(fn: () => Promise<void>): void {
                             </span>
                         </div>
                         <div class="mt-1 flex h-2 w-full overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
-                            <div class="bg-[#F53003]" :style="{ width: `${goal.progress}%` }" data-testid="analytics-goal-bar" />
+                            <div class="bg-primary" :style="{ width: `${goal.progress}%` }" data-testid="analytics-goal-bar" />
                         </div>
                         <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                             {{ goal.progress }}% · {{ goal.milestones_completed }}/{{ goal.milestones_total }} milestones · {{ goal.tasks_completed }}/{{ goal.tasks_total }} tasks
@@ -480,8 +480,8 @@ function run(fn: () => Promise<void>): void {
                     :period="periodLabel"
                     unit="% of planned load realized · minutes"
                     :legend="[
-                        { swatch: 'bg-[#F53003]', label: 'Scheduled' },
-                        { swatch: 'bg-red-500', label: 'Overload' },
+                        { swatch: 'bg-primary', label: 'Scheduled' },
+                        { swatch: 'bg-danger', label: 'Overload' },
                     ]"
                 />
 
@@ -501,7 +501,7 @@ function run(fn: () => Promise<void>): void {
                         <div class="flex h-2.5 flex-1 overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
                             <div
                                 class="h-full"
-                                :class="day.status === 'overload' ? 'bg-red-500' : 'bg-[#F53003]'"
+                                :class="day.status === 'overload' ? 'bg-danger' : 'bg-primary'"
                                 :style="{ width: `${Math.min(100, (day.scheduled_minutes / Math.max(1, day.available_minutes + day.scheduled_minutes)) * 100)}%` }"
                                 data-testid="analytics-capacity-load"
                             />
@@ -546,7 +546,7 @@ function run(fn: () => Promise<void>): void {
                     id="execution"
                     :period="periodLabel"
                     unit="% of scheduled tasks completed · counts"
-                    :legend="[{ swatch: 'bg-[#F53003]', label: 'Completion' }]"
+                    :legend="[{ swatch: 'bg-primary', label: 'Completion' }]"
                 />
 
                 <div class="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-sm" data-testid="analytics-execution-summary">
@@ -564,7 +564,7 @@ function run(fn: () => Promise<void>): void {
                 <div class="flex h-2.5 w-full overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
                     <div
                         class="h-full"
-                        :class="lowCompletion ? 'bg-red-500' : 'bg-[#F53003]'"
+                        :class="lowCompletion ? 'bg-danger' : 'bg-primary'"
                         :style="{ width: `${Math.min(100, Math.round(analytics.taskCompletionRate * 100))}%` }"
                         data-testid="analytics-execution-bar"
                     />
@@ -589,7 +589,7 @@ function run(fn: () => Promise<void>): void {
                     id="pillars"
                     :period="periodLabel"
                     unit="% of pillar target · minutes"
-                    :legend="[{ swatch: 'bg-[#F53003]', label: 'Realized' }]"
+                    :legend="[{ swatch: 'bg-primary', label: 'Realized' }]"
                 />
 
                 <ul class="space-y-2">
@@ -603,7 +603,7 @@ function run(fn: () => Promise<void>): void {
                         <div class="mt-1 flex h-2 w-full overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
                             <div
                                 v-if="pillar.percent !== null"
-                                class="h-full bg-[#F53003]"
+                                class="h-full bg-primary"
                                 :style="{ width: `${Math.min(100, pillar.percent * 100)}%` }"
                                 data-testid="analytics-pillar-bar"
                             />
@@ -708,8 +708,8 @@ function run(fn: () => Promise<void>): void {
                     :period="periodLabel"
                     unit="minutes per day"
                     :legend="[
-                        { swatch: 'bg-[#F53003]', label: 'Work' },
-                        { swatch: 'bg-green-600', label: 'Recharge' },
+                        { swatch: 'bg-primary', label: 'Work' },
+                        { swatch: 'bg-success', label: 'Recharge' },
                     ]"
                 />
                 <ul class="space-y-1">
@@ -721,8 +721,8 @@ function run(fn: () => Promise<void>): void {
                     >
                         <span class="w-24 shrink-0 text-gray-600 dark:text-gray-400">{{ day.date }}</span>
                         <div class="flex h-2.5 flex-1 overflow-hidden rounded-sm bg-gray-200 dark:bg-gray-700">
-                            <div class="bg-[#F53003]" :style="{ width: `${Math.round(day.work_ratio * 100)}%` }" data-testid="analytics-day-work" />
-                            <div class="bg-green-600" :style="{ width: `${Math.round(day.recharge_ratio * 100)}%` }" data-testid="analytics-day-recharge" />
+                            <div class="bg-primary" :style="{ width: `${Math.round(day.work_ratio * 100)}%` }" data-testid="analytics-day-work" />
+                            <div class="bg-success" :style="{ width: `${Math.round(day.recharge_ratio * 100)}%` }" data-testid="analytics-day-recharge" />
                         </div>
                         <span class="w-28 shrink-0 text-right text-xs text-gray-500 dark:text-gray-400">
                             {{ minutesLabel(day.productive_minutes) }} / {{ minutesLabel(day.recharge_minutes) }}

@@ -45,7 +45,7 @@ const STATUS_VIEW: Record<AiStatusState, { tone: string; label: string }> = {
         label: 'Saved — not yet verified.',
     },
     testing: { tone: 'text-gray-600 dark:text-gray-400', label: 'Testing connection…' },
-    connected: { tone: 'text-green-700 dark:text-green-400', label: 'Connected.' },
+    connected: { tone: 'text-success', label: 'Connected.' },
     degraded: {
         tone: 'text-warning dark:text-yellow-400',
         label: 'Connected, but slow — responses may lag.',
@@ -271,7 +271,7 @@ async function removeKey(): Promise<void> {
                 <div v-if="hasStoredKey" class="flex gap-2">
                     <KButton type="button" variant="ghost" data-testid="ai-remove-key-button" @click.prevent="removeKey">Remove stored key</KButton>
                 </div>
-                <p v-if="credentialSaved" class="text-xs text-green-700 dark:text-green-400" data-testid="ai-credential-saved">Credential updated.</p>
+                <p v-if="credentialSaved" class="text-xs text-success" data-testid="ai-credential-saved">Credential updated.</p>
             </section>
 
             <!-- Section 4 · Connection -->
@@ -280,7 +280,7 @@ async function removeKey(): Promise<void> {
                 <KButton type="button" variant="ghost" :disabled="testing" data-testid="ai-test-button" @click.prevent="runTest">
                     {{ testing ? 'Testing…' : 'Test connection' }}
                 </KButton>
-                <p v-if="testResult" class="text-sm" :class="testResult.ok ? 'text-green-700 dark:text-green-400' : 'text-danger'" data-testid="ai-test-result">
+                <p v-if="testResult" class="text-sm" :class="testResult.ok ? 'text-success' : 'text-danger'" data-testid="ai-test-result">
                     {{ testResult.text }}
                 </p>
             </section>
@@ -296,7 +296,7 @@ async function removeKey(): Promise<void> {
 
             <div class="flex items-center gap-3">
                 <KButton type="submit" :disabled="saving" data-testid="ai-save-button">{{ saving ? 'Saving…' : 'Save settings' }}</KButton>
-                <span v-if="saved" class="text-sm text-green-700 dark:text-green-400" data-testid="ai-settings-saved">AI provider settings saved.</span>
+                <span v-if="saved" class="text-sm text-success" data-testid="ai-settings-saved">AI provider settings saved.</span>
             </div>
             </form>
         </template>

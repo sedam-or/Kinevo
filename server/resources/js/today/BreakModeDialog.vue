@@ -60,7 +60,7 @@ function cancel(): void {
 <template>
     <div
         ref="root"
-        class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
+        class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-[var(--z-modal)]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="break-mode-title"

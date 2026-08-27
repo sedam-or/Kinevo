@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue';
 import { useNotificationsStore } from './store';
 import type { KinevoNotification } from './types';
 import KButton from '../components/KButton.vue';
+import KIcon from '../components/KIcon.vue';
 
 /**
  * Notification center (§28-§29): bell + toast -> center -> contextual prompt.
@@ -29,11 +30,11 @@ function explanationFor(n: KinevoNotification): string {
     return 'New update from Kinevo.';
 }
 
-function iconFor(n: KinevoNotification): string {
+function iconFor(n: KinevoNotification): 'exclamation-triangle' | 'arrow-path' {
     if (n.type === 'reconciliation') {
-        return '⚠';
+        return 'exclamation-triangle';
     }
-    return '↻';
+    return 'arrow-path';
 }
 
 function timestampFor(n: KinevoNotification): string {
@@ -63,7 +64,7 @@ async function onRead(n: KinevoNotification): Promise<void> {
             data-testid="notifications-bell"
             @click="toggle"
         >
-            <span aria-hidden="true">🔔</span>
+            <span aria-hidden="true"><KIcon name="bell" :size="18" /></span>
             <span v-if="store.unreadCount > 0" class="text-xs font-semibold" data-testid="notifications-count">
                 {{ store.unreadCount }}
             </span>
@@ -92,7 +93,7 @@ async function onRead(n: KinevoNotification): Promise<void> {
                             class="flex items-start gap-2 border border-gray-200 dark:border-gray-700 rounded-sm px-2 py-2"
                             data-testid="notification-item"
                         >
-                            <span class="text-sm" aria-hidden="true">{{ iconFor(n) }}</span>
+                            <span class="text-sm" aria-hidden="true"><KIcon :name="iconFor(n)" /></span>
                             <div class="flex-1 min-w-0">
                                 <div class="text-sm" data-testid="notification-title">{{ explanationFor(n) }}</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">{{ timestampFor(n) }}</div>

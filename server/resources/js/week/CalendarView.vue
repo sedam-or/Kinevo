@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useWeekStore } from './store';
+import KIcon from '../components/KIcon.vue';
 
 const props = defineProps<{
     anchorDate: string;
@@ -50,9 +51,9 @@ const cells = computed<{ date: string; day: number | null; task_count: number }[
         <header class="flex items-center justify-between">
             <h1 class="text-xl font-semibold" data-testid="calendar-title">Calendar</h1>
             <div class="flex items-center gap-2 text-sm">
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="calendar-prev" @click="shiftMonth(-1)">‹</button>
+                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="calendar-prev" aria-label="Previous page" @click="shiftMonth(-1)"><KIcon name="chevron-left" :size="16" /></button>
                 <span data-testid="calendar-month">{{ week.calendarYear }}-{{ String(week.calendarMonth).padStart(2, '0') }}</span>
-                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="calendar-next" @click="shiftMonth(1)">›</button>
+                <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="calendar-next" aria-label="Next page" @click="shiftMonth(1)"><KIcon name="chevron-right" :size="16" /></button>
                 <button type="button" class="border border-gray-300 dark:border-gray-600 rounded-sm px-2 py-1" data-testid="calendar-today" @click="goToThisMonth">This month</button>
             </div>
         </header>

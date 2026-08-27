@@ -4,6 +4,7 @@ import { useScheduleDraftStore } from './store';
 import { formatDate, formatTime } from './date';
 import FeatureHelp from '../components/FeatureHelp.vue';
 import KButton from '../components/KButton.vue';
+import KIcon from '../components/KIcon.vue';
 
 const emit = defineEmits<{
     (e: 'back'): void;
@@ -62,7 +63,7 @@ function cancel(): void {
 <template>
     <div class="flex flex-col gap-4" data-testid="reschedule-view">
         <header class="flex items-center gap-2">
-            <KButton variant="secondary" type="button" data-testid="reschedule-back" @click="emit('back')">← Back</KButton>
+            <KButton variant="secondary" type="button" data-testid="reschedule-back" @click="emit('back')"><KIcon name="arrow-left" :size="16" /> Back</KButton>
             <h1 class="text-xl font-semibold">Dynamic Rescheduler</h1>
             <FeatureHelp id="dynamic-rescheduler" title="Dynamic Rescheduler" body="Re-fits unfinished tasks into the rest of your week based on priorities and real capacity. Nothing changes until you review and accept the proposal." />
         </header>
@@ -85,7 +86,7 @@ function cancel(): void {
         </section>
 
         <template v-if="proposed && sd.proposal">
-            <div v-if="appliedMessage" class="text-sm text-green-700 dark:text-green-400" data-testid="reschedule-applied">{{ appliedMessage }}</div>
+            <div v-if="appliedMessage" class="text-sm text-success" data-testid="reschedule-applied">{{ appliedMessage }}</div>
 
             <div v-if="!sd.proposalHasChanges" class="text-sm text-gray-600 dark:text-gray-400" data-testid="reschedule-no-changes">
                 No tasks need to move for this range.

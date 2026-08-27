@@ -56,6 +56,7 @@ where applicable, Tailwind v4 theme mapping.
 | `--color-warning`       | Warning semantics                      |
 | `--color-danger`        | Danger / destructive semantics         |
 | `--color-danger-contrast` | Text on danger fills (buttons)       |
+| `--color-danger-tint`   | Danger alert surface background        |
 | `--color-info`          | Information semantics                  |
 | `--color-focus`         | Visible focus indicator                |
 
@@ -293,6 +294,11 @@ Baseline + R2 (TASK-R2, 2026-08-21):
 - `server/resources/js/components/` — component library v0: `KButton` (three
   variants: primary/secondary/danger + ghost) and `KInput`. Remaining surfaces
   migrate to the library in TASK-R3 (`docs/ui-audit.md` §8 duplication hunt).
+  UI-consistency slice (2026-08-27) adds `KIcon` — one shared icon set
+  (Heroicons outline 24px paths, MIT, see
+  `docs/third-party/licenses.md`) implementing design.md §67 "one consistent
+  icon set"; emoji-as-icon (🔔) and unicode pager/close glyphs are replaced,
+  while the §39 milestone glyph map stays sanctioned.
 - `server/resources/js/diagnostics/` + `offline/diagnostics.ts` — dev-only
   runtime diagnostics (design.md §78) rendered by `DiagnosticsPanel` under
   `import.meta.env.DEV`; production builds drop it (design.md §36).

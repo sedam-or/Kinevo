@@ -135,7 +135,7 @@ function cancel(): void {
 </script>
 
 <template>
-    <div ref="root" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="ep-title" data-testid="emergency-pause-dialog" @click.self="cancel">
+    <div ref="root" class="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="ep-title" data-testid="emergency-pause-dialog" @click.self="cancel">
         <div class="w-full max-w-lg border border-gray-300 dark:border-gray-600 rounded-sm bg-white dark:bg-gray-900 p-4 shadow-lg">
             <h2 class="text-lg font-semibold" data-testid="ep-title">Emergency Pause</h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
