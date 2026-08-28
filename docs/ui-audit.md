@@ -675,6 +675,26 @@ NativePHP v4.2 EDGE element publishing/activation on Android; must be
 reproduced minimally against vendor source before any fix lands.
 Link: infrastructure/nativephp/linux-build/build-android-apk.sh (repro
 pipeline); TASK.md Phase 27 evidence block 2026-08-27.
+Resolution (2026-08-28): root causes found on the Linux pipeline —
+(1) the vendor `native-ui` Compose renderer plugin is absent on this OS, so
+content element types (text/icon/pressable/scroll-view/text-input) had no
+renderer and fell through to an empty container; fixed by in-repo
+KinevoRendererRegistration.kt + MainActivity registration, applied
+idempotently by the build script (source of truth:
+infrastructure/nativephp/linux-setup/);
+(2) the runtime skipped re-extracting a rebuilt laravel_bundle.zip because
+bundle_meta version was static ("0.27.0-debug") — the device silently ran a
+stale bundle, which masked every server-side fix during device testing;
+fixed by stamping version/version_code with the build timestamp.
+Evidence (emulator, repo-built 8.5-runtime APK): uiautomator reads the full
+content subtree + a11y content-descs (Welcome/Sign in card, Today NOW/NEXT/
+CAPACITY cards, Task rows); tap Sign in → authenticated Today from live
+backend; quick-capture "Plan tomorrow" → "Captured ✓" (POST /quick-capture);
+/task detail navigation renders (title/status/progress, lifecycle, timer,
+subtasks cards); Start → in_progress + "Session #1 — running" (ExecutionTimer
+contract); Complete → completed. Symptom (b) did not reproduce across ~15
+cold boots on 2026-08-28; kept open in TASK.md follow-ups until several
+release-candidate boots pass clean. Status: resolved for (a); (b) monitoring.
 ```
 
 ## 7. Anti-pattern scan (design.md §93)

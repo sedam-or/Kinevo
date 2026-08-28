@@ -80,6 +80,8 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Native\Mobile\Edge\ElementRegistry;
+use Native\Mobile\Edge\Elements\TextInput;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -167,5 +169,14 @@ class AppServiceProvider extends ServiceProvider
         });
 
         $this->loadMigrationsFrom(dirname(__DIR__, 3).'/database/migrations');
+
+        // P27-003 — free-text capture on the native shell. The TextInput
+        // element class ships with the mobile package but is not pre-registered
+        // on this pipeline's runtime; registering it here wires
+        // <native:text_input @change/@submit> to the shared collector.
+        if (class_exists(ElementRegistry::class)
+            && class_exists(TextInput::class)) {
+            ElementRegistry::register('text_input', TextInput::class);
+        }
     }
 }

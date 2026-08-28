@@ -9,6 +9,7 @@ use App\NativeComponents\MoreScreen;
 use App\NativeComponents\NotesScreen;
 use App\NativeComponents\NotificationsScreen;
 use App\NativeComponents\ReviewScreen;
+use App\NativeComponents\TaskDetailScreen;
 use App\NativeComponents\TasksScreen;
 use App\NativeComponents\TodayScreen;
 use App\NativeComponents\WorkspacesScreen;
@@ -34,7 +35,7 @@ class NativeMobileShellTest extends TestCase
             ->values()
             ->all();
 
-        foreach (['/', 'tasks', 'capture', 'goals', 'review', 'notifications', 'canvases', 'notes', 'workspaces', 'more'] as $uri) {
+        foreach (['/', 'tasks', 'tasks/{taskId}', 'capture', 'goals', 'review', 'notifications', 'canvases', 'notes', 'workspaces', 'more'] as $uri) {
             $this->assertContains($uri, $uris, "Native route /{$uri} must stay registered.");
         }
     }
@@ -44,6 +45,7 @@ class NativeMobileShellTest extends TestCase
         $cases = [
             TodayScreen::class => 'today',
             TasksScreen::class => 'tasks',
+            TaskDetailScreen::class => 'task-detail',
             CaptureScreen::class => 'capture',
             GoalScreen::class => 'goals',
             ReviewScreen::class => 'review',

@@ -10,6 +10,20 @@
 
         <native:text class="text-sm font-bold text-theme-muted">QUICK CAPTURE</native:text>
         <native:text class="text-theme-text">Drop a task into your schedule with one tap.</native:text>
+        <native:text_input
+            ref="capture-draft"
+            a11y-label="Task title"
+            placeholder="What needs doing?"
+            keyboard="text"
+            class="p-3 rounded-md border-theme-border border-2 bg-theme-surface"
+            @change="setTitle"
+        />
+        <native:pressable ref="capture-draft-submit" a11y-label="Capture typed task" a11y-hint="Adds the typed task to your day" class="p-3 rounded-md bg-theme-primary border-theme-border border-2" @tap="captureDraft">
+            <native:text class="text-theme-on-primary font-bold">Capture</native:text>
+        </native:pressable>
+        @if ($screen->status === 'saved' || $screen->status === 'queued' || $screen->status === 'error')
+            <native:text class="text-sm {{ $screen->status === 'error' ? 'text-theme-danger' : 'text-theme-success' }}">{{ $screen->message }}</native:text>
+        @endif
 
         <native:pressable ref="capture-plan" a11y-label="Plan tomorrow" a11y-hint="Adds Plan tomorrow to your day" class="p-3 gap-2 rounded-md border-theme-border border-2 bg-theme-surface" @tap="captureNow">
             <native:row class="gap-3 items-center">

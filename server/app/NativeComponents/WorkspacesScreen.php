@@ -52,6 +52,32 @@ final class WorkspacesScreen extends BaseScreen
         }
     }
 
+    /** P27-011 switch — make a workspace the default context (server-persisted). */
+    public function setDefault(int $workspaceId): void
+    {
+        $res = KinevoApi::post('/workspaces/'.$workspaceId.'/default', []);
+
+        if ($res->successful()) {
+            $this->error = '';
+            $this->reload();
+
+            return;
+        }
+        if ($res->status() === 409) {
+            $this->state = 'conflict';
+            $this->error = 'Workspace changed elsewhere — reload to retry.';
+
+            return;
+        }
+        if ($res->status() === 401) {
+            KinevoApi::logout();
+            $this->state = 'unauthorized';
+
+            return;
+        }
+        $this->error = 'Could not switch workspace — retry.';
+    }
+
     public function render(): View
     {
         return view('workspaces', ['screen' => $this]);

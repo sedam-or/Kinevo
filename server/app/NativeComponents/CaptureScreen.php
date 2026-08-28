@@ -20,12 +20,30 @@ final class CaptureScreen extends BaseScreen
 
     public string $message = '';
 
+    /** Free-text draft (P27-003) — bound to the native text field via setTitle(). */
+    public string $draftTitle = '';
+
     public function mount(): void
     {
         $this->refreshOffline();
         if (! KinevoApi::authed()) {
             $this->status = 'error';
             $this->message = 'Sign in on the Today tab to capture.';
+        }
+    }
+
+    /** Native text field change → store the draft on the component. */
+    public function setTitle(string $title): void
+    {
+        $this->draftTitle = trim($title);
+    }
+
+    /** Capture the typed draft (falls back to the semantic quick action). */
+    public function captureDraft(): void
+    {
+        $this->capture($this->draftTitle !== '' ? $this->draftTitle : 'Plan tomorrow');
+        if ($this->status === 'saved') {
+            $this->draftTitle = '';
         }
     }
 

@@ -40,6 +40,13 @@
                     </native:row>
                     @if ($workspace['is_default'] ?? $workspace['default'] ?? false)
                         <native:text class="text-sm text-theme-success">Active workspace</native:text>
+                    @else
+                        <native:pressable ref="ws-default-{{ $workspace['id'] ?? $loop->index }}" a11y-label="Make {{ $workspace['name'] ?? 'workspace' }} the active workspace" class="p-3 rounded-sm bg-theme-primary border-theme-border border-2" @tap="setDefault({{ $workspace['id'] ?? 0 }})">
+                            <native:text class="text-theme-on-primary font-bold">Switch here</native:text>
+                        </native:pressable>
+                    @endif
+                    @if ($screen->state === 'conflict')
+                        <native:text class="text-sm text-theme-warning">{{ $screen->error }}</native:text>
                     @endif
                 </native:column>
             @empty

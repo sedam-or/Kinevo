@@ -22,6 +22,7 @@
 /storage/*.key
 /storage/pail
 /storage/framework/phpstan
+/storage/framework/native_routes.json
 /vendor
 _ide_helper.php
 Homestead.json

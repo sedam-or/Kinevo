@@ -35,12 +35,25 @@
             @forelse ($screen->tasks as $task)
                 <native:row class="p-4 gap-2 items-center justify-between rounded-md border-theme-border border-2 bg-theme-surface" :key="$task['id'] ?? $loop->index">
                     <native:column class="gap-1">
-                        <native:text class="text-theme-text font-bold">{{ $task['title'] ?? 'Untitled' }}</native:text>
-                        <native:text class="text-sm text-theme-success">{{ $task['status'] ?? (($task['state'] ?? '') ?: '') }}</native:text>
+                        <native:pressable ref="task-open-{{ $task['id'] ?? $loop->index }}" a11y-label="Open task {{ $task['title'] ?? 'Untitled' }}" @tap="openTask({{ $task['id'] ?? 0 }})">
+                            <native:text class="text-theme-text font-bold">{{ $task['title'] ?? 'Untitled' }}</native:text>
+                            <native:text class="text-sm text-theme-success">{{ $task['status'] ?? (($task['state'] ?? '') ?: '') }}</native:text>
+                        </native:pressable>
                     </native:column>
-                    <native:pressable ref="task-done-{{ $task['id'] ?? $loop->index }}" a11y-label="Mark task done" class="p-2 rounded-sm bg-theme-primary border-theme-border border-2" @tap="execute({{ $task['id'] ?? 0 }}, 'completed')">
-                        <native:text class="text-theme-on-primary font-bold">Mark done</native:text>
-                    </native:pressable>
+                    <native:row class="gap-2">
+                        @if (($task['status'] ?? '') === 'in_progress')
+                            <native:pressable ref="task-start-{{ $task['id'] ?? $loop->index }}" a11y-label="Pause task" class="p-2 rounded-sm bg-theme-surface border-theme-border border-2" @tap="execute({{ $task['id'] ?? 0 }}, 'scheduled')">
+                                <native:text class="text-theme-text font-bold">Pause</native:text>
+                            </native:pressable>
+                        @else
+                            <native:pressable ref="task-start-{{ $task['id'] ?? $loop->index }}" a11y-label="Start task" class="p-2 rounded-sm bg-theme-surface border-theme-border border-2" @tap="execute({{ $task['id'] ?? 0 }}, 'in_progress')">
+                                <native:text class="text-theme-text font-bold">Start</native:text>
+                            </native:pressable>
+                        @endif
+                        <native:pressable ref="task-done-{{ $task['id'] ?? $loop->index }}" a11y-label="Mark task done" class="p-2 rounded-sm bg-theme-primary border-theme-border border-2" @tap="execute({{ $task['id'] ?? 0 }}, 'completed')">
+                            <native:text class="text-theme-on-primary font-bold">Mark done</native:text>
+                        </native:pressable>
+                    </native:row>
                 </native:row>
             @empty
                 <native:column class="p-3 rounded-md border-theme-border border-2 bg-theme-surface">

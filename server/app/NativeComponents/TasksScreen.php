@@ -46,6 +46,8 @@ final class TasksScreen extends BaseScreen
         } elseif ($res->status() === 401) {
             KinevoApi::logout();
             $this->state = 'unauthorized';
+        } elseif ($res->status() === 403) {
+            $this->state = 'entitlement';
         } else {
             $this->state = 'error';
             $this->error = 'Could not load tasks.';
@@ -57,12 +59,23 @@ final class TasksScreen extends BaseScreen
     {
         $res = KinevoApi::post('/tasks/'.$taskId.'/status', ['status' => $to]);
         if (! $res->successful()) {
-            $this->error = 'Could not update task — retry.';
+            // 422 = invalid transition (state machine) — surface the server's
+            // reason instead of a generic failure (P27-004 acceptance).
+            $server = $res->json('error');
+            $this->error = $server !== null && $server !== ''
+                ? 'Blocked: '.$server
+                : 'Could not update task — retry.';
             $this->state = 'error';
 
             return;
         }
         $this->reload();
+    }
+
+    /** Open the task detail companion screen (P27-004). */
+    public function openTask(int $taskId): void
+    {
+        $this->navigate('/tasks/'.$taskId);
     }
 
     public function render(): View
