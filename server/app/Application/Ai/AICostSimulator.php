@@ -68,7 +68,7 @@ final readonly class AICostSimulator
 
         $planRows = [];
         foreach ($plans as $planCode => $reqProfile) {
-            $revenueMinor = (int) config("billing.prices.{$planCode}.amount_minor", 0);
+            $revenueMajor = (int) config("billing.prices.{$planCode}.amount_major", 0);
             $planRows[$planCode] = [];
             foreach (array_merge(array_keys(self::Z), ['ABUSE']) as $scenario) {
                 $requests = $scenario === 'ABUSE'
@@ -80,11 +80,11 @@ final readonly class AICostSimulator
                     // caller behaviour); override via config later with data.
                     $monthlyCost += (int) round($fc['cost_per_request']['P50'] * $requests / max(1, count($featureCosts)));
                 }
-                $margin = $revenueMinor > 0 ? ($revenueMinor - $monthlyCost) / $revenueMinor : null;
+                $margin = $revenueMajor > 0 ? ($revenueMajor - $monthlyCost) / $revenueMajor : null;
                 $planRows[$planCode][$scenario] = [
                     'requests' => $requests,
                     'monthly_cogs_minor' => $monthlyCost,
-                    'revenue_minor' => $revenueMinor,
+                    'revenue_major' => $revenueMajor,
                     'margin' => $margin === null ? null : round($margin, 3),
                     'safe' => $margin === null ? null : $margin >= $target[0],
                 ];
@@ -107,6 +107,7 @@ final readonly class AICostSimulator
             ],
             'feature_costs' => $featureCosts,
             'plans' => $planRows,
+            'currency_note' => 'revenue_major is plan currency (IDR whole Rupiah = amount_major, e.g. 49_900 / 89_900); monthly_cogs_minor is the catalog currency minor. Margin is a planning approximation valid when both sides are treated in the same unit — it is NOT accounting.',
             'target_margin_range' => $target,
             'decision_required' => 'Hosted AI quota per tier must be locked from this analysis — see report, then owner decision.',
         ];

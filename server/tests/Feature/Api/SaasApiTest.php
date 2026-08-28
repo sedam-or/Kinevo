@@ -45,9 +45,12 @@ class SaasApiTest extends TestCase
             ->assertJsonPath('usage.ai_credits.allowance', 20)
             ->assertJsonPath('usage.ai_credits.used', 0)
             ->assertJsonPath('usage.ai_credits.remaining', 20)
-            // COMMERCIAL PRICING DELTA — new launch-hypothesis prices surfaced.
-            ->assertJsonPath('pricing.free.amount_minor', 0)
+            // COMMERCIAL PRICING DELTA — locked launch prices in WHOLE Rupiah
+            // (49_900 / 89_900); amount_minor is the derived cent-equivalent.
+            ->assertJsonPath('pricing.free.amount_major', 0)
+            ->assertJsonPath('pricing.pro.amount_major', 49_900)
             ->assertJsonPath('pricing.pro.amount_minor', 4_990_000)
+            ->assertJsonPath('pricing.power.amount_major', 89_900)
             ->assertJsonPath('pricing.power.amount_minor', 8_990_000)
             ->assertJsonPath('pricing.pro.launch_hypothesis', true);
     }

@@ -1,8 +1,8 @@
 {
-    "generated_at": "2026-08-27T19:55:48+00:00",
+    "generated_at": "2026-08-28T01:20:07+00:00",
     "payment_method": "credit_card",
     "payment_fee_assumptions": {
-        "fixed_minor": 100,
+        "fixed_major": 100,
         "percentage_bps": 290,
         "verified": false
     },
@@ -10,7 +10,7 @@
     "plans": {
         "free": {
             "expected_cogs_share": {
-                "revenue_minor": 0,
+                "revenue_major": 0,
                 "payment_fee_minor": 0,
                 "ai_cogs_minor": 0,
                 "infra_minor": 25000,
@@ -21,7 +21,7 @@
                 "margin": null
             },
             "heavy_cogs_share": {
-                "revenue_minor": 0,
+                "revenue_major": 0,
                 "payment_fee_minor": 0,
                 "ai_cogs_minor": 0,
                 "infra_minor": 25000,
@@ -32,7 +32,7 @@
                 "margin": null
             },
             "abuse_cogs_share": {
-                "revenue_minor": 0,
+                "revenue_major": 0,
                 "payment_fee_minor": 0,
                 "ai_cogs_minor": 0,
                 "infra_minor": 25000,
@@ -45,94 +45,94 @@
         },
         "pro": {
             "p50_cogs_share": {
-                "revenue_minor": 4990000,
-                "payment_fee_minor": 144810,
-                "ai_cogs_minor": 49900,
+                "revenue_major": 49900,
+                "payment_fee_minor": 1547,
+                "ai_cogs_minor": 499,
                 "infra_minor": 25000,
                 "storage_minor": 5000,
                 "support_minor": 10000,
-                "total_cost_minor": 234710,
-                "gross_contribution_minor": 4755290,
-                "margin": 0.953
+                "total_cost_minor": 42046,
+                "gross_contribution_minor": 7854,
+                "margin": 0.1574
             },
             "p95_cogs_share": {
-                "revenue_minor": 4990000,
-                "payment_fee_minor": 144810,
-                "ai_cogs_minor": 149700,
+                "revenue_major": 49900,
+                "payment_fee_minor": 1547,
+                "ai_cogs_minor": 1497,
                 "infra_minor": 25000,
                 "storage_minor": 5000,
                 "support_minor": 10000,
-                "total_cost_minor": 334510,
-                "gross_contribution_minor": 4655490,
-                "margin": 0.933
+                "total_cost_minor": 43044,
+                "gross_contribution_minor": 6856,
+                "margin": 0.1374
             },
             "p99_cogs_share": {
-                "revenue_minor": 4990000,
-                "payment_fee_minor": 144810,
-                "ai_cogs_minor": 399200,
+                "revenue_major": 49900,
+                "payment_fee_minor": 1547,
+                "ai_cogs_minor": 3992,
                 "infra_minor": 25000,
                 "storage_minor": 5000,
                 "support_minor": 10000,
-                "total_cost_minor": 584010,
-                "gross_contribution_minor": 4405990,
-                "margin": 0.883
+                "total_cost_minor": 45539,
+                "gross_contribution_minor": 4361,
+                "margin": 0.0874
             },
             "heavy_cogs_share": {
-                "revenue_minor": 4990000,
-                "payment_fee_minor": 144810,
-                "ai_cogs_minor": 998000,
+                "revenue_major": 49900,
+                "payment_fee_minor": 1547,
+                "ai_cogs_minor": 9980,
                 "infra_minor": 25000,
                 "storage_minor": 5000,
                 "support_minor": 10000,
-                "total_cost_minor": 1182810,
-                "gross_contribution_minor": 3807190,
-                "margin": 0.763
+                "total_cost_minor": 51527,
+                "gross_contribution_minor": -1627,
+                "margin": -0.0326
             }
         },
         "power": {
             "p50_cogs_share": {
-                "revenue_minor": 8990000,
-                "payment_fee_minor": 260810,
-                "ai_cogs_minor": 89900,
+                "revenue_major": 89900,
+                "payment_fee_minor": 2707,
+                "ai_cogs_minor": 899,
                 "infra_minor": 25000,
                 "storage_minor": 5000,
                 "support_minor": 10000,
-                "total_cost_minor": 390710,
-                "gross_contribution_minor": 8599290,
-                "margin": 0.9565
+                "total_cost_minor": 43606,
+                "gross_contribution_minor": 46294,
+                "margin": 0.5149
             },
             "p95_cogs_share": {
-                "revenue_minor": 8990000,
-                "payment_fee_minor": 260810,
-                "ai_cogs_minor": 269700,
+                "revenue_major": 89900,
+                "payment_fee_minor": 2707,
+                "ai_cogs_minor": 2697,
                 "infra_minor": 25000,
                 "storage_minor": 5000,
                 "support_minor": 10000,
-                "total_cost_minor": 570510,
-                "gross_contribution_minor": 8419490,
-                "margin": 0.9365
+                "total_cost_minor": 45404,
+                "gross_contribution_minor": 44496,
+                "margin": 0.4949
             },
             "p99_cogs_share": {
-                "revenue_minor": 8990000,
-                "payment_fee_minor": 260810,
-                "ai_cogs_minor": 719200,
+                "revenue_major": 89900,
+                "payment_fee_minor": 2707,
+                "ai_cogs_minor": 7192,
                 "infra_minor": 25000,
                 "storage_minor": 5000,
                 "support_minor": 10000,
-                "total_cost_minor": 1020010,
-                "gross_contribution_minor": 7969990,
-                "margin": 0.8865
+                "total_cost_minor": 49899,
+                "gross_contribution_minor": 40001,
+                "margin": 0.4449
             },
             "heavy_cogs_share": {
-                "revenue_minor": 8990000,
-                "payment_fee_minor": 260810,
-                "ai_cogs_minor": 1798000,
+                "revenue_major": 89900,
+                "payment_fee_minor": 2707,
+                "ai_cogs_minor": 17980,
                 "infra_minor": 25000,
                 "storage_minor": 5000,
                 "support_minor": 10000,
-                "total_cost_minor": 2098810,
-                "gross_contribution_minor": 6891190,
-                "margin": 0.7665
+                "total_cost_minor": 60687,
+                "gross_contribution_minor": 29213,
+                "margin": 0.3249
             }
         }
     },

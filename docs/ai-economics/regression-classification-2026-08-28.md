@@ -10,27 +10,31 @@ rewritten). Active commercial config and tests are REPLACE.
 
 | Pattern | Found | Classification |
 |---|---|---|
+| `49.900` / `89.900` (new Pro / new Power) | billing.php, billing tests | REPLACE (done 2026-08-28; canonical amount_major) |
 | `34.900` / `3_490_000` (old Pro) | billing.php, nativephp mirror, billing tests | REPLACE (done 2026-08-28) |
-| `49.900` / `4_990_000` (old Power / current Pro) | billing.php, billing tests | REPLACE (done 2026-08-28) |
+| `4_990_000` / `8_990_000` (derived minor) | persistence tests + snapshot | DERIVED (amount_major × 100 — never the price) |
 | `20 credits` / `150 credits` / `500 credits` | master prompt §2.2 (historical) | PRESERVE + DEPRECATED BASELINE note |
 | `25% markup` | none in repo (only referenced in delta docs as an anti-pattern) | n/a |
 | workspace counts `2/10/25` | config/saas.php + mirror | REPLACE (done — 1/5/15 per delta §2) |
 
 ## Replacements applied (D-001/D-002)
 
-- `server/config/billing.php` — `pro` → `4_990_000` (IDR 49,900), `power` → `8_990_000` (IDR 89,900);
-  comment declares LOCKED launch hypotheses (revisi-finance §0).
+- `server/config/billing.php` — `pro` amount_major → `49_900` (Rp49.900), `power` amount_major → `89_900`
+  (Rp89.900) — canonical whole-Rupiah; `amount_minor` (4_990_000/8_990_000) is the DERIVED ×100
+  cent-equivalent stored only for P24 persistence/API snapshot (never the price itself).
 - `server/config/saas.php` — `max_workspaces` 1/5/15 (Free/Pro/Power); `ai_credits` values kept
   functional but reclassified DEPRECATED BASELINE in the header docblock (never final policy until
   FinOps simulation — D-004 produced the first evidence run).
 - `server/nativephp/android/laravel/config/{billing,saas}.php` — mirrored (git-ignored build
   artifact; synced in the working copy).
-- `server/app/Application/Saas/GetPlanOverviewUseCase.php` — exposes `pricing` (locked prices +
-  `launch_hypothesis`) and `catalog` (all tiers, from config) so the UI never hardcodes numbers.
-- `server/tests/Feature/Api/SaasApiTest.php` — new price assertions + Free=1 workspace limit +
+- `server/app/Application/Saas/GetPlanOverviewUseCase.php` — exposes `pricing` (amount_major =
+  Rp49.900/Rp89.900 + derived amount_minor, `launch_hypothesis`) and `catalog` (all tiers, from
+  config) so the UI never hardcodes numbers.
+- `server/tests/Feature/Api/SaasApiTest.php` — new price assertions (amount_major 49_900/89_900)
+  + Free=1 workspace limit +
   downgrade-preservation test (Power/Pro -> Free preserves data, blocks new usage).
-- `server/tests/Feature/BillingCheckoutTest.php`, `BillingSubscriptionReadTest.php` — price fixtures
-  to 4_990_000 / 8_990_000.
+- `server/tests/Feature/BillingCheckoutTest.php`, `BillingSubscriptionReadTest.php` — stored-minor
+  fixtures 4_990_000 / 8_990_000 (derived from Rp49.900/89.900, P24 persistence).
 - `server/tests/Feature/Api/AiUsageTest.php` — Power BYOK acceptance + per-request budget-gate tests.
 - `server/resources/js/saas/PlanSettingsView.vue` — no hardcoded numbers; prices/entitlements from
   API; tier positioning copy + Power Rp40,000 gap computed; explicit upgrade/downgrade CTAs;

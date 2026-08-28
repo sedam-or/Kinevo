@@ -25,21 +25,21 @@ final class BillingUnitEconomicsCommand extends Command
         $fees = (array) config('billing.payment_fees');
         $model = (array) config('billing.unit_economics');
         $defaultMethod = (string) config('billing.default_payment_method', 'credit_card');
-        $fee = (array) ($fees[$defaultMethod] ?? ['fixed_minor' => 0, 'percentage_bps' => 0]);
+        $fee = (array) ($fees[$defaultMethod] ?? ['fixed_major' => 0, 'percentage_bps' => 0]);
 
         $rows = [];
         foreach ((array) $model['scenarios'] as $plan => $scenarios) {
-            $revenue = (int) ($plan === 'free' ? 0 : ($prices[$plan]['amount_minor'] ?? 0));
+            $revenue = (int) ($plan === 'free' ? 0 : ($prices[$plan]['amount_major'] ?? 0));
             foreach ($scenarios as $scenario => $share) {
                 $aiCogs = (int) round($revenue * (float) $share);
-                $paymentFee = $revenue > 0 ? (int) $fee['fixed_minor'] + (int) round($revenue * (int) $fee['percentage_bps'] / 10000) : 0;
-                $infra = (int) $model['infra_minor_per_user_month'];
-                $storage = (int) $model['storage_minor_per_user_month'];
-                $support = (int) $model['support_minor_per_user_month'];
+                $paymentFee = $revenue > 0 ? (int) $fee['fixed_major'] + (int) round($revenue * (int) $fee['percentage_bps'] / 10000) : 0;
+                $infra = (int) $model['infra_major_per_user_month'];
+                $storage = (int) $model['storage_major_per_user_month'];
+                $support = (int) $model['support_major_per_user_month'];
                 $costs = $paymentFee + $aiCogs + $infra + $storage + $support;
                 $contribution = $revenue - $costs;
                 $rows[$plan][$scenario] = [
-                    'revenue_minor' => $revenue,
+                    'revenue_major' => $revenue,
                     'payment_fee_minor' => $paymentFee,
                     'ai_cogs_minor' => $aiCogs,
                     'infra_minor' => $infra,
@@ -79,7 +79,7 @@ final class BillingUnitEconomicsCommand extends Command
         foreach ($report['plans'] as $plan => $scenarios) {
             foreach ($scenarios as $scenario => $r) {
                 $tableRows[] = [
-                    $plan, $scenario, $r['revenue_minor'], $r['payment_fee_minor'], $r['ai_cogs_minor'],
+                    $plan, $scenario, $r['revenue_major'], $r['payment_fee_minor'], $r['ai_cogs_minor'],
                     $r['infra_minor'], $r['total_cost_minor'], $r['gross_contribution_minor'],
                     $r['margin'] === null ? '-' : sprintf('%.1f%%', $r['margin'] * 100),
                 ];

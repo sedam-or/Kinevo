@@ -121,42 +121,42 @@
             "P50": {
                 "requests": 13,
                 "monthly_cogs_minor": 1,
-                "revenue_minor": 0,
+                "revenue_major": 0,
                 "margin": null,
                 "safe": null
             },
             "P75": {
                 "requests": 19,
                 "monthly_cogs_minor": 2,
-                "revenue_minor": 0,
+                "revenue_major": 0,
                 "margin": null,
                 "safe": null
             },
             "P90": {
                 "requests": 26,
                 "monthly_cogs_minor": 4,
-                "revenue_minor": 0,
+                "revenue_major": 0,
                 "margin": null,
                 "safe": null
             },
             "P95": {
                 "requests": 32,
                 "monthly_cogs_minor": 4,
-                "revenue_minor": 0,
+                "revenue_major": 0,
                 "margin": null,
                 "safe": null
             },
             "P99": {
                 "requests": 47,
                 "monthly_cogs_minor": 7,
-                "revenue_minor": 0,
+                "revenue_major": 0,
                 "margin": null,
                 "safe": null
             },
             "ABUSE": {
                 "requests": 701,
                 "monthly_cogs_minor": 104,
-                "revenue_minor": 0,
+                "revenue_major": 0,
                 "margin": null,
                 "safe": null
             }
@@ -165,43 +165,43 @@
             "P50": {
                 "requests": 54,
                 "monthly_cogs_minor": 8,
-                "revenue_minor": 4990000,
+                "revenue_major": 49900,
                 "margin": 1,
                 "safe": true
             },
             "P75": {
                 "requests": 74,
                 "monthly_cogs_minor": 11,
-                "revenue_minor": 4990000,
+                "revenue_major": 49900,
                 "margin": 1,
                 "safe": true
             },
             "P90": {
                 "requests": 98,
                 "monthly_cogs_minor": 14,
-                "revenue_minor": 4990000,
+                "revenue_major": 49900,
                 "margin": 1,
                 "safe": true
             },
             "P95": {
                 "requests": 117,
                 "monthly_cogs_minor": 17,
-                "revenue_minor": 4990000,
+                "revenue_major": 49900,
                 "margin": 1,
                 "safe": true
             },
             "P99": {
                 "requests": 161,
                 "monthly_cogs_minor": 23,
-                "revenue_minor": 4990000,
+                "revenue_major": 49900,
                 "margin": 1,
                 "safe": true
             },
             "ABUSE": {
                 "requests": 2416,
                 "monthly_cogs_minor": 360,
-                "revenue_minor": 4990000,
-                "margin": 1,
+                "revenue_major": 49900,
+                "margin": 0.993,
                 "safe": true
             }
         },
@@ -209,47 +209,48 @@
             "P50": {
                 "requests": 107,
                 "monthly_cogs_minor": 16,
-                "revenue_minor": 8990000,
+                "revenue_major": 89900,
                 "margin": 1,
                 "safe": true
             },
             "P75": {
                 "requests": 148,
                 "monthly_cogs_minor": 22,
-                "revenue_minor": 8990000,
+                "revenue_major": 89900,
                 "margin": 1,
                 "safe": true
             },
             "P90": {
                 "requests": 197,
                 "monthly_cogs_minor": 29,
-                "revenue_minor": 8990000,
+                "revenue_major": 89900,
                 "margin": 1,
                 "safe": true
             },
             "P95": {
                 "requests": 233,
                 "monthly_cogs_minor": 36,
-                "revenue_minor": 8990000,
+                "revenue_major": 89900,
                 "margin": 1,
                 "safe": true
             },
             "P99": {
                 "requests": 322,
                 "monthly_cogs_minor": 48,
-                "revenue_minor": 8990000,
-                "margin": 1,
+                "revenue_major": 89900,
+                "margin": 0.999,
                 "safe": true
             },
             "ABUSE": {
                 "requests": 4831,
                 "monthly_cogs_minor": 718,
-                "revenue_minor": 8990000,
-                "margin": 1,
+                "revenue_major": 89900,
+                "margin": 0.992,
                 "safe": true
             }
         }
     },
+    "currency_note": "revenue_major is plan currency (IDR whole Rupiah = amount_major, e.g. 49_900 / 89_900); monthly_cogs_minor is the catalog currency minor. Margin is a planning approximation valid when both sides are treated in the same unit \u2014 it is NOT accounting.",
     "target_margin_range": [
         0.3,
         0.5

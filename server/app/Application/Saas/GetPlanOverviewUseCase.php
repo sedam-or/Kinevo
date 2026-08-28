@@ -57,9 +57,9 @@ final readonly class GetPlanOverviewUseCase
             // source for the pricing/upgrade UI. Launch hypotheses; never
             // claim "final market price". Free is unpriced (IDR 0).
             'pricing' => [
-                'free' => ['currency' => 'IDR', 'amount_minor' => 0, 'interval' => 'MONTH', 'interval_count' => 1, 'launch_hypothesis' => true],
-                'pro' => ['currency' => 'IDR', 'amount_minor' => (int) config('billing.prices.pro.amount_minor'), 'interval' => 'MONTH', 'interval_count' => 1, 'launch_hypothesis' => true],
-                'power' => ['currency' => 'IDR', 'amount_minor' => (int) config('billing.prices.power.amount_minor'), 'interval' => 'MONTH', 'interval_count' => 1, 'launch_hypothesis' => true],
+                'free' => ['currency' => 'IDR', 'amount_major' => 0, 'amount_minor' => 0, 'interval' => 'MONTH', 'interval_count' => 1, 'launch_hypothesis' => true],
+                'pro' => ['currency' => 'IDR', 'amount_major' => (int) config('billing.prices.pro.amount_major'), 'amount_minor' => (int) config('billing.prices.pro.amount_major') * 100, 'interval' => 'MONTH', 'interval_count' => 1, 'launch_hypothesis' => true],
+                'power' => ['currency' => 'IDR', 'amount_major' => (int) config('billing.prices.power.amount_major'), 'amount_minor' => (int) config('billing.prices.power.amount_major') * 100, 'interval' => 'MONTH', 'interval_count' => 1, 'launch_hypothesis' => true],
             ],
         ];
     }

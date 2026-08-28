@@ -14,7 +14,7 @@ interface PlanOverview {
     catalog: Record<string, { name: string; entitlements: Record<string, number | boolean> }>;
     subscription: { state: string; provider: string };
     usage: Record<string, { allowance: number; used: number; remaining: number; period: string }>;
-    pricing: Record<string, { currency: string; amount_minor: number; interval: string; interval_count: number; launch_hypothesis: boolean }>;
+    pricing: Record<string, { currency: string; amount_major: number; amount_minor: number; interval: string; interval_count: number; launch_hypothesis: boolean }>;
 }
 
 const PLAN_ORDER = ['free', 'pro', 'power'] as const;
@@ -45,11 +45,12 @@ const lastPlan = ref<string | null>(null);
 function priceLabel(code: string): string {
     const p = overview.value?.pricing[code];
     if (!p) return '—';
-    if (p.amount_minor === 0) return 'Rp0';
+    if (p.amount_major === 0) return 'Rp0';
     try {
-        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: p.currency, maximumFractionDigits: 0 }).format(p.amount_minor / 100);
+        // amount_major IS the price in whole Rupiah (49_900 / 89_900) — no cent scaling.
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: p.currency, maximumFractionDigits: 0 }).format(p.amount_major);
     } catch {
-        return `Rp${(p.amount_minor / 100).toLocaleString('id-ID')}`;
+        return `Rp${p.amount_major.toLocaleString('id-ID')}`;
     }
 }
 
@@ -57,7 +58,7 @@ function priceLabel(code: string): string {
 const powerDifference = computed(() => {
     const p = overview.value?.pricing;
     if (!p?.power || !p?.pro) return '';
-    const gap = (p.power.amount_minor - p.pro.amount_minor) / 100;
+    const gap = p.power.amount_major - p.pro.amount_major;
     return `Rp${gap.toLocaleString('id-ID')} lebih per bulan dari Pro`;
 });
 
@@ -75,8 +76,8 @@ function bullets(code: string): string[] {
 
 /** True when moving to a more expensive tier (upgrade ⇒ purchase). */
 function isUpgrade(code: string): boolean {
-    const current = overview.value?.pricing[overview.value.plan.code]?.amount_minor ?? 0;
-    const target = overview.value?.pricing[code]?.amount_minor ?? 0;
+    const current = overview.value?.pricing[overview.value.plan.code]?.amount_major ?? 0;
+    const target = overview.value?.pricing[code]?.amount_major ?? 0;
 
     return target > current;
 }

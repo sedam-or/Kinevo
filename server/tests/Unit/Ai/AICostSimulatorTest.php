@@ -30,8 +30,8 @@ final class AICostSimulatorTest extends TestCase
                 'pro' => ['mean' => 50, 'cv' => 0.5],
                 'power' => ['mean' => 100, 'cv' => 0.5],
             ],
-            'billing.prices.pro.amount_minor' => 4_990_000,
-            'billing.prices.power.amount_minor' => 8_990_000,
+            'billing.prices.pro.amount_major' => 49_900,
+            'billing.prices.power.amount_major' => 89_900,
         ]);
         $simulator = app(AICostSimulator::class);
 
@@ -64,11 +64,11 @@ final class AICostSimulatorTest extends TestCase
 
         $report = $simulator->simulate(['provider' => 'openai', 'model' => 'gpt-4o-mini']);
 
-        // At IDR 4,990,000/month revenue and a tiny request volume, margin
-        // must be positive and above the (lowered) target.
+        // At Rp 49.900/month revenue (amount_major) and a tiny request volume,
+        // margin must be positive and above the (lowered) target.
         $pro = $report['plans']['pro']['P50'];
         $this->assertGreaterThan(0, $pro['monthly_cogs_minor']);
-        $this->assertLessThan($pro['revenue_minor'], $pro['monthly_cogs_minor']);
+        $this->assertLessThan($pro['revenue_major'], $pro['monthly_cogs_minor']);
         $this->assertTrue($pro['safe']);
     }
 

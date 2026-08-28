@@ -75,12 +75,14 @@ final class BillingService
 
         $operationId = 'kinevo-'.$userId.'-'.Str::lower(Str::random(10));
 
-        // TASK-P24-005 — money in integer minor units; Midtrans takes whole IDR.
-        // Subscription API requires payment_type, a saved card token and the
-        // schedule shape (interval/interval_unit) — P24-035 sandbox evidence.
+        // TASK-P24-005 / COMMERCIAL PRICING DELTA — amount_major IS the price in
+        // whole Rupiah (Pro = 49_900, Power = 89_900); Midtrans takes whole IDR
+        // so amount = amount_major directly. amount_minor (major * 100) is a
+        // DERIVED cent-equivalent stored only for P24 persistence compatibility.
+        $priceMajor = (int) $price['amount_major'];
         $payload = [
             'name' => 'Kinevo '.$planCode.' ('.$user->email.')',
-            'amount' => intdiv((int) $price['amount_minor'], 100),
+            'amount' => $priceMajor,
             'currency' => $price['currency'],
             'payment_type' => 'credit_card',
             'token' => (string) config('billing.midtrans.test_card_token'),
@@ -104,7 +106,7 @@ final class BillingService
         $row = BillingSubscription::query()->create([
             'user_id' => $userId,
             'plan_code' => $planCode,
-            'price_amount_minor' => (int) $price['amount_minor'],
+            'price_amount_minor' => $priceMajor * 100,
             'price_currency' => $price['currency'],
             'provider' => 'midtrans',
             'operation_id' => $operationId,

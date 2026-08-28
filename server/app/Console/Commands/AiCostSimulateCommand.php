@@ -76,7 +76,7 @@ final class AiCostSimulateCommand extends Command
         }
 
         $this->table(
-            ['Plan', 'Scenario', 'Requests', 'COGS (minor)', 'Revenue (minor)', 'Margin', 'Safe'],
+            ['Plan', 'Scenario', 'Requests', 'COGS (minor)', 'Revenue (Rp)', 'Margin', 'Safe'],
             $this->rows($report),
         );
 
@@ -98,7 +98,7 @@ final class AiCostSimulateCommand extends Command
                     $scenario,
                     (string) $row['requests'],
                     (string) $row['monthly_cogs_minor'],
-                    (string) $row['revenue_minor'],
+                    (string) $row['revenue_major'],
                     $row['margin'] === null ? '-' : sprintf('%.1f%%', $row['margin'] * 100),
                     isset($row['safe']) && $row['safe'] ? 'yes' : ($row['safe'] === null ? 'n/a' : 'NO'),
                 ];

@@ -39,7 +39,7 @@ di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
 - SRS: billing · Design: docs/billing.md §Pricing Delta · Files: server/config/billing.php;
   server/config/saas.php; mirror server/nativephp/android/laravel/config/*; plan records/seeders
 - Acceptance:
-  - [ ] config/billing.php: pro = 4_990_000; power = 8_990_000 (IDR minor units)
+  - [ ] config/billing.php: pro amount_major = 49_900 (Rp49.900); power amount_major = 89_900 (Rp89.900) — whole Rupiah; amount_minor 4_990_000/8_990_000 hanya turunan ×100 utk persist P24
   - [ ] config/saas.php: max_workspaces 1/5/15; komentar harga + ai_credits direklasifikasi
         DEPRECATED BASELINE (bukan kebijakan final; menunggu FinOps sim D-004)
   - [ ] mirror nativephp configs selaras
@@ -47,7 +47,8 @@ di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
         lama TIDAK disentuh
   - [ ] klasifikasi tiap kemunculan 34.900/49.900 terdokumentasi (ganti/histori/preserve)
 - Verification: [ ] Unit(config) · [ ] Integration(EntitlementService + price catalog)
-- Evidence: config/billing.php pro=4_990_000 power=8_990_000; config/saas.php ws 1/5/15 +
+- Evidence: config/billing.php pro amount_major=49_900 power amount_major=89_900
+  (= Rp49.900/Rp89.900, BUKAN 4,9jt/8,9jt; amount_minor 4_990_000/8_990_000 = turunan ×100 utk persist P24); config/saas.php ws 1/5/15 +
   DEPRECATED BASELINE notes; mirrors nativephp sinkron (git-ignored); GetPlanOverviewUseCase
   exsposes `pricing` + `catalog`; klasifikasi lengkap di docs/ai-economics/regression-classification-2026-08-28.md
 - Known Limitations: — · Notes: TIDAK membuat sistem plan/entitlement kedua (RULE 3.2)
