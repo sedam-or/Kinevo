@@ -117,6 +117,22 @@
                 @endforelse
             </native:column>
 
+            @if (count($screen->linkingCanvases) > 0)
+                <native:column class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface">
+                    <native:text class="text-sm font-bold text-theme-muted">CANVAS</native:text>
+                    @forelse ($screen->linkingCanvases as $link)
+                        <native:pressable ref="td-canvas-{{ $link['source_id'] ?? $loop->index }}" a11y-label="Open linked canvas" class="p-2 rounded-sm bg-transparent" @tap="openCanvas({{ $link['source_id'] ?? 0 }})">
+                            <native:row class="gap-2 items-center">
+                                <native:icon name="draw" color="#2C5FA8" size="20" />
+                                <native:text class="text-theme-text">Open canvas companion</native:text>
+                            </native:row>
+                        </native:pressable>
+                    @empty
+                        <native:text class="text-theme-muted">None.</native:text>
+                    @endforelse
+                </native:column>
+            @endif
+
             <native:pressable ref="td-back" a11y-label="Back to tasks" class="p-4 rounded-md bg-theme-surface border-theme-border border-2" @tap="backToTasks">
                 <native:text class="text-theme-text font-bold">Back to Tasks</native:text>
             </native:pressable>

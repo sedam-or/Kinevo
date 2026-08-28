@@ -101,6 +101,15 @@ final class KinevoApi
             ->post(self::base().$uri, $payload);
     }
 
+    public static function delete(string $uri)
+    {
+        return Http::withToken(self::token())
+            ->acceptJson()
+            ->connectTimeout(8)
+            ->timeout(20)
+            ->delete(self::base().$uri);
+    }
+
     public static function operationId(): string
     {
         return Str::uuid()->toString();

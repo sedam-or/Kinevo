@@ -45,15 +45,25 @@
             </native:column>
         @else
             @forelse ($screen->goals as $goal)
-                <native:row class="p-4 gap-2 items-center justify-between rounded-md border-theme-border border-2 bg-theme-surface" :key="$goal['id'] ?? $loop->index">
-                    <native:column class="gap-1">
-                        <native:text class="text-theme-text font-bold">{{ $goal['title'] ?? 'Untitled' }}</native:text>
-                        <native:text class="text-sm text-theme-success">{{ $goal['status'] ?? (($goal['state'] ?? '') ?: '') }}</native:text>
-                    </native:column>
-                    <native:pressable ref="goal-ai-{{ $goal['id'] ?? $loop->index }}" a11y-label="Propose AI breakdown" class="p-2 rounded-sm bg-theme-primary border-theme-border border-2" @tap="proposeBreakdown({{ $goal['id'] ?? 0 }})">
-                        <native:text class="text-theme-on-primary font-bold">AI breakdown</native:text>
+                <native:column class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface" :key="$goal['id'] ?? $loop->index">
+                    <native:pressable ref="goal-open-{{ $goal['id'] ?? $loop->index }}" a11y-label="Open goal {{ $goal['title'] ?? 'Untitled' }}" class="p-2 rounded-sm bg-transparent" @tap="openDetail({{ $goal['id'] ?? 0 }})">
+                        <native:column class="gap-1">
+                            <native:text class="text-theme-text font-bold">{{ $goal['title'] ?? 'Untitled' }}</native:text>
+                            <native:text class="text-sm text-theme-success">{{ $goal['status'] ?? (($goal['state'] ?? '') ?: '') }}</native:text>
+                        </native:column>
                     </native:pressable>
-                </native:row>
+                    <native:row class="gap-2">
+                        <native:pressable ref="goal-detail-{{ $goal['id'] ?? $loop->index }}" a11y-label="Open goal detail" class="p-2 rounded-sm bg-theme-surface border-theme-border border-2" @tap="openDetail({{ $goal['id'] ?? 0 }})">
+                            <native:text class="text-theme-text font-bold">Detail</native:text>
+                        </native:pressable>
+                        <native:pressable ref="goal-ai-{{ $goal['id'] ?? $loop->index }}" a11y-label="Propose AI breakdown" class="p-2 rounded-sm bg-theme-primary border-theme-border border-2" @tap="proposeBreakdown({{ $goal['id'] ?? 0 }})">
+                            <native:text class="text-theme-on-primary font-bold">AI breakdown</native:text>
+                        </native:pressable>
+                        <native:pressable ref="goal-proposals-{{ $goal['id'] ?? $loop->index }}" a11y-label="Review AI breakdown proposals" class="p-2 rounded-sm bg-theme-primary border-theme-border border-2" @tap="openBreakdown({{ $goal['id'] ?? 0 }})">
+                            <native:text class="text-theme-on-primary font-bold">Proposals</native:text>
+                        </native:pressable>
+                    </native:row>
+                </native:column>
             @empty
                 <native:column class="p-3 rounded-md border-theme-border border-2 bg-theme-surface">
                     <native:text class="text-theme-muted">No goals yet.</native:text>

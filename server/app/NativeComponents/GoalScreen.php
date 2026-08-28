@@ -52,6 +52,16 @@ final class GoalScreen extends BaseScreen
         }
     }
 
+    public function openDetail(int $goalId): void
+    {
+        $this->navigate('/goals/'.$goalId);
+    }
+
+    public function openBreakdown(int $goalId): void
+    {
+        $this->navigate('/goals/'.$goalId.'/breakdown');
+    }
+
     public function proposeBreakdown(int $goalId): void
     {
         $res = KinevoApi::post('/goals/'.$goalId.'/breakdown-proposals');

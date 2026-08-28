@@ -2,10 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\NativeComponents\BreakdownScreen;
+use App\NativeComponents\CanvasDetailScreen;
 use App\NativeComponents\CanvasScreen;
 use App\NativeComponents\CaptureScreen;
+use App\NativeComponents\GoalDetailScreen;
 use App\NativeComponents\GoalScreen;
 use App\NativeComponents\MoreScreen;
+use App\NativeComponents\NoteDetailScreen;
 use App\NativeComponents\NotesScreen;
 use App\NativeComponents\NotificationsScreen;
 use App\NativeComponents\ReviewScreen;
@@ -35,7 +39,7 @@ class NativeMobileShellTest extends TestCase
             ->values()
             ->all();
 
-        foreach (['/', 'tasks', 'tasks/{taskId}', 'capture', 'goals', 'review', 'notifications', 'canvases', 'notes', 'workspaces', 'more'] as $uri) {
+        foreach (['/', 'tasks', 'tasks/{taskId}', 'capture', 'goals', 'goals/{goalId}', 'goals/{goalId}/breakdown', 'review', 'notifications', 'canvases', 'canvases/{canvasId}', 'notes', 'notes/{noteId}', 'workspaces', 'more'] as $uri) {
             $this->assertContains($uri, $uris, "Native route /{$uri} must stay registered.");
         }
     }

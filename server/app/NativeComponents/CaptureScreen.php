@@ -74,11 +74,14 @@ final class CaptureScreen extends BaseScreen
 
         $this->status = 'saving';
 
-        $res = KinevoApi::post('/notes', ['title' => 'Reading note']);
+        $res = KinevoApi::post('/notes', [
+            'title' => $this->draftTitle !== '' ? $this->draftTitle : 'Reading note',
+        ]);
 
         if ($res->successful()) {
             $this->status = 'saved';
             $this->message = 'Note saved ✓';
+            $this->draftTitle = '';
         } elseif ($res->status() === 401) {
             KinevoApi::logout();
             $this->status = 'error';

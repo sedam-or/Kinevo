@@ -5,9 +5,10 @@ namespace App\NativeComponents;
 use Illuminate\View\View;
 
 /**
- * Review (P27-007 companion): a read-only progress surface — how much of
- * today is spoken for (capacity), and overall goal progress. The browser
- * remains authoritative for scheduling; this screen never mutates.
+ * Review (P27-009 companion): a read-only progress surface — how much of today
+ * is spoken for (capacity), recent task completion + focus from the analytics
+ * overview, and overall goal progress. Metrics are server-authored only; this
+ * screen never derives values.
  */
 final class ReviewScreen extends BaseScreen
 {
@@ -18,6 +19,12 @@ final class ReviewScreen extends BaseScreen
     public array $capacity = [];
 
     public array $goals = [];
+
+    public array $completion = [];
+
+    public array $focus = [];
+
+    public array $goalProgress = [];
 
     public function mount(): void
     {
@@ -42,15 +49,41 @@ final class ReviewScreen extends BaseScreen
 
         $today = KinevoApi::get('/today', ['date' => date('Y-m-d')]);
         $goals = KinevoApi::get('/goals');
+        $overview = KinevoApi::get('/analytics/overview', [
+            'from' => date('Y-m-d', strtotime('-7 days')),
+            'to' => date('Y-m-d'),
+        ]);
 
-        if ($today->successful() && $goals->successful()) {
+        $hasCore = $today->successful() && $goals->successful();
+
+        if ($hasCore) {
             $this->capacity = $today->json('capacity') ?? [];
             $this->goals = $goals->json('goals') ?? [];
-            $this->state = 'ready';
-        } else {
+        }
+        if ($overview->successful()) {
+            $this->completion = $overview->json('task_completion') ?? [];
+            $this->focus = $overview->json('focus') ?? [];
+            $this->goalProgress = $overview->json('goal_progress') ?? [];
+        }
+
+        if (! $hasCore) {
             $this->state = 'error';
             $this->error = 'Review unavailable — retry when reachable.';
+
+            return;
         }
+
+        $this->state = 'ready';
+    }
+
+    public function openGoal(int $goalId): void
+    {
+        $this->navigate('/goals/'.$goalId);
+    }
+
+    public function openToday(): void
+    {
+        $this->replace('/');
     }
 
     public function render(): View

@@ -33,13 +33,13 @@
             </native:column>
         @else
             @forelse ($screen->canvases as $canvas)
-                <native:row class="p-4 gap-2 items-center justify-between rounded-md border-theme-border border-2 bg-theme-surface" :key="$canvas['id'] ?? $loop->index">
+                <native:pressable ref="canvas-open-{{ $canvas['id'] ?? $loop->index }}" a11y-label="Open canvas {{ $canvas['title'] ?? 'Untitled' }}" class="p-4 gap-2 items-center justify-between rounded-md border-theme-border border-2 bg-theme-surface" @tap="openDetail({{ $canvas['id'] ?? 0 }})">
                     <native:column class="gap-1">
                         <native:text class="text-theme-text font-bold">{{ $canvas['title'] ?? 'Untitled' }}</native:text>
                         <native:text class="text-sm text-theme-muted">{{ $canvas['status'] ?? (($canvas['state'] ?? '') ?: '') }}</native:text>
                     </native:column>
                     <native:text class="text-sm text-theme-warning">Open on web</native:text>
-                </native:row>
+                </native:pressable>
             @empty
                 <native:column class="p-3 rounded-md border-theme-border border-2 bg-theme-surface">
                     <native:text class="text-theme-muted">No canvases yet.</native:text>

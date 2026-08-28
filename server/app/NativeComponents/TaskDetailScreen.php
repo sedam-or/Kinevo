@@ -25,6 +25,9 @@ final class TaskDetailScreen extends BaseScreen
 
     public array $execution = [];
 
+    /** Knowledge links pointing AT this task (P27-008 reachability). */
+    public array $linkingCanvases = [];
+
     public int $taskId = 0;
 
     public function mount(): void
@@ -89,7 +92,27 @@ final class TaskDetailScreen extends BaseScreen
             : [];
         $active = KinevoApi::get('/execution/active');
         $this->execution = $active->successful() ? ($active->json('execution') ?? $active->json('session') ?? []) : [];
+        $this->linkingCanvases = $this->loadLinkingCanvases();
         $this->state = 'ready';
+    }
+
+    /** Canvases that reference this task, surfaced so the companion is reachable. */
+    private function loadLinkingCanvases(): array
+    {
+        $links = KinevoApi::get('/knowledge/links', ['target_type' => 'task', 'target_id' => $this->taskId]);
+        if (! $links->successful()) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            $links->json('links') ?? [],
+            static fn ($l) => ($l['source_type'] ?? null) === 'canvas',
+        ));
+    }
+
+    public function openCanvas(int $canvasId): void
+    {
+        $this->navigate('/canvases/'.$canvasId);
     }
 
     /** Lifecycle: start working (in_progress). */

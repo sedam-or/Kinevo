@@ -1,10 +1,14 @@
 <?php
 
+use App\NativeComponents\CanvasDetailScreen;
 use App\NativeComponents\CanvasScreen;
 use App\NativeComponents\CaptureScreen;
+use App\NativeComponents\BreakdownScreen;
+use App\NativeComponents\GoalDetailScreen;
 use App\NativeComponents\GoalScreen;
 use App\NativeComponents\MoreScreen;
 use App\NativeComponents\NotesScreen;
+use App\NativeComponents\NoteDetailScreen;
 use App\NativeComponents\NotificationsScreen;
 use App\NativeComponents\ReviewScreen;
 use App\NativeComponents\TaskDetailScreen;
@@ -23,9 +27,13 @@ Route::native('/tasks', TasksScreen::class);
 Route::native('/tasks/{taskId}', TaskDetailScreen::class);
 Route::native('/capture', CaptureScreen::class);
 Route::native('/goals', GoalScreen::class);
+Route::native('/goals/{goalId}', GoalDetailScreen::class);
+Route::native('/goals/{goalId}/breakdown', BreakdownScreen::class);
 Route::native('/review', ReviewScreen::class);
 Route::native('/notifications', NotificationsScreen::class);
 Route::native('/canvases', CanvasScreen::class);
+Route::native('/canvases/{canvasId}', CanvasDetailScreen::class);
 Route::native('/notes', NotesScreen::class);
+Route::native('/notes/{noteId}', NoteDetailScreen::class);
 Route::native('/workspaces', WorkspacesScreen::class);
 Route::native('/more', MoreScreen::class);

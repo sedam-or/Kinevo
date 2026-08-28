@@ -52,6 +52,11 @@ final class CanvasScreen extends BaseScreen
         }
     }
 
+    public function openDetail(int $canvasId): void
+    {
+        $this->navigate('/canvases/'.$canvasId);
+    }
+
     public function render(): View
     {
         return view('canvases', ['screen' => $this]);

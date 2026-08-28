@@ -32,21 +32,30 @@
                 </native:pressable>
             </native:column>
         @else
+            @if ($screen->notice !== '')
+                <native:text class="text-sm text-theme-success">{{ $screen->notice }}</native:text>
+            @endif
             @forelse ($screen->items as $item)
-                <native:row class="p-4 gap-2 items-center justify-between rounded-md border-theme-border border-2 bg-theme-surface" :key="$item['id'] ?? $loop->index">
-                    <native:column class="gap-1">
-                        <native:text class="text-theme-text font-bold">{{ $item['title'] ?? 'Untitled' }}</native:text>
-                        <native:text class="text-sm text-theme-muted">{{ $item['body'] ?? $item['message'] ?? '' }}</native:text>
-                    </native:column>
-                    <native:pressable ref="notif-read-{{ $item['id'] ?? $loop->index }}" a11y-label="Mark as read" class="p-2 rounded-sm bg-theme-primary border-theme-border border-2" @tap="markRead({{ $item['id'] ?? 0 }})">
-                        <native:text class="text-theme-on-primary font-bold">Mark read</native:text>
+                <native:column class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface" :key="$item['id'] ?? $loop->index">
+                    <native:pressable ref="notif-open-{{ $item['id'] ?? $loop->index }}" a11y-label="Open notification {{ $item['title'] ?? 'Untitled' }}" class="p-2 rounded-sm bg-transparent" @tap="open('{{ $item['type'] ?? 'other' }}', {{ $item['payload']['task_id'] ?? 0 }})">
+                        <native:column class="gap-1">
+                            <native:text class="text-theme-text font-bold">{{ $item['title'] ?? 'Untitled' }}</native:text>
+                            <native:text class="text-sm text-theme-muted">{{ $item['body'] ?? $item['message'] ?? '' }}</native:text>
+                        </native:column>
                     </native:pressable>
-                </native:row>
+                    <native:row class="gap-2 items-center justify-between">
+                        <native:text class="text-sm text-theme-muted">{{ $item['scheduled_for'] ?? '' }}</native:text>
+                        <native:pressable ref="notif-read-{{ $item['id'] ?? $loop->index }}" a11y-label="Mark as read" class="p-2 rounded-sm bg-theme-primary border-theme-border border-2" @tap="markRead({{ $item['id'] ?? 0 }})">
+                            <native:text class="text-theme-on-primary font-bold">Mark read</native:text>
+                        </native:pressable>
+                    </native:row>
+                </native:column>
             @empty
                 <native:column class="p-3 rounded-md border-theme-border border-2 bg-theme-surface">
                     <native:text class="text-theme-muted">No notifications right now.</native:text>
                 </native:column>
             @endforelse
+            <native:text class="text-sm text-theme-muted">In-app notifications only — push delivery needs a provider (P27-010 limitation).</native:text>
         @endif
     </native:column>
 </native:scroll-view>

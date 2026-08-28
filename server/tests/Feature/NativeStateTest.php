@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\NativeComponents\GoalScreen;
+use App\NativeComponents\NoteDetailScreen;
+use App\NativeComponents\WorkspacesScreen;
 use Illuminate\Support\Facades\Http;
 use Native\Mobile\Testing\TestableComponent;
 use Tests\TestCase;
@@ -63,5 +65,47 @@ final class NativeStateTest extends TestCase
             ->call('proposeBreakdown', 1)
             ->assertSet('state', 'error')
             ->assertSee('retry on the web app');
+    }
+
+    public function test_workspace_switch_conflict_surfaces_conflict_state(): void
+    {
+        Http::fake(function ($request) {
+            if ($request->method() === 'GET') {
+                return Http::response(['workspaces' => [['id' => 7, 'name' => 'W']]]);
+            }
+
+            return Http::response(['error' => 'changed'], 409);
+        });
+
+        TestableComponent::test(WorkspacesScreen::class)
+            ->call('setDefault', 7)
+            ->assertSet('state', 'conflict');
+    }
+
+    public function test_note_link_conflict_surfaces_409_state(): void
+    {
+        Http::fake(function ($request) {
+            if ($request->method() === 'GET' && str_contains($request->url(), '/notes/3/links')) {
+                return Http::response(['links' => []]);
+            }
+            if ($request->method() === 'POST' && str_contains($request->url(), '/notes/3/links')) {
+                return Http::response(['error' => 'duplicate'], 409);
+            }
+            if ($request->method() === 'GET') {
+                $routeIsNote = str_contains($request->url(), '/notes/3');
+                if ($routeIsNote) {
+                    return Http::response(['note' => ['id' => 3, 'title' => 'n', 'version' => 1]]);
+                }
+
+                return Http::response(['tasks' => [], 'goals' => []]);
+            }
+
+            return Http::response(['error' => 'nope'], 500);
+        });
+
+        TestableComponent::test(NoteDetailScreen::class, ['noteId' => 3])
+            ->call('addTaskLink', 11)
+            ->assertSet('state', 'conflict')
+            ->assertSee('already exists');
     }
 }

@@ -31,16 +31,53 @@
             </native:column>
 
             <native:column class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface">
-                <native:text class="text-sm font-bold text-theme-muted">GOALS ({{ count($screen->goals) }})</native:text>
-                @forelse ($screen->goals as $goal)
-                    <native:row class="gap-2 items-center justify-between" :key="$goal['id'] ?? $loop->index">
-                        <native:text class="text-theme-text">{{ $goal['title'] ?? 'Untitled' }}</native:text>
-                        <native:text class="text-sm text-theme-success">{{ $goal['status'] ?? (($goal['state'] ?? '') ?: '') }}</native:text>
+                <native:text class="text-sm font-bold text-theme-muted">TASK COMPLETION · 7D</native:text>
+                @if (! empty($screen->completion))
+                    <native:row class="gap-2 items-center">
+                        <native:text class="font-bold text-theme-success">{{ $screen->completion['completed_in_period'] ?? 0 }} done</native:text>
+                        <native:text class="text-theme-muted">{{ $screen->completion['completion_rate'] ?? 0 }}% rate</native:text>
                     </native:row>
+                    <native:text class="text-sm text-theme-muted">{{ $screen->completion['completed_tasks'] ?? 0 }}/{{ $screen->completion['total_tasks'] ?? 0 }} tasks</native:text>
+                @else
+                    <native:text class="text-theme-muted">Not available yet.</native:text>
+                @endif
+            </native:column>
+
+            <native:column class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface">
+                <native:text class="text-sm font-bold text-theme-muted">FOCUS · 7D</native:text>
+                @if (! empty($screen->focus))
+                    <native:row class="gap-2 items-center">
+                        <native:text class="font-bold text-theme-text">{{ $screen->focus['total_minutes'] ?? 0 }} min focused</native:text>
+                        <native:text class="text-theme-muted">{{ $screen->focus['total_sessions'] ?? 0 }} sessions</native:text>
+                    </native:row>
+                @else
+                    <native:text class="text-theme-muted">Not available yet.</native:text>
+                @endif
+            </native:column>
+
+            <native:column class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface">
+                <native:text class="text-sm font-bold text-theme-muted">GOAL PROGRESS</native:text>
+                @if (! empty($screen->goalProgress))
+                    <native:text class="text-theme-text">{{ $screen->goalProgress['completion_rate'] ?? 0 }}% goals</native:text>
+                @else
+                    <native:text class="text-theme-muted">Not available yet.</native:text>
+                @endif
+                @forelse ($screen->goals as $goal)
+                    <native:pressable ref="rv-goal-{{ $goal['id'] ?? $loop->index }}" a11y-label="Open goal {{ $goal['title'] ?? 'Untitled' }}" class="p-2 rounded-sm bg-transparent" @tap="openGoal({{ $goal['id'] ?? 0 }})">
+                        <native:row class="gap-2 items-center justify-between">
+                            <native:text class="text-theme-text">{{ $goal['title'] ?? 'Untitled' }}</native:text>
+                            <native:text class="text-sm text-theme-success">{{ $goal['status'] ?? (($goal['state'] ?? '') ?: '') }}</native:text>
+                        </native:row>
+                    </native:pressable>
                 @empty
                     <native:text class="text-theme-muted">No goals yet.</native:text>
                 @endforelse
             </native:column>
+
+            <native:pressable ref="rv-today" a11y-label="Open Today" class="p-4 rounded-sm bg-theme-primary border-theme-border border-2" @tap="openToday">
+                <native:text class="text-theme-on-primary font-bold">Open Today</native:text>
+            </native:pressable>
+            <native:text class="text-sm text-theme-muted">Metrics are server-authored.</native:text>
         @endif
     </native:column>
 </native:scroll-view>

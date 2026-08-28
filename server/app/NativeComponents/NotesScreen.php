@@ -50,6 +50,11 @@ final class NotesScreen extends BaseScreen
         }
     }
 
+    public function openDetail(int $noteId): void
+    {
+        $this->navigate('/notes/'.$noteId);
+    }
+
     public function render(): View
     {
         return view('notes', ['screen' => $this]);
