@@ -82,6 +82,7 @@ final class TaskDetailScreen extends BaseScreen
         }
 
         $this->task = $res->json('task') ?? [];
+        $this->error = '';
         $subRes = KinevoApi::get('/tasks/'.$this->taskId.'/subtasks');
         $this->subtasks = $subRes->successful()
             ? ($subRes->json('subtasks') ?? $subRes->json('data') ?? [])
@@ -149,7 +150,10 @@ final class TaskDetailScreen extends BaseScreen
 
     private function transitionTo(string $to): void
     {
-        $res = KinevoApi::post('/tasks/'.$this->taskId.'/status', ['status' => $to]);
+        $res = KinevoApi::post('/tasks/'.$this->taskId.'/status', [
+            'status' => $to,
+            'version' => $this->task['version'] ?? null,
+        ]);
         $this->handleMutation($res, $to === 'completed' ? 'Task completed ✓' : 'Task updated.');
     }
 

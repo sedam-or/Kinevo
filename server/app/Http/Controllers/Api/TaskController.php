@@ -232,10 +232,26 @@ final class TaskController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'status' => ['required', 'string', 'in:backlog,scheduled,in_progress,partial,continued,completed,skipped,missed,conflict'],
+            'version' => ['sometimes', 'integer', 'min:1'],
         ]);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        if ($request->filled('version')) {
+            try {
+                $current = $this->getTaskUseCase->__invoke($request->user()->id, $taskId);
+            } catch (InvalidArgumentException) {
+                $current = null;
+            }
+
+            if ($current !== null && $current->version !== $request->integer('version')) {
+                return response()->json([
+                    'error' => 'Task changed on another device — reload and retry.',
+                    'code' => 'VERSION_CONFLICT',
+                ], 409);
+            }
         }
 
         try {

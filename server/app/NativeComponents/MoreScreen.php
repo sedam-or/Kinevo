@@ -27,6 +27,12 @@ final class MoreScreen extends BaseScreen
         $this->authed = false;
     }
 
+    /** Hub navigation (P27-005/007/008/009/010 reachability). */
+    public function go(string $uri): void
+    {
+        $this->navigate('/'.ltrim($uri, '/'));
+    }
+
     public function render(): View
     {
         return view('more', ['screen' => $this]);

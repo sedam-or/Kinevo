@@ -60,12 +60,17 @@ final class GoalScreen extends BaseScreen
 
             return;
         }
-        if ($res->status() === 429 || $res->status() === 403 && str_contains((string) $res->json('error'), 'AI')) {
+        $code = $res->json('code');
+        if ($res->status() === 403 && $code === 'ENTITLEMENT_LIMIT') {
+            $this->state = 'entitlement';
+            $this->error = 'Plan limit reached — upgrade on the web app to keep using AI.';
+        } elseif ($code === 'AI_PROVIDER_UNAVAILABLE' || $code === 'AI_CREDITS_EXHAUSTED' || $res->status() === 429) {
+            $this->state = 'error';
             $this->error = 'AI is not ready — check provider on the web app.';
         } else {
+            $this->state = 'error';
             $this->error = 'Breakdown request failed — retry on the web app.';
         }
-        $this->state = 'error';
     }
 
     public function render(): View

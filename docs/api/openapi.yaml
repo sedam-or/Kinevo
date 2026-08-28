@@ -2492,14 +2492,6 @@ paths:
         '404': { description: Not found }
         '422': { description: Validation error }
 
-  /ai/proposals:
-    post:
-      tags: [AI]
-      summary: Generate a structured AI proposal
-      responses:
-        '202': {description: Accepted}
-        '503': {description: AI unavailable}
-
   /logs:
     get:
       tags: [Activity]
@@ -3985,6 +3977,7 @@ components:
       required: [status]
       properties:
         status: {type: string, enum: [backlog, scheduled, in_progress, partial, continued, completed, skipped, missed, conflict]}
+        version: {type: integer, minimum: 1, description: Optional optimistic-concurrency guard. When provided, the API returns 409 (VERSION_CONFLICT) if the task version no longer matches on the server.}
     Task:
       type: object
       required: [id, title, status, priority_tier, version]

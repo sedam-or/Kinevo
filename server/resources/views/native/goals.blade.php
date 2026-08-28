@@ -17,7 +17,7 @@
         @elseif ($screen->state === 'offline')
             <native:column class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface">
                 <native:text class="text-theme-text">Backend unreachable.</native:text>
-                <native:pressable ref="retry-goals" class="p-3 rounded-sm bg-theme-primary border-theme-border border-2" @tap="reload">
+                <native:pressable ref="retry-goals" class="p-4 rounded-sm bg-theme-primary border-theme-border border-2" @tap="reload">
                     <native:text class="text-theme-on-primary font-bold">Retry</native:text>
                 </native:pressable>
             </native:column>
@@ -27,7 +27,19 @@
                     <native:icon name="error" color="#D20812" size="20" />
                     <native:text class="text-theme-text">{{ $screen->error }}</native:text>
                 </native:row>
-                <native:pressable ref="retry-goals-error" class="p-3 rounded-sm bg-theme-primary border-theme-border border-2" @tap="reload">
+                <native:pressable ref="retry-goals-error" class="p-4 rounded-sm bg-theme-primary border-theme-border border-2" @tap="reload">
+                    <native:text class="text-theme-on-primary font-bold">Retry</native:text>
+                </native:pressable>
+            </native:column>
+        @elseif ($screen->state === 'entitlement')
+            <native:column class="p-4 gap-2 rounded-md border-theme-warning border-2 bg-theme-surface">
+                <native:row class="gap-2 items-center">
+                    <native:icon name="workspace_premium" color="#B7730F" size="20" />
+                    <native:text class="text-theme-warning font-bold">Plan limit</native:text>
+                </native:row>
+                <native:text class="text-theme-text">{{ $screen->error }}</native:text>
+                <native:text class="text-sm text-theme-muted">Upgrade on the web app, then come back.</native:text>
+                <native:pressable ref="retry-goals-entitlement" a11y-label="Retry after upgrade" class="p-4 rounded-sm bg-theme-primary border-theme-border border-2" @tap="reload">
                     <native:text class="text-theme-on-primary font-bold">Retry</native:text>
                 </native:pressable>
             </native:column>

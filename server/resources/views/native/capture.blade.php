@@ -18,26 +18,26 @@
             class="p-3 rounded-md border-theme-border border-2 bg-theme-surface"
             @change="setTitle"
         />
-        <native:pressable ref="capture-draft-submit" a11y-label="Capture typed task" a11y-hint="Adds the typed task to your day" class="p-3 rounded-md bg-theme-primary border-theme-border border-2" @tap="captureDraft">
+        <native:pressable ref="capture-draft-submit" a11y-label="Capture typed task" a11y-hint="Adds the typed task to your day" class="p-4 rounded-md bg-theme-primary border-theme-border border-2" @tap="captureDraft">
             <native:text class="text-theme-on-primary font-bold">Capture</native:text>
         </native:pressable>
         @if ($screen->status === 'saved' || $screen->status === 'queued' || $screen->status === 'error')
             <native:text class="text-sm {{ $screen->status === 'error' ? 'text-theme-danger' : 'text-theme-success' }}">{{ $screen->message }}</native:text>
         @endif
 
-        <native:pressable ref="capture-plan" a11y-label="Plan tomorrow" a11y-hint="Adds Plan tomorrow to your day" class="p-3 gap-2 rounded-md border-theme-border border-2 bg-theme-surface" @tap="captureNow">
+        <native:pressable ref="capture-plan" a11y-label="Plan tomorrow" a11y-hint="Adds Plan tomorrow to your day" class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface" @tap="captureNow">
             <native:row class="gap-3 items-center">
                 <native:icon name="edit_calendar" color="#DE3005" size="20" />
                 <native:text class="text-theme-text font-bold">Plan tomorrow</native:text>
             </native:row>
         </native:pressable>
-        <native:pressable ref="capture-review" a11y-label="Review the week" a11y-hint="Adds Review the week to your day" class="p-3 gap-2 rounded-md border-theme-border border-2 bg-theme-surface" @tap="captureReview">
+        <native:pressable ref="capture-review" a11y-label="Review the week" a11y-hint="Adds Review the week to your day" class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface" @tap="captureReview">
             <native:row class="gap-3 items-center">
                 <native:icon name="assessment" color="#DE3005" size="20" />
                 <native:text class="text-theme-text font-bold">Review the week</native:text>
             </native:row>
         </native:pressable>
-        <native:pressable ref="capture-note" a11y-label="Capture a reading note" a11y-hint="Adds Capture a reading note to your day" class="p-3 gap-2 rounded-md border-theme-border border-2 bg-theme-surface" @tap="captureNote">
+        <native:pressable ref="capture-note" a11y-label="Capture a reading note" a11y-hint="Adds Capture a reading note to your day" class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface" @tap="captureNote">
             <native:row class="gap-3 items-center">
                 <native:icon name="book" color="#DE3005" size="20" />
                 <native:text class="text-theme-text font-bold">Capture a reading note</native:text>

@@ -13,7 +13,7 @@
                 <native:icon name="lock" color="#DE3005" size="30" />
                 <native:text class="text-xl font-bold text-theme-text">Welcome to Kinevo</native:text>
                 <native:text class="text-theme-muted">Sign in to sync your day onto this device.</native:text>
-                <native:pressable ref="sign-in" a11y-label="Sign in" a11y-hint="Signs in with your Kinevo account" class="p-3 rounded-sm bg-theme-primary border-theme-border border-2" @tap="signIn">
+                <native:pressable ref="sign-in" a11y-label="Sign in" a11y-hint="Signs in with your Kinevo account" class="p-4 rounded-sm bg-theme-primary border-theme-border border-2" @tap="signIn">
                     <native:text class="text-theme-on-primary font-bold">Sign in</native:text>
                 </native:pressable>
                 <native:text class="text-sm text-theme-muted">Token is stored on this device only.</native:text>
@@ -23,7 +23,7 @@
         @elseif ($screen->state === 'offline')
             <native:column class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface">
                 <native:text class="text-theme-text">Backend unreachable — you are offline.</native:text>
-                <native:pressable ref="retry-offline" a11y-label="Retry" class="p-3 rounded-sm bg-theme-primary border-theme-border border-2" @tap="reload">
+                <native:pressable ref="retry-offline" a11y-label="Retry" class="p-4 rounded-sm bg-theme-primary border-theme-border border-2" @tap="reload">
                     <native:text class="text-theme-on-primary font-bold">Retry</native:text>
                 </native:pressable>
             </native:column>
@@ -33,7 +33,7 @@
                     <native:icon name="error" color="#D20812" size="20" />
                     <native:text class="text-theme-text">{{ $screen->error }}</native:text>
                 </native:row>
-                <native:pressable ref="retry-error" a11y-label="Retry" a11y-hint="Reloads the today view" class="p-3 rounded-sm bg-theme-primary border-theme-border border-2" @tap="reload">
+                <native:pressable ref="retry-error" a11y-label="Retry" a11y-hint="Reloads the today view" class="p-4 rounded-sm bg-theme-primary border-theme-border border-2" @tap="reload">
                     <native:text class="text-theme-on-primary font-bold">Retry</native:text>
                 </native:pressable>
             </native:column>

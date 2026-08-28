@@ -4,7 +4,7 @@
         @if ($screen->state === 'unauthorized')
             <native:column class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface">
                 <native:text class="text-theme-text">Sign in on the Today tab first.</native:text>
-                <native:pressable ref="td-back-auth" class="p-3 rounded-sm bg-theme-primary" @tap="backToTasks">
+                <native:pressable ref="td-back-auth" class="p-4 rounded-sm bg-theme-primary" @tap="backToTasks">
                     <native:text class="text-theme-on-primary font-bold">Back to Tasks</native:text>
                 </native:pressable>
             </native:column>
@@ -16,14 +16,14 @@
                     <native:icon name="cloud_off" color="#B7730F" size="18" />
                     <native:text class="text-theme-text">Backend unreachable.</native:text>
                 </native:row>
-                <native:pressable ref="td-retry-offline" class="p-3 rounded-sm bg-theme-primary" @tap="reload">
+                <native:pressable ref="td-retry-offline" class="p-4 rounded-sm bg-theme-primary" @tap="reload">
                     <native:text class="text-theme-on-primary font-bold">Retry</native:text>
                 </native:pressable>
             </native:column>
         @elseif ($screen->state === 'error')
             <native:column class="p-4 gap-2 rounded-md border-theme-danger border-2 bg-theme-surface">
                 <native:text class="text-theme-text">{{ $screen->error }}</native:text>
-                <native:pressable ref="td-retry-error" class="p-3 rounded-sm bg-theme-primary" @tap="reload">
+                <native:pressable ref="td-retry-error" class="p-4 rounded-sm bg-theme-primary" @tap="reload">
                     <native:text class="text-theme-on-primary font-bold">Retry</native:text>
                 </native:pressable>
             </native:column>
@@ -35,7 +35,7 @@
         @elseif ($screen->state === 'conflict')
             <native:column class="p-4 gap-2 rounded-md border-theme-warning border-2 bg-theme-surface">
                 <native:text class="text-theme-text">{{ $screen->error }}</native:text>
-                <native:pressable ref="td-reload-conflict" class="p-3 rounded-sm bg-theme-primary" @tap="reload">
+                <native:pressable ref="td-reload-conflict" class="p-4 rounded-sm bg-theme-primary" @tap="reload">
                     <native:text class="text-theme-on-primary font-bold">Reload</native:text>
                 </native:pressable>
             </native:column>
@@ -56,15 +56,15 @@
 
             <native:row class="gap-2">
                 @if (($screen->task['status'] ?? '') === 'in_progress')
-                    <native:pressable ref="td-complete" a11y-label="Complete task" class="p-3 rounded-md bg-theme-primary border-theme-border border-2" @tap="complete">
+                    <native:pressable ref="td-complete" a11y-label="Complete task" class="p-4 rounded-md bg-theme-primary border-theme-border border-2" @tap="complete">
                         <native:text class="text-theme-on-primary font-bold">Complete</native:text>
                     </native:pressable>
                 @else
-                    <native:pressable ref="td-start" a11y-label="Start task" class="p-3 rounded-md bg-theme-primary border-theme-border border-2" @tap="start">
+                    <native:pressable ref="td-start" a11y-label="Start task" class="p-4 rounded-md bg-theme-primary border-theme-border border-2" @tap="start">
                         <native:text class="text-theme-on-primary font-bold">Start</native:text>
                     </native:pressable>
                 @endif
-                <native:pressable ref="td-partial" a11y-label="Log partial completion" class="p-3 rounded-md bg-theme-surface border-theme-border border-2" @tap="partialComplete">
+                <native:pressable ref="td-partial" a11y-label="Log partial completion" class="p-4 rounded-md bg-theme-surface border-theme-border border-2" @tap="partialComplete">
                     <native:text class="text-theme-text font-bold">Partial</native:text>
                 </native:pressable>
             </native:column>
@@ -79,25 +79,25 @@
                     <native:text class="text-theme-text">Session #{{ $screen->execution['id'] }} — {{ $screen->execution['status'] ?? 'active' }}</native:text>
                     @if (($screen->execution['status'] ?? '') === 'paused')
                         <native:row class="gap-2">
-                            <native:pressable ref="td-timer-resume" a11y-label="Resume timer" class="p-3 rounded-sm bg-theme-primary" @tap="timerResume">
+                            <native:pressable ref="td-timer-resume" a11y-label="Resume timer" class="p-4 rounded-sm bg-theme-primary" @tap="timerResume">
                                 <native:text class="text-theme-on-primary font-bold">Resume</native:text>
                             </native:pressable>
-                            <native:pressable ref="td-timer-complete" a11y-label="Complete timer session" class="p-3 rounded-sm bg-theme-surface border-theme-border border-2" @tap="timerComplete">
+                            <native:pressable ref="td-timer-complete" a11y-label="Complete timer session" class="p-4 rounded-sm bg-theme-surface border-theme-border border-2" @tap="timerComplete">
                                 <native:text class="text-theme-text font-bold">Finish</native:text>
                             </native:pressable>
                         </native:row>
                     @else
                         <native:row class="gap-2">
-                            <native:pressable ref="td-timer-pause" a11y-label="Pause timer" class="p-3 rounded-sm bg-theme-surface border-theme-border border-2" @tap="timerPause">
+                            <native:pressable ref="td-timer-pause" a11y-label="Pause timer" class="p-4 rounded-sm bg-theme-surface border-theme-border border-2" @tap="timerPause">
                                 <native:text class="text-theme-text font-bold">Pause</native:text>
                             </native:pressable>
-                            <native:pressable ref="td-timer-complete" a11y-label="Complete timer session" class="p-3 rounded-sm bg-theme-primary" @tap="timerComplete">
+                            <native:pressable ref="td-timer-complete" a11y-label="Complete timer session" class="p-4 rounded-sm bg-theme-primary" @tap="timerComplete">
                                 <native:text class="text-theme-on-primary font-bold">Finish</native:text>
                             </native:pressable>
                         </native:row>
                     @endif
                 @else
-                    <native:pressable ref="td-timer-start" a11y-label="Start focus timer" class="p-3 rounded-sm bg-theme-primary" @tap="timerStart">
+                    <native:pressable ref="td-timer-start" a11y-label="Start focus timer" class="p-4 rounded-sm bg-theme-primary" @tap="timerStart">
                         <native:text class="text-theme-on-primary font-bold">Start timer</native:text>
                     </native:pressable>
                 @endif
@@ -117,7 +117,7 @@
                 @endforelse
             </native:column>
 
-            <native:pressable ref="td-back" a11y-label="Back to tasks" class="p-3 rounded-md bg-theme-surface border-theme-border border-2" @tap="backToTasks">
+            <native:pressable ref="td-back" a11y-label="Back to tasks" class="p-4 rounded-md bg-theme-surface border-theme-border border-2" @tap="backToTasks">
                 <native:text class="text-theme-text font-bold">Back to Tasks</native:text>
             </native:pressable>
         @endif

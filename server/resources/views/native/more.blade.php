@@ -21,24 +21,50 @@
             @endif
         </native:column>
 
-        <native:text class="text-sm font-bold text-theme-muted">COMING TO THIS TAB</native:text>
-        <native:column class="p-3 gap-2 rounded-md border-theme-border border-2 bg-theme-surface">
-            <native:row class="gap-3 items-center">
-                <native:icon name="assessment" color="#2C5FA8" size="20" />
-                <native:text class="text-theme-text">Review</native:text>
-            </native:row>
-            <native:row class="gap-3 items-center">
-                <native:icon name="notifications" color="#2C5FA8" size="20" />
-                <native:text class="text-theme-text">Notifications</native:text>
-            </native:row>
-            <native:row class="gap-3 items-center">
-                <native:icon name="settings" color="#2C5FA8" size="20" />
-                <native:text class="text-theme-text">Settings</native:text>
-            </native:row>
+        <native:text class="text-sm font-bold text-theme-muted">GOALS &amp; REVIEW</native:text>
+        <native:column class="p-2 gap-1 rounded-md border-theme-border border-2 bg-theme-surface">
+            <native:pressable ref="nav-goals" a11y-label="Open Goals" class="p-4 rounded-sm bg-transparent" @tap="go('goals')">
+                <native:row class="gap-3 items-center">
+                    <native:icon name="flag" color="#2C5FA8" size="20" />
+                    <native:text class="text-theme-text font-bold">Goals</native:text>
+                </native:row>
+            </native:pressable>
+            <native:pressable ref="nav-review" a11y-label="Open Review" class="p-4 rounded-sm bg-transparent" @tap="go('review')">
+                <native:row class="gap-3 items-center">
+                    <native:icon name="assessment" color="#2C5FA8" size="20" />
+                    <native:text class="text-theme-text font-bold">Review</native:text>
+                </native:row>
+            </native:pressable>
+        </native:column>
+
+        <native:text class="text-sm font-bold text-theme-muted">KNOWLEDGE</native:text>
+        <native:column class="p-2 gap-1 rounded-md border-theme-border border-2 bg-theme-surface">
+            <native:pressable ref="nav-notes" a11y-label="Open Notes" class="p-4 rounded-sm bg-transparent" @tap="go('notes')">
+                <native:row class="gap-3 items-center">
+                    <native:icon name="menu_book" color="#2C5FA8" size="20" />
+                    <native:text class="text-theme-text font-bold">Notes</native:text>
+                </native:row>
+            </native:pressable>
+            <native:pressable ref="nav-canvases" a11y-label="Open Canvases" class="p-4 rounded-sm bg-transparent" @tap="go('canvases')">
+                <native:row class="gap-3 items-center">
+                    <native:icon name="draw" color="#2C5FA8" size="20" />
+                    <native:text class="text-theme-text font-bold">Canvases</native:text>
+                </native:row>
+            </native:pressable>
+        </native:column>
+
+        <native:text class="text-sm font-bold text-theme-muted">INBOX</native:text>
+        <native:column class="p-2 gap-1 rounded-md border-theme-border border-2 bg-theme-surface">
+            <native:pressable ref="nav-notifications" a11y-label="Open Notifications" class="p-4 rounded-sm bg-transparent" @tap="go('notifications')">
+                <native:row class="gap-3 items-center">
+                    <native:icon name="notifications" color="#2C5FA8" size="20" />
+                    <native:text class="text-theme-text font-bold">Notifications</native:text>
+                </native:row>
+            </native:pressable>
         </native:column>
 
         @if ($screen->authed)
-            <native:pressable ref="sign-out" a11y-label="Sign out" a11y-hint="Removes the token from this device" class="p-3 rounded-sm border-theme-danger border-2" @tap="signOut">
+            <native:pressable ref="sign-out" a11y-label="Sign out" a11y-hint="Removes the token from this device" class="p-4 rounded-sm border-theme-danger border-2" @tap="signOut">
                 <native:text class="text-theme-danger font-bold">Sign out</native:text>
             </native:pressable>
         @endif

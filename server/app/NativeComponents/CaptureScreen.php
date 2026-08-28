@@ -6,13 +6,11 @@ use Illuminate\View\View;
 
 /**
  * Quick Capture (P27-003): capture a task into the shared pipeline via
- * POST /quick-capture. Carries an operation_id (offline envelope) and
- * surfaces queued/saved/error states instead of failing silently.
- *
- * Note: the Android renderer in this build does not yet emit a native
- * text field, so the MVP exposes semantic quick-capture actions.
- * Free-text input lands with the native TextField renderer (tracked in
- * TASK.md P27-003 known limitations).
+ * POST /quick-capture, or a knowledge note via POST /notes. Task capture
+ * carries an operation_id (offline envelope) and surfaces queued/saved/
+ * error states instead of failing silently. Note capture follows the
+ * /notes contract (online only — notes are outside the task offline queue
+ * scope, docs/offline-sync.md).
  */
 final class CaptureScreen extends BaseScreen
 {
@@ -57,9 +55,41 @@ final class CaptureScreen extends BaseScreen
         $this->capture('Review the week');
     }
 
+    /** Capture a reading note as a knowledge note (POST /notes). */
     public function captureNote(): void
     {
-        $this->capture('Capture a reading note');
+        $this->refreshOffline();
+        if (! KinevoApi::authed()) {
+            $this->status = 'error';
+            $this->message = 'Sign in on the Today tab first.';
+
+            return;
+        }
+        if ($this->offline) {
+            $this->status = 'error';
+            $this->message = 'Offline — note capture needs a connection.';
+
+            return;
+        }
+
+        $this->status = 'saving';
+
+        $res = KinevoApi::post('/notes', ['title' => 'Reading note']);
+
+        if ($res->successful()) {
+            $this->status = 'saved';
+            $this->message = 'Note saved ✓';
+        } elseif ($res->status() === 401) {
+            KinevoApi::logout();
+            $this->status = 'error';
+            $this->message = 'Session expired — sign in again.';
+        } elseif ($res->status() === 422) {
+            $this->status = 'error';
+            $this->message = 'Invalid note: '.implode(' ', collect($res->json('errors'))->flatten()->all());
+        } else {
+            $this->status = 'error';
+            $this->message = 'Note capture failed — retry.';
+        }
     }
 
     private function capture(string $title): void

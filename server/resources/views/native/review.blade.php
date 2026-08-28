@@ -17,7 +17,7 @@
         @elseif ($screen->state === 'offline' || $screen->state === 'error')
             <native:column class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface">
                 <native:text class="text-theme-text">{{ $screen->error ?: 'Review unavailable — retry.' }}</native:text>
-                <native:pressable ref="retry-review" class="p-3 rounded-sm bg-theme-primary border-theme-border border-2" @tap="reload">
+                <native:pressable ref="retry-review" class="p-4 rounded-sm bg-theme-primary border-theme-border border-2" @tap="reload">
                     <native:text class="text-theme-on-primary font-bold">Retry</native:text>
                 </native:pressable>
             </native:column>

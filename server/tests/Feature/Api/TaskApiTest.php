@@ -111,6 +111,21 @@ class TaskApiTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_stale_version_status_transition_returns_409(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $task = $this->createTask($user->id);
+
+        $this->withToken($token)->postJson("/api/v1/tasks/{$task->id}/status", ['status' => 'scheduled'])
+            ->assertStatus(200);
+
+        $this->withToken($token)->postJson("/api/v1/tasks/{$task->id}/status", [
+            'status' => 'in_progress',
+            'version' => 1,
+        ])->assertStatus(409)
+            ->assertJsonPath('code', 'VERSION_CONFLICT');
+    }
+
     public function test_subtask_can_be_added(): void
     {
         [$user, $token] = $this->userWithToken();
