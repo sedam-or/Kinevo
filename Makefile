@@ -166,7 +166,10 @@ prod-smoke:
 # build's Dotenv is mutable, so phpunit.xml/.env.testing alone cannot stop a
 # RefreshDatabase run from migrate:fresh-ing the LIVE database (TASK-R5
 # incident: every `make test` wiped user data).
-TESTENV := $(COMPOSE) exec -T -e APP_ENV=testing -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: -e DB_URL= app
+# AUTH_MAX_ATTEMPTS_PER_MINUTE is pinned to the production default (5) so the
+# auth-throttle security contract (RateLimitingTest) is deterministic even when
+# the dev sandbox raises the limit via docker-compose env.
+TESTENV := $(COMPOSE) exec -T -e APP_ENV=testing -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: -e DB_URL= -e AUTH_MAX_ATTEMPTS_PER_MINUTE=5 app
 test:
 	$(TESTENV) php artisan test
 

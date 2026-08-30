@@ -126,6 +126,34 @@ from your monitoring/alerting tooling.
 
 ---
 
+### Third-party dependency resource budget (P28-TPI-006)
+
+Planning baseline only — no service is adopted yet (see `docs/third-party/
+adoption-matrix.md`). Every planned external service carries recorded
+CPU/RAM/disk/network/startup/backup/failure/upgrade data and an explicit
+classification so that a low-resource VPS never silently absorbs a heavyweight
+open-source stack. Values below are reserve estimates for a single-user
+personal deployment; scale them for multi-tenant and verify before adoption.
+
+| Service | Mode | CPU | RAM | Disk | Network | Startup | Backup | Failure | Upgrade | Class |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Excalidraw/Tiptap (embedded) | EMBED | in-process | in-browser bundle | ~350 KB each | lazy load | instant | n/a (persisted by Kinevo) | degrades capability only | via package deps | always-on (in-app) |
+| Pic Smaller | EMBED | in-browser | in-browser | small wasm | lazy load | instant | n/a | original bytes proceed | via package deps | always-on (in-app) |
+| Uppy | EMBED | in-browser | in-browser | small | per upload | instant | n/a | retry + visible failure | via package deps | always-on (in-app) |
+| Filament | EMBED | app + postgres +2% | app +256 MB | +500 MB | minimal (admin-only) | on first admin visit | covered by DB backup | admin unavailable, app continues | via composer | dev-only/cloud-only (P34) |
+| Gotify | ADAPTER + SERVICE | 0.1–0.3 vCPU | 64–128 MB | <1 GB | push egress only | seconds | n/a (transient) | in-app delivery continues | image pull | optional (P34) |
+| Lago | ADAPTER + SERVICE | 0.5–1 vCPU | 512 MB–1 GB | 1–2 GB | low (API) | seconds–minutes | DB-backed; include in backup | fails safe, no fabricated entitlements | version-pinned | optional/cloud-only (P24/P32) |
+| OpenPanel | ADAPTER + SERVICE | 0.5 vCPU | 256–512 MB | 1–5 GB | low (ingest) | seconds | DB-backed | analytics degrade only | version-pinned | optional/cloud-only (P31/P32) |
+| Langfuse | ADAPTER + SERVICE | 0.5 vCPU | 512 MB | 1–5 GB | low | seconds–minutes | DB-backed | ledger remains truth; traces lost | version-pinned | optional (P31) |
+| GlitchTip | ADAPTER + SERVICE | 0.25 vCPU | 128–256 MB | 1–2 GB | low | seconds | DB-backed | telemetry outage only, redaction first | version-pinned | optional (P34) |
+
+Rule: downloads/ingestion of planned services only happens inside the Docker
+profile that declares them (P28-TPI-007); a bare `make up` never pulls any of
+them. Re-run this budget at adoption (funded by P28-TPI-002) and record real
+values in `docs/third-party/adoption-matrix.md`.
+
+---
+
 ### Oracle profile
 For Oracle Always Free personal deployment, size services conservatively around the 2 OCPU / 12 GB RAM baseline. Ollama should use a small quantized model and be loaded on demand where possible. Large coding models belong on the development workstation rather than the free production VPS.
 

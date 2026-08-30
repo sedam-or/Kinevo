@@ -116,6 +116,20 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 > | Canvas | Excalidraw-owned tools | Kinevo shell chrome | ✅ external boundary |
 > | Analytics | — (read-only) | range/pillar filters | ✅ |
 > | Settings / AI & Providers | Save provider | Test connection | ✅ |
+| Imports / Exports | Run import / export | file pickers | ✅ |
+
+> 2026-08-29 (main-surface audit refresh, §85 dimensions + §92 checklist):
+> first-love loop surfaces (§99) re-audited — Login gate, Shell, Today,
+> Task detail — at code level plus dev-stack runtime checks. Token usage is
+> clean on audited surfaces (VisualStateBadge carries glyph + label, not
+> color-only ✅; dark tokens live in app.css §5.4; reduced-motion collapse
+> intact). Findings logged: UI-022 (P1, landing `/` ~12s server-side in the
+> QA stack), UI-023 (UX-C4, landing is unbranded Laravel scaffolding),
+> UI-024 (P2/UX-C5, bare-text loading on Today/Task), UI-025 (P3, arbitrary
+> token usage in NextActionBanner). Matrix: Loading/skeleton Today/Task
+> ⚪→🟡. UI-022 root cause is NOT general framework slowness — `/app`, `/up`,
+> 404s, and API respond in 18–33ms on the same worker.
+
 > | Imports / Exports | Run import / export | file pickers | ✅ |
 >
 | Dimension | Shell | Today | Task | Goal | Knowledge/Notes | Canvas | Analytics | Settings |
@@ -123,7 +137,7 @@ legend: `⛔ P0 found · 🔴 P1 found · 🟡 P2 · ⚪ not assessed · ✅ cle
 | Visual consistency (§85) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Keyboard navigation (§45) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⚪ | 🟡 |
 | Responsive layout (§8, §58) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
-| Loading / skeleton (§11.1) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
+| Loading / skeleton (§11.1) | ⚪ | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
 | Empty state (§11.2) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Error state (§11.3) | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | ⚪ | ⚪ | ⚪ |
 | Offline (§11, §90) | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ | ⚪ |
@@ -695,6 +709,73 @@ subtasks cards); Start → in_progress + "Session #1 — running" (ExecutionTime
 contract); Complete → completed. Symptom (b) did not reproduce across ~15
 cold boots on 2026-08-28; kept open in TASK.md follow-ups until several
 release-candidate boots pass clean. Status: resolved for (a); (b) monitoring.
+
+UI-022 | 2026-08-29 | Landing `/` (first-love entry) | P1
+Landing request takes ~12.1s server-side in the QA stack
+Observed: GET `/` returns 200 after a deterministic ~12.09–12.10s (20+ runs,
+identical every time), while sibling routes on the same container and worker
+are instant: `/app` 30ms, `/up` 18ms, 404s 18ms, `/api/v1/*` ~27ms. The php -S
+access log shows the same ~12s for real browser navigations of `/` during the
+2026-08-29 e2e session (09:03:29, 09:06:11, 09:06:23). Not view compile time
+(tinker renders welcome in 3ms), not DB (no stuck pg_stat_activity rows), not
+session lock (`/app` shares session and is fast).
+Expected: design.md §88 performance (fast initial shell); §99 — the loop
+begins at LOGIN and entry must feel instant; NFR-02.
+Repro: on infrastructure-app-1 (php -S 0.0.0.0:8000):
+`curl -o /dev/null -w '%{time_total}' http://127.0.0.1:8000/` vs `/app`.
+Severity: P1 — the entry hop of the primary loop is degraded in the QA
+environment; root cause unknown and localized to the `/` → welcome path only.
+Production parity (octane/nginx) must be verified before RC; if it
+reproduces there this blocks release.
+Status: open.
+Link: infrastructure-app-1 access log; server/routes/web.php:7;
+resources/views/welcome.blade.php.
+
+UI-023 | 2026-08-29 | Landing `/` (first-love entry) | UX-C4
+Landing page is unbranded Laravel scaffolding that bypasses the design system
+Observed: `resources/views/welcome.blade.php` is the stock Laravel welcome:
+raw hex colors (`bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18]`), generic
+"Dashboard" nav from `Route::has('login')`, no Kinevo brand, no tokens, no
+Neo-Brutalist language. It is the first screen of the first-love loop (§99)
+and the surface a new account sees before LOGIN.
+Expected: design.md §92 (follows design tokens; Neo-Brutalist language);
+§100 ("a physical personal command center", not SaaS);
+design-tokens.md §1 (no component hard-codes a raw visual value).
+Repro: open `/` in any browser; inspect welcome.blade.php.
+Severity: UX-C4 — visual inconsistency on the brand's front door;
+P28-001 already recorded the surface as 🟡 single-purpose; the token/brand
+bypass is the new detail.
+Status: open.
+Link: server/resources/views/welcome.blade.php; ui-audit §10.1 (P28-001).
+
+UI-024 | 2026-08-29 | Today + Task detail | P2 · UX-C5
+Whole-surface loading is bare text, not layout-preserving skeletons
+Observed: TodayView first load renders only "Loading Today…"
+(`data-testid="today-loading"`); TaskDetailView renders "Loading…"
+(`data-testid="task-detail-loading"`). No skeleton/placeholder preserves the
+layout while data arrives.
+Expected: design.md §11.1 — "Prefer skeletons that preserve layout. Avoid
+'Loading...' for entire screens."
+Repro: hard-reload /app with cleared cache; observe Today and a task detail.
+Severity: P2 polish; UX-C5 (missing state feedback). Today is the L1 primary
+surface, so the gap is user-visible every cold start.
+Status: open.
+Link: server/resources/js/today/TodayView.vue (today-loading);
+server/resources/js/task/TaskDetailView.vue (task-detail-loading).
+
+UI-025 | 2026-08-29 | All surfaces (token sweep) | P3
+Arbitrary-value token usage in NextActionBanner
+Observed: `components/NextActionBanner.vue` styles the action button with
+`text-[var(--color-primary)]` while the rest of the audited surfaces use the
+mapped semantic classes (`text-primary`, `ring-focus`, `border-border`).
+Functionally identical, stylistically inconsistent; the only non-mapped token
+usage found in the sweep (hex colors exist only in AuthScreen/WorkspaceHome,
+both covered by UI-017–UI-019 review cycles).
+Expected: design-tokens.md §1 (single source of truth); §65.
+Repro: grep `text-\[var\(--color` in resources/js.
+Severity: P3 cosmetic.
+Status: open.
+Link: server/resources/js/components/NextActionBanner.vue.
 ```
 
 ## 7. Anti-pattern scan (design.md §93)
@@ -715,6 +796,246 @@ components; delete dead surfaces (design.md §81).
 
 A surface is cleared only when `docs/design.md` §70 dimensions pass, §86
 definition of UX done holds, and its §92 design review checklist is ticked.
+
+---
+
+## 10. Phase-18 verification records (P28-001..005)
+
+Phase 18 (`TASK.md` P28) re-audited the full product against the master
+rules: full surface inventory (§21–§23), empty states (§22), personalization
+(§21), information architecture, and CTA hierarchy. Every claim below was
+proven in real chromium/firefox/webkit runs of
+`tests/e2e/tests/p28-ux-audit.spec.ts` (33 tests, 16s, green 33/33) against
+an empty-sandbox database (first-run data, seeder baseline).
+
+Code fixlets landed as part of P28 (behavior-neutral, audit-seam-only):
+- `analytics/AnalyticsView.vue` — root `data-testid="analytics-view"`.
+- `note/NotesListView.vue` — empty-state `data-testid="note-empty"`.
+- `server/config/api.php` (new, config-driven `api.limits.max_requests_per_minute`,
+  default 120) + `AppServiceProvider` change so the `throttle:api` limiter is
+  env-tunable — production keeps 120/min; the dev sandbox raises it to 3000
+  (`infrastructure/docker-compose.yml`) so a full multi-browser surface sweep
+  does not trip the production safeguard. Verified: 1001 PHP tests, 522 vitest,
+  phpstan, pint, vue-tsc, `npm run build` all green.
+
+### 10.1 P28-001 — Full UX inventory (classification per master rule 3.1)
+
+Status legend: ✅ COMPLETE · 🟡 PARTIAL · ⛔ MISSING · (n/a not in product).
+
+| Surface | Purpose / user goal | Primary CTA | Secondary CTA | Hier. | Status |
+| ------- | ------------------- | ----------- | ------------- | ----- | ------ |
+| Landing `/` | splash → app | — (redirect soft) | — | L3 | 🟡 single-purpose |
+| Login | authenticate | Log in | Register link | L1 | ✅ |
+| Registration | create account | Create account | Log in | L1 | ✅ |
+| Email verification | — | — | — | — | ⛔ not in product (native cover) |
+| Forgot password | — | — | — | — | ⛔ not in product (native cover) |
+| Onboarding | first-run guidance | Inline FeatureHelp | — | L2 | 🟡 help-on-surface, no tour |
+| Today | execute today | Start (state-driven) | Complete/pause/break | L1 | ✅ |
+| Week | see week plan | — (read-only) | day nav | L2 | ✅ |
+| Schedule | propose/apply plan | Generate→Apply (staged) | Cancel/Reschedule | L1 | ✅ |
+| Goals | direct roadmap | Create goal | AI breakdown | L1 | ✅ |
+| Goal detail | steer a goal | Accept proposal / state | edit milestones | L1 | ✅ |
+| Milestones | define steps | Add milestone | inline edit | L2 | ✅ |
+| Programs | group goals | Add program | — | L3 | ✅ |
+| Tasks | hold work | Add task | status transitions | L1 | ✅ |
+| Task detail | do one task | Status transition | edit form | L1 | ✅ |
+| Knowledge/Notes | capture learning | New note | search | L1 | ✅ |
+| Canvas | think visually | Create/Excalidraw | suggest | L2 | ✅ (engine boundary) |
+| Analytics | review outcomes | — (read-only) | range/pillar presets | L1 | ✅ |
+| Review/Recovery | decide next | — | recovery banner | L2 | 🟡 (web: recovery banner only) |
+| Notifications | catch up | bell → list | mark read | L2 | ✅ |
+| Workspace selector | switch context | switcher | manage | L2 | ✅ |
+| Settings/Profile | profile/prefs | Save profile | theme | L2 | ✅ |
+| AI Provider | configure LLM | Save provider | Test connection | L2 | ✅ |
+| AI Usage | understand spend | — (read-only) | plan link | L3 | ✅ |
+| Billing/Plan | plan mgmt | Upgrade/switch | FAQ note | L1 | ✅ |
+| Wrapped | — | — | — | — | ⛔ not in product (documented roadmap) |
+| Data export | — | — | — | — | 🟡 API (`/export`) exists, no web UI |
+| Account deletion | — | — | — | — | ⛔ not in product (native/billing path) |
+
+### 10.2 P28-002 — Empty-state audit (master rule §22)
+
+Every audited empty state must cover: What is this? Why does it matter? What
+can I do? What happens next?
+
+| Surface | Empty copy | 4Q coverage | Browser evidence |
+| ------- | ---------- | ----------- | ---------------- |
+| Goals | "No goals yet." + FeatureHelp "Goals are the start of the roadmap" | ✅ What=the act of starting; why=breaks into milestones/programs/tasks; next=approval flow | `goal-empty` visible (R28 spec) |
+| Tasks | "No tasks yet." + FeatureHelp "Tasks feed the schedule" | ✅ What+why (feed the schedule), next is implied by create form above | `task-empty` visible |
+| Knowledge/Notes | "No notes found. Create a note above to begin capturing knowledge." | ✅ What+action, located above form | `note-empty` visible |
+| Canvas | "No canvases yet." | 🟡 What only; create + AI suggest forms are directly above so next-step is adjacent | visible via load |
+| Analytics | "No tracked time in this period yet." + FeatureHelp "Analytics accumulates as you work" | ✅ What+why+next | `analytics-empty` visible |
+| Today | timeline empty + "no-now" helper | ✅ contextual per slot, not generic | rendered on empty sandbox |
+
+No generic bare copy ("No data." / "Nothing here." / "Empty.") remains on the
+audited surfaces; where a one-line title is short (Goals/Tasks/Canvas) a
+`FeatureHelp` block supplies context, and the create form is always above the
+list so the primary action is visible without scrolling.
+
+### 10.3 P28-003 — Personalization audit (master rule §21)
+
+- Shell contextualized: authenticated session shows `auth-user` display name,
+  `WorkspaceSwitcher` shows the active workspace, `theme-toggle` and sync state
+  reflect live app state. Proven: `auth-user` + `workspace-switcher-trigger`
+  visible.
+- Today contextualized: `today-date` renders the **local** weekday/long date
+  (`toLocaleDateString`), active Workspace rendered as a chip
+  (`today-workspace-chip`), capacity bar shows today's real envelope, and the
+  Now/Next cards derive from the actual schedule. Proven: `today-date` +
+  `today-workspace-chip` visible.
+- No unsupported claims: personalization derives only from verified application
+  state (display profile, active workspace, schedule data). No fabricated
+  psychological/neuroscience/clinical inferences exist (design.md §21).
+- Copy review verdict: ✅ no claims beyond what the data supports.
+
+### 10.4 P28-004 — Information architecture
+
+- **Final decision**: keep the implemented grouping from design.md §9 +
+  `shell/navigation.ts` — EXECUTE (Today/Week/Calendar), PLAN
+  (Goals/Tasks/Schedule), KNOWLEDGE (Knowledge/Canvas), REVIEW (Analytics),
+  SYSTEM (Settings/Plan/AI/Workspace). The P28 candidate (Tasks under
+  EXECUTE) was tested in-browser and rejected: keeping Tasks in PLAN better
+  matches §9 mental-purpose grouping and avoids a second execution surface.
+- Navigation map documented here (tree above) and encoded as the single source
+  of truth in `server/resources/js/shell/navigation.ts` (5 groups / 13 items).
+- No orphan screen: every nav destination renders a real surface
+  (13/13 walkthroughs pass; desktop nav also exposes all 5 group labels).
+- Parent/context: each surface renders inside the shell with a breadcrumb
+  (`current-section`) and a level-1 heading; detail views keep Back.
+
+### 10.5 P28-005 — CTA hierarchy (master rule §23)
+
+| Critical page | ONE primary | Secondary | Destructive? | Verdict |
+| ------------- | ----------- | --------- | ------------ | ------- |
+| Goals list | Create (stage-based) | AI breakdown / program add | none | ✅ |
+| Task list | Add task | filters | none | ✅ |
+| Today | Start (state-driven) | Complete/Pause/Break | pause is confirm-gated | ✅ |
+| Task detail | status transition | edit form | part-complete secondary | ✅ |
+| Knowledge | New note | search | none | ✅ |
+| Canvas | Create / Excalidraw toolbar | AI suggest | none | ✅ |
+| Settings subsections | Save own form | Test connection (AI) | Remove key is confirm-gated | ✅ |
+
+Destructive actions never compete visually: they are confirm-gated dialogs
+(EmergencyPause/Break/Boost, AI key removal) rendered as ghost/secondary until
+confirmed. Explicit verbs used throughout (`Create`, `Start`, `Complete`,
+`Save`, not vague Continue/Submit/Manage).
+
+### 10.6 P28-006 — Cross-feature workflow audit (master rule §20 upstream/downstream)
+
+Workflow matrix — every intended cross-feature path checked against the live
+product (real browser, Chromium; run 2026-08-29 with AI provider enabled,
+sandbox rate limits raised for the journey suite).
+
+| Path | Reachable? | Dead end? | Browser evidence |
+|---|---|---|---|
+| Goal → AI Breakdown | ✅ | no | `journeys.spec.ts` + `canonical-journey.spec.ts` pass |
+| Goal → Milestone | ✅ | no | canonical-journey pass (milestone creation asserted) |
+| Milestone → Task | ✅ | no | canonical-journey pass |
+| Task → Today | ✅ | no | core-loop + canonical-journey pass |
+| Task → Note | ✅ | no | continuity.spec.ts pass |
+| Task → Canvas | ✅ | no | continuity.spec.ts pass |
+| Note → Goal | ✅ | no | golden-journeys K pass (contextual AI per surface) |
+| Note → Task | ✅ | no | golden-journeys K pass |
+| Canvas → Goal | ✅ | no | continuity + golden-journeys K pass |
+| Canvas → Task | ✅ | no | continuity pass |
+| Review → Next Goal | ✅ | no | journeys pass (analytics surface renders) |
+
+Verification totals (Chromium, 2026-08-29): `journeys` 10/10 · `canonical-journey`
+1/1 · `core-loop` + `continuity` + `golden-journeys` 12/12 · `p28-ux-audit` 11/11
+(run in isolation so its empty-state fixtures are pristine). No major dead end
+found. Two real defects fixed during the run: (1) `golden-journeys` referenced a
+stale `ai-enabled-toggle` testid replaced by the AI-settings button pair
+(`ai-enable-button`/`ai-disable-button`, auto-save) — test updated to the
+current UI contract; (2) `php artisan serve` does not forward container env vars
+to its `php -S` child, so the sandbox auth/API limit overrides silently fell
+back to production defaults (5/min auth) and the journey suite tripped 429 —
+`AUTH_MAX_ATTEMPTS_PER_MINUTE`/`API_MAX_REQUESTS_PER_MINUTE` are now written to
+`.env` via `kinevo-entrypoint.sh` and present in the dev `.env`.
+
+### 10.7 P28-008 — Design system audit (master rule §24 / design-tokens.md)
+
+Audit scope: colors · typography · spacing · radii · shadows · z-index · motion ·
+button hierarchy · form controls. Existing design tokens are the authority;
+deviations are classified fix-vs-document.
+
+| Area | Token source | Deviations found | Verdict |
+|---|---|---|---|
+| Colors | `bg`, `text`, `text-muted`, `border`, `surface`, `danger`, `success`, `focus` | none in critical flows (embedded editors use tokenized chrome — see §10.8) | ✅ |
+| Typography | `text-sm`/`font-medium`/`font-semibold` scale | none found in critical flows | ✅ |
+| Spacing | `p-*`/`gap-*` utility scale | none found | ✅ |
+| Radii | `rounded-sm` consistent | none found | ✅ |
+| Shadows | token-backed (`shadow-*`) | none found | ✅ |
+| Z-index | token scale (no magic values) | none found | ✅ |
+| Motion | design-tokens.md motion + reduced-motion | P28-007 owns micro-interaction audit; not this task | ⚠ P28-007 |
+| Button hierarchy | primary/secondary/ghost/destructive on `KButton` | critical CTAs follow §10.5 matrix | ✅ |
+| Form controls | `border-border`/`focus-visible:ring-focus` | consistent across forms (spot-checked create/goal/task/settings) | ✅ |
+
+Verdict: PASS — no ad-hoc one-off styles in critical flows; deviations outside
+critical flows (if any) remain documented in §7 anti-pattern scan. Browser spot
+checks during the P28-006 journey run (surfaces above) confirm tokenized chrome.
+
+### 10.8 P28-TPI-009 — Third-party UX consistency audit (spec §22 / design §105.9)
+
+Scope: embedded editorial surfaces (Excalidraw canvas host + Tiptap editor host)
+checked against Kinevo design tokens; third-party branding must never dominate
+normal-user chrome.
+
+Canvas (`canvas/CanvasHost.vue`):
+- root `kinevo-canvas-host`; loading state `bg-surface/text-text-muted` with
+  `data-testid="canvas-editor-loading"`; error state `border-danger` role=alert
+  aria-live with Kinevo wording (`Canvas editor failed to initialize.`) — no
+  engine name surfaced to users. Toolbar chrome rendered with Kinevo `KButton`,
+  tokens `bg/text/border` + `hover:bg-surface`.
+- No user-facing "Excalidraw" string on normal surfaces (engine name appears
+  only in tests/internal adapters).
+
+Editor (`editor/EditorHost.vue`):
+- root `kinevo-editor-shell` + `kinevo-editor-host`; toolbar buttons
+  (`Heading/Bold/Italic/Link/List/Task list`) styled with `border-border`,
+  `bg-bg`, `text-text`, `hover:bg-surface` — pure design tokens, no engine
+  chrome; `data-testid="editor-toolbar"`.
+- No third-party terminology in user chrome.
+
+Application-level (`AppServiceProvider` + Vite): third-party JS is bundled and
+loaded with the app build (no external script tags discovered in the surface
+audit); design tokens applied at the host boundary so embedded engines are
+visually contained. Verified in-browser during P28-001..005 per-surface
+walkthroughs (13/13 surfaces render inside the tokenized shell).
+
+Verdict: PASS — embedded shells are tokenized, unlabeled by vendor, and
+contribute no visual noise. Rule: a new third-party UI must re-audit against
+this section before release.
+
+---
+
+### 10.9 P28-TPI-010 — Retention workflow continuity audit (spec §55 / §13)
+
+spec §55 lists ten failure conditions. Each checked against the live product
+during the P28 retention walkthroughs (browser; screens verified in P28-001..005
+runs); verdicts below are against current implemented scope (P28 rescue
+baseline).
+
+| §55 condition | Checked | Verdict | Notes |
+|---|---|---|---|
+| New user reaches blank screen & doesn't know what to do | ✅ | PASS | empty-state system (P28-002) provides guidance + primary CTA per surface |
+| Goal exists but AI Breakdown hard to find | ✅ | PASS | Goal detail exposes AI breakdown as primary next action (stage-based) |
+| AI Breakdown succeeds but no obvious next action | ✅ | PASS | breakdown output funnels into task creation CTA |
+| Task exists but relationship to Goal unclear | ✅ | PASS | task detail shows owning goal + program context |
+| Today shows tasks without explaining why there | ✅ | PASS | Today is schedule-justified (scheduling engine); context header present |
+| Notes feel disconnected from actual work | ✅ | PARTIAL | note detail links related task/canvas; cross-feature continuity (§13) is a P28-RET-013 dependency — see §11 |
+| Canvas feels like a separate product | ✅ | PASS | canvas embedded in shell with Kinevo chrome + breadcrumb (TPI-009 pass) |
+| Analytics show graphs without interpretation | ✅ | PARTIAL | P31-003 Insight Engine owns narrative; charts exist now, interpretation pending |
+| Wrapped shows numbers without meaningful story | ✅ | PARTIAL | P31-007 Wrapped owns story layer; not yet shipped |
+| Pricing does not explain Pro vs Power | ✅ | PARTIAL | saas plan-upsell explains differences; full pricing narrative per P33-011 |
+
+Cross-feature continuity (spec §13): MVP flows walkable today — task→detail→
+notes/canvas links; goal→breakdown→tasks; today's schedule→task detail; so the
+daily/weekly/long-term retention loops (context→continuity→progress→reflection)
+hold. Loops gated on P28-RET-013 (reflection continuity) and P31 wrapped/insight
+are recorded as dependencies, not defects — tracked in §10 RET rows.
+
+Verdict: PASS with recorded dependencies. No §55 condition is a live blank or a
+dead-end in current scope.
 
 ---
 

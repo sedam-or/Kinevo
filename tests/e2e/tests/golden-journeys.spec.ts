@@ -223,10 +223,8 @@ test.describe('R17 golden journey H2 — AI discoverability gate (P17-028)', () 
         // Force the canonical unconfigured/off state via Settings (§104).
         await page.getByTestId('nav-ai-settings').click();
         await expect(page.getByTestId('ai-settings-view')).toBeVisible();
-        await page.getByTestId('ai-enabled-toggle').uncheck();
-        await page.getByTestId('ai-save-button').click();
-        await expect(page.getByTestId('ai-settings-saved')).toBeVisible();
-
+        await page.getByTestId('ai-disable-button').click();
+        await expect(page.getByTestId('ai-enable-button')).toBeVisible();
         // Create a goal and try the AI path — must NOT fire a doomed request.
         const name = unique('r17-i');
         await page.getByTestId('nav-goals').click();
@@ -243,9 +241,8 @@ test.describe('R17 golden journey H2 — AI discoverability gate (P17-028)', () 
         await expect(page.getByTestId('ai-settings-view')).toBeVisible();
 
         // Restore: leave AI enabled so later suites see the configured state.
-        await page.getByTestId('ai-enabled-toggle').check();
-        await page.getByTestId('ai-save-button').click();
-        await expect(page.getByTestId('ai-settings-saved')).toBeVisible();
+        await page.getByTestId('ai-enable-button').click();
+        await expect(page.getByTestId('ai-disable-button')).toBeVisible();
     });
 });
 test.describe('R17 golden journey K — contextual AI entry points per surface (P17-029)', () => {
@@ -259,10 +256,8 @@ test.describe('R17 golden journey K — contextual AI entry points per surface (
         // Force the unconfigured/off state via the control plane (§104).
         await page.getByTestId('nav-ai-settings').click();
         await expect(page.getByTestId('ai-settings-view')).toBeVisible();
-        await page.getByTestId('ai-enabled-toggle').uncheck();
-        await page.getByTestId('ai-save-button').click();
-        await expect(page.getByTestId('ai-settings-saved')).toBeVisible();
-
+        await page.getByTestId('ai-disable-button').click();
+        await expect(page.getByTestId('ai-enable-button')).toBeVisible();
         const name = unique('r17-k');
 
         // GOAL → Break down with AI (post-create suggestion).
@@ -304,8 +299,7 @@ test.describe('R17 golden journey K — contextual AI entry points per surface (
         // Restore: leave AI enabled so later suites see the configured state.
         await page.getByTestId('nav-ai-settings').click();
         await expect(page.getByTestId('ai-settings-view')).toBeVisible();
-        await page.getByTestId('ai-enabled-toggle').check();
-        await page.getByTestId('ai-save-button').click();
-        await expect(page.getByTestId('ai-settings-saved')).toBeVisible();
+        await page.getByTestId('ai-enable-button').click();
+        await expect(page.getByTestId('ai-disable-button')).toBeVisible();
     });
 });

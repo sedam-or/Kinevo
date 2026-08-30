@@ -3554,3 +3554,152 @@ Rules of maintenance:
 4. Offline cell cites the queue op when one exists; "online-required" must
    say why (material transaction / secrets).
 5. Proven-by links rot → re-run the named spec when touching the row.
+
+## 105. Retention UX & Third-Party UI Contract (post-P27, ADR-014)
+
+> Source of requirements: `KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_
+> RETENTION_UX_SPEC.md` (§14–§24, §46–§49, §55, §63–§64). This section is the
+> design authority for retention UX; §60 (Empty/Onboarding) and §94
+> (Information Hierarchy) remain in force and are extended — not replaced —
+> here. Skill input (design-taste-frontend): empty states beautifully composed
+> + show how to populate; one label per intent (no duplicate-CTA intent);
+> every animation needs a stated reason; AA contrast on every CTA.
+
+### 105.1 Retention engine
+
+Retention is NOT streak spam, badges, artificial urgency, manipulative
+notifications, or dark patterns. The engine is:
+
+```text
+Context → Continuity → Progress → Reflection → reduced cognitive overhead → Return
+```
+
+A retained user repeatedly experiences: "Kinevo remembers where I am,
+understands what I am trying to achieve, helps me decide what matters now, and
+shows me that I am making progress."
+
+### 105.2 First session — progressive disclosure
+
+Order of first exposure (never equal visual weight for every capability):
+
+```text
+What Kinevo is → Workspace → Goal → AI Breakdown → first Task → Today →
+first completion → then Knowledge / Canvas / Analytics
+```
+
+### 105.3 Empty-state contract (extends §60)
+
+Every empty state answers all four:
+
+```text
+WHAT IS THIS? · WHY DOES IT MATTER? · WHAT CAN I DO? · WHAT SHOULD I DO NEXT?
+```
+
+Release-critical copy (canonical — reuse verbatim per surface):
+
+- Goal: "You haven't defined a goal yet. / Goals give Kinevo something
+  meaningful to plan toward. / Try: 'Finish my thesis in 4 months.' [Create Goal]"
+- Task (active Goal exists): "Your goal is ready. / Now define the next action.
+  [Create Task] [Break down with AI]"
+- Knowledge: "Your knowledge desk connects ideas to the work you're doing. [Create Note]"
+- Canvas: "Use a canvas when the problem is easier to see than to list. [Create Canvas]"
+- Analytics: "Your insights will appear after enough activity is recorded. /
+  Start by moving one goal forward. [Open Today]"
+
+Generic "No data" is insufficient unless followed by a useful next step. A
+new user reaching a blank screen without knowing what to do is a product
+defect, not polish (spec §55).
+
+### 105.4 Personalization rule
+
+Personalization is evidence-based ONLY — allowed signals: display_name,
+active_workspace, active_goal, deadlines, today tasks, recent progress,
+recent activity, local date/time. Form: "Good morning. You have 2 important
+actions left in Research today." Forbidden: fabricated psychological traits,
+pseudo-neuroscience, clinical inference ("Your brain is naturally more
+productive in the morning" is banned).
+
+### 105.5 CTA hierarchy (extends §94/§51)
+
+Per critical surface: ONE primary, ONE secondary, optional tertiary/details.
+Example (Goal): primary [Break down with AI] · secondary [Add Milestone] ·
+other: Edit/Archive. Destructive actions never compete visually with the
+primary workflow. One label per intent across a surface (design-taste rule:
+no duplicate-intent CTAs).
+
+### 105.6 Micro-interactions (extends P17 cascade rules)
+
+Motion communicates cause and effect, and every animation has a stated reason
+(hierarchy / storytelling / feedback / state transition — never "looked cool"):
+
+```text
+Task completion: click → clear state transition → progress feedback → next relevant action
+AI Breakdown:    generating → structured proposal → validation complete → Review/Accept CTA
+Save:            Saving… → Saved
+Offline:         Online → Offline → Queued → Syncing → Saved
+```
+
+`prefers-reduced-motion` is honored — states remain understandable without
+motion.
+
+### 105.7 Analytics UX (extends §Analytics rows)
+
+Every meaningful visualization answers: What happened? What changed? What
+matters? What can I do next? Charts without interpretation are incomplete on
+critical screens ("Goal Progress +18% this month — You moved 3 active goals;
+Research contributed most of the progress. [Open Research]").
+
+### 105.8 Cross-feature continuity
+
+The chain is one mental model — no standalone islands:
+
+```text
+Goal → Note → Canvas → Task   and   Task → Note → Canvas
+```
+
+A Goal page surfaces relevant Notes/Canvas/Tasks; a Task page surfaces
+Goal/Knowledge/Canvas; Note and Canvas pages surface their linked entities.
+The user never has to remember which feature stored the context. Any feature
+without a meaningful pathway into/out of the core loop is redesignable,
+intentionally secondary, or deferred.
+
+### 105.9 Product shell & third-party UI theming
+
+One user-facing shell (Navigation, Topbar, Workspace context, Search/Command,
+Notifications, User menu, Theme). Third-party screens never silently replace
+the shell. All customer-facing embedded UI (Excalidraw, Tiptap, Uppy, Filament
+surfaces, future embedded tools) uses Kinevo color tokens, typography,
+spacing, radii, shadows, motion, and interaction semantics; external branding
+never visually dominates. Normal users never see Lago/OpenPanel/Gotify/
+Langfuse terminology unless the view is explicitly intended for them.
+
+### 105.10 Retention failure conditions (gate input)
+
+The UX gate fails if: a new user reaches a blank screen and doesn't know what
+to do; a Goal exists but AI Breakdown is hard to find; Breakdown succeeds with
+no obvious next action; a Task's relation to its Goal is unclear; Today shows
+tasks without explaining why they are there; Notes feel disconnected from
+actual work; Canvas feels like a separate product; Analytics show graphs
+without interpretation; Wrapped shows numbers without a story; Pricing does
+not explain Pro vs Power.
+
+### 105.11 Retention loops
+
+```text
+Daily:     Today → NOW → Start → Complete → progress feedback → next action
+Weekly:    Review → what moved? / what stalled? / what needs adjustment? → next-week plan
+Long-term: months of execution → progress history → insight → Wrapped → reflection → next goal
+```
+
+Wrapped is a reflection layer (achievements, patterns, progress, reflection,
+next direction) built from Goals/Milestones/Tasks/Progress/Activity/Focus/
+Scheduling/Workspace data. Sharing defaults OFF → Preview → Privacy summary →
+Confirm → Share; no raw Notes/Canvas/private task content in the share
+artifact.
+
+### 105.12 Final retention test
+
+For every feature: (1) Does it help the user make progress? (2) Does it
+reduce cognitive overhead? (3) Does it connect to existing context? (4) Does
+it create a useful next action? (5) Does it create a real reason to return?
+If "no" to all five, it must not dominate the product shell.

@@ -4,7 +4,11 @@ set -e
 # Container-provided env (DB_HOST, DB_*, APP_URL, ...) MUST win over any
 # checked-out or scaffold-generated .env, because Laravel's env() reads the
 # .env file before the process environment.
-OVERRIDE_VARS="APP_ENV APP_URL APP_DEBUG DB_CONNECTION DB_HOST DB_PORT DB_DATABASE DB_USERNAME DB_PASSWORD DB_SSLMODE"
+# AUTH_MAX_ATTEMPTS_PER_MINUTE / API_MAX_REQUESTS_PER_MINUTE are written to
+# .env so they also reach the `php artisan serve` child process (Laravel's
+# ServeCommand passes only a whitelist of process vars to `php -S`; anything
+# that must affect the served app has to live in the .env file).
+OVERRIDE_VARS="APP_ENV APP_URL APP_DEBUG DB_CONNECTION DB_HOST DB_PORT DB_DATABASE DB_USERNAME DB_PASSWORD DB_SSLMODE AUTH_MAX_ATTEMPTS_PER_MINUTE API_MAX_REQUESTS_PER_MINUTE"
 
 if [ ! -f .env ]; then
     cp .env.example .env

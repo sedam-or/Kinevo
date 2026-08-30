@@ -3,7 +3,7 @@
     <native:column class="p-4 gap-3">
         @if ($screen->offline)
             <native:row class="p-2 gap-2 items-center rounded-sm border-theme-warning border-2">
-                <native:icon name="cloud_off" color="#B7730F" size="18" />
+                <native:icon name="cloud_off" color="#8A5A00" size="18" />
                 <native:text class="text-theme-warning">Offline — data may be stale</native:text>
             </native:row>
         @endif
@@ -34,7 +34,7 @@
         @elseif ($screen->state === 'entitlement')
             <native:column class="p-4 gap-2 rounded-md border-theme-warning border-2 bg-theme-surface">
                 <native:row class="gap-2 items-center">
-                    <native:icon name="workspace_premium" color="#B7730F" size="20" />
+                    <native:icon name="workspace_premium" color="#8A5A00" size="20" />
                     <native:text class="text-theme-warning font-bold">Plan limit</native:text>
                 </native:row>
                 <native:text class="text-theme-text">{{ $screen->error }}</native:text>

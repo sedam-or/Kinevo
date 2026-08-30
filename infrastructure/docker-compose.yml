@@ -1,3 +1,9 @@
+# Standard external-service profiles (P28-TPI-007). Services join a profile
+# when adopted; `make up` (compose up -d) starts the default/core set ONLY —
+# nothing external ever auto-starts. AI inference (ollama) is opt-in via
+# `--profile ai`; planned profiles for future optional services:
+#   billing | analytics | ai-obs | notifications | error-tracking
+# (see docs/third-party/adoption-matrix.md §Resource profile fields).
 services:
   app:
     build:
@@ -20,6 +26,13 @@ services:
       # Local models load on demand (ADR-011): a cold 7B can take minutes,
       # so the provider HTTP budget must exceed any 30s-style default.
       AI_TIMEOUT_SECONDS: 300
+      # Dev/e2e sandbox: raise the per-user API ceiling so browser suites that
+      # sweep every surface in one run do not trip the production 120/min
+      # safeguard (config/api.php). Deployments keep the default unless set.
+      API_MAX_REQUESTS_PER_MINUTE: 3000
+      # Dev/e2e sandbox: a journey suite logs in once per test in one run;
+      # keep the production 5/min auth default, raise it only in the sandbox.
+      AUTH_MAX_ATTEMPTS_PER_MINUTE: 60
     depends_on:
       postgres:
         condition: service_healthy

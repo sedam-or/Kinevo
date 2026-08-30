@@ -290,7 +290,7 @@ function run(fn: () => Promise<void>): void {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="space-y-6" data-testid="analytics-view">
         <div class="flex items-center gap-2" data-testid="analytics-presets">
             <button
                 v-for="preset in presets"

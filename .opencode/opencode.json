@@ -1,9 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "lsp": true,
   "skills": {
     "paths": [
       ".agents/skills",
-      "ui-ux-pro-max-skill/.claude/skills"
+      "ui-ux-pro-max-skill/"
     ]
   }
 }
+

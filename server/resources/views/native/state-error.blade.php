@@ -4,7 +4,7 @@
         <native:column class="p-4 gap-2 rounded-md border-theme-danger border-2 bg-theme-surface">
             @if ($screen->offline)
                 <native:row class="gap-2 items-center">
-                    <native:icon name="cloud_off" color="#B7730F" size="20" />
+                    <native:icon name="cloud_off" color="#8A5A00" size="20" />
                     <native:text class="text-theme-warning font-bold">Offline</native:text>
                 </native:row>
             @endif

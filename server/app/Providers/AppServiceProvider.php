@@ -149,11 +149,21 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // TASK-P22-002/P22-005/P22-006 — evidence-based rate-limit classes.
+        // Auth baseline is 5/min per IP; sandbox/e2e may raise it via
+        // AUTH_MAX_ATTEMPTS_PER_MINUTE without touching the code (browser
+        // suites that log in once per journey in a single run).
         RateLimiter::for('auth', function (Request $r) {
-            return [Limit::perMinute(5)->by($r->ip())];
+            $perMinute = (int) config('api.limits.auth_max_attempts_per_minute');
+
+            return [Limit::perMinute($perMinute)->by($r->ip())];
         });
         RateLimiter::for('api', function (Request $r) {
-            return [Limit::perMinute(120)->by(($r->user()->id ?? $r->ip()).'|api')];
+            // TASK-P22-006 — per-user API safeguard (config-driven; default 120).
+            // Production keeps the 120/min baseline; sandbox/e2e environments may
+            // raise it via API_MAX_REQUESTS_PER_MINUTE without touching the code.
+            $perMinute = (int) (config('api.limits.max_requests_per_minute') ?: 120);
+
+            return [Limit::perMinute($perMinute)->by(($r->user()->id ?? $r->ip()).'|api')];
         });
         RateLimiter::for('ai', function (Request $r) {
             // TASK-P25-007 — per-minute AI runtime safeguard (config-driven; null/0 → 10).

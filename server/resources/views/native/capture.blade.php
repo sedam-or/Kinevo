@@ -3,7 +3,7 @@
     <native:column class="p-4 gap-3">
         @if ($screen->offline)
             <native:row class="p-2 gap-2 items-center rounded-sm border-theme-warning border-2">
-                <native:icon name="cloud_off" color="#B7730F" size="18" />
+                <native:icon name="cloud_off" color="#8A5A00" size="18" />
                 <native:text class="text-theme-warning">Offline — captures queue for sync</native:text>
             </native:row>
         @endif
@@ -48,12 +48,12 @@
             <native:text class="text-theme-muted">Saving…</native:text>
         @elseif ($screen->status === 'saved')
             <native:row class="p-2 gap-2 items-center rounded-sm border-theme-success border-2">
-                <native:icon name="check_circle" color="#1D8A4E" size="18" />
+                <native:icon name="check_circle" color="#157A45" size="18" />
                 <native:text class="text-theme-success">{{ $screen->message }}</native:text>
             </native:row>
         @elseif ($screen->status === 'queued')
             <native:row class="p-2 gap-2 items-center rounded-sm border-theme-warning border-2">
-                <native:icon name="sync" color="#B7730F" size="18" />
+                <native:icon name="sync" color="#8A5A00" size="18" />
                 <native:text class="text-theme-warning">{{ $screen->message }}</native:text>
             </native:row>
         @elseif ($screen->status === 'error')

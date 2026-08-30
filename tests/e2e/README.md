@@ -39,6 +39,10 @@ polluted; it truncates domain tables only (users/profiles/configs survive).
 - `tests/journeys.spec.ts` — every primary navigation destination renders its
   surface (Today, Week, Schedule, Goals, Tasks, Knowledge, Canvas, Analytics,
   Settings).
+- `tests/p28-ux-audit.spec.ts` — Phase-18 UX verification (docs/ui-audit.md
+  §10): full surface inventory, empty-state audit, personalization,
+  information architecture, CTA hierarchy. Authenticates once over the API and
+  reuses a shared page so the run stays under per-user rate limits.
 
 ## Adding browsers
 

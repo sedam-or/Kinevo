@@ -13,7 +13,7 @@
         @elseif ($screen->state === 'offline')
             <native:column class="p-4 gap-2 rounded-md border-theme-border border-2 bg-theme-surface">
                 <native:row class="gap-2 items-center">
-                    <native:icon name="cloud_off" color="#B7730F" size="18" />
+                    <native:icon name="cloud_off" color="#8A5A00" size="18" />
                     <native:text class="text-theme-text">Backend unreachable.</native:text>
                 </native:row>
                 <native:pressable ref="td-retry-offline" class="p-4 rounded-sm bg-theme-primary" @tap="reload">

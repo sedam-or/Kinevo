@@ -75,6 +75,7 @@ async function createNote(): Promise<void> {
             <div
                 v-if="displayedNotes().length === 0 && !notes.loading"
                 class="border-2 border-dashed border-border/40 rounded-sm p-6 text-center text-sm text-text-muted"
+                data-testid="note-empty"
             >No notes found. Create a note above to begin capturing knowledge.</div>
             <article
                 v-for="note in displayedNotes()"

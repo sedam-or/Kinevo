@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('app'); // UI-022 experiment B
 });
 
 // The single-page application shell (TASK-100/101). Mounts the Vue app at #app.

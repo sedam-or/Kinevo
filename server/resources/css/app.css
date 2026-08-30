@@ -64,8 +64,8 @@
     --color-border: #1b1b18;
     --color-primary: #DE3005; /* WCAG 2.2 AA on white text (4.63:1); was #F53003 (3.96:1), TASK-R5 */
     --color-primary-contrast: #FFFFFF;
-    --color-success: #1D8A4E;
-    --color-warning: #B7730F;
+    --color-success: #157A45; /* WCAG 2.2 AA on white + success-tint (TASK-R5 re-check) */
+    --color-warning: #8A5A00;
     --color-danger: #D20812;
     --color-danger-contrast: #FFFFFF;
     --color-info: #2C5FA8;
