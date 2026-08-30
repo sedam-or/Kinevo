@@ -68,6 +68,34 @@ versions. Tiptap and its ProseMirror chain were re-reviewed at integration time
 architecture spike). Ollama remains unintegrated and MUST be re-reviewed at its
 integration.
 
+## Adoption baseline (planned — NOT yet adopted)
+
+> Source: `KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md`
+> §3/§9 + `docs/third-party/adoption-matrix.md`. These are **planning baselines
+> only**. Per the ledger rules above, none of these may be listed as
+> license-approved for adoption until the exact package/version is checked at
+> integration time. AGPL rows carry a no-copy rule: adapter calls over the
+> network are the default safe boundary; copying source into Kinevo Core (MIT)
+> requires a deliberate, documented licensing decision.
+
+| Component | Version/Commit | License | Source | Modified? | Vendored? | Notice Required? | Notes |
+|---|---|---|---|---|---|---|---|
+| Pic Smaller | pending (record at adoption) | MIT (repo baseline) | official repo — record exact URL at adoption | No | Planned (engine) | Check | Browser-local image compression; engine embed, not its UI (planning mode EMBED/ADAPTER) |
+| Uppy | pending (record at adoption) | MIT | https://github.com/transloadit/uppy | No | No | Check | Upload UX/transport behind Kinevo `AssetStorage` port (planning mode EMBED/ADAPTER) |
+| Filament | pending (record at adoption) | MIT | https://github.com/filamentphp/filament | No | No | Check | Admin UI over Kinevo application services (planning mode EMBED) |
+| Open SaaS | n/a — patterns only | MIT | https://github.com/wasp-lang/open-saas | No | No | No | HARVEST: OAuth/billing/onboarding/email UX patterns; Wasp/Prisma/Node runtime NOT introduced |
+| Gotify | pending (record at adoption) | MIT | https://github.com/gotify/server | No | No | Check | Notification transport behind `NotificationProvider` port (planning mode ADAPTER + SERVICE) |
+| Lago | pending (record at adoption) | AGPLv3 | https://github.com/getlago/lago | No | No | Check | Billing/metering infrastructure; AGPL — no source copying into Kinevo Core (planning mode ADAPTER + SERVICE) |
+| OpenPanel | pending (record at adoption) | AGPL-3.0 | official repo — record exact URL at adoption | No | No | Check | Product analytics; AGPL — event taxonomy owned by Kinevo, no source copying (planning mode ADAPTER + SERVICE) |
+| Langfuse | pending (record at adoption) | MIT core; `ee/` separately licensed | https://github.com/langfuse/langfuse | No | No | Check | AI observability; self-hosted setup MUST verify only core OSS features are enabled (planning mode ADAPTER + SERVICE) |
+| GlitchTip | pending (record at adoption) | MIT (backend baseline) | https://github.com/glitchtip/glitchtip | No | No | Check | Error tracking behind Kinevo redaction layer (planning mode ADAPTER + SERVICE) |
+
+### Verification note
+Open SaaS has no runtime row because no runtime is adopted (HARVEST mode —
+patterns only). Excalidraw, Tiptap, React and Ollama already have rows above.
+The authoritative mode/contract/failure/exit detail for every baseline row
+lives in `docs/third-party/adoption-matrix.md`.
+
 ## Vendored UI assets
 
 | Component | Version/Commit | License | Source | Modified? | Vendored? | Notice Required? | Notes |

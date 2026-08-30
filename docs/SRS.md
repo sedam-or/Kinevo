@@ -1617,6 +1617,52 @@ Setiap FR di bawah memiliki: kode, nama, priority, requirement `shall`, actor, p
 
 **Acceptance Criteria:** Any candidate violating a hard rule is rejected before scoring; changes to soft scoring cannot make an invalid candidate executable.
 
+## FR-65 — Upload & Asset Pipeline (Uppy + Pic Smaller)
+
+**Prioritas:** Should-Have (post-P27 adoption baseline; ADR-014)
+
+**Deskripsi:** Note/Canvas uploads SHALL flow through a Kinevo-owned pipeline: Uppy (upload UX/transport) → client-side validation → image compression via the Pic Smaller engine (when applicable) → Kinevo upload adapter (authorization + ownership) → object storage → Kinevo `Asset` record → Note/Canvas reference. Binary payloads SHALL NOT be embedded inside structured documents where an asset reference is appropriate.
+
+**Business Rules:** Kinevo owns authorization, ownership, canonical asset metadata (user/workspace-scoped; storage_key, content_type, size, sha256, dimensions, compression profile) and storage policy. Upload states (selecting/compressing/uploading/paused/queued/completed/failed/retrying/cancelled) SHALL be user-visible. Compression failure SHALL NOT block upload (original bytes proceed with a visible notice). Storage unavailability SHALL fail visibly with retry/recovery.
+
+**Acceptance Criteria:** A note image upload survives a compression-engine failure and a transient network failure; every stored asset has an owned Asset record; no embedded-editor type/CSS leaks into Kinevo chrome.
+
+## FR-66 — Notification Provider Abstraction (Gotify transport)
+
+**Prioritas:** Should-Have (post-P27 adoption baseline; ADR-014)
+
+**Deskripsi:** Notification semantics (Notification, NotificationPreference, NotificationEvent) SHALL remain Kinevo domain objects; delivery transports (including Gotify) SHALL be inserted behind a Kinevo `NotificationProvider` port without rewriting the notification domain.
+
+**Business Rules:** Channels conceptually separate security/billing/productivity/marketing; marketing requires consent/policy handling. A Gotify outage SHALL degrade delivery only — in-app notifications continue and delivery retries where configured. External terminology SHALL NOT surface to normal users.
+
+**Acceptance Criteria:** Swapping or removing the transport provider requires no notification-domain change; no notification content leaks into transport logs beyond the documented payload.
+
+## FR-67 — AI Usage Firewall
+
+**Prioritas:** Must-Have for hosted AI; guardrails apply to BYOK
+
+**Deskripsi:** Every AI request SHALL pass the preflight firewall in order: Authenticate → Entitlement → AI allowance → Rate limit → Request budget → Context/token guard — before any provider invocation. A failed preflight SHALL NOT call the provider. Actual usage SHALL be settled after the call (reserve maximum permitted budget → call → measure actual → settle → release unused reservation).
+
+**Business Rules:** Both hosted-AI and BYOK requests are bound by token/context/request/rate limits, timeouts, and abuse protection (BYOK never consumes Kinevo hosted credits but never bypasses safeguards). The request firewall MUST run before provider invocation.
+
+**Acceptance Criteria:** A user at zero remaining allowance gets a clear, non-provider error with no provider call logged; a completed request settles exactly the actual usage against the AI usage ledger.
+
+## FR-68 — Provider Price Catalog
+
+**Prioritas:** Must-Have before any usage-based billing goes live
+
+**Deskripsi:** Provider model prices SHALL live in a versioned catalog (provider, model, currency, input/cached-input/output rates, effective_from/until, pricing_version, source) — never hardcoded in feature code. Historical usage SHALL remain reproducible after price changes.
+
+**Acceptance Criteria:** A price change creates a new catalog version; past usage rows still resolve to the price version effective at request time.
+
+## FR-69 — Product Event Taxonomy & Analytics Boundary
+
+**Prioritas:** Should-Have (post-P27 adoption baseline; ADR-014)
+
+**Deskripsi:** Product analytics events SHALL be semantic and content-minimal, owned by Kinevo (signup, verification_completed, onboarding_completed, workspace_created, goal_created, goal_progressed, ai_breakdown_requested, ai_proposal_accepted, task_completed, review_opened, wrapped_opened, wrapped_shared, upgrade_started, subscription_activated). Raw note/canvas/private task content SHALL NOT be sent as event payload. OpenPanel (product behavior) and Langfuse (AI engineering telemetry) SHALL stay separate systems; the Kinevo AI ledger remains the only customer-facing billing/usage truth.
+
+**Acceptance Criteria:** An event stream replay cannot reconstruct private note/canvas content; entitlement/credit resolution never reads from OpenPanel or Langfuse.
+
 ---
 
 # 4. KEBUTUHAN NON-FUNGSIONAL (NFR)
@@ -2635,6 +2681,21 @@ AI proposals SHALL show:
 - Accept/Edit/Reject
 
 AI suggestions SHALL never be visually indistinguishable from confirmed system state.
+
+## 14.6 Retention UX
+
+Retention SHALL be driven by context → continuity → progress → reflection → reduced cognitive overhead — never by streak spam, badges, artificial urgency, manipulative notifications, or dark patterns.
+
+- **Empty states** SHALL answer: What is this? Why does it matter? What can I do? What should I do next? Generic "No data" without a next step is a defect on critical surfaces (canonical copy: docs/design.md).
+- **Personalization** SHALL be evidence-based (display name, active workspace/goal, deadlines, today tasks, recent progress/activity, local date/time). Heuristic productivity signals SHALL NOT be turned into medical/psychological claims.
+- **CTA hierarchy** per critical surface: one primary, one secondary, optional tertiary; destructive actions never compete visually with the primary workflow.
+- **Micro-interactions** SHALL communicate cause and effect (completion → progress → next action; save → saved; online → offline → queued → syncing → saved). Motion SHALL honor `prefers-reduced-motion`.
+- **Continuity**: a Goal page SHALL surface relevant Notes/Canvas/Tasks; a Task page SHALL surface linked Goal/Knowledge/Canvas; a Note/Canvas page SHALL surface its linked entities.
+- **Retention loops**: daily (Today → NOW → Start → Complete → progress → next action), weekly (Review → what moved/stalled → next-week plan), long-term (progress history → insight → Wrapped → next goal).
+- **Wrapped** sharing SHALL default OFF, with preview → privacy summary → confirm → share; no raw Note/Canvas/private task content may leak through the share artifact.
+- **First session** SHALL progressively disclose: Goal → AI Breakdown → first Task → Today → first completion, before exposing Knowledge/Canvas/Analytics at full weight.
+
+North Star metric: **Weekly Goal Progressing Users (WGPU)** — unique users in a 7-day window performing at least one meaningful progress action on an active Goal.
 
 ---
 

@@ -216,3 +216,84 @@ Client contract: one authoritative active state (server default wins unless a
 validated stored choice or `?workspace=` deep link exists); switching reloads
 the app so every surface rehydrates consistently. Knowledge links remain the
 relationship authority — workspaces add context only.
+
+## Third-Party Integration Architecture (post-P27, ADR-014)
+
+Adopted external capability follows five integration modes — EMBED, HARVEST,
+REIMPLEMENT, ADAPTER + SERVICE, REFERENCE ONLY — defined in
+`docs/adr/ADR-014-third-party-adoption-strategy.md` and tracked per dependency
+in `docs/third-party/adoption-matrix.md`. No dependency is introduced without a
+matrix row and a license re-check at the exact version
+(`docs/third-party/licenses.md`).
+
+Service boundary (ADAPTER + SERVICE mode):
+
+```text
+Kinevo domain
+    ↓
+Kinevo application port (NotificationProvider / BillingAdapter /
+                          AnalyticsAdapter / AIObservabilityAdapter /
+                          ErrorTelemetryAdapter / AssetStorage)
+    ↓
+Kinevo adapter
+    ↓
+external service (Gotify / Lago / OpenPanel / Langfuse / GlitchTip)
+```
+
+Embedded packages (Excalidraw, Tiptap, Uppy, Pic Smaller, Filament) live behind
+Kinevo boundaries; their types, CSS/theme, and terminology do not leak into the
+domain layer or customer-facing chrome (Kinevo design tokens always win).
+
+Failure policy (per external service): OpenPanel/Langfuse/Gotify/GlitchTip
+outages degrade the related capability only — Kinevo continues; Lago outage
+fails safe (billing must never fabricate entitlements); storage outage fails
+visibly with retry/recovery. Observability failures never silently corrupt
+business data.
+
+### Capability ownership map (ADR-014 / spec §6)
+
+Kinevo owns the semantics; externals provide capability only. Every row names
+the owning Kinevo module (persistence + authorization + meaning) and the
+external capability it may use — NO domain semantic is ever delegated:
+
+| Capability | Kinevo owner (authority) | External capability (never authority) |
+|---|---|---|
+| Identity / auth / sessions | `Domain\Identity`, Sanctum tokens | OAuth providers (P29, as credential source only) |
+| Email | `config/mail.php` abstraction (P29-004) | Postmark/Resend/SES drivers (transport only) |
+| Workspaces / goals / milestones / programs / tasks | `Domain\Goals`, `Domain\Tasks`, `Domain\Workspaces` | — (none) |
+| Notes / knowledge | `Domain\Notes`, `Domain\Knowledge` | Tiptap (editing UX only) |
+| Canvas / scene | `Domain\Canvas` + `CanvasAdapter` (ADR-005) | Excalidraw (drawing UX only) |
+| Schedule / capacity | `Domain\Scheduling` (deterministic engine) | — (none; AI never schedules) |
+| Attachments / assets | `Application\Attachments` + `AssetStorage` port | Uppy (upload UX/transport), Pic Smaller (compression engine) |
+| Billing / plan / entitlement | `Application\Saas\EntitlementService`, `Domain\Billing` | Midtrans gateway; Lago metering/invoice (scale only) |
+| AI usage / credits / cost | `Domain\Ai\BillingLedger`, `AiCreditGuard` | Langfuse traces (never entitlement truth) |
+| Product analytics events | event taxonomy (P32-001, Kinevo-owned) | OpenPanel (ingestion/aggregation sink) |
+| Notifications / preferences | `Domain\Notifications` | Gotify (transport only) |
+| Error telemetry | Kinevo redaction layer (SRS §15/NFR-03) | GlitchTip (aggregation UI) |
+| Privacy / export / deletion | `Application\ActivityLogs`, data-ownership phase (P30) | — (none) |
+
+### Adapter contract inventory (TPI-005 / ports-before-services)
+
+Every external integration enters through one of these application ports.
+Domain code never imports adapter/service types. Failure semantics listed per
+port are the ones the owning module must honor.
+
+| Port (interface) | Owning module | Backends (planned/existing) | Contract/failure semantics |
+|---|---|---|---|
+| `AssetStorage` | `Application\Attachments` | local/S3 disk now; Uppy upstream | Upload visible; resumable; retry on failure; ownership/authorization still Kinevo (SRS FR-65) |
+| `ImageCompressionProvider` | attachment pipeline | Pic Smaller engine (P30) | Compression failure → original bytes proceed + notice; never blocks save |
+| `NotificationProvider` | `Domain\Notifications` | in-app center now; Gotify transport (P34) | Outage → in-app delivery continues; external queue retries; preferences honored |
+| `BillingAdapter` | `Domain\Billing`, `BillingService` | MidtransGateway now; Lago metering (P24/P32) | Billing fails safe; entitlements never fabricated; reconcile job (BillingReconcileCommand) |
+| `AnalyticsAdapter` | event taxonomy (P32-001) | derived analytics now; OpenPanel sink (P31/P32) | No event meaning change on outage; same taxonomy to any sink |
+| `AIObservabilityProvider` | `Domain\Ai\BillingLedger` | ledger now; Langfuse traces (P31) | Ledger is billing truth regardless; traces best-effort |
+| `ErrorTelemetryProvider` | Kinevo redaction layer | none now; GlitchTip (P34) | Redaction first; telemetry outage never corrupts business data |
+
+Development resource profiles: external services start explicitly via Docker
+profiles (`core` always; `billing`/`analytics`/`ai-obs`/`notifications`/
+`error-tracking` opt-in) — never auto-started. Local Ollama never starts merely
+because it is installed; AI provider selection is explicit (SRS §13.5/§13.6).
+
+Repository boundaries (spec §59): Kinevo Core (public, self-hostable — domain,
+application, frontend, embedded packages), Kinevo Cloud (private — managed
+billing/AI/observability operations, cloud-only secrets), Kinevo Site (public —
+landing/pricing/marketing). No wholesale Open SaaS copy into any repo.

@@ -114,3 +114,12 @@ added when they are adopted:
 
 - **Excalidraw** (MIT) — canvas engine, behind a bounded adapter.
 - **Ollama** — optional local AI runtime.
+
+### Adoption baseline (post-P27 planning)
+
+`KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md` adds an
+adoption baseline (Uppy, Pic Smaller, Filament, Open SaaS-patterns, Gotify,
+Lago, OpenPanel, Langfuse, GlitchTip) tracked in
+`docs/third-party/adoption-matrix.md` + `docs/third-party/licenses.md`
+(§ Adoption baseline). Attribution text is NOT invented in advance — each
+component gets its real notice entry here at adoption time.

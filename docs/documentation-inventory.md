@@ -32,7 +32,7 @@ PRODUCT · ENGINEERING · CONTRIBUTOR · AGENT · OPERATIONS · HISTORICAL · TE
 | docs/brand.md | PRODUCT | current (P20) | brand architecture |
 | docs/implementation-status.md | ENGINEERING | living status | |
 | docs/adr/* | ENGINEERING | decision records | immutable |
-| docs/third-party/* | OPERATIONS | license ledger | |
+| docs/third-party/* | OPERATIONS | license ledger + adoption matrix | adoption-matrix.md (ADR-014, post-P27 baseline) |
 | docs/archive/KINEVO_MASTER_P18-20 prompt | HISTORICAL | execution-prompt provenance | archived P21-007 |
 | docs/archive/mapping-system-analysis-2026-08-25.md | HISTORICAL | analysis snapshot | archived P21-007 |
 | docs/google*.html, robots.txt, sitemap.xml | OPERATIONS | site verification (Pages landing) | versioned intentionally |
