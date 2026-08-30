@@ -1,10 +1,12 @@
 import { apiClient } from '../api/client';
 import type {
+    AssignmentLockResponse,
     CreateTaskPayload,
     PartialCompleteResponse,
     PromoteSubtaskResponse,
     SubtaskListResponse,
     SubtaskResponse,
+    TaskDetailResponse,
     TaskListResponse,
     TaskResponse,
     TaskStatusValue,
@@ -26,8 +28,8 @@ export const taskApi = {
         });
     },
 
-    show(taskId: number): Promise<TaskResponse> {
-        return apiClient.request<TaskResponse>(`/tasks/${taskId}`);
+    show(taskId: number): Promise<TaskDetailResponse> {
+        return apiClient.request<TaskDetailResponse>(`/tasks/${taskId}`);
     },
 
     update(taskId: number, payload: UpdateTaskPayload): Promise<TaskResponse> {
@@ -41,6 +43,12 @@ export const taskApi = {
         return apiClient.request<TaskResponse>(`/tasks/${taskId}/status`, {
             method: 'POST',
             body: JSON.stringify({ status }),
+        });
+    },
+
+    setAssignmentLock(taskId: number, locked: boolean): Promise<AssignmentLockResponse> {
+        return apiClient.request<AssignmentLockResponse>(`/tasks/${taskId}/assignment/${locked ? 'lock' : 'unlock'}`, {
+            method: 'POST',
         });
     },
 

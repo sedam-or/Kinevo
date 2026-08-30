@@ -137,6 +137,10 @@ async function applyStatus(status: TaskStatusValue): Promise<void> {
     await tasks.setStatus(props.taskId, status);
 }
 
+async function toggleAssignmentLock(): Promise<void> {
+    await tasks.setAssignmentLock(props.taskId, !(tasks.assignmentLocked ?? false));
+}
+
 async function addSubtask(): Promise<void> {
     subtaskError.value = null;
     if (newSubtaskTitle.value.trim() === '') {
@@ -292,6 +296,17 @@ const relatedLinks = computed<EntityLink[]>(() => {
                 <span class="text-xs rounded-sm bg-surface border border-border text-text px-2 py-0.5" data-testid="task-detail-status">
                     {{ tasks.current ? statusLabel(tasks.current.status) : '' }}
                 </span>
+                <span
+                    v-if="tasks.assignmentLocked === true"
+                    class="text-xs rounded-sm bg-surface border border-primary text-primary px-2 py-0.5"
+                    data-testid="task-detail-locked-badge"
+                >Locked</span>
+                <KButton
+                    v-if="tasks.assignmentLocked !== null"
+                    variant="secondary"
+                    :data-testid="tasks.assignmentLocked ? 'task-detail-unlock' : 'task-detail-lock'"
+                    @click="toggleAssignmentLock"
+                >{{ tasks.assignmentLocked ? 'Unlock placement' : 'Lock placement' }}</KButton>
                 <KButton
                     variant="secondary"
                     :disabled="clarifying"

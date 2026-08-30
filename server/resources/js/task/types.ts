@@ -49,6 +49,22 @@ export interface TaskResponse {
     task: Task;
 }
 
+export interface TaskDetailResponse extends TaskResponse {
+    /** ADR-015: active placement lock state (null when the task has no placement). */
+    assignment_locked?: boolean | null;
+}
+
+export interface AssignmentLockResponse {
+    assignment: {
+        id: number;
+        task_id: number;
+        locked: boolean;
+        start_at: string;
+        end_at: string;
+        version: number;
+    };
+}
+
 export interface SubtaskListResponse {
     subtasks: Subtask[];
 }

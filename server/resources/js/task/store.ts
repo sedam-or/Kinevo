@@ -9,6 +9,8 @@ export const useTaskStore = defineStore('task', () => {
     const tasks = ref<Task[]>([]);
     const current = ref<Task | null>(null);
     const subtasks = ref<Subtask[]>([]);
+    /** ADR-015: active placement lock state for the loaded task (null = no placement). */
+    const assignmentLocked = ref<boolean | null>(null);
     const loading = ref(false);
     const error = ref<ApiError | null>(null);
 
@@ -31,8 +33,9 @@ export const useTaskStore = defineStore('task', () => {
         loading.value = true;
         error.value = null;
         try {
-            const { task } = await taskApi.show(taskId);
+            const { task, assignment_locked: assignmentLockedFromApi } = await taskApi.show(taskId);
             current.value = task;
+            assignmentLocked.value = assignmentLockedFromApi ?? null;
             const { subtasks: sub } = await taskApi.subtasks(taskId);
             subtasks.value = sub;
         } catch (err) {
@@ -62,6 +65,16 @@ export const useTaskStore = defineStore('task', () => {
             if (current.value?.id === taskId) {
                 current.value = task;
             }
+        } catch (err) {
+            error.value = err as ApiError;
+        }
+    }
+
+    async function setAssignmentLock(taskId: number, locked: boolean): Promise<void> {
+        error.value = null;
+        try {
+            await taskApi.setAssignmentLock(taskId, locked);
+            await load(taskId);
         } catch (err) {
             error.value = err as ApiError;
         }
@@ -145,6 +158,7 @@ export const useTaskStore = defineStore('task', () => {
     return {
         tasks,
         current,
+        assignmentLocked,
         subtasks,
         loading,
         error,
@@ -152,6 +166,7 @@ export const useTaskStore = defineStore('task', () => {
         load,
         create,
         setStatus,
+        setAssignmentLock,
         apiUpdate,
         addSubtask,
         toggleSubtask,
