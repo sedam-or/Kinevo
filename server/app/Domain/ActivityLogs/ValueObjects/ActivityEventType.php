@@ -31,6 +31,16 @@ final class ActivityEventType
 
     public const BOOST_END = 'boost_end';
 
+    public const SCHEDULE_DRAFT_APPLIED = 'schedule_draft_applied';
+
+    public const SCHEDULE_RESCHEDULE_APPLIED = 'schedule_reschedule_applied';
+
+    public const SCHEDULE_OVERRIDE_APPLIED = 'schedule_override_applied';
+
+    public const ASSIGNMENT_LOCKED = 'assignment_locked';
+
+    public const ASSIGNMENT_UNLOCKED = 'assignment_unlocked';
+
     private const TYPES = [
         self::TASK_COMPLETED,
         self::TASK_CONTINUED,
@@ -43,6 +53,11 @@ final class ActivityEventType
         self::BREAK_END,
         self::BOOST_START,
         self::BOOST_END,
+        self::SCHEDULE_DRAFT_APPLIED,
+        self::SCHEDULE_RESCHEDULE_APPLIED,
+        self::SCHEDULE_OVERRIDE_APPLIED,
+        self::ASSIGNMENT_LOCKED,
+        self::ASSIGNMENT_UNLOCKED,
     ];
 
     public function __construct(
@@ -106,6 +121,31 @@ final class ActivityEventType
     public static function boostEnd(): self
     {
         return new self(self::BOOST_END);
+    }
+
+    public static function scheduleDraftApplied(): self
+    {
+        return new self(self::SCHEDULE_DRAFT_APPLIED);
+    }
+
+    public static function scheduleRescheduleApplied(): self
+    {
+        return new self(self::SCHEDULE_RESCHEDULE_APPLIED);
+    }
+
+    public static function scheduleOverrideApplied(): self
+    {
+        return new self(self::SCHEDULE_OVERRIDE_APPLIED);
+    }
+
+    public static function assignmentLocked(): self
+    {
+        return new self(self::ASSIGNMENT_LOCKED);
+    }
+
+    public static function assignmentUnlocked(): self
+    {
+        return new self(self::ASSIGNMENT_UNLOCKED);
     }
 
     public function equals(self $other): bool

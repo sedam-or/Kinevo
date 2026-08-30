@@ -9,12 +9,14 @@ use App\Domain\Goals\Contracts\GoalRepository;
 use App\Domain\Milestones\Contracts\MilestoneRepository;
 use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
+use App\Domain\Scheduling\Contracts\ScheduleOverrideRepository;
 use App\Domain\Scheduling\DraftAssignment;
 use App\Domain\Scheduling\DraftInput;
 use App\Domain\Scheduling\DynamicRescheduler;
 use App\Domain\Scheduling\HardConstraintEngine;
-use App\Domain\Scheduling\HardLandscapeEvent;
 use App\Domain\Scheduling\RescheduleProposal;
+use App\Domain\Scheduling\Resolution\EffectiveLandscapeResolver;
+use App\Domain\Scheduling\Resolution\HardLandscapeOccurrence;
 use App\Domain\Scheduling\ScheduleAssignment;
 use App\Domain\Scheduling\ScheduleAssignmentLockedConflict;
 use App\Domain\Scheduling\ScheduleDraft;
@@ -54,6 +56,8 @@ final class ScheduleDraftController extends Controller
         private readonly ApplyRescheduleProposalUseCase $applyProposal,
         private readonly ScheduleAssignmentRepository $assignments,
         private readonly HardLandscapeRepository $hardLandscape,
+        private readonly ScheduleOverrideRepository $overrides,
+        private readonly EffectiveLandscapeResolver $landscapeResolver,
         private readonly TaskRepository $tasks,
         private readonly GoalRepository $goals,
         private readonly MilestoneRepository $milestones,
@@ -307,15 +311,34 @@ final class ScheduleDraftController extends Controller
         $horizon = new TimeRange($from->startOfDay(), $to->endOfDay());
         $baseVersion = $this->assignments->currentScheduleVersion($userId);
 
+        // Effective Hard Landscape (ADR-015): the deterministic scheduler
+        // consumes RESOLVED occurrences — recurring series expanded into the
+        // horizon, overrides applied — never raw source rows.
+        $resolution = $this->landscapeResolver->resolve(
+            $this->hardLandscape->listForUser($userId),
+            $this->overrides->listForUser($userId),
+            $horizon->start,
+            $horizon->end,
+        );
+
         $hardLandscape = array_map(
-            static fn (HardLandscapeEvent $event) => $event->timeRange(),
-            $this->hardLandscape->listForUserInRange($userId, $from, $to->endOfDay()),
+            static fn (HardLandscapeOccurrence $occurrence) => $occurrence->timeRange(),
+            $resolution->occurrences,
         );
 
         /** @var array<string, TimeRange> $slotsByTask */
         $slotsByTask = [];
+        $lockedByTask = [];
+
         foreach ($this->assignments->listForUserInRange($userId, $from, $to->endOfDay()) as $assignment) {
             $slotsByTask[(string) $assignment->taskId] = $assignment->timeRange();
+
+            // ADR-015 locked-task contract: a locked placement is a
+            // user-fixed placement — its lock state must reach the
+            // scheduler/rescheduler input so automation can never move it.
+            if ($assignment->locked) {
+                $lockedByTask[(string) $assignment->taskId] = true;
+            }
         }
 
         $tasks = [];
@@ -333,7 +356,7 @@ final class ScheduleDraftController extends Controller
                 milestoneDeadline: $this->milestoneDeadline($userId, $task->milestoneId),
                 taskDeadline: $task->dueAt,
                 progress: $task->progress,
-                isLocked: false,
+                isLocked: $lockedByTask[(string) $task->id] ?? false,
                 isSacredAnchor: false,
                 existingSlot: $slotsByTask[(string) $task->id] ?? null,
             );

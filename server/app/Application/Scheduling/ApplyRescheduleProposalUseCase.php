@@ -2,6 +2,9 @@
 
 namespace App\Application\Scheduling;
 
+use App\Application\ActivityLogs\RecordActivityUseCase;
+use App\Domain\ActivityLogs\ActivityLog;
+use App\Domain\ActivityLogs\ValueObjects\ActivityEventType;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
 use App\Domain\Scheduling\RescheduleProposal;
 use App\Domain\Scheduling\ScheduleAssignment;
@@ -9,6 +12,7 @@ use App\Domain\Scheduling\ScheduleAssignmentLockedConflict;
 use App\Domain\Scheduling\ScheduleVersionConflict;
 use App\Domain\Scheduling\TaskMove;
 use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentSource;
+use App\Domain\Scheduling\ValueObjects\ScheduleSupersession;
 use App\Domain\Scheduling\ValueObjects\ScheduleVersion;
 use Illuminate\Support\Facades\DB;
 
@@ -33,6 +37,7 @@ final readonly class ApplyRescheduleProposalUseCase
 {
     public function __construct(
         private ScheduleAssignmentRepository $assignments,
+        private RecordActivityUseCase $recordActivity,
     ) {}
 
     public function __invoke(int $userId, RescheduleProposal $proposal): RescheduleApplyResult
@@ -67,6 +72,17 @@ final readonly class ApplyRescheduleProposalUseCase
             return $persisted;
         });
 
+        // ADR-015 history model: the apply is an auditable schedule mutation.
+        $this->recordActivity->__invoke(ActivityLog::create(
+            $userId,
+            ActivityEventType::scheduleRescheduleApplied(),
+            'schedule',
+            $newVersion->value,
+            'Reschedule proposal applied',
+            operationId: 'schedule_reschedule_applied:'.$userId.':'.$newVersion->value,
+            payload: ['schedule_version' => $newVersion->value, 'moves' => count($created)],
+        ));
+
         return new RescheduleApplyResult(
             $newVersion,
             $created,
@@ -94,8 +110,10 @@ final readonly class ApplyRescheduleProposalUseCase
         // placement is replaced by the confirmed slot (the domain applies a
         // move by replacing the task's slot). Locked tasks are never touched,
         // and conflicted tasks are never deleted — they simply are not moved.
+        // Each superseded placement is archived into history (ADR-015) in
+        // this same transaction.
         foreach ($existing as $prior) {
-            $this->assignments->deleteForUser($userId, $prior->id);
+            $this->assignments->deleteForUser($userId, $prior->id, ScheduleSupersession::rescheduleApply($newVersion->value));
         }
 
         return $this->assignments->create(ScheduleAssignment::create(

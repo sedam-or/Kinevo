@@ -14,8 +14,11 @@ use InvalidArgumentException;
  * - FREQ=DAILY | FREQ=WEEKLY
  * - INTERVAL=n (every n days/weeks)
  * - BYDAY=MO,TU,WE,TH,FR,SA,SU (weekday set for WEEKLY)
- * - COUNT=n | UNTIL=YYYYMMDD (bounding; generation is always additionally
- *   bounded by an explicit window and a max-occurrences guard)
+ * - COUNT=n | UNTIL=YYYYMMDD[THHMMSS[Z]] (bounding — UNTIL is ENFORCED by the
+ *   generator, inclusive: date-only UNTIL includes its local date, datetime
+ *   UNTIL includes its instant; COUNT + UNTIL → whichever terminates first;
+ *   generation is always additionally bounded by an explicit window and a
+ *   max-occurrences guard)
  *
  * Generation is deterministic and timezone-aware (see
  * RecurrenceOccurrenceGenerator).
@@ -42,6 +45,7 @@ final class RecurrenceRule
         public readonly ?int $count,
         public readonly ?CarbonImmutable $until,
         public readonly CarbonImmutable $start,
+        public readonly bool $untilIsDateOnly = true,
     ) {}
 
     /**
@@ -54,6 +58,7 @@ final class RecurrenceRule
         array $byDay = [],
         ?int $count = null,
         ?CarbonImmutable $until = null,
+        bool $untilIsDateOnly = true,
     ): self {
         $freq = strtoupper($freq);
 
@@ -86,6 +91,7 @@ final class RecurrenceRule
             $count,
             $until,
             $start,
+            $untilIsDateOnly,
         );
     }
 
@@ -116,11 +122,12 @@ final class RecurrenceRule
 
         $count = isset($parts['COUNT']) ? (int) $parts['COUNT'] : null;
         $until = null;
+        $untilIsDateOnly = true;
         if (isset($parts['UNTIL']) && $parts['UNTIL'] !== '') {
-            $until = self::parseUntil($parts['UNTIL'], $start);
+            [$until, $untilIsDateOnly] = self::parseUntil($parts['UNTIL'], $start);
         }
 
-        return self::create($freq, $start, $interval, $byDay, $count, $until);
+        return self::create($freq, $start, $interval, $byDay, $count, $until, $untilIsDateOnly);
     }
 
     /**
@@ -175,22 +182,37 @@ final class RecurrenceRule
         return array_search($iso, self::WEEKDAY_MAP, true) ?: 'MO';
     }
 
-    private static function parseUntil(string $value, CarbonImmutable $start): CarbonImmutable
+    /**
+     * Parse an RFC-5545 UNTIL value. Returns the resolved instant (in the
+     * DTSTART timezone) plus whether the value was date-only:
+     *
+     * - `YYYYMMDD`            → date-only, inclusive through that local date
+     * - `YYYYMMDDTHHMMSS`     → floating datetime, inclusive instant (start TZ)
+     * - `YYYYMMDDTHHMMSSZ`    → UTC datetime (RFC-5545 normative form),
+     *   converted to the DTSTART timezone before comparison
+     *
+     * @return array{0: CarbonImmutable, 1: bool}
+     *
+     * @throws InvalidArgumentException when the value is malformed
+     */
+    private static function parseUntil(string $value, CarbonImmutable $start): array
     {
-        // Accept YYYYMMDD or YYYYMMDDTHHMMSS(Z).
-        $normalized = preg_replace('/\D/', '', $value);
+        $trimmed = trim($value);
+        $isUtc = str_ends_with(strtoupper($trimmed), 'Z');
+        $normalized = preg_replace('/\D/', '', $trimmed);
         $len = strlen($normalized);
 
         if ($len >= 8) {
             $date = substr($normalized, 0, 8);
             $time = $len >= 14 ? substr($normalized, 8, 6) : '000000';
+            $untilIsDateOnly = $len < 14;
             $parsed = CarbonImmutable::createFromFormat(
                 '!YmdHis',
                 $date.$time,
-                $start->timezone,
+                $isUtc ? 'UTC' : $start->timezone,
             );
             if ($parsed instanceof CarbonImmutable) {
-                return $parsed;
+                return [$parsed->timezone($start->timezone), $untilIsDateOnly];
             }
         }
 

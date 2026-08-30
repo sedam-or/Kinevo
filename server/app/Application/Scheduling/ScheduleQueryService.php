@@ -9,9 +9,12 @@ use App\Domain\Pauses\Contracts\PauseEventRepository;
 use App\Domain\Programs\Contracts\ProgramRepository;
 use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
-use App\Domain\Scheduling\HardLandscapeEvent;
+use App\Domain\Scheduling\Contracts\ScheduleOverrideRepository;
+use App\Domain\Scheduling\Resolution\EffectiveLandscapeResolver;
+use App\Domain\Scheduling\Resolution\RecurrenceResolutionWarning;
 use App\Domain\Scheduling\ScheduleAssignment;
 use App\Domain\Scheduling\SlotCalculator;
+use App\Domain\Scheduling\ValueObjects\HardLandscapeType;
 use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentStatus;
 use App\Domain\Scheduling\ValueObjects\TimeRange;
 use App\Domain\Tasks\Contracts\TaskRepository;
@@ -32,6 +35,8 @@ final readonly class ScheduleQueryService
     public function __construct(
         private ScheduleAssignmentRepository $assignments,
         private HardLandscapeRepository $hardLandscape,
+        private ScheduleOverrideRepository $overrides,
+        private EffectiveLandscapeResolver $landscapeResolver,
         private PauseEventRepository $pauseEvents,
         private BreakPeriodRepository $breaks,
         private TaskRepository $tasks,
@@ -55,21 +60,30 @@ final readonly class ScheduleQueryService
             ),
         ));
 
+        // Effective Hard Landscape on this day (ADR-015): recurring sources
+        // are expanded to their occurrence dates, overrides applied. All
+        // landscape semantics come from the canonical resolver.
+        $landscape = $this->effectiveLandscape($userId, $date->startOfDay(), $date->endOfDay());
+
         $version = $this->assignments->currentScheduleVersion($userId);
 
         $events = array_map(
-            fn (ScheduleAssignment $assignment) => $this->event($userId, $assignment, $assignments),
+            fn (ScheduleAssignment $assignment) => $this->event($userId, $assignment, $assignments, $landscape),
             $assignments,
         );
 
-        // Hard Landscape boundaries on this day (FR-01/FR-27/FR-28).
-        $landscape = $this->hardLandscape->listForUserOnDate($userId, $date);
-
         // Dynamic Empty Slots (FR-02): free intervals between occupied events and
-        // Hard Landscape, excluding gaps shorter than the minimum fillable duration.
+        // effective Hard Landscape, excluding gaps shorter than the minimum
+        // fillable duration.
         $occupied = array_merge(
             array_map(static fn (ScheduleAssignment $a) => $a->timeRange(), $assignments),
-            array_map(static fn (HardLandscapeEvent $e) => $e->timeRange(), $landscape),
+            array_map(
+                static fn (array $entry) => new TimeRange(
+                    CarbonImmutable::parse($entry['start_at']),
+                    CarbonImmutable::parse($entry['end_at']),
+                ),
+                $landscape,
+            ),
         );
         $emptySlots = $this->slots->calculate($this->dayRange($date), $occupied);
 
@@ -97,10 +111,7 @@ final readonly class ScheduleQueryService
                 ],
                 $emptySlots,
             ),
-            'hard_landscape' => array_map(
-                static fn (HardLandscapeEvent $e) => $e->toArray(),
-                $landscape,
-            ),
+            'hard_landscape' => $landscape,
             'capacity' => [
                 'scheduled_minutes' => $scheduledMinutes,
                 'available_minutes' => $availableMinutes,
@@ -120,16 +131,19 @@ final readonly class ScheduleQueryService
         // The API exposes date boundaries; treat `to` as inclusive of the full
         // `to` day (half-open [from, end-of-to-day) interval).
         $assignments = $this->assignments->listForUserInRange($userId, $from, $to->endOfDay());
+        $landscape = $this->effectiveLandscape($userId, $from->startOfDay(), $to->endOfDay());
 
         return [
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
             'schedule_version' => $this->assignments->currentScheduleVersion($userId)->value,
+            'hard_landscape' => $landscape,
             'events' => array_map(
                 fn (ScheduleAssignment $assignment) => $this->event(
                     $userId,
                     $assignment,
                     $this->assignments->listForUserOnDate($userId, $assignment->date),
+                    $landscape,
                 ),
                 $assignments,
             ),
@@ -144,6 +158,7 @@ final readonly class ScheduleQueryService
     public function weekView(int $userId, CarbonImmutable $date): array
     {
         $start = $date->startOfWeek();
+        $landscape = $this->effectiveLandscape($userId, $start->startOfDay(), $start->addDays(6)->endOfDay());
         $days = [];
 
         for ($i = 0; $i < 7; $i++) {
@@ -158,6 +173,7 @@ final readonly class ScheduleQueryService
                     static fn (ScheduleAssignment $a) => $a->durationMinutes,
                     $dayAssignments,
                 )),
+                ...$this->landscapeDayStats($landscape, $day),
             ];
         }
 
@@ -182,6 +198,7 @@ final readonly class ScheduleQueryService
         $last = $first->endOfMonth();
 
         $assignments = $this->assignments->listForUserInRange($userId, $first, $last);
+        $landscape = $this->effectiveLandscape($userId, $first, $last);
         $byDay = [];
 
         foreach ($assignments as $assignment) {
@@ -199,6 +216,7 @@ final readonly class ScheduleQueryService
                 'day' => $d->day,
                 'task_count' => $byDay[$key]['task_count'] ?? 0,
                 'scheduled_minutes' => $byDay[$key]['scheduled_minutes'] ?? 0,
+                ...$this->landscapeDayStats($landscape, $d),
             ];
         }
 
@@ -212,12 +230,14 @@ final readonly class ScheduleQueryService
 
     /**
      * Compose a single event entry with task + program/goal/milestone context,
-     * lock state, and conflict state (overlap with another assignment).
+     * lock state, and conflict state (overlap with another assignment or with
+     * an effective Hard Landscape block — ADR-015: conflicts stay visible).
      *
      * @param  array<int, ScheduleAssignment>  $dayAssignments
+     * @param  list<array<string, mixed>>  $landscape
      * @return array<string, mixed>
      */
-    private function event(int $userId, ScheduleAssignment $assignment, array $dayAssignments): array
+    private function event(int $userId, ScheduleAssignment $assignment, array $dayAssignments, array $landscape = []): array
     {
         $task = $this->tasks->findForUser($userId, $assignment->taskId);
 
@@ -226,6 +246,20 @@ final readonly class ScheduleQueryService
             if ($other->id !== $assignment->id && $assignment->overlapsWith($other)) {
                 $conflict = true;
                 break;
+            }
+        }
+
+        if (! $conflict) {
+            foreach ($landscape as $entry) {
+                $landscapeRange = new TimeRange(
+                    CarbonImmutable::parse($entry['start_at']),
+                    CarbonImmutable::parse($entry['end_at']),
+                );
+
+                if ($assignment->timeRange()->overlaps($landscapeRange)) {
+                    $conflict = true;
+                    break;
+                }
             }
         }
 
@@ -323,5 +357,100 @@ final readonly class ScheduleQueryService
         $milestone = $this->milestones->findForUser($userId, $task->milestoneId);
 
         return $milestone !== null ? $milestone->toArray() : null;
+    }
+
+    /**
+     * Resolve the effective Hard Landscape for a window via the canonical
+     * resolver (ADR-015) and shape it for API payloads: source-event fields
+     * are preserved, the effective window replaces start/end for recurring
+     * occurrences, and ADR-authorized additive metadata is attached
+     * (source_event_id, provenance, original_start, recurrence_warning).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function effectiveLandscape(int $userId, CarbonImmutable $from, CarbonImmutable $to): array
+    {
+        $sources = $this->hardLandscape->listForUser($userId);
+        $resolution = $this->landscapeResolver->resolve(
+            $sources,
+            $this->overrides->listForUser($userId),
+            $from,
+            $to,
+        );
+
+        $byId = [];
+        foreach ($sources as $source) {
+            $byId[$source->id] = $source;
+        }
+
+        $warningsBySource = [];
+        foreach ($resolution->recurrenceWarnings as $warning) {
+            $warningsBySource[$warning->sourceEventId] ??= $warning;
+        }
+
+        $payload = [];
+
+        foreach ($resolution->occurrences as $occurrence) {
+            $source = $byId[$occurrence->sourceEventId] ?? null;
+
+            $entry = $source !== null
+                ? $source->toArray()
+                : ['id' => $occurrence->sourceEventId, 'title' => $occurrence->title];
+
+            $entry['start_at'] = $occurrence->effectiveStart->toISOString();
+            $entry['end_at'] = $occurrence->effectiveEnd->toISOString();
+            $entry['source_event_id'] = $occurrence->sourceEventId;
+            $entry['provenance'] = $occurrence->provenance->value;
+
+            $isRecurringSource = $source !== null
+                && $source->type->equals(HardLandscapeType::recurring());
+
+            if ($isRecurringSource) {
+                $entry['original_start'] = $occurrence->originalStart->toISOString();
+            }
+
+            $warning = $warningsBySource[$occurrence->sourceEventId] ?? null;
+
+            if ($warning instanceof RecurrenceResolutionWarning) {
+                $entry['recurrence_warning'] = $warning->reason;
+            }
+
+            $payload[] = $entry;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Per-day landscape aggregates for Week/Month summaries (ADR-015):
+     * count of effective occurrences overlapping the day and their minutes
+     * clipped to that day.
+     *
+     * @param  list<array<string, mixed>>  $landscape
+     * @return array{landscape_count: int, landscape_minutes: int}
+     */
+    private function landscapeDayStats(array $landscape, CarbonImmutable $day): array
+    {
+        $dayRange = new TimeRange($day->startOfDay(), $day->endOfDay());
+        $count = 0;
+        $minutes = 0;
+
+        foreach ($landscape as $entry) {
+            $start = CarbonImmutable::parse($entry['start_at']);
+            $end = CarbonImmutable::parse($entry['end_at']);
+
+            if (! $end->gt($dayRange->start) || ! $start->lt($dayRange->end)) {
+                continue;
+            }
+
+            $count++;
+            $clipped = new TimeRange(
+                $start->greaterThan($dayRange->start) ? $start : $dayRange->start,
+                $end->lessThan($dayRange->end) ? $end : $dayRange->end,
+            );
+            $minutes += $clipped->durationMinutes()->value();
+        }
+
+        return ['landscape_count' => $count, 'landscape_minutes' => $minutes];
     }
 }

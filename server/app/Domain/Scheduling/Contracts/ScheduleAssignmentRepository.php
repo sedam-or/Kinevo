@@ -3,6 +3,7 @@
 namespace App\Domain\Scheduling\Contracts;
 
 use App\Domain\Scheduling\ScheduleAssignment;
+use App\Domain\Scheduling\ValueObjects\ScheduleSupersession;
 use App\Domain\Scheduling\ValueObjects\ScheduleVersion;
 use Carbon\CarbonImmutable;
 
@@ -40,5 +41,20 @@ interface ScheduleAssignmentRepository
 
     public function update(ScheduleAssignment $assignment, int $baseVersion): ScheduleAssignment;
 
-    public function deleteForUser(int $userId, int $assignmentId): void;
+    /**
+     * Delete an assignment, first archiving it into
+     * `schedule_assignment_history` (ADR-015 history model) within the
+     * caller's transaction. Supersession metadata is optional: apply paths
+     * pass the superseding schedule version; other mutation paths archive
+     * with mechanism-less provenance.
+     */
+    public function deleteForUser(int $userId, int $assignmentId, ?ScheduleSupersession $supersededBy = null): void;
+
+    /**
+     * Placement timeline for one task (ADR-015 minimum query surface):
+     * archived placements, oldest first.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function historyForTask(int $userId, int $taskId): array;
 }

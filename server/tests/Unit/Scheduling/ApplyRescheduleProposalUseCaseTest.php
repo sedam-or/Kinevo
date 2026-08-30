@@ -32,7 +32,10 @@ final class ApplyRescheduleProposalUseCaseTest extends TestCase
         parent::setUp();
 
         $this->store = new FakeAssignmentStore;
-        $this->useCase = new ApplyRescheduleProposalUseCase($this->store);
+        $this->useCase = new ApplyRescheduleProposalUseCase(
+            $this->store,
+            new \App\Application\ActivityLogs\RecordActivityUseCase(new \Tests\Support\FakeActivityLogRepository),
+        );
     }
 
     private function move(int $taskId, string $fromStart, string $fromEnd, string $toStart, string $toEnd): TaskMove

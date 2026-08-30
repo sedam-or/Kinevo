@@ -184,4 +184,85 @@ final class RecurrenceOccurrenceGeneratorTest extends TestCase
 
         $this->assertCount(5, $occurrences);
     }
+
+    public function test_until_date_only_is_inclusive(): void
+    {
+        // UNTIL=20260824 → the 08-24 occurrence is included (RFC date-only
+        // UNTIL extends through that local date).
+        $rule = RecurrenceRule::parse(
+            'FREQ=WEEKLY;UNTIL=20260824',
+            CarbonImmutable::parse('2026-08-17 09:00'),
+        );
+        $from = CarbonImmutable::parse('2026-08-17');
+        $to = CarbonImmutable::parse('2026-09-30');
+
+        $occurrences = $this->generator->generate($rule, $from, $to);
+
+        $dates = array_map(static fn ($o) => $o->toDateString(), $occurrences);
+        $this->assertSame(['2026-08-17', '2026-08-24'], $dates);
+    }
+
+    public function test_until_datetime_is_inclusive_at_the_exact_instant(): void
+    {
+        $start = CarbonImmutable::parse('2026-08-17 09:00');
+
+        $inclusive = RecurrenceRule::parse('FREQ=WEEKLY;UNTIL=20260824T090000', $start);
+        $exclusive = RecurrenceRule::parse('FREQ=WEEKLY;UNTIL=20260824T085959', $start);
+        $from = CarbonImmutable::parse('2026-08-17');
+        $to = CarbonImmutable::parse('2026-09-30');
+
+        $this->assertCount(2, $this->generator->generate($inclusive, $from, $to));
+        $this->assertCount(1, $this->generator->generate($exclusive, $from, $to));
+    }
+
+    public function test_utc_z_until_is_normalized_to_the_start_timezone(): void
+    {
+        // Occurrence 2026-08-24 09:00 Asia/Jakarta == 02:00 UTC.
+        $rule = RecurrenceRule::parse(
+            'FREQ=WEEKLY;UNTIL=20260824T020000Z',
+            CarbonImmutable::parse('2026-08-17 09:00', 'Asia/Jakarta'),
+        );
+        $from = CarbonImmutable::parse('2026-08-17');
+        $to = CarbonImmutable::parse('2026-09-30');
+
+        $this->assertCount(2, $this->generator->generate($rule, $from, $to));
+
+        $strict = RecurrenceRule::parse(
+            'FREQ=WEEKLY;UNTIL=20260824T015959Z',
+            CarbonImmutable::parse('2026-08-17 09:00', 'Asia/Jakarta'),
+        );
+
+        $this->assertCount(1, $this->generator->generate($strict, $from, $to));
+    }
+
+    public function test_count_and_until_whichever_terminates_first(): void
+    {
+        $start = CarbonImmutable::parse('2026-08-17 09:00');
+        $from = CarbonImmutable::parse('2026-08-17');
+        $to = CarbonImmutable::parse('2026-08-31');
+
+        $untilFirst = RecurrenceRule::parse('FREQ=DAILY;COUNT=5;UNTIL=20260818', $start);
+        $countFirst = RecurrenceRule::parse('FREQ=DAILY;COUNT=1;UNTIL=20260820', $start);
+
+        $this->assertSame(
+            ['2026-08-17', '2026-08-18'],
+            array_map(static fn ($o) => $o->toDateString(), $this->generator->generate($untilFirst, $from, $to)),
+        );
+        $this->assertSame(
+            ['2026-08-17'],
+            array_map(static fn ($o) => $o->toDateString(), $this->generator->generate($countFirst, $from, $to)),
+        );
+    }
+
+    public function test_until_beyond_window_leaves_window_bound_in_charge(): void
+    {
+        $rule = RecurrenceRule::parse(
+            'FREQ=DAILY;UNTIL=20260930',
+            CarbonImmutable::parse('2026-08-17 09:00'),
+        );
+        $from = CarbonImmutable::parse('2026-08-17');
+        $to = CarbonImmutable::parse('2026-08-19');
+
+        $this->assertCount(3, $this->generator->generate($rule, $from, $to));
+    }
 }

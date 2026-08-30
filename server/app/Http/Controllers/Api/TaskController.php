@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Application\Scheduling\AutoSwapUseCase;
 use App\Application\Scheduling\QuickCapturePlacementUseCase;
+use App\Application\Scheduling\SetAssignmentLockUseCase;
 use App\Application\Tasks\AddSubtaskUseCase;
 use App\Application\Tasks\CreateTaskUseCase;
 use App\Application\Tasks\GetTaskUseCase;
@@ -15,6 +16,9 @@ use App\Application\Tasks\ToggleSubtaskUseCase;
 use App\Application\Tasks\UpdateSubtaskUseCase;
 use App\Application\Tasks\UpdateTaskUseCase;
 use App\Application\Workspaces\ResolveWorkspaceContext;
+use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
+use App\Domain\Scheduling\ScheduleAssignmentVersionConflict;
+use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentStatus;
 use App\Domain\Tasks\Contracts\SubtaskRepository;
 use App\Domain\Tasks\ValueObjects\TaskStatus;
 use App\Http\Controllers\Controller;
@@ -40,6 +44,8 @@ final class TaskController extends Controller
         private readonly PartialCompleteTaskUseCase $partialCompleteTaskUseCase,
         private readonly QuickCapturePlacementUseCase $quickCapturePlacementUseCase,
         private readonly AutoSwapUseCase $autoSwapUseCase,
+        private readonly SetAssignmentLockUseCase $setAssignmentLockUseCase,
+        private readonly ScheduleAssignmentRepository $assignments,
         private readonly SubtaskRepository $subtaskRepository,
     ) {}
 
@@ -132,6 +138,52 @@ final class TaskController extends Controller
         return response()->json($result->toArray(), $result->applied ? 200 : 202);
     }
 
+    /**
+     * ADR-015 locked-task contract: the user fixes a placement. Locked
+     * placements are never moved by the scheduler or the rescheduler.
+     */
+    public function lock(Request $request, int $taskId): JsonResponse
+    {
+        return $this->setAssignmentLock($request, $taskId, true);
+    }
+
+    public function unlock(Request $request, int $taskId): JsonResponse
+    {
+        return $this->setAssignmentLock($request, $taskId, false);
+    }
+
+    private function setAssignmentLock(Request $request, int $taskId, bool $locked): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'version' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $data = $validator->validated();
+
+        try {
+            $assignment = $this->setAssignmentLockUseCase->__invoke(
+                $request->user()->id,
+                $taskId,
+                $locked,
+                isset($data['version']) ? (int) $data['version'] : null,
+            );
+        } catch (InvalidArgumentException $e) {
+            if ($e->getMessage() === 'Task not found.') {
+                return response()->json(['error' => $e->getMessage()], 404);
+            }
+
+            return response()->json(['error' => $e->getMessage()], 404);
+        } catch (ScheduleAssignmentVersionConflict $e) {
+            return response()->json(['error' => $e->getMessage()], 409);
+        }
+
+        return response()->json(['assignment' => $assignment->toArray()]);
+    }
+
     public function show(Request $request, int $taskId): JsonResponse
     {
         try {
@@ -140,7 +192,21 @@ final class TaskController extends Controller
             return response()->json(['error' => $e->getMessage()], 404);
         }
 
-        return response()->json(['task' => $task->toArray()]);
+        // ADR-015 additive: the task's active placement lock state, so the
+        // UI can hydrate the lock control without an extra request.
+        $locked = null;
+        foreach ($this->assignments->listForTask($taskId) as $assignment) {
+            if ($assignment->userId === $request->user()->id
+                && $assignment->status->equals(ScheduleAssignmentStatus::scheduled())) {
+                $locked = $assignment->locked;
+                break;
+            }
+        }
+
+        return response()->json([
+            'task' => $task->toArray(),
+            'assignment_locked' => $locked,
+        ]);
     }
 
     public function store(Request $request): JsonResponse

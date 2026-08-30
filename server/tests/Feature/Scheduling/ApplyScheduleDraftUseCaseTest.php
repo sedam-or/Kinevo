@@ -289,4 +289,146 @@ final class ApplyScheduleDraftUseCaseTest extends TestCase
     {
         return $this->useCase->__invoke($userId, $draft, $baseVersion);
     }
+
+    // ------------------------------------------------------------------
+    // ES-IMPL-06A — schedule assignment history (ADR-015)
+    // ------------------------------------------------------------------
+
+    private function historyCount(int $userId): int
+    {
+        return (int) DB::table('schedule_assignment_history')->where('user_id', $userId)->count();
+    }
+
+    public function test_schedule_assignment_history_table_exists(): void
+    {
+        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('schedule_assignment_history'));
+    }
+
+    public function test_superseded_placement_is_archived_with_provenance(): void
+    {
+        $user = $this->createUser();
+        $task = $this->createTask($user->id);
+
+        $this->applyDraft($user->id, $this->draft([
+            $this->assignment($task->id, '2026-08-19T09:00:00', '2026-08-19T10:00:00'),
+        ]), new ScheduleVersion(1));
+
+        $this->applyDraft($user->id, $this->draft([
+            $this->assignment($task->id, '2026-08-19T14:00:00', '2026-08-19T15:00:00'),
+        ]), new ScheduleVersion(2));
+
+        $this->assertSame(1, $this->historyCount($user->id));
+        $this->assertDatabaseHas('schedule_assignment_history', [
+            'user_id' => $user->id,
+            'task_id' => $task->id,
+            'start_at' => '2026-08-19 09:00:00',
+            'schedule_version' => 2,
+            'superseded_by_schedule_version' => 3,
+            'superseded_by' => 'draft',
+        ]);
+
+        // ADR-015 minimum query surface: the placement timeline is
+        // reconstructable per task.
+        $timeline = app(\App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository::class)
+            ->historyForTask($user->id, $task->id);
+        $this->assertCount(1, $timeline);
+        $this->assertSame('2026-08-19T09:00:00.000000Z', $timeline[0]['start_at']);
+        $this->assertSame('draft', $timeline[0]['superseded_by']);
+    }
+
+    public function test_failed_apply_writes_no_partial_history(): void
+    {
+        $user = $this->createUser();
+        $taskA = $this->createTask($user->id, 'A');
+        $taskB = $this->createTask($user->id, 'B');
+
+        // A is auto-placed at 09:00–10:00 (draft v1).
+        $this->applyDraft($user->id, $this->draft([
+            $this->assignment($taskA->id, '2026-08-19T09:00:00', '2026-08-19T10:00:00'),
+        ]), new ScheduleVersion(1));
+
+        // B holds a manual placement the new draft for A would overlap.
+        DB::table('task_assignments')->insert([
+            'user_id' => $user->id,
+            'task_id' => $taskB->id,
+            'date' => '2026-08-19',
+            'start_at' => '2026-08-19 09:30:00',
+            'end_at' => '2026-08-19 10:30:00',
+            'duration_minutes' => 60,
+            'status' => 'scheduled',
+            'source' => 'manual',
+            'schedule_version' => 1,
+            'locked' => false,
+            'version' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // The draft supersedes A's prior placement, then fails on the overlap
+        // — the whole transaction (history + live mutation) must roll back.
+        $this->expectException(\App\Domain\Scheduling\ScheduleAssignmentOverlap::class);
+        $this->applyDraft($user->id, $this->draft([
+            $this->assignment($taskA->id, '2026-08-19T09:30:00', '2026-08-19T10:30:00'),
+        ]), new ScheduleVersion(2));
+    }
+
+    public function test_failed_apply_rolls_back_history(): void
+    {
+        $user = $this->createUser();
+        $taskA = $this->createTask($user->id, 'A');
+        $taskB = $this->createTask($user->id, 'B');
+
+        $this->applyDraft($user->id, $this->draft([
+            $this->assignment($taskA->id, '2026-08-19T09:00:00', '2026-08-19T10:00:00'),
+        ]), new ScheduleVersion(1));
+
+        DB::table('task_assignments')->insert([
+            'user_id' => $user->id,
+            'task_id' => $taskB->id,
+            'date' => '2026-08-19',
+            'start_at' => '2026-08-19 09:30:00',
+            'end_at' => '2026-08-19 10:30:00',
+            'duration_minutes' => 60,
+            'status' => 'scheduled',
+            'source' => 'manual',
+            'schedule_version' => 1,
+            'locked' => false,
+            'version' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        try {
+            $this->applyDraft($user->id, $this->draft([
+                $this->assignment($taskA->id, '2026-08-19T09:30:00', '2026-08-19T10:30:00'),
+            ]), new ScheduleVersion(2));
+            $this->fail('Expected the overlapping draft to fail.');
+        } catch (\App\Domain\Scheduling\ScheduleAssignmentOverlap) {
+        }
+
+        $this->assertSame(0, $this->historyCount($user->id), 'A failed apply must archive nothing.');
+        $this->assertAssignmentCount($user->id, 2);
+    }
+
+    public function test_idempotent_reapply_does_not_duplicate_history(): void
+    {
+        $user = $this->createUser();
+        $task = $this->createTask($user->id);
+
+        $this->applyDraft($user->id, $this->draft([
+            $this->assignment($task->id, '2026-08-19T09:00:00', '2026-08-19T10:00:00'),
+        ]), new ScheduleVersion(1));
+
+        $this->applyDraft($user->id, $this->draft([
+            $this->assignment($task->id, '2026-08-19T14:00:00', '2026-08-19T15:00:00'),
+        ]), new ScheduleVersion(2));
+
+        // Idempotent retry of the same (already-applied) draft.
+        $result = $this->applyDraft($user->id, $this->draft([
+            $this->assignment($task->id, '2026-08-19T14:00:00', '2026-08-19T15:00:00'),
+        ]), new ScheduleVersion(2));
+
+        $this->assertFalse($result->applied);
+        $this->assertSame(1, $this->historyCount($user->id));
+    }
 }

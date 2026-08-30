@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $override_start_at
  * @property string $override_end_at
  * @property string|null $reason
+ * @property bool $cancels_occurrence
  * @property string|null $created_at
  * @property string|null $updated_at
  */
@@ -28,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'override_start_at',
     'override_end_at',
     'reason',
+    'cancels_occurrence',
 ])]
 class ScheduleOverride extends Model
 {
@@ -40,6 +42,7 @@ class ScheduleOverride extends Model
             'effective_to' => 'datetime',
             'override_start_at' => 'datetime',
             'override_end_at' => 'datetime',
+            'cancels_occurrence' => 'boolean',
         ];
     }
 

@@ -5,6 +5,7 @@ namespace Tests\Support;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
 use App\Domain\Scheduling\ScheduleAssignment;
 use App\Domain\Scheduling\ScheduleAssignmentOverlap;
+use App\Domain\Scheduling\ValueObjects\ScheduleSupersession;
 use App\Domain\Scheduling\ValueObjects\ScheduleVersion;
 use Carbon\CarbonImmutable;
 use InvalidArgumentException;
@@ -20,6 +21,9 @@ final class FakeAssignmentStore implements ScheduleAssignmentRepository
 
     /** @var array<int, int> taskId → owning userId */
     public array $tasks = [];
+
+    /** @var list<array{assignment: ScheduleAssignment, superseded_by: ?ScheduleSupersession}> */
+    public array $history = [];
 
     public function findForUser(int $userId, int $assignmentId): ?ScheduleAssignment
     {
@@ -103,13 +107,30 @@ final class FakeAssignmentStore implements ScheduleAssignmentRepository
         throw new \LogicException('Not exercised by these tests.');
     }
 
-    public function deleteForUser(int $userId, int $assignmentId): void
+    public function deleteForUser(int $userId, int $assignmentId, ?ScheduleSupersession $supersededBy = null): void
     {
         foreach ($this->rows as $i => $row) {
             if ($row->userId === $userId && $row->id === $assignmentId) {
+                $this->history[] = [
+                    'assignment' => $row,
+                    'superseded_by' => $supersededBy,
+                ];
                 unset($this->rows[$i]);
             }
         }
+    }
+
+    public function historyForTask(int $userId, int $taskId): array
+    {
+        $timeline = [];
+
+        foreach ($this->history as $entry) {
+            if ($entry['assignment']->userId === $userId && $entry['assignment']->taskId === $taskId) {
+                $timeline[] = $entry['assignment']->toArray();
+            }
+        }
+
+        return $timeline;
     }
 
     public function seed(ScheduleAssignment $assignment): void

@@ -44,12 +44,26 @@ final class RecurrenceOccurrenceGenerator
         }
 
         $occurrences = [];
-        $cursor = $windowStart;
-        $boundary = $windowEnd->addDay();
         $seenMatches = 0;
+        $until = $rule->until;
 
-        // Hard ceiling so even a huge window or misconfigured rule stays bounded.
-        $maxDays = $maxOccurrences * max(1, $rule->interval) * 7 + 1;
+        // RFC-5545 COUNT counts occurrences from DTSTART (the series start),
+        // never from the query window. Only series with a COUNT need the
+        // pre-window scan; all other rules iterate the window directly.
+        $cursor = $windowStart;
+        if ($rule->count !== null) {
+            $seriesStart = $rule->start()->startOfDay();
+            if ($seriesStart->lessThan($windowStart)) {
+                $cursor = $seriesStart;
+            }
+        }
+
+        // Hard ceiling so even a huge window, an old series, or a
+        // misconfigured rule stays bounded: the full scan span plus the
+        // max-occurrence guard margin.
+        $boundary = $windowEnd->addDay();
+        $maxDays = (int) $cursor->startOfDay()->diffInDays($boundary)
+            + $maxOccurrences * max(1, $rule->interval) * 7 + 1;
 
         while ($cursor->lt($boundary) && $maxDays-- > 0) {
             if ($rule->matches($cursor)) {
@@ -62,7 +76,24 @@ final class RecurrenceOccurrenceGenerator
 
                 $occurrence = $this->occurrenceOn($rule, $cursor);
 
-                if (! isset($excludedDays[$occurrence->toDateString()])) {
+                // RFC-5545 UNTIL is inclusive: date-only UNTIL includes its
+                // local date; datetime UNTIL includes its exact instant (a
+                // trailing Z is UTC, normalized by RecurrenceRule). COUNT and
+                // UNTIL both apply — whichever terminates first wins.
+                if ($until !== null) {
+                    if ($rule->untilIsDateOnly) {
+                        if ($occurrence->toDateString() > $until->toDateString()) {
+                            break;
+                        }
+                    } elseif ($occurrence->gt($until)) {
+                        break;
+                    }
+                }
+
+                // When scanning from the series start (COUNT semantics),
+                // only occurrences inside the requested window are emitted.
+                if ($occurrence->greaterThanOrEqualTo($windowStart)
+                    && ! isset($excludedDays[$occurrence->toDateString()])) {
                     $occurrences[$occurrence->toDateString()] = $occurrence;
                 }
             }

@@ -34,6 +34,7 @@ final class ScheduleOverride
         public readonly CarbonImmutable $overrideStartAt,
         public readonly CarbonImmutable $overrideEndAt,
         public readonly ?string $reason = null,
+        public readonly bool $cancelsOccurrence = false,
         public readonly ?CarbonImmutable $createdAt = null,
         public readonly ?CarbonImmutable $updatedAt = null,
     ) {
@@ -57,6 +58,12 @@ final class ScheduleOverride
             && $this->effectiveFrom->toDateString() !== $this->effectiveTo->toDateString()) {
             throw new InvalidArgumentException('One-time override must target a single occurrence date.');
         }
+
+        // Cancellation is an occurrence-level statement (ADR-015): it targets
+        // exactly one occurrence and has no replacement interval semantics.
+        if ($this->cancelsOccurrence && ! $this->type->equals(ScheduleOverrideType::oneTime())) {
+            throw new InvalidArgumentException('Only a one-time override can cancel an occurrence.');
+        }
     }
 
     public static function create(
@@ -68,6 +75,7 @@ final class ScheduleOverride
         CarbonImmutable|string $overrideStartAt,
         CarbonImmutable|string $overrideEndAt,
         ?string $reason = null,
+        bool $cancelsOccurrence = false,
     ): self {
         return new self(
             0,
@@ -79,6 +87,7 @@ final class ScheduleOverride
             $overrideStartAt instanceof CarbonImmutable ? $overrideStartAt : CarbonImmutable::parse($overrideStartAt),
             $overrideEndAt instanceof CarbonImmutable ? $overrideEndAt : CarbonImmutable::parse($overrideEndAt),
             $reason,
+            $cancelsOccurrence,
         );
     }
 
@@ -94,6 +103,7 @@ final class ScheduleOverride
             $this->overrideStartAt,
             $this->overrideEndAt,
             $this->reason,
+            $this->cancelsOccurrence,
             $this->createdAt,
             $this->updatedAt,
         );
@@ -125,6 +135,7 @@ final class ScheduleOverride
             'override_start_at' => $this->overrideStartAt->toISOString(),
             'override_end_at' => $this->overrideEndAt->toISOString(),
             'reason' => $this->reason,
+            'cancels_occurrence' => $this->cancelsOccurrence,
             'created_at' => $this->createdAt?->toISOString(),
             'updated_at' => $this->updatedAt?->toISOString(),
         ];

@@ -110,6 +110,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/tasks/{taskId}', [TaskController::class, 'show']);
     Route::put('/tasks/{taskId}', [TaskController::class, 'update']);
     Route::post('/tasks/{taskId}/auto-swap', [TaskController::class, 'autoSwap']);
+    Route::post('/tasks/{taskId}/assignment/lock', [TaskController::class, 'lock']);
+    Route::post('/tasks/{taskId}/assignment/unlock', [TaskController::class, 'unlock']);
     Route::post('/tasks/{taskId}/status', [TaskController::class, 'status']);
     Route::post('/tasks/{taskId}/partial-complete', [TaskController::class, 'partialComplete']);
     Route::get('/tasks/{taskId}/subtasks', [TaskController::class, 'subtasks']);

@@ -151,4 +151,152 @@ final class ScheduleOverrideApiTest extends TestCase
 
         $this->withToken($token)->getJson('/api/v1/schedule-overrides')->assertStatus(200)->assertJsonCount(0, 'overrides');
     }
+
+    // ------------------------------------------------------------------
+    // ES-IMPL-04/05 — overrides change the effective schedule (ADR-015)
+    // ------------------------------------------------------------------
+
+    private function recurringSource(int $userId, string $start = '2026-09-07T09:00:00', string $end = '2026-09-07T10:00:00', string $recurrence = 'FREQ=WEEKLY'): int
+    {
+        return app(HardLandscapeRepository::class)->create(
+            HardLandscapeEvent::create($userId, 'KRS: Algorithms', HardLandscapeType::recurring(), $start, $end, $recurrence),
+        )->id;
+    }
+
+    public function test_permanent_shift_reaches_today_on_covered_dates(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $sourceId = $this->recurringSource($user->id); // Mondays 09:00.
+
+        $this->withToken($token)->postJson('/api/v1/schedule-overrides', [
+            'hard_landscape_event_id' => $sourceId,
+            'type' => 'permanent',
+            'effective_from' => '2026-09-14T00:00:00',
+            'effective_to' => '2026-12-31T00:00:00',
+            'override_start_at' => '2026-09-16T13:00:00',
+            'override_end_at' => '2026-09-16T14:00:00',
+            'reason' => 'Room change',
+        ])->assertStatus(201);
+
+        // The pre-shift Monday is VACATED (its block moved to Wednesday).
+        $this->withToken($token)
+            ->getJson('/api/v1/today?date=2026-09-07')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'hard_landscape')
+            ->assertJsonPath('hard_landscape.0.provenance', 'base'); // 09-07 is before the shift boundary.
+
+        // The first covered Monday (09-14) is vacated…
+        $this->withToken($token)
+            ->getJson('/api/v1/today?date=2026-09-14')
+            ->assertStatus(200)
+            ->assertJsonCount(0, 'hard_landscape');
+
+        // …and its effective occurrence appears on the shifted Wednesday.
+        $this->withToken($token)
+            ->getJson('/api/v1/today?date=2026-09-16')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'hard_landscape')
+            ->assertJsonPath('hard_landscape.0.start_at', '2026-09-16T13:00:00.000000Z')
+            ->assertJsonPath('hard_landscape.0.provenance', fn ($p) => str_starts_with((string) $p, 'shifted:'))
+            ->assertJsonPath('hard_landscape.0.original_start', '2026-09-14T09:00:00.000000Z');
+    }
+
+    public function test_cancelling_one_time_exception_removes_the_target_occurrence_from_today(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $sourceId = $this->recurringSource($user->id, '2026-08-17T09:00:00', '2026-08-17T10:00:00');
+
+        $this->withToken($token)->postJson('/api/v1/schedule-overrides', [
+            'hard_landscape_event_id' => $sourceId,
+            'type' => 'one_time',
+            'effective_from' => '2026-08-24T00:00:00',
+            'effective_to' => '2026-08-24T00:00:00',
+            'override_start_at' => '2026-08-24T09:00:00',
+            'override_end_at' => '2026-08-24T10:00:00',
+            'reason' => 'Public holiday',
+            'cancels_occurrence' => true,
+        ])->assertStatus(201);
+
+        $this->withToken($token)
+            ->getJson('/api/v1/today?date=2026-08-24')
+            ->assertStatus(200)
+            ->assertJsonCount(0, 'hard_landscape');
+
+        // Adjacent occurrences are untouched.
+        $this->withToken($token)
+            ->getJson('/api/v1/today?date=2026-08-31')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'hard_landscape');
+    }
+
+    public function test_scheduler_respects_the_shifted_interval(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $sourceId = $this->recurringSource($user->id);
+
+        $this->withToken($token)->postJson('/api/v1/schedule-overrides', [
+            'hard_landscape_event_id' => $sourceId,
+            'type' => 'permanent',
+            'effective_from' => '2026-09-14T00:00:00',
+            'effective_to' => '2026-12-31T00:00:00',
+            'override_start_at' => '2026-09-16T13:00:00',
+            'override_end_at' => '2026-09-16T14:00:00',
+        ])->assertStatus(201);
+
+        app(\App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository::class)->create(
+            \App\Domain\Scheduling\ScheduleAssignment::create(
+                userId: $user->id,
+                taskId: \App\Models\Task::query()->create([
+                    'user_id' => $user->id,
+                    'title' => 'Deep work',
+                    'status' => 'backlog',
+                    'priority_tier' => 3,
+                    'progress_mode' => 'derived',
+                    'progress' => 0,
+                    'version' => 1,
+                    'estimated_minutes' => 60,
+                ])->id,
+                date: '2026-09-16',
+                startAt: '2026-09-16T13:30:00',
+                endAt: '2026-09-16T14:30:00',
+                source: \App\Domain\Scheduling\ValueObjects\ScheduleAssignmentSource::draft(),
+                scheduleVersion: 1,
+            ),
+        );
+
+        $proposal = $this->withToken($token)
+            ->postJson('/api/v1/schedule/reschedule', ['from' => '2026-09-16', 'to' => '2026-09-16'])
+            ->assertStatus(200)
+            ->json()['proposal'];
+
+        $this->assertNotEmpty($proposal['moves'], 'Work overlapping the shifted block must be re-proposed.');
+    }
+
+    public function test_shift_colliding_with_another_landscape_is_rejected_with_409(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $sourceA = $this->recurringSource($user->id); // Mondays 09:00–10:00.
+        app(HardLandscapeRepository::class)->create(
+            HardLandscapeEvent::create(
+                $user->id,
+                'Gym',
+                HardLandscapeType::recurring(),
+                '2026-09-18T13:00:00',
+                '2026-09-18T14:00:00',
+                'FREQ=WEEKLY',
+            ),
+        ); // Fridays 13:00–14:00.
+
+        // Shifting source A onto the Gym window must be rejected: the first
+        // covered Monday (09-14) re-times to Friday 09-18 13:30–14:30, which
+        // collides with the Gym's Friday 13:00–14:00 block.
+        $this->withToken($token)->postJson('/api/v1/schedule-overrides', [
+            'hard_landscape_event_id' => $sourceA,
+            'type' => 'permanent',
+            'effective_from' => '2026-09-14T00:00:00',
+            'effective_to' => '2026-12-31T00:00:00',
+            'override_start_at' => '2026-09-18T13:30:00',
+            'override_end_at' => '2026-09-18T14:30:00',
+        ])->assertStatus(409);
+    }
 }

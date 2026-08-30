@@ -32,7 +32,10 @@ final class ApplyScheduleDraftUseCaseTest extends TestCase
         parent::setUp();
 
         $this->store = new FakeAssignmentStore;
-        $this->useCase = new ApplyScheduleDraftUseCase($this->store);
+        $this->useCase = new ApplyScheduleDraftUseCase(
+            $this->store,
+            new \App\Application\ActivityLogs\RecordActivityUseCase(new \Tests\Support\FakeActivityLogRepository),
+        );
     }
 
     private function assignment(int $taskId, string $start, string $end): DraftAssignment

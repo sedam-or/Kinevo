@@ -62,6 +62,7 @@ final class ScheduleOverrideController extends Controller
             'override_start_at' => ['required', 'date'],
             'override_end_at' => ['required', 'date', 'after:override_start_at'],
             'reason' => ['nullable', 'string', 'max:500'],
+            'cancels_occurrence' => ['nullable', 'boolean'],
         ]);
 
         if ($validator->fails()) {
@@ -80,6 +81,7 @@ final class ScheduleOverrideController extends Controller
                 CarbonImmutable::parse($data['override_start_at']),
                 CarbonImmutable::parse($data['override_end_at']),
                 $data['reason'] ?? null,
+                (bool) ($data['cancels_occurrence'] ?? false),
             );
         } catch (ScheduleOverrideConflict $e) {
             return response()->json(['error' => $e->getMessage()], 409);

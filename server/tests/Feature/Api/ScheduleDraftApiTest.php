@@ -291,4 +291,93 @@ final class ScheduleDraftApiTest extends TestCase
             'base_version' => $proposal['base_version'],
         ])->assertStatus(409);
     }
+
+    // ------------------------------------------------------------------
+    // ES-IMPL-03 — Scheduler consumes the Effective Landscape (ADR-015)
+    // ------------------------------------------------------------------
+
+    private function recurringBlock(int $userId, string $recurrence, string $start, string $end): void
+    {
+        app(HardLandscapeRepository::class)->create(
+            HardLandscapeEvent::create($userId, 'KRS: Algorithms', HardLandscapeType::recurring(), $start, $end, $recurrence),
+        );
+    }
+
+    public function test_draft_never_schedules_flexible_work_into_a_future_recurring_occurrence(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        // Weekly Monday 09:00–11:00 series starting 2026-08-17.
+        $this->recurringBlock($user->id, 'FREQ=WEEKLY', '2026-08-17T09:00:00', '2026-08-17T11:00:00');
+        $task = $this->createTask($user->id, 'Deep work', ['estimated_minutes' => 60]);
+
+        $draft = $this->withToken($token)
+            ->postJson('/api/v1/schedule/draft', ['from' => '2026-08-24', 'to' => '2026-08-24'])
+            ->assertStatus(200)
+            ->json()['draft'];
+
+        $this->assertNotEmpty($draft['assignments'], 'The task must still be scheduled on the occurrence day.');
+        foreach ($draft['assignments'] as $assignment) {
+            $this->assertTrue(
+                $assignment['end'] <= '2026-08-24T09:00:00.000000Z'
+                    || $assignment['start'] >= '2026-08-24T11:00:00.000000Z',
+                'Flexible work must never overlap the effective recurrence window.',
+            );
+        }
+    }
+
+    public function test_draft_treats_non_occurrence_dates_as_free(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $this->recurringBlock($user->id, 'FREQ=WEEKLY', '2026-08-17T09:00:00', '2026-08-17T11:00:00');
+        $task = $this->createTask($user->id, 'Deep work', ['estimated_minutes' => 120]);
+
+        $draft = $this->withToken($token)
+            ->postJson('/api/v1/schedule/draft', ['from' => '2026-08-25', 'to' => '2026-08-25'])
+            ->assertStatus(200)
+            ->json()['draft'];
+
+        $this->assertNotEmpty($draft['assignments']);
+        $this->assertSame([], $draft['unassigned']);
+    }
+
+    public function test_draft_ignores_exhausted_recurrence_counts(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        // COUNT=1 → only the 2026-08-17 occurrence exists; 08-24 is free.
+        $this->recurringBlock($user->id, 'FREQ=WEEKLY;COUNT=1', '2026-08-17T09:00:00', '2026-08-17T11:00:00');
+        $this->createTask($user->id, 'Deep work', ['estimated_minutes' => 60]);
+
+        $draft = $this->withToken($token)
+            ->postJson('/api/v1/schedule/draft', ['from' => '2026-08-24', 'to' => '2026-08-24'])
+            ->assertStatus(200)
+            ->json()['draft'];
+
+        foreach ($draft['assignments'] as $assignment) {
+            $this->assertStringStartsWith('2026-08-24', (string) $assignment['start']);
+        }
+        $this->assertSame([], $draft['unassigned']);
+    }
+
+    public function test_rescheduler_moves_work_out_of_a_future_recurring_occurrence(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $this->recurringBlock($user->id, 'FREQ=WEEKLY', '2026-08-17T09:00:00', '2026-08-17T11:00:00');
+        $task = $this->createTask($user->id, 'Clashing work');
+        // Placed on a future occurrence date, overlapping the effective block.
+        $this->place($user->id, $task->id, '2026-08-24', '2026-08-24T09:30:00', '2026-08-24T10:30:00');
+
+        $proposal = $this->withToken($token)
+            ->postJson('/api/v1/schedule/reschedule', ['from' => '2026-08-24', 'to' => '2026-08-24'])
+            ->assertStatus(200)
+            ->json()['proposal'];
+
+        $this->assertNotEmpty($proposal['moves'], 'The clashing placement must be re-proposed.');
+        foreach ($proposal['moves'] as $move) {
+            $this->assertTrue(
+                $move['to']['end'] <= '2026-08-24T09:00:00.000000Z'
+                    || $move['to']['start'] >= '2026-08-24T11:00:00.000000Z',
+                'Rescheduled work must never land inside the effective recurrence window.',
+            );
+        }
+    }
 }

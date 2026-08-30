@@ -41,6 +41,7 @@ final readonly class UpdateScheduleOverrideUseCase
             $overrideStartAt ?? $existing->overrideStartAt,
             $overrideEndAt ?? $existing->overrideEndAt,
             $reason !== null ? $reason : $existing->reason,
+            $existing->cancelsOccurrence,
             $existing->createdAt,
             $existing->updatedAt,
         );

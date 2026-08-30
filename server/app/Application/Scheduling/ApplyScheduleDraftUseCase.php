@@ -2,6 +2,9 @@
 
 namespace App\Application\Scheduling;
 
+use App\Application\ActivityLogs\RecordActivityUseCase;
+use App\Domain\ActivityLogs\ActivityLog;
+use App\Domain\ActivityLogs\ValueObjects\ActivityEventType;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
 use App\Domain\Scheduling\DraftAssignment;
 use App\Domain\Scheduling\ScheduleAssignment;
@@ -9,6 +12,7 @@ use App\Domain\Scheduling\ScheduleAssignmentLockedConflict;
 use App\Domain\Scheduling\ScheduleDraft;
 use App\Domain\Scheduling\ScheduleVersionConflict;
 use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentSource;
+use App\Domain\Scheduling\ValueObjects\ScheduleSupersession;
 use App\Domain\Scheduling\ValueObjects\ScheduleVersion;
 use Illuminate\Support\Facades\DB;
 
@@ -30,6 +34,7 @@ final readonly class ApplyScheduleDraftUseCase
 {
     public function __construct(
         private ScheduleAssignmentRepository $assignments,
+        private RecordActivityUseCase $recordActivity,
     ) {}
 
     public function __invoke(int $userId, ScheduleDraft $draft, ScheduleVersion $baseVersion): ScheduleApplyResult
@@ -59,6 +64,17 @@ final readonly class ApplyScheduleDraftUseCase
             return $persisted;
         });
 
+        // ADR-015 history model: the apply is an auditable schedule mutation.
+        $this->recordActivity->__invoke(ActivityLog::create(
+            $userId,
+            ActivityEventType::scheduleDraftApplied(),
+            'schedule',
+            $newVersion->value,
+            'Schedule draft applied',
+            operationId: 'schedule_draft_applied:'.$userId.':'.$newVersion->value,
+            payload: ['schedule_version' => $newVersion->value, 'placements' => count($created)],
+        ));
+
         return new ScheduleApplyResult($newVersion, $created, applied: true);
     }
 
@@ -79,9 +95,11 @@ final readonly class ApplyScheduleDraftUseCase
 
         // Supersede the task's prior auto-generated placements (never manual,
         // override, or locked) so the draft is the authoritative placement.
+        // Each superseded placement is archived into history (ADR-015) in
+        // this same transaction.
         foreach ($existing as $prior) {
             if ($this->isSuperseded($prior)) {
-                $this->assignments->deleteForUser($userId, $prior->id);
+                $this->assignments->deleteForUser($userId, $prior->id, ScheduleSupersession::draftApply($newVersion->value));
             }
         }
 

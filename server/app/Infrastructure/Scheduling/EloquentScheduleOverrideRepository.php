@@ -60,6 +60,7 @@ final class EloquentScheduleOverrideRepository implements ScheduleOverrideReposi
             'override_start_at' => $override->overrideStartAt,
             'override_end_at' => $override->overrideEndAt,
             'reason' => $override->reason,
+            'cancels_occurrence' => $override->cancelsOccurrence,
         ]);
 
         return $this->toDomain($model);
@@ -89,6 +90,7 @@ final class EloquentScheduleOverrideRepository implements ScheduleOverrideReposi
             'override_start_at' => $override->overrideStartAt,
             'override_end_at' => $override->overrideEndAt,
             'reason' => $override->reason,
+            'cancels_occurrence' => $override->cancelsOccurrence,
         ]);
 
         $model->refresh();
@@ -147,6 +149,7 @@ final class EloquentScheduleOverrideRepository implements ScheduleOverrideReposi
             CarbonImmutable::parse($model->override_start_at),
             CarbonImmutable::parse($model->override_end_at),
             $model->reason,
+            (bool) $model->cancels_occurrence,
             $model->created_at !== null ? CarbonImmutable::parse($model->created_at) : null,
             $model->updated_at !== null ? CarbonImmutable::parse($model->updated_at) : null,
         );

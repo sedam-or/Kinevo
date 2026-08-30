@@ -3,7 +3,9 @@
 namespace Tests\Feature\Api;
 
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
+use App\Domain\Scheduling\HardLandscapeEvent;
 use App\Domain\Scheduling\ScheduleAssignment;
+use App\Domain\Scheduling\ValueObjects\HardLandscapeType;
 use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentSource;
 use App\Models\Task;
 use App\Models\User;
@@ -208,5 +210,137 @@ final class ScheduleApiTest extends TestCase
             ->getJson('/api/v1/today?date=2026-08-19')
             ->assertStatus(200)
             ->assertJsonCount(0, 'events');
+    }
+
+    // ------------------------------------------------------------------
+    // ES-IMPL-02 — Effective Landscape read-model integration (ADR-015)
+    // ------------------------------------------------------------------
+
+    private function createRecurringLandscape(int $userId, string $recurrence, string $start = '2026-08-17T09:00:00', string $end = '2026-08-17T10:30:00'): void
+    {
+        app(\App\Domain\Scheduling\Contracts\HardLandscapeRepository::class)->create(
+            HardLandscapeEvent::create(
+                $userId,
+                'KRS: Algorithms',
+                HardLandscapeType::recurring(),
+                $start,
+                $end,
+                $recurrence,
+            ),
+        );
+    }
+
+    public function test_recurring_krs_course_appears_in_today_on_future_occurrence_date(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $this->createRecurringLandscape($user->id, 'FREQ=WEEKLY'); // Mondays from 2026-08-17.
+
+        $this->withToken($token)
+            ->getJson('/api/v1/today?date=2026-08-24')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'hard_landscape')
+            ->assertJsonPath('hard_landscape.0.title', 'KRS: Algorithms')
+            ->assertJsonPath('hard_landscape.0.source_event_id', fn ($id) => $id > 0)
+            ->assertJsonPath('hard_landscape.0.provenance', 'base')
+            ->assertJsonPath('hard_landscape.0.start_at', '2026-08-24T09:00:00.000000Z');
+    }
+
+    public function test_non_occurrence_date_has_no_recurring_landscape(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $this->createRecurringLandscape($user->id, 'FREQ=WEEKLY');
+
+        $this->withToken($token)
+            ->getJson('/api/v1/today?date=2026-08-25')
+            ->assertStatus(200)
+            ->assertJsonCount(0, 'hard_landscape');
+    }
+
+    public function test_recurring_landscape_respects_count_boundary_in_today(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $this->createRecurringLandscape($user->id, 'FREQ=WEEKLY;COUNT=2'); // 08-17, 08-24 only.
+
+        $this->withToken($token)
+            ->getJson('/api/v1/today?date=2026-08-31')
+            ->assertStatus(200)
+            ->assertJsonCount(0, 'hard_landscape');
+    }
+
+    public function test_recurring_landscape_respects_until_boundary_in_today(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $this->createRecurringLandscape($user->id, 'FREQ=WEEKLY;UNTIL=20260824');
+
+        $this->withToken($token)
+            ->getJson('/api/v1/today?date=2026-08-31')
+            ->assertStatus(200)
+            ->assertJsonCount(0, 'hard_landscape');
+    }
+
+    public function test_malformed_recurrence_degrades_to_base_block_with_visible_warning(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $this->createRecurringLandscape($user->id, 'NOT_A_RULE', '2026-08-24T09:00:00', '2026-08-24T10:30:00');
+
+        $this->withToken($token)
+            ->getJson('/api/v1/today?date=2026-08-24')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'hard_landscape')
+            ->assertJsonPath('hard_landscape.0.recurrence_warning', fn ($warning) => str_contains($warning, 'FREQ'));
+    }
+
+    public function test_week_includes_effective_landscape_aggregates(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $this->createRecurringLandscape($user->id, 'FREQ=WEEKLY'); // Monday 2026-08-24 inside the week.
+
+        $this->withToken($token)
+            ->getJson('/api/v1/week?date=2026-08-24')
+            ->assertStatus(200)
+            ->assertJsonPath('days.0.date', '2026-08-24')
+            ->assertJsonPath('days.0.landscape_count', 1)
+            ->assertJsonPath('days.0.landscape_minutes', 90)
+            ->assertJsonPath('days.1.landscape_count', 0)
+            ->assertJsonPath('days.1.landscape_minutes', 0);
+    }
+
+    public function test_month_includes_effective_landscape_aggregates(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $this->createRecurringLandscape($user->id, 'FREQ=WEEKLY'); // Mondays 08-17, 08-24, 08-31.
+
+        $this->withToken($token)
+            ->getJson('/api/v1/calendar?month=2026-08')
+            ->assertStatus(200)
+            ->assertJsonPath('days.16.landscape_count', 1)
+            ->assertJsonPath('days.16.landscape_minutes', 90)
+            ->assertJsonPath('days.23.landscape_count', 1)
+            ->assertJsonPath('days.30.landscape_count', 1)
+            ->assertJsonPath('days.17.landscape_count', 0);
+    }
+
+    public function test_schedule_range_includes_effective_landscape(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $this->createRecurringLandscape($user->id, 'FREQ=WEEKLY');
+
+        $this->withToken($token)
+            ->getJson('/api/v1/schedule?from=2026-08-24&to=2026-08-24')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'hard_landscape')
+            ->assertJsonPath('hard_landscape.0.source_event_id', fn ($id) => $id > 0);
+    }
+
+    public function test_landscape_is_scoped_to_owner(): void
+    {
+        [$user, $token] = $this->userWithToken();
+        $other = User::factory()->create();
+        $this->createRecurringLandscape($other->id, 'FREQ=WEEKLY');
+
+        $this->withToken($token)
+            ->getJson('/api/v1/today?date=2026-08-24')
+            ->assertStatus(200)
+            ->assertJsonCount(0, 'hard_landscape');
     }
 }
