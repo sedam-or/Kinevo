@@ -881,4 +881,25 @@ tests/e2e/tests/ai-remote-journey.spec.ts   chromium/firefox/webkit  3/3 PASS
 ## Maintenance
 
 - Updated per browser run; each golden journey has an evidence trail.
-- The matrix reflects the live state of the repo, not intent.
+- The matrix reflects the live state of the repo, not intent.### ES-IMPL-08 — Effective Schedule browser journeys (2026-08-30)
+
+New spec `tests/e2e/tests/es-effective-schedule.spec.ts` (chromium, single-engine because
+the sandbox is single-owner and journeys anchor to the live "today" — same posture as
+journey-c-e). Prerequisites: `make e2e-clean`, owner registered, `KINEVO_E2E_SEAM=1` asset
+build. Run: `docker run --rm --network host -e E2E_BASE_URL=http://127.0.0.1:8000 -v
+"$(pwd)/tests/e2e:/e2e" -w /e2e kinevo-e2e npx playwright test --project=chromium
+es-effective-schedule.spec.ts` — **4 passed (26.2s)**.
+
+- **JOURNEY B (reality-first)**: recurring Hard Landscape (the KRS-confirm product) →
+  UI: block rendered on Today; in-context: next-week occurrence (`provenance: base`), Week
+  `landscape_count ≥ 1`; UI: Schedule draft preview places work only outside the block.
+- **JOURNEY C (Permanent Shift)**: override moves the series → UI: today vacated; in-context:
+  effective occurrence on the shifted date (`provenance: shifted:<id>`).
+- **JOURNEY D (One-Time Exception)**: cancelling exception → UI: target occurrence gone;
+  in-context: adjacent occurrence untouched (`base`).
+- **LOCK journey**: UI lock from Task detail (`task-detail-lock` → `task-detail-locked-badge`);
+  in-context: reschedule proposal contains no move for the locked task.
+
+Regression run same day: es spec + golden-journeys + canonical-journey + core-loop +
+continuity + next-action + journey-c-e → **22 passed (6.2m, chromium)**. Firefox/WebKit not
+run for the ES spec (single-engine decision above); the config retains all three projects.

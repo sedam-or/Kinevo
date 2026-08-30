@@ -11,6 +11,17 @@ version** (v1) are tracked separately in `docs/SRS.md` and
 Release governance: see `docs/release-management.md`.
 
 ## [Unreleased]
+### Added
+- Effective Schedule resolution (ADR-015): recurring Hard Landscape (e.g. KRS-confirmed weekly
+  courses) now appears on every occurrence date in Today/Week/Calendar, the deterministic
+  scheduler draft, the rescheduler, and ICS export. Permanent Shift and One-Time Exception
+  overrides now change the effective schedule (exception > latest shift > base), including
+  occurrence cancellation (`cancels_occurrence`). Superseded placements are archived into
+  `schedule_assignment_history` in the same transaction as every schedule mutation, with new
+  schedule activity events. Users can lock/unlock a scheduled placement
+  (`POST /tasks/{id}/assignment/lock|unlock`) — locked placements are never moved by the
+  scheduler or rescheduler. The recurrence engine now enforces UNTIL (inclusive; UTC `Z`
+  normalized) and counts COUNT occurrences from the series start, not the query window.
 ### Changed
 - The Android shell now lives in this repo (Phase 27, TASK-P27-001..010): the NativePHP mobile
   surface was ported in as `routes/native.php` + ten native screens (Today/Tasks/Capture/Goals/

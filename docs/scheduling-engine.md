@@ -123,3 +123,34 @@ At minimum test:
 
 ---
 
+## Effective Schedule Resolution (ADR-015, implemented 2026-08-30)
+
+The scheduling views, the draft generator, the rescheduler, and ICS export consume the
+**Effective Landscape Resolver** (`App\Domain\Scheduling\Resolution\EffectiveLandscapeResolver`)
+— one canonical resolution pipeline:
+
+```
+source event → recurrence expansion → base occurrence → override resolution → effective occurrence
+```
+
+- Recurrence semantics remain owned exclusively by `RecurrenceRule` +
+  `RecurrenceOccurrenceGenerator` (DAILY/WEEKLY, INTERVAL, BYDAY, COUNT/UNTIL).
+  **UNTIL is enforced by the generator** (ES-FIX-00): inclusive — a date-only UNTIL includes
+  its local date, a datetime UNTIL includes its instant, a trailing `Z` is UTC normalized to
+  the DTSTART timezone; COUNT + UNTIL → whichever terminates first. COUNT counts from
+  DTSTART (series start), not from the query window.
+- Override precedence inside one series: ONE-TIME EXCEPTION > LATEST APPLICABLE PERMANENT
+  SHIFT (greatest `effective_from`, tie-break greatest id) > BASE RECURRENCE. A covered
+  occurrence is re-timed by the date delta between its original date and the shift's
+  `effective_from`, keeping the override interval's time-of-day and duration. A cancelling
+  one-time exception (`cancels_occurrence`) removes exactly its target occurrence.
+- Read models filter by the EFFECTIVE window: a shifted occurrence appears on its effective
+  date and is vacated from its original date.
+- History: superseded/deleted assignments are archived into `schedule_assignment_history`
+  in the same transaction as the live mutation (draft apply, reschedule apply, auto-swap,
+  pause paths), plus `schedule_draft_applied` / `schedule_reschedule_applied` /
+  `schedule_override_applied` / `assignment_locked` / `assignment_unlocked` activity events.
+- Locked placements: produced only by the user via
+  `POST /tasks/{taskId}/assignment/lock|unlock`; the scheduler and rescheduler receive
+  `isLocked` input and never move them (existing hard-rule + apply-conflict contracts
+  unchanged). AI has no path into schedule authority.

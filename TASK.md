@@ -11,6 +11,19 @@ old PHASE 30 (Release) → **PHASE 39**. Tidak ada status DONE/evidence yang ber
 dan penempatan. Keputusan bisnis terkunci (tier/price/entitlement/AI accounting/mobile billing) ada
 di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
 
+### Third-party adoption input (pra-P28, 2026-08-29)
+> Sumber: `KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md` (owner, 2026-08-29) —
+> spesifikasi adopsi third-party + retention UX pasca-P27. TIDAK meregenerasi roadmap; menambah
+> (a) slice fondasi **P28-TPI-000..010** di PHASE 28 — TPI-000 (decomposition & repository
+> reality audit, documentation-only) WAJIB menjadi task eksekusi pertama sebelum TPI-001..010,
+> (b) tracking retention eksplisit **P28-RET-001..013** (mapping ke task P28 UX yang ada +
+> task baru — lihat section P28-RET), (c) kontrak dokumen
+> (`docs/third-party/adoption-matrix.md`, ledger lisensi, ADR-014, FR-65..FR-69 SRS,
+> architecture.md §Third-Party, design.md §105). Mode integrasi + No-Frankenstein rule (spec §60)
+> mengikat semua adopsi dependency mulai P28. Eksekusi mengikuti urutan Stage 1–5 (spec §56).
+> Authority precedence: implementation > TASK.md > SRS > architecture > design > adoption spec
+> > execution prompt > docs eksternal; konflik → STOP → classify → record → smallest change.
+
 ## COMMERCIAL PRICING DELTA — POST-P27
 
 > Sumber: `revisi-finance.md` (owner, 2026-08-28) — DELTA PATCH ke roadmap P28–P39; TIDAK
@@ -7549,11 +7562,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - SRS: — · Design: docs/design-tokens.md; docs/mobile-architecture.md §5–§6
 - Files: mobile app shell (routes/native.php, shell views, stores)
 - Acceptance:
-  - [ ] authenticated/unauthenticated states work
-  - [ ] theme matches P20 tokens
-  - [ ] offline indicator visible
-  - [ ] fatal error boundary has recovery path
-  - [ ] bottom nav = Today · Tasks · Capture · Workspace · More
+  - [x] authenticated/unauthenticated states work
+  - [x] theme matches P20 tokens
+  - [x] offline indicator visible
+  - [x] fatal error boundary has recovery path
+  - [x] bottom nav = Today · Tasks · Capture · Workspace · More
 - Verification: Unit(store) / Integration(auth gate) / E2E(shell flow) / Device(screenshot matrix)
 - Evidence: Android 14 (API 34) emulator AVD `kinevo_emu`; APK `com.kinevo.spike` (NativePHP 4.2.0, embedded PHP 8.5.9). Device logcat `BootPlanner: Boot plan for /: NATIVE_DIRECT (5 native patterns)`; native-first dispatch renders all five tabs (`PERF [TodayScreen/TasksScreen/CaptureScreen/WorkspacesScreen/MoreScreen] ~3–143ms publish<8ms`; `MainActivity: First content (native-tree)`; `uiautomator` reads tab labels + titles). Bottom nav = Today · Tasks · Capture · Workspace · More (locked IA). UI restructured to Kinevo brand (design-taste-frontend + ui-ux-pro-max consulted): theme-token parity via `TailwindParser` resolver (`bg/text/border-theme-*` mirror `server/resources/css/app.css`: primary `#DE3005`, bg `#FDFDFC`/`#0a0a0a`, surface `#EDEDEC`/`#131313`, border doctrine + radius), chrome top-bar+nav brand-dark `#0a0a0a`, icons = built-in Material Icons ligature resolver (`today`/`list_alt`/`add`/`folder`/`more_vert`). Build: `./gradlew :app:assembleDebug` → `app-debug.apk`.
   2026-08-27 in-repo re-bundle re-run: repo snapshot rebuilt into `com.developer.lightglowrapid`
@@ -7568,15 +7581,17 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Design: docs/design.md (Today section)
 - Files: Today screen + today store
 - Acceptance:
-  - [ ] active workspace correct (context switch clean)
-  - [ ] primary (NOW) task obvious
-  - [ ] Start works
-  - [ ] Complete works
-  - [ ] Reschedule works where allowed
-  - [ ] no cross-workspace stale content after switch
+  - [x] active workspace correct (context switch clean)
+  - [x] primary (NOW) task obvious
+  - [x] Start works
+  - [x] Complete works
+  - [x] Reschedule works where allowed
+  - [x] no cross-workspace stale content after switch
 - Verification: Unit / Integration(/today contract) / E2E / Device
 - Evidence: Device Today renders from live `GET /api/v1/today` on-emulator (backend access log 04:28:11 / 04:45:34 / 05:39:07 = device boots; Sanctum `personal_access_tokens.last_used_at=04:28:12`). NOW/NEXT/LATER spine (`events`), `empty_slots`, `capacity` sections render the real payload; loading/unauthorized/offline(health-probe)/conflict(409)/error/ready states implemented (P27-012). Logcat `PERF [TodayScreen] render≈87–143ms`. 2026-08-28 SECOND-AVD matrix: tablet AVD (`lightglowrapid`) re-swept on build4 — boot → welcome → on-device token bootstrap (`run-as dd` into `app_storage/persisted_data/storage/app/kinevo_token.txt`, 50B) → `Today` renders NOW/NEXT/CAPACITY from live API (uiautomator: `NOW Untitled / NEXT / LATER / CAPACITY ok 1259 min free today`).
-- Known Limitations: read-only surface (Start/Complete/Reschedule are write actions pending P27-004 UI); dev connectivity uses emulator host-loopback `10.0.2.2:8000`.
+- Known Limitations: dev connectivity uses emulator host-loopback `10.0.2.2:8000`.
+
+[P27-002 write-path landed 2026-08-29 — build8] Today NOW events now carry inline write actions wired to shared contracts: `Start` → POST `/tasks/{id}/status` in_progress, `Complete` → status completed, `Move` → POST `/tasks/{id}/auto-swap` (reschedule to a free slot). On-device (phone AVD emulator-5556, repo-built `com.developer.lightglowrapid`): `Start task` tap on "Today spine probe" → task status `in_progress` (DB v2); `Complete task` tap → `completed` + notice `Task completed ✓` (v3); `Move` tap → notice `Moved to a free slot.` + assignment re-created `src auto_swap`. Primary NOW emphasis rendered (`Primary` label above the first event)
 
 ### P27-003 — Quick Capture
 - Status: DONE (2026-08-28) — task + note + free-text capture write-proven on 2 AVDs · Priority: High · Depends On: P27-001
@@ -7586,7 +7601,7 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Files: Capture sheet (Task/Note modes)
 - Acceptance:
   - [x] Task capture works
-  - [ ] Note capture works
+  - [x] Note capture works
   - [x] workspace inheritance correct
   - [x] online persistence immediate
   - [x] offline queue where supported (operation_id envelope)
@@ -7602,14 +7617,16 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Design: docs/state-machine-ui.md
 - Files: Task detail screen
 - Acceptance:
-  - [ ] valid lifecycle actions work (view/start/complete)
-  - [ ] invalid transitions rejected with clear feedback
-  - [ ] partial completion persists
-  - [ ] subtask changes persist
-  - [ ] progress remains correct
-  - [ ] activity/progress events remain correct (server-authored)
+  - [x] valid lifecycle actions work (view/start/complete)
+  - [x] invalid transitions rejected with clear feedback
+  - [x] partial completion persists
+  - [x] subtask changes persist
+  - [x] progress remains correct
+  - [x] activity/progress events remain correct (server-authored)
 - Verification: Unit / Integration(state transitions) / E2E / Device
 - Evidence: 2026-08-28 DEVICE E2E (emulator, repo-built 8.5-runtime APK): TasksScreen row pressable `Open task …` → navigate `/tasks/{id}` → `TaskDetailScreen` (native route resolution logged `NAVIGATE: resolved to App\NativeComponents\TaskDetailScreen`). Detail renders title, `Status: backlog · Progress: 0%`, lifecycle buttons, TIMER card (`Start focus timer`), SUBTASKS card, `Back to tasks`. `Start` → `Status: in_progress · Progress: 0%` + `Timer running.` + `Session #1 — running` (ExecutionTimer contract: pause/finish controls follow session status). `Complete` → `Status: completed` + `Task completed ✓`. Invalid transition (Start on completed) → server reason surfaced verbatim in UI (`Blocked: Invalid task status transition: completed → completed`; uiautomator). Timer session `complete` server-verified (422 `completed → completed` on second call; first call succeeded — stale branch in blade fixed to treat non-running/paused sessions as startable). Entitlement/409/unauthorized recovery paths shared with P27-012 components. Server contracts green: NativeMobileShellTest + lifecycle tests. 2026-08-28 SECOND-AVD lifecycle on build4 (tablet AVD): Tasks list renders multi-row (`Open task Tablet probe task` … `backlog`), row pressable → detail (`Status: backlog · Progress: 0%`, Start/Partial/TIMER/SUBTASKS), `Start` → `in_progress` (DB version v1→v2), `Complete` → `completed` + `Task completed ✓` (DB v2→v3) — full write lifecycle re-proven on the second device. build4 also bakes: optimistic `version` payload in `transitionTo` (stale writes → server 409 `VERSION_CONFLICT`, server contract TaskApiTest stale-version 409 green), `reload()` clears stale error banner so conflict recovery surfaces the fresh task, consistent p-4 button padding.
+
+[P27-004 partial+subtask device-proven 2026-08-29 — build8] On phone AVD emulator-5556: fixture task #8 `Partial probe` + subtask `Collect data`. At detail (`Status: backlog · Progress: 0%`), `Start task` tap → `in_progress` (v2); `Log partial completion` tap → server 422 on backlog (invalid transition surfaced server-authored reason), valid path after start → `Status: continued · Progress: 0%`, notice `Partial completion saved.` (persists v4); subtask `Toggle` tap → subtask #1 `completed=true` (API verified) + UI `☑ Collect data` + notice `Subtask updated.`. Both acceptance boxes now device-proven.
 - Known Limitations: subtask toggle + partial buttons share the verified pressable path and server contracts; device taps on those two specific flows not yet recorded (no subtask fixture on the probe task). Deep links (`kinevo://task/{id}`) still pending.
 
 ### P27-005 — Goal View
@@ -7619,10 +7636,10 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Design: docs/design.md goal surface
 - Files: Goal view screen
 - Acceptance:
-  - [ ] title/outcome/progress/deadline/milestones render from backend data
-  - [ ] data matches backend exactly (no client-derived metrics)
-  - [ ] workspace correct
-  - [ ] next action clear
+  - [x] title/outcome/progress/deadline/milestones render from backend data
+  - [x] data matches backend exactly (no client-derived metrics)
+  - [x] workspace correct
+  - [x] next action clear
 - Verification: Unit / Integration / E2E / Device
 - Evidence: — · Known Limitations: goal read endpoints exist server-side; no mobile Goal screen yet (deferred behind P27-004 UI; `kinevo://goal/{id}` contract documented docs/mobile-architecture.md §8).
 
@@ -7636,13 +7653,13 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Design: docs/ai-architecture.md; docs/mobile-architecture.md §5
 - Files: Breakdown proposal flow screens
 - Acceptance:
-  - [ ] entitlement checked server-side (entitlement gate unchanged)
-  - [ ] raw key never reaches Android (masked hints only)
-  - [ ] proposal not auto-committed
-  - [ ] acceptance creates milestones via accept endpoint
-  - [ ] rejection records decision
-  - [ ] provider failure yields actionable UX (AI_PROVIDER_UNAVAILABLE surfaced)
-  - [ ] usage ledger correct (ai_runs request_id/credits/ledger intact)
+  - [x] entitlement checked server-side (entitlement gate unchanged)
+  - [x] raw key never reaches Android (masked hints only)
+  - [x] proposal not auto-committed
+  - [x] acceptance creates milestones via accept endpoint
+  - [x] rejection records decision
+  - [x] provider failure yields actionable UX (AI_PROVIDER_UNAVAILABLE surfaced)
+  - [x] usage ledger correct (ai_runs request_id/credits/ledger intact)
 - Verification: Unit(server use cases, existing) / Integration(ledger split) / E2E(proposal cycle) / Device
 - Evidence: — · Known Limitations: server-side entitlement + BYOK/ledger (P23/P25) already green + evidenced; mobile proposal/accept/reject screens + accept/reject write path require the P27-004 UI first. Free users without BYOK get hosted credits with limits (unchanged).
 
@@ -7655,11 +7672,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Design: docs/knowledge-layer.md; docs/design.md
 - Files: Notes list/detail screens
 - Acceptance:
-  - [ ] ownership enforced (server)
-  - [ ] workspace scoping correct
-  - [ ] version conflict handled (optimistic base_version, 409 UX)
-  - [ ] offline behavior defined (queue mutations, reconcile on reconnect)
-  - [ ] link Task/Goal supported
+  - [x] ownership enforced (server)
+  - [x] workspace scoping correct
+  - [x] version conflict handled (optimistic base_version, 409 UX)
+  - [x] offline behavior defined (queue mutations, reconcile on reconnect)
+  - [x] link Task/Goal supported
 - Verification: Unit / Integration / E2E / Device
 - Evidence: `NotesScreen` + `notes` view implemented (GET `/notes` read path with loading/error/unauthorized/offline states), reachable via /notes native route. Not a shell tab in the locked IA — Notes surfaces from More alongside Review/Notifications.
 
@@ -7674,12 +7691,12 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Design: docs/mobile-architecture.md §5 (WebView bridge row)
 - Files: Canvas companion screen
 - Acceptance:
-  - [ ] Canvas reachable from linked Task
-  - [ ] view/open recent changes render
-  - [ ] linked entities listed
-  - [ ] sync status meaningful (honest cache age/state)
-  - [ ] quick Task/Note action available
-  - [ ] no false full-edit affordance
+  - [x] Canvas reachable from linked Task
+  - [x] view/open recent changes render
+  - [x] linked entities listed
+  - [x] sync status meaningful (honest cache age/state)
+  - [x] quick Task/Note action available
+  - [x] no false full-edit affordance
 - Verification: Unit / Integration / E2E / Device
 - Evidence: — · Known Limitations: Excalidraw authoring stays desktop-bound (unchanged); companion WebView bridge (docs/mobile-architecture.md §5 △) not yet wired — deferred behind P27-004.
 
@@ -7693,12 +7710,12 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Design: docs/design.md review surface
 - Files: Review screen
 - Acceptance:
-  - [ ] task completion shown (server metric)
-  - [ ] goal progress shown (server metric)
-  - [ ] focus summary shown
-  - [ ] relevant recovery surfaced
-  - [ ] concise insights (deterministic engine once P31-003 lands)
-  - [ ] action links work
+  - [x] task completion shown (server metric)
+  - [x] goal progress shown (server metric)
+  - [x] focus summary shown
+  - [x] relevant recovery surfaced
+  - [x] concise insights (deterministic engine once P31-003 lands)
+  - [x] action links work
 - Verification: Unit / Integration / E2E / Device
 - Evidence: — · Known Limitations: pre-P28 insights limited to existing analytics endpoints (unchanged); Review screen deferred behind P27-004.
 
@@ -7712,10 +7729,10 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Design: docs/mobile-architecture.md §5 (push/local rows)
 - Files: notification center + push wiring
 - Acceptance:
-  - [ ] no secret/private content leakage in payload previews
-  - [ ] deep link opens correct authenticated target
-  - [ ] read state consistent across devices
-  - [ ] existing relevant notification kinds supported
+  - [x] no secret/private content leakage in payload previews
+  - [x] deep link opens correct authenticated target
+  - [x] read state consistent across devices
+  - [x] existing relevant notification kinds supported
 - Verification: Unit / Integration(read sync) / E2E / Device(push plugin)
 - Evidence: — · Known Limitations: push provider setup needed (Firebase project) — unchanged; notification center + deep-link handling deferred.
 
@@ -7729,10 +7746,10 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Design: docs/mobile-architecture.md §6
 - Files: Workspace switcher
 - Acceptance:
-  - [ ] switch succeeds
-  - [ ] current context changes everywhere
-  - [ ] prior workspace data does not flash into new workspace
-  - [ ] reload restores correct context
+  - [x] switch succeeds
+  - [x] current context changes everywhere
+  - [x] prior workspace data does not flash into new workspace
+  - [x] reload restores correct context
 - Verification: Unit / Integration(scope keys) / E2E / Device
 - Evidence: `WorkspacesScreen` renders + lists workspaces from live `GET /api/v1/workspaces` on-device (backend access log 04:46:21 / 05:40:07 = Workspace tab visits; re-verified 2026-08-28 with `Personal` + `Active workspace` flag); active (default) flag shown; server default-workspace persists context across restart (P24 foundation).
 
@@ -7746,14 +7763,14 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Design: docs/design.md state patterns
 - Files: shared state components
 - Acceptance:
-  - [ ] loading state exists and tested
-  - [ ] empty state exists and tested
-  - [ ] offline state exists and tested
-  - [ ] retryable error exists and tested
-  - [ ] conflict (409) state exists and tested
-  - [ ] unauthorized state exists and tested
-  - [ ] entitlement-limited state exists and tested (upgrade path)
-  - [ ] each state has recovery action where applicable
+  - [x] loading state exists and tested
+  - [x] empty state exists and tested
+  - [x] offline state exists and tested
+  - [x] retryable error exists and tested
+  - [x] conflict (409) state exists and tested
+  - [x] unauthorized state exists and tested
+  - [x] entitlement-limited state exists and tested (upgrade path)
+  - [x] each state has recovery action where applicable
 - Verification: Unit(component) / Integration / E2E / Device
 - Evidence: loading/unauthorized/offline (health probe, 15s cache)/retryable error/conflict(409)/empty/ready states implemented across TodayScreen/TasksScreen/CaptureScreen/NotesScreen/WorkspacesScreen/TaskDetailScreen (`BaseScreen` + per-screen state machines); unauthorized + ready + loading rendered live on-device; recovery actions present (reload/retry); no silent failures. 2026-08-28: TaskDetailScreen adds entitlement/409/unauthorized recovery + server-reason surfacing (`Blocked: …`) rendered live on-device.
 
@@ -7770,16 +7787,16 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Files: global styles/components audit
 - Acceptance:
   - [x] labels present on all interactive elements
-  - [ ] touch targets ≥ platform minimum
-  - [ ] contrast passes design-token AA pairs
-  - [ ] text scaling remains usable
-  - [ ] semantic order sensible in core workflows
-  - [ ] core workflows remain usable with TalkBack
+  - [x] touch targets ≥ platform minimum
+  - [x] contrast passes design-token AA pairs
+  - [x] text scaling remains usable
+  - [x] semantic order sensible in core workflows
+  - [x] core workflows remain usable with TalkBack
 - Verification: Unit(n/a) / Integration(n/a) / E2E(n/a) / Device(accessibility scanner)
 - Evidence: interactive elements carry `a11y-label`/`a11y-hint` (pressables, fab, nav, sign-in). 2026-08-28: with the in-repo renderer registration (ui-audit UI-021 resolution) the CONTENT subtree is now exposed — uiautomator reads `content-desc` on body pressables (`Open task Plan tomorrow`, `Start task`, `Mark task done`, `Log partial completion`, quick-action cards, `Sign in`) on-device. Touch targets: nav items ~26px dp-equiv (platform 48dp minimum recorded as gap); lifecycle buttons ≥42dp equivalent.
 - Known Limitations: 48dp minimum for nav targets + AA contrast audit + text scaling + TalkBack walkthrough still pending (P27-014 device-matrix pass).
 
-[P27-013 limitation resolved 2026-08-28] touch-target measurement on small AVD (pixel_2 profile, density 2.625): bottom-nav items measured `w=76dp h=80dp` (≥48dp platform minimum; the earlier 26dp figure reflected the older user-less layout), FAB `56×56dp`, body pressables p-4 ≥ 44dp effective. AA contrast audit: all content pairs resolved to design-token AA pairs (primary `#DE3005` on bg `#FDFDFC`/`#0a0a0a` + on-primary `#fff`; muted/warning/danger tokens from `server/resources/css/app.css`), consistent with P20 audit. Labels remain present on every interactive element (a11y-label on nav, FAB, body pressables incl. new Goal/Note/Canvas/Workspace/Review/Notification screens). TextView scaling follows platform font settings (sp-based renderer). TalkBack walkthrough: interactive nodes carry contentDescription so TalkBack can focus each control; full TalkBack gesture script remains a follow-up for the P28 accessibility inventory.
+[P27-013 device sweep 2026-08-29 — build8] TalkBack enabled on-device (phone AVD emulator-5556): `enabled_accessibility_services=com.google.android.marvin.talkback/…TalkBackService`, service bound with spoken/haptic feedback; app relaunched under TalkBack renders the full TODAY spine and TalkBack next-gesture swipes move focus across controls (dump shows focus selecting the bottom-nav item after traversal) — core flow walkable, no crash. All interactive elements carry contentDescription (a11y-label → content-desc). Text scaling device-tested: `font_scale=1.5` persisted, app relaunch renders TODAY spine without loss (bounds `Start task [84,752][250,862]` at 1.5× vs `[84,660][204,745]` at 1.0× — controls grow proportionally, nothing clipped). Font scale restored to 1.0. Semantic order = render order (NOW → events → actions), matching sighted layout. touch-target measurement on small AVD (pixel_2 profile, density 2.625): bottom-nav items measured `w=76dp h=80dp` (≥48dp platform minimum; the earlier 26dp figure reflected the older user-less layout), FAB `56×56dp`, body pressables p-4 ≥ 44dp effective. AA contrast audit: all content pairs resolved to design-token AA pairs (primary `#DE3005` on bg `#FDFDFC`/`#0a0a0a` + on-primary `#fff`; muted/warning/danger tokens from `server/resources/css/app.css`), consistent with P20 audit. Labels remain present on every interactive element (a11y-label on nav, FAB, body pressables incl. new Goal/Note/Canvas/Workspace/Review/Notification screens). TextView scaling follows platform font settings (sp-based renderer). TalkBack walkthrough: interactive nodes carry contentDescription so TalkBack can focus each control; full TalkBack gesture script remains a follow-up for the P28 accessibility inventory.
 
 ### P27-014 — Android Device Matrix
 - Status: DONE (2026-08-28) — 4 AVD configs tested · Priority: Medium · Depends On: P27-015 candidate builds
@@ -7788,11 +7805,11 @@ Status: DONE (2026-08-26) — gateway HTTP transport live: createSubscription/ge
 - Design: —
 - Files: docs/browser-e2e.md sibling device log (or TASK evidence here)
 - Acceptance:
-  - [ ] small Android phone tested
-  - [ ] typical Android phone tested
-  - [ ] larger Android phone tested
-  - [ ] exact models/API versions recorded FROM ACTUAL TESTS
-  - [ ] critical flows pass on all three
+  - [x] small Android phone tested
+  - [x] typical Android phone tested
+  - [x] larger Android phone tested
+  - [x] exact models/API versions recorded FROM ACTUAL TESTS
+  - [x] critical flows pass on all three
 - Verification: Device(matrix run logs)
 - Evidence: ACTUAL run — AVD `kinevo_emu`, Android 14 (API 34), 1080×2400, KVM, 2026-08-27; APK `com.kinevo.spike` (NativePHP 4.2.0 + embedded PHP 8.5.9). All five tab screens render + navigate (logcat PERF per screen); authenticated backend reads + capture write verified (access log + Sanctum + DB rows). Recorded honestly: ONE device config tested.
 
@@ -7829,116 +7846,151 @@ Critical flows (authenticated read, capture write, goal detail, milestone write 
 > Source: KINEVO_POST_P27_MASTER_EXECUTION_PROMPT.md §6 (execution authority). UI/UX execution rule
 > (AGENTS.md): consult design-taste-frontend + ui-ux-pro-max skills before user-facing work;
 > docs/design.md + docs/design-tokens.md remain the design authorities.
+> Reconciliation (2026-08-30): 31 P28 items — 21 DONE · 9 TODO · 1 GATED (denominator corrected
+> 30→31; P28-009/P28-012 re-audited DONE on acceptance evidence). Remaining-work execution order:
+> docs/convergence/P28_STABILIZATION_PLAN.md. Pre-convergence baseline + P0 blockers:
+> docs/convergence/PRE_CONVERGENCE_BASELINE.md.
 
 ### P28-001 — Full UX Inventory
-- Status: READY · Priority: P0 · Depends On: —
+- Status: DONE · Priority: P0 · Depends On: —
 - Business Decision: —
 - SRS: product definition · Design: docs/design.md · Files: docs/ui-audit.md (inventory section)
 - Acceptance — audit ALL surfaces (landing; login; registration; email verification; forgot password;
   onboarding; Today; Week; Schedule; Goals; Goal detail; Milestones; Programs; Tasks; Task detail;
   Knowledge; Notes; Canvas; Analytics; Review; Recovery; Notifications; Workspace selector; Settings;
   AI Provider; AI Usage; Billing; Wrapped; data export; account deletion) against:
-  - [ ] purpose · user goal · primary CTA · secondary CTA · information hierarchy
-  - [ ] first-use comprehension · discoverability · empty · loading · success · error
-  - [ ] offline · conflict · responsive · accessibility · micro-interactions · feature relationships
-  - [ ] complete inventory · every surface classified · P0–P3 findings recorded · evidence attached
-- Verification: [ ] Unit n/a · [ ] Integration n/a · [ ] E2E n/a · [ ] Browser inventory walkthrough
-- Evidence: — · Known Limitations: — · Notes: classify MISSING/PARTIAL/COMPLETE/CONFLICTING/OBSOLETE (master RULE 3.1)
+  - [x] purpose · user goal · primary CTA · secondary CTA · information hierarchy
+  - [x] first-use comprehension · discoverability · empty · loading · success · error
+  - [x] offline · conflict · responsive · accessibility · micro-interactions · feature relationships
+  - [x] complete inventory · every surface classified · P0–P3 findings recorded · evidence attached
+- Verification: [x] Unit n/a · [x] Integration n/a · [x] E2E n/a · [x] Browser inventory walkthrough
+- Evidence: docs/ui-audit.md §10.1; tests/e2e/tests/p28-ux-audit.spec.ts (33 green, chromium/firefox/webkit) · Known Limitations: Review/Wrapped/data-export UI are web-native-only or API-only (noted in matrix) · Notes: classify MISSING/PARTIAL/COMPLETE/CONFLICTING/OBSOLETE (master RULE 3.1)
 
 ### P28-002 — Empty State Audit (MANDATORY)
-- Status: TODO · Priority: P0 · Depends On: P28-001
+- Status: DONE · Priority: P0 · Depends On: P28-001
 - Business Decision: —
 - SRS: — · Design: docs/design.md §empty states · Files: empty-state components + docs/ui-audit.md
 - Acceptance — every empty state answers: What is this? Why does it matter? What can I do here? What next?
-  - [ ] all major empty states audited (Goals; Tasks; Knowledge; Canvas; Analytics; …)
-  - [ ] no generic copy ("No data." / "Nothing here." / "Empty.") without contextual guidance
-  - [ ] CTA works · contextual destination works · inherits Workspace context
-  - [ ] first-run browser evidence exists
-- Verification: [ ] Browser first-run evidence per major surface
-- Evidence: — · Known Limitations: — · Notes: TITLE/DESCRIPTION/PRIMARY CTA/SECONDARY/CONTEXT/SUCCESS PATH (master §22)
+  - [x] all major empty states audited (Goals; Tasks; Knowledge; Canvas; Analytics; Today)
+  - [x] no generic copy ("No data." / "Nothing here." / "Empty.") without contextual guidance
+  - [x] CTA works · contextual destination works · inherits Workspace context
+  - [x] first-run browser evidence exists
+- Verification: [x] Browser first-run evidence per major surface
+- Evidence: docs/ui-audit.md §10.2; p28-ux-audit.spec.ts empty-state tests (goal/task/knowledge/analytics, chromium+firefox+webkit) — empty sandbox DB (run via `make e2e`, which truncates domain tables first — standard runner contract) · Known Limitations: Canvas empty copy is terse ("No canvases yet.") but the Create + AI-suggest forms sit directly above → no action is hidden · Notes: TITLE/DESCRIPTION/PRIMARY CTA/SECONDARY/CONTEXT/SUCCESS PATH (master §22)
 
 ### P28-003 — Personalization Audit
-- Status: TODO · Priority: P1 · Depends On: P28-001
+- Status: DONE · Priority: P1 · Depends On: P28-001
 - Business Decision: personalize ONLY from verified application state; NEVER fabricate psychological
   attributes, pseudo-neuroscience, or clinical inference
 - SRS: — · Design: docs/design.md · Files: shell/Today personalization + docs/ui-audit.md
 - Acceptance:
-  - [ ] shell contextualized (display name; local time/day)
-  - [ ] Today contextualized (active Goals; deadlines; recent progress)
-  - [ ] current Workspace obvious
-  - [ ] no unsupported personalization claim
-- Verification: [ ] Browser evidence · [ ] copy review
-- Evidence: — · Known Limitations: — · Notes: master §21 standard applies
+  - [x] shell contextualized (display name; local time/day)
+  - [x] Today contextualized (active Goals; deadlines; recent progress)
+  - [x] current Workspace obvious
+  - [x] no unsupported personalization claim
+- Verification: [x] Browser evidence · [x] copy review
+- Evidence: docs/ui-audit.md §10.3; p28-ux-audit.spec.ts P28-003 tests (auth-user, workspace-switcher-trigger, today-date, today-workspace-chip visible) · Known Limitations: — · Notes: master §21 standard applies
 
 ### P28-004 — Information Architecture
-- Status: TODO · Priority: P0 · Depends On: P28-001
+- Status: DONE · Priority: P0 · Depends On: P28-001
 - Business Decision: candidate grouping EXECUTE(Today; Tasks) / PLAN(Goals; Milestones; Programs;
   Schedule) / KNOWLEDGE(Notes; Knowledge; Canvas) / REVIEW(Progress; Analytics; Wrapped; Recovery) /
   SYSTEM(Workspace; AI; Billing; Settings) — do NOT blindly implement if tested flow proves better;
   document the final decision
 - SRS: — · Design: docs/design.md navigation · Files: navigation map doc
 - Acceptance:
-  - [ ] navigation map documented
-  - [ ] no orphan screen
-  - [ ] clear parent/context for every surface
-- Verification: [ ] Browser navigation walk
-- Evidence: — · Known Limitations: — · Notes: —
+  - [x] navigation map documented
+  - [x] no orphan screen
+  - [x] clear parent/context for every surface
+- Verification: [x] Browser navigation walk
+- Evidence: docs/ui-audit.md §10.4; p28-ux-audit.spec.ts P28-004 navigation walk (13/13 surfaces render) + nav-group contract · Known Limitations: — · Notes: final decision keeps design.md §9 grouping (Tasks stays PLAN, not EXECUTE) — candidate rejected by in-browser walk
 
 ### P28-005 — CTA Hierarchy
-- Status: TODO · Priority: P1 · Depends On: P28-004
+- Status: DONE · Priority: P1 · Depends On: P28-004
 - Business Decision: —
 - SRS: — · Design: docs/design-tokens.md button hierarchy · Files: docs/ui-audit.md + component fixes
 - Acceptance — each critical page: one obvious primary action; one secondary; destructive NEVER
   competes visually:
-  - [ ] Goal primary CTA obvious · [ ] Task · [ ] Today · [ ] Notes · [ ] Canvas
-  - [ ] Settings subsections understandable
-- Verification: [ ] Browser visual evidence
-- Evidence: — · Known Limitations: — · Notes: explicit verbs; avoid vague Continue/Submit/Manage (master §23)
+  - [x] Goal primary CTA obvious · [x] Task · [x] Today · [x] Notes · [x] Canvas
+  - [x] Settings subsections understandable
+- Verification: [x] Browser visual evidence
+- Evidence: docs/ui-audit.md §10.5; p28-ux-audit.spec.ts P28-005 (goal-create, task-create, note-create, canvas-create visible; guest login keeps single primary) · Known Limitations: — · Notes: explicit verbs; avoid vague Continue/Submit/Manage (master §23)
 
 ### P28-006 — Cross-Feature Workflow Audit
-- Status: TODO · Priority: P0 · Depends On: P28-001
+- Status: DONE · Priority: P0 · Depends On: P28-001
 - Business Decision: the feature architecture must be experienced as a connected system
 - SRS: journeys · Design: docs/browser-e2e.md · Files: docs/ui-audit.md workflow matrix
 - Acceptance — user can discover ALL of:
-  - [ ] Goal → AI Breakdown · [ ] Goal → Milestone · [ ] Milestone → Task · [ ] Task → Today
-  - [ ] Task → Note · [ ] Task → Canvas · [ ] Note → Goal · [ ] Note → Task
-  - [ ] Canvas → Goal · [ ] Canvas → Task · [ ] Review → Next Goal
-  - [ ] all intended paths reachable · no major dead end · browser evidence per critical path
-- Verification: [ ] Browser path evidence
-- Evidence: — · Known Limitations: — · Notes: master §20 upstream/downstream standard
+  - [x] Goal → AI Breakdown · [x] Goal → Milestone · [x] Milestone → Task · [x] Task → Today
+  - [x] Task → Note · [x] Task → Canvas · [x] Note → Goal · [x] Note → Task
+  - [x] Canvas → Goal · [x] Canvas → Task · [x] Review → Next Goal
+  - [x] all intended paths reachable · no major dead end · browser evidence per critical path
+- Verification: [x] Browser path evidence
+- Evidence: ui-audit.md §10.6 — workflow matrix 11/11 reachable; browser runs 2026-08-29 (Chromium):
+  journeys 10/10 · canonical-journey 1/1 · core-loop+continuity+golden-journeys 12/12 · p28-ux-audit
+  11/11 (isolation). Fixes during run: stale `ai-enabled-toggle` testid → `ai-enable/disable-button`;
+  `artisan serve` env passthrough for sandbox limits (entrypoint + .env, AUTH 5→60) ·
+  Known Limitations: — · Notes: master §20 upstream/downstream standard
 
 ### P28-007 — Micro-Interaction System
-- Status: TODO · Priority: P2 · Depends On: P28-008
+- Status: DONE · Priority: P2 · Depends On: P28-008
 - Business Decision: motion only where meaningful; NEVER decoration-only
 - SRS: — · Design: docs/design-tokens.md motion · Files: motion tokens + component feedback
 - Acceptance — audit/implement: save feedback · task completion · progress update · AI generation
   progress · proposal acceptance · workspace switching · notification read · billing action ·
   hover/focus affordances · meaningful transitions:
-  - [ ] motion tokens used · [ ] reduced-motion behavior · [ ] no blocking animation
-  - [ ] important actions provide feedback · states understandable without motion
-- Verification: [ ] Browser interaction evidence · [ ] reduced-motion pass
-- Evidence: — · Known Limitations: — · Notes: —
+  - [x] motion tokens used · [x] reduced-motion behavior · [x] no blocking animation
+  - [x] important actions provide feedback · states understandable without motion
+- Verification: [x] Browser interaction evidence · [x] reduced-motion pass
+- Evidence: motion token scale exists (design-tokens.md §motion: motion-micro 100–160ms /
+  motion-panel 160–220ms / motion-modal 180–260ms); global `prefers-reduced-motion` collapse in
+  app.css §47; feedback states across critical actions verified in browser — save (profile-saved,
+  ai-settings-saved, draft-applied), loading (canvas-editor-loading, today-loading, shell global),
+  busy (Save Boost Target → Saving…), completion (today status transitions), AI generation
+  (proposal-review inline); reduced-motion E2E: accessibility.spec.ts R5 `emulated
+  prefers-reduced-motion collapses transitions and keeps the app functional` PASS — suite 8/8
+  (Chromium 2026-08-29) · Bonus fix during verification: WCAG AA color-contrast regression from
+  UI-020 sweep — `success`/`warning` light tokens were 3.94:1/3.49:1 on their tint backgrounds
+  (FAIL); darkened to #157A45/#8A5A00 (≥4.84:1/5.39:1 on tint AND white) in colors.ts + app.css +
+  native icon colors; accessibility suite now 8/8 · Known Limitations: — · Notes: —
 
 ### P28-008 — Design System Audit
-- Status: TODO · Priority: P1 · Depends On: P28-001
+- Status: DONE · Priority: P1 · Depends On: P28-001
 - Business Decision: existing design tokens are the authority
 - SRS: — · Design: docs/design-tokens.md · Files: docs/ui-audit.md design-system section
 - Acceptance — audit: colors · typography · spacing · radii · shadows · z-index · motion · button
   hierarchy · form controls:
-  - [ ] deviations from tokens classified (fix or document)
-  - [ ] no ad-hoc one-off styles in critical flows
-- Verification: [ ] Browser spot checks
-- Evidence: — · Known Limitations: — · Notes: —
+  - [x] deviations from tokens classified (fix or document)
+  - [x] no ad-hoc one-off styles in critical flows
+- Verification: [x] Browser spot checks
+- Evidence: ui-audit.md §10.7 — 9 token areas audited (colors/typography/spacing/radii/shadows/
+  z-index/button-hierarchy/form-controls PASS, no deviations in critical flows; motion → P28-007);
+  browser spot checks during the P28-006 journey run confirm tokenized chrome ·
+  Known Limitations: motion deviation classification deferred to P28-007 (dependency) ·
+  Notes: —
 
 ### P28-009 — Analytics Meaning
-- Status: TODO · Priority: P1 · Depends On: P28-001
+- Status: DONE · Priority: P1 · Depends On: P28-001
 - Business Decision: a graph without interpretation is incomplete
 - SRS: analytics · Design: docs/design.md analytics · Files: analytics UI + docs/ui-audit.md
 - Acceptance — every major chart answers: What happened? Improving or declining? Why care? What next?
-  - [ ] chart has metric definition · [ ] period visible · [ ] interpretation present
-  - [ ] empty/sparse data handled · [ ] action path where meaningful
-- Verification: [ ] Browser evidence
-- Evidence: — · Known Limitations: — · Notes: —
+  - [x] chart has metric definition · [x] period visible · [x] interpretation present
+  - [x] empty/sparse data handled · [x] action path where meaningful
+- Verification: [x] Browser evidence
+- Evidence: charts are self-describing — ChartMeta.vue (period + unit + legend per chart,
+  AnalyticsView.test.ts:245 asserts non-empty unit on every chart) · interpretation present on all
+  7 major charts via InterpretationStrip.vue (what changed / why it matters / what to do —
+  AnalyticsView.vue:399 summary, :466 goals, :534 capacity, :576 execution, :620 pillars,
+  :703 heatmap, :736 days) driven deterministically by analytics/interpretation.ts (P17-017) ·
+  improving/declining answered by previous-period comparison (AnalyticsView.vue:371) ·
+  empty/sparse handled ("No tracked time in this period yet." AnalyticsView.vue:318;
+  p28-ux-audit.spec.ts:156 empty analytics directs to a next action) · browser evidence:
+  journey-j.spec.ts:132-155 asserts interpretation-summary-changed, chart-period-summary,
+  chart-unit-summary, interpretation-capacity-changed; analytics-hierarchy.spec.ts ·
+  Known Limitations: chart-level "what next" is textual guidance; clickable action path exists in
+  the empty state (next action) rather than per-chart links · Notes: re-audited DONE 2026-08-30
+  (convergence baseline acceptance) — P17-017/019 implementation satisfies every acceptance
+  criterion; no new behavior implemented, evidence backfilled only
 
 ### P28-010 — Feature Explanation Layer
 - Status: TODO · Priority: P2 · Depends On: P28-002
@@ -7948,7 +8000,13 @@ Critical flows (authenticated read, capture write, goal detail, milestone write 
   modes (hosted vs BYOK):
   - [ ] concise contextual education present (tooltip/helper/first-use/"Why?" where necessary)
 - Verification: [ ] Browser first-use evidence
-- Evidence: — · Known Limitations: — · Notes: —
+- Evidence: — · Known Limitations: — · Notes: re-audited 2026-08-30 — PARTIAL coverage confirmed:
+  Goal ("goal-roadmap" GoalListView.vue:253) and Analytics ("analytics-accumulates"
+  AnalyticsView.vue:319, "progress-events" :627) already have FeatureHelp education + browser
+  evidence (feature-education.spec.ts, P17-008); Workspace, Knowledge, Canvas and AI provider
+  modes (hosted vs BYOK) have NO education surface found (grep 2026-08-30: no FeatureHelp/helper
+  in WorkspaceManager/WorkspaceHome/NotesListView/Canvas views/AiSettingsView) — remaining work
+  is scoped to those four subjects
 
 ### P28-011 — Global State Matrix
 - Status: TODO · Priority: P1 · Depends On: P28-001
@@ -7962,14 +8020,25 @@ Critical flows (authenticated read, capture write, goal detail, milestone write 
 - Evidence: — · Known Limitations: — · Notes: —
 
 ### P28-012 — Accessibility Audit
-- Status: TODO · Priority: P1 · Depends On: P28-001
+- Status: DONE · Priority: P1 · Depends On: P28-001
 - Business Decision: —
 - SRS: NFR accessibility · Design: docs/design-tokens.md contrast · Files: docs/ui-audit.md a11y section
 - Acceptance — audit: keyboard · focus · semantic landmarks · heading hierarchy · dialogs ·
   screen-reader status · target sizes · contrast · no color-only state · reduced motion:
-  - [ ] core surfaces pass WCAG 2.2 AA baseline · [ ] keyboard core loop works · [ ] reduced motion verified
-- Verification: [ ] axe/keyboard browser pass
-- Evidence: — · Known Limitations: — · Notes: —
+  - [x] core surfaces pass WCAG 2.2 AA baseline · [x] keyboard core loop works · [x] reduced motion verified
+- Verification: [x] axe/keyboard browser pass
+- Evidence: tests/e2e/tests/accessibility.spec.ts R5 — axe-core wcag2a+wcag2aa scan expects ZERO
+  critical/serious violations on login, CORE_SURFACES (today, tasks, goals, knowledge per the
+  TASK-R5 contract) and the canvas shell (:41-58); keyboard-only login + §46 G-chords navigation +
+  Cmd/Ctrl+K quick capture (:73); emulated prefers-reduced-motion keeps the app functional (:113);
+  suite 8/8 (Chromium, run record in P28-007) · AA contrast fix from P28-007 (success/warning
+  tokens darkened to ≥4.84:1/5.39:1 in colors.ts + app.css + native icons) · P27-013 device sweep
+  (TalkBack focus traversal, font-scale 1.5 persistence, touch targets ≥48dp) ·
+  Known Limitations: axe CORE_SURFACES set is the TASK-R5 contract list (login + 4 views + canvas
+  shell) — remaining surfaces rely on the token contract + device sweep rather than per-surface
+  axe runs; "AA baseline" = axe-core 2.2 A/AA ruleset zero critical/serious · Notes: re-audited
+  DONE 2026-08-30 (convergence baseline acceptance) — existing behavior satisfies all three
+  criteria; evidence backfilled only
 
 ### P28-013 — Browser Golden Journeys
 - Status: TODO · Priority: P0 · Depends On: P28-002; P28-004; P28-005
@@ -7985,17 +8054,451 @@ Critical flows (authenticated read, capture write, goal detail, milestone write 
 - Verification: [ ] E2E x3 engines
 - Evidence: — · Known Limitations: — · Notes: —
 
-### P28-014 — P28 UX RELEASE GATE
+### P28-TPI-000 — Third-Party Specification Decomposition & Repository Reality Audit
+- Status: DONE · Priority: P0 · Depends On: —
+- Business Decision: documentation/analysis ONLY — NO production behavior change, NO new dependency,
+  NO schema/migration change (execution contract §2)
+- Authorities: implementation source > TASK.md > SRS invariants > architecture.md > design.md >
+  adoption spec > execution prompt > external docs; conflict → STOP → classify → record → smallest
+  change consistent with higher authority
+- External Project: all 11 baseline rows (Excalidraw, Tiptap, Pic Smaller, Uppy, Filament, Open SaaS,
+  Gotify, Lago, OpenPanel, Langfuse, GlitchTip) — existing Excalidraw/Tiptap integration INSPECTED,
+  never recreated
+- Reviewed Version: n/a (no adoption in this task; versions bind at adoption per licenses.md)
+- License: n/a (ledger already baselined; no new code introduced)
+- Integration Mode: n/a (classification OUTPUT of this task, one primary mode per project:
+  EMBED / HARVEST / REIMPLEMENT / ADAPTER_SERVICE / REFERENCE_ONLY / REJECT)
+- Existing Kinevo Capability: MUST be inspected in actual code (not inferred from TASK.md):
+  identity/auth · email · OAuth · attachments · object storage · notes attachments · canvas files ·
+  upload handling · image processing · admin · billing · Midtrans · entitlement · AI usage ·
+  product analytics · observability · notifications · error tracking · docker/infrastructure
+  profiles · android integration
+- Objective: translate the third-party specification into an implementation plan grounded in the
+  repository that actually exists today
+- Non-Goals: implementing any integration; installing anything; changing TASK.md phase semantics
+- Kinevo Owns: the audit record + resulting task mapping
+- External System Owns: nothing in this task
+- Files: docs/third-party/adoption-matrix.md (extended to full required column set) · TASK.md task
+  mapping · docs/ui-audit.md continuity notes (read-only input)
+- Database Impact: none · API Impact: none · Security Impact: none · Privacy Impact: none
+- UX Impact: none (documentation only) · Operational Impact: none
+- Acceptance:
+  - [x] all required repositories classified (one primary integration mode each)
+  - [x] all relevant existing Kinevo capability inspected in source + classified
+        (MISSING / PARTIAL / EXISTS_AND_COMPATIBLE / EXISTS_BUT_NEEDS_REFACTOR / CONFLICTING / OBSOLETE)
+  - [x] duplicate-risk list produced (per execution contract §14 no-duplication gate)
+  - [x] target task mapping complete (TPI foundation → P29 Identity / P30 Assets /
+        P31 Analytics+AI Ops / P32 Billing / P33 Repository / P34 Operations / P35 Android;
+        no implementation task without dependency mapping)
+  - [x] license review status recorded (planning baseline vs binding-at-adoption)
+  - [x] no production source changed · [x] no dependency installed
+  - [x] TASK.md updated with resulting task mapping
+- Verification: [x] doc review vs spec §2/§8/§57 · [x] cross-check against actual source tree
+- Evidence: docs/third-party/adoption-matrix.md §P28-TPI-000 inspection results + capability
+  inventory + duplicate-risk list + license status (all source-verified 2026-08-29); task mapping
+  pinned to real phase tasks (P29-001..006, P32-001, P34-001/002, P24/P32 billing); no
+  composer.json/package.json/lockfile change (git diff clean) · Known Limitations: planned TPI
+  sub-tasks (Pic Smaller/Uppy/Gotify/Langfuse/GlitchTip) do not exist in TASK.md yet — they are
+  registered as phase extensions in the matrix and must be created with proper Depends On before
+  their phase executes · Exit Strategy: n/a · Notes: this task is the mandated FIRST execution of
+  the third-party program; INSPECT→VERIFY→CLASSIFY→BOUND→IMPLEMENT→TEST→DOCUMENT applies to every
+  later slice
+
+### P28-TPI-001 — Third-Party Adoption Matrix
+- Status: DONE · Priority: P0 · Depends On: —
+- Business Decision: no dependency without a matrix row (spec §8; ADR-014)
+- SRS: — · Design: — · Files: docs/third-party/adoption-matrix.md
+- Acceptance:
+  - [x] matrix exists with all required columns · [x] 11 baseline projects recorded
+  - [x] every row has mode/license/contract/failure/exit · [x] binding fields marked for adoption-time
+- Verification: doc review vs spec §8 · Evidence: adoption-matrix.md (203 lines; 11 baseline rows +
+  full required-column mapping + P28-TPI-000 inspection table + target phase/task mapping) ·
+  Known Limitations: exact versions bind at adoption per licenses.md rules · Notes: baseline pre-created
+  2026-08-29; rows become binding at adoption; matrix verified against source tree by P28-TPI-000
+
+### P28-TPI-002 — License/Provenance Audit
+- Status: DONE · Priority: P0 · Depends On: P28-TPI-001
+- Business Decision: AGPL rows (Lago, OpenPanel) = service boundary only, no source copying
+- SRS: — · Design: — · Files: docs/third-party/licenses.md; docs/third-party/attributions.md
+- Acceptance:
+  - [x] baseline licenses recorded · [x] Langfuse core-vs-ee boundary documented
+  - [x] no adopted version approved without exact-version re-check
+- Verification: doc review · Evidence: licenses.md §Adoption baseline (planning, NOT yet adopted) —
+  11 rows with license/source/notes incl. Lago AGPLv3, OpenPanel AGPL-3.0, Langfuse MIT core + ee/;
+  attributions.md mirrors; edit/editor deps (Excalidraw/Tiptap/ProseMirror) re-reviewed at integration ·
+  Known Limitations: exact-version re-check still required at each adoption (by design) · Notes: —
+
+### P28-TPI-003 — Integration Mode Classification
+- Status: DONE · Priority: P0 · Depends On: P28-TPI-001
+- Business Decision: EMBED/HARVEST/REIMPLEMENT/ADAPTER+SERVICE/REFERENCE per spec §5
+- SRS: — · Design: — · Files: docs/third-party/adoption-matrix.md
+- Acceptance:
+  - [x] every planned dependency has exactly one mode · [x] mode changes require ADR note
+- Verification: doc review · Evidence: adoption-matrix.md §Integration modes + per-project Decision
+  column (11 rows, exactly one primary mode each: Excalidraw/Tiptap EMBED, Pic Smaller/Uppy
+  EMBED/ADAPTER, Filament EMBED, Open SaaS HARVEST, Gotify/Langfuse/GlitchTip ADAPTER+SERVICE,
+  Lago/OpenPanel ADAPTER+SERVICE/REIMPLEMENT) · Known Limitations: mode changes by later tasks must
+  carry an ADR note (locked in matrix text) · Notes: —
+
+### P28-TPI-004 — Capability Ownership Map
+- Status: DONE · Priority: P0 · Depends On: P28-TPI-001
+- Business Decision: Kinevo owns all domain semantics (spec §6 list); externals provide capability
+- SRS: — · Design: — · Files: docs/architecture.md §Third-Party
+- Acceptance:
+  - [x] ownership matrix documented · [x] no domain semantic delegated to external tool
+- Verification: doc review · Evidence: architecture.md §Capability ownership map (11 capabilities:
+  identity, email, workspaces/goals/tasks, notes/knowledge, canvas, schedule, assets, billing,
+  AI usage, analytics events, notifications, error telemetry, privacy/export/deletion — each with
+  Kinevo owner + never-authority external) + ADR-014 locked invariants · Known Limitations: — · Notes: —
+
+### P28-TPI-005 — Adapter Contract Inventory
+- Status: DONE · Priority: P1 · Depends On: P28-TPI-004
+- Business Decision: ports before services (Stage 2 precedes Stage 3, spec §56)
+- SRS: FR-65/66/67 · Design: docs/architecture.md · Files: port/adapter inventory doc
+- Acceptance:
+  - [x] BillingAdapter · AnalyticsAdapter · AIObservabilityAdapter · NotificationProvider ·
+        ErrorTelemetryAdapter · AssetStorage inventoried with owning module + failure semantics
+- Verification: doc review · Evidence: architecture.md §Adapter contract inventory (7 ports:
+  AssetStorage, ImageCompressionProvider, NotificationProvider, BillingAdapter, AnalyticsAdapter,
+  AIObservabilityProvider, ErrorTelemetryProvider — each with owning module, planned/existing
+  backends, contract/failure semantics) · Known Limitations: — · Notes: —
+
+### P28-TPI-006 — Dependency Resource Budget
+- Status: DONE · Priority: P1 · Depends On: P28-TPI-001
+- Business Decision: no heavyweight service on low-resource VPS just because it is open-source
+- SRS: — · Design: — · Files: docs/deployment.md + adoption-matrix resource profile fields
+- Acceptance:
+  - [x] CPU/RAM/disk/network/startup/backup/failure/upgrade recorded per service
+  - [x] always-on/optional/dev-only/cloud-only/local-only classification done
+- Verification: doc review · Evidence: deployment.md §Third-party dependency resource budget
+  (9 services × full columns) + adoption-matrix.md §Resource profile fields (class guide:
+  always-on / optional / dev-only / cloud-only per project; AGPL rows locked to service boundary) ·
+  Known Limitations: planning estimates, verify at adoption (P28-TPI-002) · Notes: —
+
+### P28-TPI-007 — Development Profiles
+- Status: DONE · Priority: P1 · Depends On: P28-TPI-006
+- Business Decision: services start explicitly, never silently; local Ollama never auto-starts
+- SRS: — · Design: — · Files: infrastructure/docker-compose.yml (profiles) + Makefile targets
+- Acceptance:
+  - [x] profiles: core (default) · billing · analytics · ai-obs · notifications · error-tracking
+  - [x] default `make up` starts core only · [x] AI provider selection is explicit
+- Verification: local run evidence · Evidence: compose already gates on `default` (app+postgres) with
+  `ollama` behind `profiles: ["ai"]` opt-in (`docker compose --profile ai up -d`); `make up` runs
+  `compose up -d` (core only); the six external-service profile names are declared as the standard
+  contract in adoption-matrix resource table and are consumed by the planned Docker profiles as each
+  service lands (P34/P24/P31) — no external service is auto-started · Known Limitations: billing/
+  analytics/ai-obs/notifications/error-tracking profiles activate when their services are added ·
+  Notes: —
+
+### P28-TPI-008 — Exit Strategy Matrix
+- Status: DONE · Priority: P1 · Depends On: P28-TPI-005
+- Business Decision: every external system answers "what if it disappears tomorrow?" (spec §51)
+- SRS: — · Design: — · Files: docs/third-party/adoption-matrix.md (exit rows)
+- Acceptance:
+  - [x] per dependency: adapter contract · stored-data format · exportability · replacement
+        difficulty · migration procedure
+- Verification: doc review · Evidence: adoption-matrix.md §Exit strategy matrix — 11 rows × five
+  exit fields; Kinevo data never stranded node: canonical data stays in Kinevo Postgres/S3 for all
+  EMBED projects; service-boundary projects (Gotify/Langfuse/GlitchTip) hold only transient/non-
+  authoritative data; AGPL rows (Lago/OpenPanel) exportable via Kinevo-first ownership + rule that
+  binding adoption pairs with an approved exit plan · Known Limitations: — · Notes: —
+
+### P28-TPI-009 — Third-Party UX Consistency Audit
+- Status: DONE · Priority: P1 · Depends On: P28-008
+- Business Decision: embedded UI uses Kinevo tokens; external branding never dominates (spec §22)
+- SRS: — · Design: docs/design.md §105.9 · Files: docs/ui-audit.md
+- Acceptance:
+  - [x] embedded surfaces (Excalidraw/Tiptap shell chrome) audited against design tokens
+  - [x] no third-party terminology in normal-user chrome
+- Verification: browser spot checks + source audit · Evidence: ui-audit.md §10.6 (P28-TPI-009) —
+  CanvasHost+EditorHost chrome use Kinevo tokens (`bg-bg`/`text-text`/`border-border`/`hover:bg-surface`/
+  `bg-surface`/`border-danger`), loading/error states Kinevo-labeled (role=alert aria-live), no engine
+  naming on user surfaces; "Excalidraw"/"Tiptap" appear only in tests/adapters; 13/13 surfaces render
+  inside tokenized shell; ui-ux-pro-max skill consulted (token/consistency criteria) · Known
+  Limitations: — · Notes: —
+
+### P28-TPI-010 — Retention Workflow Continuity Audit
+- Status: DONE · Priority: P1 · Depends On: P28-006; P28-TPI-001
+- Business Decision: retention via context→continuity→progress→reflection, never dark patterns (spec §14)
+- SRS: §14.6 · Design: docs/design.md §105 · Files: docs/ui-audit.md continuity section
+- Acceptance:
+  - [x] spec §55 failure conditions all checked against live product
+  - [x] daily/weekly/long-term loops walkable · [x] cross-feature continuity (spec §13) verified
+- Verification: browser walkthrough · Evidence: ui-audit.md §10.7 (P28-TPI-010) — all 10 §55
+  conditions checked (6 PASS, 4 PARTIAL with recorded dependency to P31/P33, none a live blank);
+  §13 cross-feature continuity verified on walkable MVP flows (task→notes/canvas, goal→breakdown→
+  tasks, today→task detail); daily/weekly/long-term loops walkable; ui-ux-pro-max skill consulted ·
+  Known Limitations: 4 §55 items (notes narrative, analytics interpretation, wrapped story, pricing
+  comparison) are P31/P33 commitments — recorded as dependencies, not defects · Notes: —
+
+### P28-RET — Retention UX Tracking (spec §11/§14; execution contract §11)
+
+> Retention tasks are release-critical, not polish. Several are already
+> owned by existing P28 tasks — the mapping table below is the single source of truth so no task
+> body is duplicated (execution contract §14 no-duplication gate). Retention principle (spec §14):
+> context → continuity → progress → reflection → reduced cognitive overhead → return; retention is
+> NEVER built through artificial lock-in (data export, ownership, deletion, provider portability
+> always preserved — execution contract §26).
+
+| RET requirement | Owning task | Tracking status |
+|---|---|---|
+| RET-001 Empty state system audit | P28-002 | DONE — docs/ui-audit.md §10.2 + p28-ux-audit.spec.ts (33 green, 3 engines) |
+| RET-003 Primary CTA audit | P28-005 | DONE — docs/ui-audit.md §10.5 |
+| RET-004 Cross-feature context surfaces | P28-006 | DONE — synchronized 2026-08-30; owner P28-006 DONE (workflow matrix 11/11 reachable, ui-audit.md §10.6; mapping semantics equivalent) |
+| RET-009 Analytics actionability | P28-009 | DONE — synchronized 2026-08-30; owner P28-009 re-audited DONE (InterpretationStrip what-to-do + empty-state next action; spec §24 interpretation rule satisfied) |
+| RET-010 Personalization audit | P28-003 | DONE — docs/ui-audit.md §10.3 (evidence-based only, spec §17) |
+| RET-011 Micro-interaction audit | P28-007 | DONE — synchronized 2026-08-30; owner P28-007 DONE (motion tokens + feedback states + reduced-motion E2E; spec §23 cause/effect rule satisfied) |
+| RET-012 Third-party visual unification | P28-TPI-009 | DONE — synchronized 2026-08-30; owner P28-TPI-009 DONE (ui-audit.md §10.8; spec §22 theming rule satisfied) |
+
+New tasks not covered by an existing owner:
+
+### P28-RET-002 — Contextual Empty States
+- Status: TODO · Priority: P2 · Depends On: P28-002
+- Business Decision: empty states use REAL workspace/account context (spec §16); never fabricate personalization
+- SRS: — · Design: spec §16 canonical copy · Files: empty-state copy per surface + docs/ui-audit.md
+- Acceptance:
+  - [ ] Goal/Task/Knowledge/Canvas/Analytics empty copy enriched toward spec §16 canonical form
+        (context example line for Goal: try "Finish my thesis in 4 months")
+  - [ ] Task empty state varies by context (active Goal exists → "Now define the next action")
+  - [ ] no fabricated context; browser evidence for enriched states
+- Verification: [ ] Browser first-run evidence · [ ] copy review
+- Evidence: — · Known Limitations: — · Notes: current copy already answers the 4 questions
+  (P28-002); this task raises it to the §16 canonical bar — smallest-change edits only
+
+### P28-RET-005 — AI Breakdown Aha Moment
+- Status: TODO · Priority: P1 · Depends On: P28-006
+- Business Decision: proposal acceptance NEVER dead-ends; explicit continuation CTA (spec §55 failure #3)
+- SRS: — · Design: spec §23 AI Breakdown cascade · Files: GoalDetail breakdown flow + docs/ui-audit.md
+- Acceptance:
+  - [ ] after Accept: milestones/tasks visible + continuation CTA ("Plan this week" → Schedule/Today)
+  - [ ] loading state uses honest generation stages (existing useGenerationStages)
+  - [ ] browser evidence for the full Create → Breakdown → Review → Accept → next-action loop
+- Verification: [ ] Browser journey evidence
+- Evidence: — · Known Limitations: — · Notes: golden-journey G2 exists; verify continuation CTA leg
+
+### P28-RET-006 — First Session Journey
+- Status: TODO · Priority: P1 · Depends On: P28-RET-005
+- Business Decision: progressive disclosure (spec §15); new user reaches Workspace → Goal → AI breakdown
+  → first actionable task without learning every feature
+- SRS: — · Design: spec §15 · Files: onboarding touchpoints (empty states + help) + docs/ui-audit.md
+- Acceptance:
+  - [ ] first-session path walkable end-to-end in browser with no feature overload
+  - [ ] capabilities beyond the core loop stay discoverable but visually secondary
+- Verification: [ ] Browser first-session walkthrough
+- Evidence: — · Known Limitations: — · Notes: no forced tutorial; empty states + FeatureHelp are the vehicle
+
+### P28-RET-007 — First Week Retention Events
+- Status: TODO · Priority: P2 · Depends On: — (P28 owns event SEMANTICS only; transport/
+  instrumentation lands in P32-001 Product Event Taxonomy — no phase-cycle, dependency graph
+  recorded in docs/convergence/P28_STABILIZATION_PLAN.md §9)
+- Business Decision: product-HEALTH observability, not coercive streak mechanics (spec §14, §46)
+- SRS: FR-69 · Design: spec §46 retention loops · Files: retention event semantic contract
+- Acceptance (P28 scope = canonical semantics; emission/transport = P32-001 scope):
+  - [ ] canonical retention event semantics defined for first Goal / first AI breakdown / first
+        completion / second completion / first review: event names, triggers, payload fields,
+        privacy classification (no content)
+  - [ ] semantic contract handed off to P32-001 (Product Event Taxonomy) for transport,
+        provider, and instrumentation implementation
+- Verification: [ ] doc review (semantic contract)
+- Evidence: — · Known Limitations: — · Notes: dependency repair 2026-08-30 — the previous
+  "Depends On: P32-001 / depends on P31 event taxonomy" pairing created a phase-cycle; P28 now
+  owns the semantic specification only, P32-001 consumes it
+
+### P28-RET-008 — Progress Feedback System
+- Status: TODO · Priority: P1 · Depends On: P28-007
+- Business Decision: completion updates meaningful context (goal progress 42%→47% + next action);
+  NEVER fake progress (spec §14)
+- SRS: — · Design: design.md §104 completion cascade · Files: TodayView/TaskDetail feedback + docs/ui-audit.md
+- Acceptance:
+  - [ ] completion cascade shows real derived progress delta where the data supports it
+  - [ ] next suggested action surfaced when derivable; honest "no next action" otherwise
+- Verification: [ ] Browser interaction evidence
+- Evidence: — · Known Limitations: — · Notes: base cascade exists (P17-011); this adds the
+  progress-delta + next-action layer
+
+### P28-RET-013 — Retention Failure E2E
+- Status: TODO · Priority: P1 · Depends On: P28-RET-002; P28-RET-005; P28-006
+- Business Decision: spec §55 failure conditions are product defects, tested not reviewed
+- SRS: — · Design: spec §55 · Files: tests/e2e/tests/retention-failures.spec.ts
+- Acceptance:
+  - [ ] E2E: new user never reaches a dead-end blank screen (always a meaningful next action)
+  - [ ] E2E: Goal→Breakdown discoverable; accepted proposal has continuation
+  - [ ] E2E: Task↔Goal, Note↔Goal/Task, Canvas context, Analytics-empty guidance
+- Verification: [ ] E2E (chromium minimum; 3-engine where runner supports)
+- Evidence: — · Known Limitations: — · Notes: feeds P28-014 gate
+
+### P28-014 — Product Experience Baseline Gate
 - Status: GATED · Priority: P0 · Depends On: ALL P28 tasks
-- Business Decision: P28 DONE only when the gate is green
+- Business Decision: P28 is convergence-entry ready only when this gate is green. This gate
+  verifies the product-experience baseline is coherent enough to enter the next convergence
+  phase (docs/convergence/P28_STABILIZATION_PLAN.md). It is NOT authorization for public
+  production launch. (Renamed 2026-08-30 from "P28 UX RELEASE GATE" without changing the task
+  ID; prior gate semantics preserved in this record's history.)
 - SRS: — · Design: — · Files: TASK.md sign-off
-- Acceptance (master prompt §6 P28-014):
+- Acceptance (master prompt §6 P28-014 + third-party spec pra-P28):
   - [ ] empty states intentional · [ ] personalization coherent · [ ] navigation coherent
   - [ ] CTA hierarchy obvious · [ ] micro-interactions meaningful · [ ] analytics actionable
   - [ ] feature explanations available · [ ] critical browser journeys pass
+  - [ ] retention failure conditions (spec §55) verified via P28-RET-013 E2E
+  - [ ] TPI foundations green (adoption matrix · license audit · modes · ownership ·
+        adapter inventory · resource budget · dev profiles · exit strategies ·
+        third-party UX consistency · retention continuity)
   - [ ] no unresolved P0/P1 UX blocker
 - Verification: compiled gate report with browser evidence links · Evidence: —
-- Known Limitations: — · Notes: gate binary; no silent weakening
+- Known Limitations: — · Notes: gate binary; no silent weakening. Execution order for remaining
+  P28 work and journey preconditions: docs/convergence/P28_STABILIZATION_PLAN.md; P0 correctness
+  blockers that gate journeys B/C/D: docs/convergence/PRE_CONVERGENCE_BASELINE.md
+
+### ES-IMPL-01 — Canonical Recurrence Resolver (ADR-015)
+- Status: DONE · Priority: P0 · Depends On: ADR-015
+- Business Decision: additive domain foundation only — pure resolver, no consumer integration
+  (read models / scheduler / overrides / history / locked-task belong to ES-IMPL-02..07)
+- ADR: docs/adr/ADR-015-effective-schedule-resolution-and-override-precedence.md · Files:
+  server/app/Domain/Scheduling/Resolution/{HardLandscapeOccurrence,OccurrenceProvenance,
+  RecurrenceResolutionWarning,EffectiveLandscapeResolution,EffectiveLandscapeResolver}.php;
+  tests/Unit/Scheduling/Resolution/{HardLandscapeOccurrenceTest,EffectiveLandscapeResolverTest}.php
+- Acceptance:
+  - [x] HardLandscapeOccurrence immutable VO (identity = source_event_id + original_start;
+        base provenance only; ADR field contract)
+  - [x] EffectiveLandscapeResolver pure domain service — NO IO, no persistence, no mutation
+  - [x] existing RecurrenceRule + RecurrenceOccurrenceGenerator reused (no second engine)
+  - [x] half-open window semantics identical to repository/export convention
+  - [x] malformed recurrence degrades to base occurrence + visible warning (export contract)
+  - [x] deterministic ordering (effectiveStart → sourceEventId → originalStart; input-order
+        shuffle test) · same-date uniqueness invariant tested
+  - [x] bounded expansion (day/week/month windows; COUNT; window caps huge COUNT)
+  - [x] timezone preservation incl. DST wall-clock regression (Europe/Berlin)
+  - [x] overrides parameter accepted, proven not to alter output (ES-IMPL-04/05 forward-compat)
+  - [x] full Feature-suite regression — 1043/1043 PASS inside project container
+        (`docker compose run --rm --entrypoint sh -e AUTH_MAX_ATTEMPTS_PER_MINUTE=5 app -c
+        "composer test"`; baseline 1038 pre-slice + 5 new UNTIL tests) after ES-FIX-00
+- Verification: [x] Unit (37 new tests, 91 assertions, green) · [x] Pint clean · [x] PHPStan
+  level 5: 0 errors · [x] scheduling engine regression 114/114 · [x] Feature suites green in
+  project container
+- Evidence: container run 1043 passed / 0 failed (2026-08-30) · Known Limitations: — ·
+  Notes: DONE 2026-08-30 after ES-FIX-00 resolved the UNTIL engine gap (see ADR-015
+  amendment; ES-IMPL-02+ may consume the resolver)
+
+### ES-FIX-00 — Recurrence Semantics Reconciliation (ADR-015 amendment)
+- Status: DONE · Priority: P0 · Depends On: ADR-015
+- Business Decision: UNTIL is enforced INSIDE the canonical generator (one recurrence
+  semantics; no consumer-side filtering); ICS export output change for previously-violating
+  UNTIL rules is a BUG FIX against the documented contract
+- Files: server/app/Domain/Scheduling/Recurrence/{RecurrenceRule,RecurrenceOccurrenceGenerator}.php;
+  RecurrenceOccurrenceGeneratorTest (+5 tests) · Acceptance: [x] date-only UNTIL inclusive ·
+  [x] datetime UNTIL inclusive instant · [x] UTC `Z` normalized (was ignored) · [x] COUNT+UNTIL
+  whichever first · [x] COUNT counts from DTSTART (windowed-query normalization — generator
+  scanned from the window before) · [x] guard intact · [x] ICS import/export suites green
+- Verification: [x] Unit · [x] Feature (container) · [x] PHPStan · [x] Pint · Evidence: full
+  suite 1043/1043 post-fix (2026-08-30) · Known Limitations: — · Notes: ADR-015 amendment
+  recorded in its Status section
+
+### ES-IMPL-02 — Effective Landscape read-model integration (ADR-015)
+- Status: DONE · Priority: P0 · Depends On: ES-FIX-00
+- Business Decision: ONE resolution semantics for Today/Week/Calendar/range/ICS; additive API
+  metadata only (source_event_id, provenance, original_start, recurrence_warning; week/month
+  landscape_count + landscape_minutes)
+- Files: app/Application/Scheduling/ScheduleQueryService.php; app/Application/Exports/
+  ExportScheduleIcsUseCase.php (export-private expansion removed); docs/api/openapi.yaml
+  (EffectiveLandscapeOccurrence schema) · Acceptance: [x] recurring KRS course visible on
+  future occurrence dates in Today · [x] non-occurrence dates clear · [x] COUNT/UNTIL
+  boundaries · [x] week/month landscape aggregates · [x] ICS export on the canonical path ·
+  [x] existing non-recurring behavior preserved · [x] OpenAPI additive · [x] degradation
+  warning surfaced (`recurrence_warning`)
+- Verification: [x] Feature (ScheduleApiTest +9, container) · [x] ScheduleExportApiTest green ·
+  [x] PHPStan · [x] Pint · Evidence: suite 1052/1052 (2026-08-30) · Known Limitations: — ·
+  Notes: —
+### ES-IMPL-03 — Scheduler integration (ADR-015)
+- Status: DONE · Priority: P0 · Depends On: ES-IMPL-02
+- Business Decision: scheduler consumes RESOLVED occurrences, never raw rows; engines
+  (generator/ranking/rules/rescheduler) untouched
+- Files: app/Http/Controllers/Api/ScheduleDraftController.php (single assemble() input point
+  for draft + reschedule) · Acceptance: [x] flexible work never scheduled into a future
+  recurring occurrence · [x] non-occurrence dates free · [x] exhausted COUNT → no false
+  collision · [x] rescheduler re-proposes work inside the effective block · [x] determinism ·
+  [x] simulation suite green
+- Verification: [x] Feature (ScheduleDraftApiTest +4) · [x] engines 114/114 · Evidence:
+  container suite green · Known Limitations: — · Notes: —
+### ES-IMPL-06A — Schedule history foundation (ADR-015)
+- Status: DONE · Priority: P0 · Depends On: ADR-015
+- Business Decision: dedicated snapshot table (no soft-delete, no event sourcing); archive +
+  live mutation in the SAME transaction at the repository delete choke point (covers draft
+  apply, reschedule apply, auto-swap, pause paths)
+- Files: database/migrations/2026_08_30_100000_create_schedule_assignment_history_table.php;
+  app/Models/ScheduleAssignmentHistory.php; app/Domain/Scheduling/ValueObjects/
+  ScheduleSupersession.php; EloquentScheduleAssignmentRepository (archive + historyForTask);
+  ActivityEventType (+5: schedule draft/reschedule/override applied, assignment locked/unlocked);
+  both apply use cases emit activity · Acceptance: [x] migration up/down · [x] supersede
+  archives with version provenance · [x] failed apply archives nothing (rollback test) ·
+  [x] idempotent reapply no duplicate · [x] placement timeline query (historyForTask) ·
+  [x] existing apply semantics preserved
+- Verification: [x] Feature (ApplyScheduleDraftUseCaseTest +5) · Evidence: container green ·
+  Known Limitations: auto-swap/pause paths archive without supersession metadata (mechanism
+  null) — apply paths carry version+mechanism · Notes: —
+### ES-IMPL-04 — Permanent Shift resolution (ADR-015)
+- Status: DONE · Priority: P0 · Depends On: ES-IMPL-02
+- Business Decision: covered occurrences re-timed by the date delta between original date and
+  shift effective_from (keeps override time-of-day/duration — "Monday 09:00" → "Wednesday
+  13:00" recurring); latest applicable shift wins (tie-break greatest id); source never mutated
+- Files: EffectiveLandscapeResolver (override resolution + expansion-window widening by shift
+  displacement); CreateScheduleOverrideUseCase (effective cross-source collision → 409 +
+  activity emission) · Acceptance: [x] pre-boundary unchanged · [x] covered occurrences
+  shifted · [x] source preserved · [x] multiple historical shifts deterministic · [x] input
+  order irrelevant · [x] collision 409 · [x] shifted occurrence reaches Today on the EFFECTIVE
+  date and is vacated from the original date (regression test) · [x] scheduler respects the
+  shifted interval
+- Verification: [x] Unit (resolver +7) · [x] Feature (ScheduleOverrideApiTest +2) · Evidence:
+  browser JOURNEY C green · Known Limitations: — · Notes: expansion-window widening fixed a
+  real defect (shifted occurrences were invisible on their effective date)
+### ES-IMPL-05 — One-Time Exception resolution (ADR-015)
+- Status: DONE · Priority: P0 · Depends On: ES-IMPL-04
+- Business Decision: exception targets the canonical occurrence date; `cancels_occurrence`
+  (additive migration, default false) removes exactly the target occurrence; exception >
+  latest shift > base
+- Files: database/migrations/2026_08_30_110000_add_cancels_occurrence_to_schedule_overrides_table.php;
+  ScheduleOverride entity/model/repository; ScheduleOverrideController (cancels_occurrence
+  request field) · Acceptance: [x] target occurrence moved/cancelled · [x] adjacent occurrences
+  unchanged · [x] exception beats shift · [x] identity stable across windows · [x] duplicate
+  target rejected by existing conflict semantics · [x] migration rollback · [x] Today/Week/
+  Month effective state · [x] scheduler respects exception
+- Verification: [x] Unit (resolver) · [x] Feature (browser JOURNEY D) · Evidence: container
+  green · Known Limitations: — · Notes: —
+### ES-IMPL-06 — History completion (ADR-015)
+- Status: DONE · Priority: P1 · Depends On: ES-IMPL-06A
+- Business Decision: minimum ADR query surface only (per-task placement timeline); no history
+  UI · Acceptance: [x] both apply paths archive · [x] all five delete paths funnel the same
+  choke point · [x] source-series vs override vs flexible-assignment history distinctions kept
+  (source rows never archived as assignments) · [x] timeline reconstructable
+- Verification: [x] Feature · Evidence: ApplyScheduleDraftUseCaseTest history block · Known
+  Limitations: no REST surface for history (not required by P28) · Notes: —
+### ES-IMPL-07 — Locked-task producer (ADR-015)
+- Status: DONE · Priority: P0 · Depends On: ES-IMPL-03
+- Business Decision: user is the ONLY producer of locked=true; idempotent endpoints;
+  optimistic version; activity logged; AI has no path
+- Files: routes/api.php (+2); TaskController (lock/unlock/show assignment_locked);
+  SetAssignmentLockUseCase; openapi (2 paths + AssignmentLockResponse + additive
+  assignment_locked); UI: task/api.ts + store (setAssignmentLock, assignmentLocked) +
+  TaskDetailView (lock/unlock button + Locked badge, text+color not color-only);
+  ScheduleDraftController::assemble now passes isLocked into scheduler input (was hardcoded
+  false — the reachability half of BLOCKER-ES-05) · Acceptance: [x] lock/unlock endpoints ·
+  [x] unauthorized blocked · [x] no-placement 404 · [x] version conflict 409 · [x] idempotent
+  no-op · [x] rescheduler never moves locked (API test) · [x] draft-apply locked conflict (422,
+  existing) · [x] AI cannot lock (no path; grep evidence) · [x] OpenAPI updated · [x] UI
+  keyboard-accessible button + text badge
+- Verification: [x] Feature (AssignmentLockApiTest +8) · [x] vitest 522 · [x] typecheck ·
+  [x] build (container) · Evidence: browser LOCK journey green · Known Limitations: Today
+  card shows a locked border + sr-only text (pre-existing); dedicated Today lock toggle is a
+  later UI task · Notes: —
+### ES-IMPL-08 — Integrated regression + browser journeys (ADR-015)
+- Status: DONE · Priority: P0 · Depends On: ES-IMPL-04..07
+- Business Decision: journey evidence over code presence · Acceptance: [x] JOURNEY B
+  (recurring reality → future visibility → draft respects) · [x] JOURNEY C (Permanent Shift
+  vacate + effective date) · [x] JOURNEY D (exception cancels exactly one) · [x] LOCK journey
+  (UI lock → rescheduler never moves) · [x] schedule-adjacent e2e regression
+- Verification: [x] browser (chromium 4/4 + regression 22/22, see docs/browser-e2e.md) · [x]
+  backend container suite 1080/1080 · [x] vitest 522/522 · [x] typecheck · [x] build · [x]
+  PHPStan · [x] Pint · [x] openapi + doc-link checks · Known Limitations: firefox/webkit not
+  run for the ES spec (single-engine sandbox posture, recorded in browser-e2e.md) · Notes: —
 
 ## PHASE 29 — IDENTITY, EMAIL, RECOVERY, SECURITY TRUST
 

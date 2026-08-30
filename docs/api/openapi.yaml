@@ -600,6 +600,60 @@ paths:
         '404': { description: Task not found }
         '422': { description: Validation error }
 
+  /tasks/{taskId}/assignment/lock:
+    post:
+      tags: [Tasks]
+      summary: 'Lock the task''s active placement (ADR-015: user-fixed placement — never moved by scheduler/rescheduler)'
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version: { type: integer, minimum: 1, nullable: true, description: 'Optional optimistic assignment version; stale value → 409.' }
+      responses:
+        '200':
+          description: Placement locked (idempotent — already locked is a no-op)
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AssignmentLockResponse'}
+        '401': { description: Unauthorized }
+        '404': { description: No scheduled placement exists for this task }
+        '409': { description: Assignment version conflict }
+
+  /tasks/{taskId}/assignment/unlock:
+    post:
+      tags: [Tasks]
+      summary: 'Unlock the task''s active placement (ADR-015; idempotent)'
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version: { type: integer, minimum: 1, nullable: true, description: 'Optional optimistic assignment version; stale value → 409.' }
+      responses:
+        '200':
+          description: Placement unlocked
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AssignmentLockResponse'}
+        '401': { description: Unauthorized }
+        '404': { description: No scheduled placement exists for this task }
+        '409': { description: Assignment version conflict }
+
   /tasks/{taskId}/partial-complete:
     post:
       tags: [Tasks]
@@ -4000,6 +4054,21 @@ components:
       required: [task]
       properties:
         task: {$ref: '#/components/schemas/Task'}
+        assignment_locked: {type: boolean, nullable: true, description: 'ADR-015 additive: active placement lock state on GET /tasks/{taskId} (null when no placement).'}
+    AssignmentLockResponse:
+      type: object
+      required: [assignment]
+      properties:
+        assignment:
+          type: object
+          required: [id, task_id, locked, start_at, end_at, version]
+          properties:
+            id: {type: integer}
+            task_id: {type: integer}
+            locked: {type: boolean}
+            start_at: {type: string, format: date-time}
+            end_at: {type: string, format: date-time}
+            version: {type: integer}
     QuickCaptureRequest:
       type: object
       required: [title]
@@ -4104,7 +4173,7 @@ components:
           items: {$ref: '#/components/schemas/EmptySlot'}
         hard_landscape:
           type: array
-          items: {type: object}
+          items: {$ref: '#/components/schemas/EffectiveLandscapeOccurrence'}
         capacity: {$ref: '#/components/schemas/CapacityIndicators'}
     ScheduleResponse:
       type: object
@@ -4113,6 +4182,9 @@ components:
         from: {type: string, format: date}
         to: {type: string, format: date}
         schedule_version: {type: integer}
+        hard_landscape:
+          type: array
+          items: {$ref: '#/components/schemas/EffectiveLandscapeOccurrence'}
         events:
           type: array
           items: {$ref: '#/components/schemas/ScheduleEvent'}
@@ -4401,6 +4473,8 @@ components:
               weekday: {type: integer}
               task_count: {type: integer}
               scheduled_minutes: {type: integer}
+              landscape_count: {type: integer, description: 'Effective Hard Landscape occurrences overlapping the day (ADR-015).'}
+              landscape_minutes: {type: integer, description: 'Effective Hard Landscape minutes clipped to the day (ADR-015).'}
     CalendarResponse:
       type: object
       required: [year, month, schedule_version, days]
@@ -4417,6 +4491,24 @@ components:
               day: {type: integer}
               task_count: {type: integer}
               scheduled_minutes: {type: integer}
+              landscape_count: {type: integer, description: 'Effective Hard Landscape occurrences overlapping the day (ADR-015).'}
+              landscape_minutes: {type: integer, description: 'Effective Hard Landscape minutes clipped to the day (ADR-015).'}
+    EffectiveLandscapeOccurrence:
+      type: object
+      description: 'One resolved Hard Landscape block (ADR-015): a source event with its effective window after recurrence expansion and override resolution. Source-event fields are preserved; additive provenance fields describe the resolution.'
+      required: [id, title, type, start_at, end_at, source_event_id, provenance]
+      properties:
+        id: {type: integer, description: 'Source hard_landscape_events id (the series id for recurring occurrences).'}
+        user_id: {type: integer, nullable: true}
+        title: {type: string}
+        type: {type: string, enum: [permanent, recurring, one_time]}
+        start_at: {type: string, format: date-time, description: 'Effective occurrence start.'}
+        end_at: {type: string, format: date-time, description: 'Effective occurrence end.'}
+        recurrence: {type: string, nullable: true}
+        source_event_id: {type: integer, description: 'Canonical provenance anchor: the source series/event id.'}
+        provenance: {type: string, enum: [base, shifted, excepted, cancelled], description: 'Resolution provenance; suffixed values carry the override id (e.g. shifted:12).'}
+        original_start: {type: string, format: date-time, nullable: true, description: 'Pre-override occurrence start for recurring sources.'}
+        recurrence_warning: {type: string, nullable: true, description: 'Present when the recurrence rule was unparseable and the block degraded to the base occurrence.'}
     HardLandscapeEvent:
       type: object
       required: [id, user_id, title, type, start_at, end_at]
