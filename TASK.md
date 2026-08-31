@@ -8534,6 +8534,41 @@ New tasks not covered by an existing owner:
   · Notes: BLOCKER-SCHED-01 RESOLVED; queue infra intentionally NOT adopted (synchronous bounded
   computation suffices); scheduler_runs extended as telemetry
 
+### OFFLINE-01 — Offline Mutation Reconciliation & Operation Ledger (ADR-017)
+- Status: DONE · Priority: P0 · Depends On: SCHED-01
+- Business Decision: ADR-017 — server-authoritative operation ledger; bounded
+  allowlist (task create/update/status, subtask create, note create/update);
+  idempotent replay by (user_id, operation_id) + payload hash; version conflicts
+  (task/note base_version) never overwrite; quick capture + all schedule
+  mutations stay ONLINE_ONLY; client clocks never decide precedence; no LWW/CRDT
+- Files: docs/adr/ADR-017-*.md; database/migrations/2026_08_31_110000_create_offline_operations_table.php;
+  app/Domain/OfflineSync/* (OperationType allowlist, OperationEnvelope, OperationOutcome,
+  OfflineOperationRecord, contracts); app/Application/OfflineSync/OfflineReconciliationService.php
+  (dispatch to real use cases); app/Http/Controllers/Api/SyncReconcileController.php;
+  routes/api.php (+/sync/reconcile); app/Console/Commands/PruneOfflineLedgerCommand.php;
+  config/offline.php; bootstrap/app.php (prune schedule); TaskController/NoteController
+  (+X-Operation-Id online convergence, task base_version, TaskVersionConflict, task version
+  bump on content updates); web: offline/reconcile-applier.ts (→/sync/reconcile),
+  offline/reconcile-submit.ts (offline-aware submit), offline/queue-access.ts, queue
+  listFailed+discardConflicts, auth/store.ts offline-reload fix, task/note stores wired,
+  SyncStatusPanel conflict review button, AuthHost boot drain + rehydration; Makefile
+  e2e-clean (+offline_operations); docs/offline-sync.md + mobile-architecture.md rewritten
+- Acceptance: [x] first-apply once · [x] same id + identical payload replay (no dup) ·
+  [x] same id + different payload REUSED · [x] stale task/note update conflict, server wins ·
+  [x] task:status semantic idempotency · [x] ownership isolation · [x] workspace context
+  snapshotted + verified · [x] unsupported type rejected · [x] batch ≤50 + payload bounds ·
+  [x] per-op transaction (one bad op doesn't corrupt batch) · [x] retention 90d + prune ·
+  [x] online X-Operation-Id ledger convergence · [x] web queue enqueues offline, drains on
+  boot/reconnect, conflict review + discard · [x] auth offline-reload keeps session ·
+  [x] OpenAPI /sync/reconcile + schemas
+- Verification: [x] Feature (OfflineReconcileApiTest ×16) · [x] Vitest 531/531 (offline
+  applier/submit/auth +8) · [x] typecheck · [x] build (container) · [x] PHPStan 0 · [x] Pint ·
+  [x] openapi check · [x] browser O1–O4 (offline-reconcile.spec.ts, chromium) · Known
+  Limitations: mobile durable queue deferred to Android hardening (ADR-017 §2.19); quick
+  capture + subtask toggle + canvas + goal/program offline deferred (documented in capability
+  matrix); note documents > 64KB rejected offline (per-op payload bound) · Notes:
+  BLOCKER-OFFLINE-01 resolved (server/web); server protocol reusable by mobile unchanged
+
 > Objective: verified identity, reliable transactional email, safe recovery. Source:
 > KINEVO_POST_P27_MASTER_EXECUTION_PROMPT.md §7 (execution authority).
 

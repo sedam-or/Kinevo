@@ -931,3 +931,26 @@ Regression: full chromium suite on a truncated sandbox + journey-c seed →
 seeding, above) plus two PRE-EXISTING WIP failures outside this epic
 (p28-ux-audit goals empty state; theme mobile 375px) — flagged for the P28-013
 full-engine evidence gate.
+### ADR-017 — Offline mutation reconciliation browser journeys (2026-08-31)
+
+New spec `tests/e2e/tests/offline-reconcile.spec.ts` (chromium, single-owner
+sandbox). Prerequisite: `make e2e-clean` (the truncate list now includes
+`offline_operations`) + owner registered. Offline is simulated with Playwright
+`context.setOffline(true)` (flips `navigator.onLine` — the signal the api
+client and AuthHost use). Record: **4/4 passed (25.8s)**.
+
+- **JOURNEY O1 (basic reconnect)**: online baseline → offline task create →
+  aggregate "1 queued" state → reconnect → drain → queue clears → canonical
+  server state visible.
+- **JOURNEY O2 (response-loss replay)**: same operation_id + identical payload
+  replayed through `/sync/reconcile` → `replay: true`, the domain mutation
+  exists exactly once.
+- **JOURNEY O3 (conflict)**: stale offline edit (base_version behind the
+  server) → reconnect drain → VERSION_CONFLICT → server state NOT overwritten →
+  "conflict" badge + "Discard local change" clears the queue.
+- **JOURNEY O4 (reload)**: offline mutation queued → reload → the durable
+  IndexedDB queue survives (the reload's boot drain reconciles it) → canonical
+  state visible.
+
+Regression note: the offline journeys assert deterministic single-owner state;
+run them on a clean sandbox (`make e2e-clean`) like the scheduler journeys.

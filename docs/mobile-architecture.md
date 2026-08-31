@@ -47,10 +47,16 @@ Shared logic lives in use cases, never in components.
 
 - **On device:** SQLite is the local canonical store (NativePHP embedded runtime).
 - **Server:** PostgreSQL remains authoritative for the SaaS (`docs/offline-sync.md`).
-- **Reconciliation:** reuse the existing operation envelope — every offline mutation carries an
-  `operation_id` (UUID), `base_version`, and payload, then reconciles through the server contract
-  (`docs/offline-sync.md`). Optimistic concurrency uses the existing `base_version` rule (409 on
-  stale writes, never silent overwrite).
+- **Reconciliation (ADR-017):** the SERVER protocol (operation envelope +
+  `offline_operations` ledger + `POST /sync/reconcile`) is the mobile contract
+  and is reusable unchanged. Optimistic concurrency uses the existing
+  `base_version` rule (409 on stale writes, never silent overwrite).
+- **Current mobile offline status (truthful):** the shipped mobile screens show
+  `offline`/`queued` status labels ONLY — there is no durable offline queue on
+  device yet (a queued CaptureScreen draft is a component property lost on
+  navigation; all mobile mutations are live HTTP). Durable mobile offline
+  persistence is deferred to the Android production-hardening phase; the server
+  contract above is the intended target and is NOT a second protocol.
 - **Risk:** schema parity between SQLite (mobile) and PostgreSQL (server) must be enforced by the
   migration + repository abstractions — the single largest P27 gating item.
 

@@ -1803,6 +1803,36 @@ paths:
         '404': { description: Draft not found }
         '422': { description: Draft is not pending }
 
+  /sync/reconcile:
+    post:
+      tags: [Offline]
+      summary: Offline mutation reconciliation — replay queued operations through the authoritative ledger (ADR-017)
+      description: >
+        Distinct from schedule "Sync Now" (POST /schedule/sync, ADR-016). Accepts a bounded
+        batch of operation envelopes; each is validated, dispatched to the canonical use case
+        with its own transaction, and recorded in the operation ledger for idempotent replay.
+        A first-apply executes at most once; a replay of the same operation_id + identical
+        payload returns the recorded outcome (response-loss safety); a replay with a different
+        payload is rejected (REUSED). Conflicts never overwrite server state and are returned
+        in `needs_review`. Batch ≤ 50 operations; per-operation payload ≤ 64 KB; request ≤ 512 KB.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReconcileRequest'
+      responses:
+        '200':
+          description: One outcome per operation (applied / conflict / rejected)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReconcileResponse'
+        '401': { description: Unauthorized }
+        '413': { description: Request exceeds the size limit }
+        '422': { description: Invalid envelope or batch too large }
+        '429': { description: Rate limited }
+
   /schedule/mini-pause:
     post:
       tags: [Scheduling]
@@ -4091,6 +4121,7 @@ components:
         estimated_minutes: {type: integer, minimum: 1, nullable: true}
         due_at: {type: string, format: date-time, nullable: true}
         is_sacred_anchor: {type: boolean, nullable: true, description: 'ADR-016: set/clear the Sacred Anchor flag (at most one per user).'}
+        base_version: {type: integer, minimum: 1, nullable: true, description: 'ADR-017: optimistic concurrency guard — a stale value yields 409 VERSION_CONFLICT.'}
     TaskStatusRequest:
       type: object
       required: [status]
@@ -4256,6 +4287,57 @@ components:
         events:
           type: array
           items: {$ref: '#/components/schemas/ScheduleEvent'}
+    ReconcileRequest:
+      type: object
+      required: [operations]
+      properties:
+        operations:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: {$ref: '#/components/schemas/OperationEnvelope'}
+    OperationEnvelope:
+      type: object
+      required: [protocol_version, operation_id, operation_type, entity_type, payload]
+      properties:
+        protocol_version: {type: integer, enum: [1]}
+        operation_id: {type: string, maxLength: 64, description: 'Idempotency identity (client UUID); NOT authorization. Scoped per user.'}
+        operation_type:
+          type: string
+          enum: [task:create, task:update, task:status, subtask:create, note:create, note:update]
+          description: 'Closed allowlist — unsupported types are rejected (422).'
+        entity_type: {type: string}
+        entity_id: {type: integer, nullable: true, description: 'Server id, or null for creates.'}
+        client_reference_id: {type: string, nullable: true, description: 'Correlation only for creates — the server returns the canonical entity_id.'}
+        payload: {type: object, description: 'The canonical request body of the matching online mutation.'}
+        base_version: {type: integer, nullable: true}
+        workspace_id: {type: integer, nullable: true, description: 'Snapshotted at enqueue; verified server-side on replay.'}
+        client_created_at: {type: string, nullable: true, description: 'Observability metadata only — never decides write precedence.'}
+    ReconcileResponse:
+      type: object
+      required: [outcomes, needs_review]
+      properties:
+        outcomes:
+          type: array
+          items: {$ref: '#/components/schemas/ReconcileOutcome'}
+        needs_review:
+          type: array
+          items: {type: string}
+          description: 'Operation ids that conflicted and need user review.'
+    ReconcileOutcome:
+      type: object
+      required: [operation_id, status, code, replay]
+      properties:
+        operation_id: {type: string}
+        status: {type: string, enum: [applied, conflict, rejected]}
+        code:
+          type: string
+          enum: [VERSION_CONFLICT, STATE_CONFLICT, VALIDATION, NOT_FOUND, REUSED, UNSUPPORTED, WORKSPACE, ENTITLEMENT, EXPIRED]
+        replay: {type: boolean, description: 'True when the operation was replayed from the ledger (no re-execution).'}
+        result: {type: object, nullable: true, description: 'Canonical entity shape on first-apply; bounded {entity_id, version} on replay.'}
+        entity_id: {type: integer, nullable: true}
+        result_version: {type: integer, nullable: true}
+        error: {type: string, nullable: true}
     SyncNowRequest:
       type: object
       properties:

@@ -12,6 +12,21 @@ Release governance: see `docs/release-management.md`.
 
 ## [Unreleased]
 ### Added
+- Offline mutation reconciliation & operation ledger (ADR-017): a server-authoritative
+  idempotency ledger (`offline_operations`) now backs replay of offline mutations for a
+  bounded allowlist (task create/update/status, subtask create, note create/update).
+  `POST /sync/reconcile` replays queued operations through the same application use cases
+  with per-operation transactions; the same operation_id + identical payload replays safely
+  (response-loss protection), a different payload is rejected, and version conflicts
+  (task/note `base_version`) never overwrite newer server state — they surface for review.
+  Online mutations accept an optional `X-Operation-Id` for the same convergence. The web
+  IndexedDB MutationQueue is now real: offline mutations enqueue durably, drain on reconnect
+  and reload, clear only after server acknowledgement, and show an aggregate
+  offline/queued/syncing/conflict state with a "Discard local change" review action. Offline
+  reload no longer logs the user out. Ledger retention (90 days) with a daily prune command.
+  Schedule mutations and quick capture stay online-only by design (the schedule remains the
+  deterministic authority). BLOCKER-OFFLINE-01 resolved (web/server); mobile durable offline
+  is explicitly deferred to Android hardening with the same server protocol as the contract.
 - Scheduler trigger, Sync Now & draft approval lifecycle (ADR-016): a weekly
   planning trigger (`schedule:prepare-weekly`) now prepares a persisted,
   review-ready draft for the user's local week — it never auto-applies. Manual
