@@ -5,6 +5,8 @@ import AiNotConfiguredNotice from '../ai/AiNotConfiguredNotice.vue';
 import KButton from '../components/KButton.vue';
 import KInput from '../components/KInput.vue';
 import KIcon from '../components/KIcon.vue';
+import FeatureHelp from '../components/FeatureHelp.vue';
+import InlineError from '../components/InlineError.vue';
 import { useAiSettingsStore } from '../ai/store';
 import { aiApi, type AiProposal } from '../ai/api';
 
@@ -113,8 +115,11 @@ async function rejectSuggestion(): Promise<void> {
 <template>
     <div class="flex flex-col gap-6" data-testid="canvas-view">
         <div>
+        <div class="flex items-center gap-2">
             <h1 class="text-xl font-semibold">Canvas</h1>
-            <p class="text-sm text-text-muted">Visual thinking boards for planning and synthesis.</p>
+            <FeatureHelp id="canvas" title="Canvas" body="A visual board for planning and synthesis — map an idea, untangle a problem, or sketch the shape of a project before it becomes tasks." />
+        </div>
+        <p class="text-sm text-text-muted">Visual thinking boards for planning and synthesis.</p>
         </div>
 
         <section class="surface-primary p-5" data-testid="canvas-create">
@@ -174,13 +179,22 @@ async function rejectSuggestion(): Promise<void> {
         </section>
 
         <div v-if="canvas.loading" class="text-sm text-text-muted" data-testid="canvas-loading">Loading…</div>
-        <div v-if="canvas.error" class="text-sm text-danger" role="alert" data-testid="canvas-error">{{ canvas.error.message }}</div>
+        <InlineError v-if="canvas.error" :message="canvas.error.message" data-testid="canvas-error" @retry="() => void canvas.loadList()" />
 
         <section data-testid="canvas-list" class="surface-supporting flex flex-col">
             <div
                 v-if="canvas.canvases.length === 0 && !canvas.loading"
-                class="border-2 border-dashed border-border/40 rounded-sm p-6 text-center text-sm text-text-muted"
-            >No canvases yet.</div>
+                class="border-2 border-dashed border-border/40 rounded-sm p-6 flex flex-col items-center gap-2 text-center text-sm text-text-muted"
+                data-testid="canvas-empty"
+            >
+                <span>No boards yet.</span>
+                <FeatureHelp
+                    id="canvas-roadmap"
+                    variant="block"
+                    title="Why draw it out first?"
+                    body="A canvas helps you map ideas, plan a project, or untangle a problem visually — before it becomes tasks. Create one above and sketch freely; the board is yours."
+                />
+            </div>
             <article
                 v-for="item in canvas.canvases"
                 :key="item.id"

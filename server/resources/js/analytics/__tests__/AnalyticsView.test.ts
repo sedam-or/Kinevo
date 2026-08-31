@@ -517,13 +517,15 @@ describe('AnalyticsView', () => {
         expect(wrapper.find('[data-testid="analytics-summary"]').exists()).toBe(false);
     });
 
-    it('renders the error state on failure', async () => {
+    it('renders the error state on failure with a recovery path', async () => {
         mockedOverview.mockRejectedValue({ message: 'Server error' });
 
         const wrapper = mount(AnalyticsView);
         await flushPromises();
 
-        expect(wrapper.get('[data-testid="analytics-error"]').text()).toBe('Server error');
+        // P28-011/RET-013: a load failure explains the error AND offers a retry.
+        expect(wrapper.get('[data-testid="analytics-error"]').text()).toContain('Server error');
+        expect(wrapper.find('[data-testid="inline-error-retry"]').exists()).toBe(true);
     });
 
     it('renders the activity heatmap with legend and accessible list', async () => {

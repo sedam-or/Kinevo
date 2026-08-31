@@ -11,6 +11,7 @@ import KIcon from '../components/KIcon.vue';
 import ProposalReviewCard from '../ai/ProposalReviewCard.vue';
 import AiNotConfiguredNotice from '../ai/AiNotConfiguredNotice.vue';
 import { useAiSettingsStore } from '../ai/store';
+import InlineError from '../components/InlineError.vue';
 
 const emit = defineEmits<{
     (e: 'selectGoal', goalId: number): void;
@@ -163,7 +164,7 @@ function workloadLabel(w: string): string {
         <h1 class="text-xl font-semibold">Goals / Roadmap</h1>
 
         <div v-if="goals.loading" class="text-sm text-text-muted" data-testid="goals-loading">Loading…</div>
-        <div v-if="goals.error" class="text-sm text-danger" role="alert" data-testid="goals-error">{{ goals.error.message }}</div>
+        <InlineError v-if="goals.error" :message="goals.error.message" data-testid="goals-error" @retry="() => void goals.loadAll()" />
 
         <!-- Create goal (planning workflow P17-003: outcome/deadline/description).
              Staged-primary rule (P17-010): this panel's CTA is primary until the

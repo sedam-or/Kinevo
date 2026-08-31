@@ -19,9 +19,13 @@ if (! $user) {
 }
 
 App\Models\Task::where(['user_id' => $user->id, 'title' => 'JourneyC missed report'])->delete();
-
+// P28 harness fix: scope the seeded task to the owner's DEFAULT workspace so
+// the workspace-scoped task list (TASK-P19-013) surfaces it in journey-c-e —
+// an unassigned (NULL workspace) task is correctly hidden from a scoped list.
+$defaultWs = \App\Models\Workspace::where('user_id', $user->id)->where('is_default', true)->first();
 $task = \App\Models\Task::create([
     'user_id' => $user->id,
+    'workspace_id' => $defaultWs?->id ?? null,
     'title' => 'JourneyC missed report',
     'status' => 'scheduled',
     'priority_tier' => 2,

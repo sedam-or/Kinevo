@@ -43,6 +43,21 @@ export const FEATURE_REGISTRY: Record<string, FeatureDefinition> = {
         title: 'AI Breakdown Proposal',
         body: 'AI suggests, you decide. Nothing is applied until you accept — edit milestones freely before accepting.',
     },
+    'knowledge': {
+        id: 'knowledge',
+        title: 'Knowledge & Notes',
+        body: 'Notes preserve context outside the plan — what you learned, decided, or need to remember. Link them to goals and tasks so thinking stays connected to execution.',
+    },
+    'canvas': {
+        id: 'canvas',
+        title: 'Canvas',
+        body: 'A visual board for planning and synthesis — map an idea, untangle a problem, or sketch the shape of a project before it becomes tasks.',
+    },
+    'ai-provider-modes': {
+        id: 'ai-provider-modes',
+        title: 'AI provider modes',
+        body: 'AI runs through a provider you control. Hosted mode uses Kinevo\u2019s included AI allowance. BYOK connects your own provider key and never touches your hosted credits. \u201cNot configured\u201d or \u201cUnavailable\u201d means AI actions pause until a provider is reachable.',
+    },
     'workspace': {
         id: 'workspace',
         title: 'Workspaces',

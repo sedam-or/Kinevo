@@ -112,6 +112,21 @@ describe('NotesListView', () => {
         expect(noteApi.search).toHaveBeenCalledWith('res');
         expect(wrapper.find('[data-testid="note-item"]').exists()).toBe(true);
     });
+
+    it('explains the Knowledge surface contextually (P28-010)', async () => {
+        vi.mocked(noteApi.list).mockResolvedValue({ notes: [] });
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(NotesListView, { global: { plugins: [pinia] } });
+        await flushPromises();
+
+        // Header FeatureHelp exists with the registry's Knowledge explanation.
+        const help = wrapper.find('[data-testid="feature-help-knowledge"]');
+        expect(help.exists()).toBe(true);
+        // Empty state names the surface, why it matters, and the next step.
+        expect(wrapper.find('[data-testid="note-empty"]').text()).toContain('Nothing here yet');
+    });
 });
 
 describe('NoteEditView', () => {

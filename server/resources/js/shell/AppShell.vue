@@ -82,13 +82,13 @@ function selectView(view: ShellView): void {
         </a>
 
         <!-- Sync + notification topbar -->
-        <header class="flex items-center justify-between gap-2 border-b border-border/20 px-4 py-3">
-            <div class="flex items-center gap-3 min-w-0">
+        <header class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-b border-border/20 px-3 sm:px-4 py-2 sm:py-3">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
                 <span class="flex shrink-0 items-center gap-2">
                     <KLogo :size="24" />
-                    <span class="font-semibold">Kinevo</span>
+                    <span class="hidden sm:inline font-semibold">Kinevo</span>
                 </span>
-                <span data-testid="current-section" class="text-sm text-text-muted truncate">
+                <span data-testid="current-section" class="text-sm text-text-muted truncate min-w-0">
                     / {{ currentSection }}
                 </span>
                 <span data-testid="sync-state" class="shrink-0">
@@ -96,7 +96,7 @@ function selectView(view: ShellView): void {
                 </span>
                 <span class="shrink-0"><NotificationCenter /></span>
             </div>
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex items-center gap-2 shrink-0 ml-auto">
                 <!-- TASK-P19-005 — the single reusable workspace switcher. -->
                 <WorkspaceSwitcher>
                     <template #footer>

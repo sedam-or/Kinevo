@@ -4,7 +4,7 @@ import { FEATURE_REGISTRY, featureDefinition } from '../registry';
 /** TASK-P20-011 — single source of truth for feature explanations. */
 describe('feature registry', () => {
     it('exposes definitions for every in-product FeatureHelp id', () => {
-        for (const id of ['hard-landscape', 'capacity', 'adaptive-context', 'progress-events', 'dynamic-rescheduler', 'ai-proposal']) {
+        for (const id of ['hard-landscape', 'capacity', 'adaptive-context', 'progress-events', 'dynamic-rescheduler', 'ai-proposal', 'knowledge', 'canvas', 'ai-provider-modes', 'workspace']) {
             expect(featureDefinition(id), id).toBeDefined();
             expect(featureDefinition(id)!.body.length).toBeGreaterThan(20);
         }

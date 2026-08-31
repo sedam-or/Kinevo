@@ -5,6 +5,7 @@ import { useGoalStore } from '../goal/store';
 import { useShellStore } from '../shell/store';
 import KButton from '../components/KButton.vue';
 import KIcon from '../components/KIcon.vue';
+import FeatureHelp from '../components/FeatureHelp.vue';
 
 /**
  * Workspace Home (TASK-P19-038) — identity-first context surface, ordered:
@@ -43,7 +44,10 @@ function go(view: Parameters<typeof shell.setView>[0], focusId?: number): void {
                 data-testid="wh-icon"
             >{{ (ws?.name ?? 'W').slice(0, 1).toUpperCase() }}</span>
             <div>
-                <h1 class="text-xl font-semibold" data-testid="wh-name">{{ ws?.name ?? 'Workspace' }}</h1>
+                <h1 class="text-xl font-semibold flex items-center gap-2" data-testid="wh-name">
+                    {{ ws?.name ?? 'Workspace' }}
+                    <FeatureHelp id="workspace" title="Workspaces" body="Keep life areas separate — Research, Work, Personal — while Today still shows everything scheduled across all of them." />
+                </h1>
                 <p v-if="ws?.description" class="text-sm text-text-muted">{{ ws.description }}</p>
             </div>
         </header>

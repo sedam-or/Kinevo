@@ -213,6 +213,10 @@ vi.mocked(aiApi.acceptProposal).mockResolvedValue(undefined);
         expect(goalApi.goals).toHaveBeenCalledTimes(2);
         expect(wrapper.find('[data-testid="goal-proposal-accepted"]').exists()).toBe(true);
         expect(wrapper.emitted('selectGoal')).toBeUndefined();
+        // RET-005: after accept the user gets an explicit continuation path —
+        // open the goal (milestones visible there + next action) rather than
+        // being dropped back to a dead list.
+        expect(wrapper.find('[data-testid="goal-breakdown-open"]').exists()).toBe(true);
     });
 
     it('surfaces the AI breakdown error without navigating away (P17-003)', async () => {

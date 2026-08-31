@@ -56,12 +56,18 @@ describe('CanvasListView', () => {
         expect(wrapper.text()).toContain('Research board');
     });
 
-    it('shows an empty state when there are no canvases', async () => {
+    it('shows a contextual empty state when there are no canvases', async () => {
         vi.mocked(canvasApi.list).mockResolvedValue({ canvases: [] });
         const wrapper = mountView();
         await flushPromises();
 
-        expect(wrapper.find('[data-testid="canvas-list"]').text()).toContain('No canvases yet.');
+        // P28 RET-002: the empty state explains where/why/next instead of a bare
+        // "No canvases yet." — it names the surface and the next action.
+        const empty = wrapper.find('[data-testid="canvas-empty"]');
+        expect(empty.exists()).toBe(true);
+        expect(empty.text()).toContain('No boards yet.');
+        expect(empty.text()).toContain('Why draw it out first?');
+        expect(wrapper.find('[data-testid="canvas-create"]').exists()).toBe(true);
     });
 
     it('emits select when a canvas is opened', async () => {

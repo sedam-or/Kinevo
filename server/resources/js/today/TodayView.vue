@@ -14,6 +14,7 @@ import { taskStates } from '../visualstate/derive';
 import KButton from '../components/KButton.vue';
 import KInput from '../components/KInput.vue';
 import FeatureHelp from '../components/FeatureHelp.vue';
+import InlineError from '../components/InlineError.vue';
 import { useToastStore } from '../components/toast';
 import WhyThis from '../components/WhyThis.vue';
 import KIcon from '../components/KIcon.vue';
@@ -50,7 +51,7 @@ const quickCaptureForm = reactive({
     priorityTier: 3,
     durationMinutes: null as number | null,
 });
-
+const quickCaptureSection = ref<HTMLElement | null>(null);
 const quickError = ref<string | null>(null);
 
 onMounted(() => {
@@ -185,6 +186,10 @@ async function quickCapture(): Promise<void> {
     }
 }
 
+function focusQuickCapture(): void {
+    quickCaptureSection.value?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    quickCaptureSection.value?.querySelector('input')?.focus();
+}
 const toast = useToastStore();
 const adaptive = useAdaptiveStore();
 // Today's progress (TASK-P17-014): the §99 loop ends in PROGRESS — surface
@@ -200,7 +205,6 @@ let emphasisTimer: ReturnType<typeof setTimeout> | undefined;
 function onExecutionCompleted(): void {
     // Complete cascade (TASK-P17-011): the data reloads below (progress
     // advance); announce it and spotlight what's next.
-    toast.push('Task completed · progress updated');
     nextEmphasis.value = true;
     if (emphasisTimer) {
         clearTimeout(emphasisTimer);
@@ -209,8 +213,12 @@ function onExecutionCompleted(): void {
         nextEmphasis.value = false;
     }, 2000);
     // A completed timer may have changed the task status (completed/continued);
-    // reload the day so the schedule, states, and NOW card reflect it.
-    void today.load(props.date);
+    // reload the day so the schedule, states, and NOW card reflect it, then
+    // report the concrete progress delta (RET-008: action → visible consequence
+    // → progress understanding → next action).
+    void today.load(props.date).then(() => {
+        toast.push(`Task completed · ${completedCount.value}/${today.events.length} done`);
+    });
 }
 
 function onRechargeCompleted(): void {
@@ -388,7 +396,12 @@ async function endBoostTarget(): Promise<void> {
 
         <!-- Loading / error -->
         <div v-if="today.loading" class="text-sm text-text-muted" data-testid="today-loading">Loading Today…</div>
-        <div v-if="today.error" class="text-sm text-danger" role="alert" data-testid="today-error">{{ today.error.message }}</div>
+        <InlineError
+            v-if="today.error"
+            :message="today.error.message"
+            data-testid="today-error"
+            @retry="() => void today.load(props.date)"
+        />
 
         <!-- Emergency Pause recovery banner (FR-07): the week is exceptional.
              Shared banner pattern: left accent bar + open tint surface. -->
@@ -447,6 +460,23 @@ async function endBoostTarget(): Promise<void> {
                         End Boost
                     </KButton>
                 </div>
+            </div>
+        </section>
+
+        <!-- First-session guidance (RET-006): a genuinely blank day — nothing
+             scheduled, no hard landscape, no captured tasks — gets a gentle
+             start-here strip instead of silence. Two real paths (reality-first
+             quick capture, goal-first planning); no forced tutorial. -->
+        <section
+            v-if="!currentEvent && !today.hasData && !today.loading && !today.error"
+            class="rounded-sm border border-dashed border-primary/50 bg-surface p-4 flex flex-col gap-2"
+            data-testid="first-session-guide"
+        >
+            <p class="text-sm font-medium">Start here</p>
+            <p class="text-sm text-text-muted">Today is empty because nothing is scheduled yet — a clean slate. Capture the first thing on your mind, or start from a goal and let Kinevo break it down.</p>
+            <div class="flex flex-wrap gap-2">
+                <KButton variant="primary" data-testid="first-session-capture" @click="focusQuickCapture">Capture a quick task</KButton>
+                <KButton variant="secondary" data-testid="first-session-goal" @click="shell.setView('goals')">Start with a goal</KButton>
             </div>
         </section>
 
@@ -641,7 +671,7 @@ async function endBoostTarget(): Promise<void> {
         <AdaptiveContextPanel v-if="!today.loading && !today.error && today.date" />
 
         <!-- Quick Capture: an open L4 supporting group, never a box. -->
-        <section class="surface-supporting" data-testid="quick-capture">
+        <section ref="quickCaptureSection" class="surface-supporting" data-testid="quick-capture">
             <h2 class="text-sm font-bold tracking-tight mb-3">Quick Capture</h2>
             <form class="flex flex-col gap-3" @submit.prevent="quickCapture">
                 <div v-if="quickError" class="text-sm text-danger" role="alert">{{ quickError }}</div>

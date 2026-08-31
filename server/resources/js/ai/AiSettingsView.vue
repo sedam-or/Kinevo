@@ -5,6 +5,7 @@ import { aiApi, type AiProviderCatalogEntry, type AiStatusState } from './api';
 import KButton from '../components/KButton.vue';
 import SecretField from './SecretField.vue';
 import AiUsageSummaryCard from './AiUsageSummaryCard.vue';
+import FeatureHelp from '../components/FeatureHelp.vue';
 
 const store = useAiSettingsStore();
 
@@ -209,6 +210,14 @@ async function removeKey(): Promise<void> {
 
             <form class="flex flex-col gap-6" @submit.prevent="submit" data-testid="ai-provider-form">
             <div v-if="formError" class="text-sm text-danger" role="alert" data-testid="ai-settings-error">{{ formError }}</div>
+
+            <!-- Section 0 · Provider modes explained (P28-010) -->
+            <FeatureHelp
+                id="ai-provider-modes"
+                variant="block"
+                title="AI provider modes"
+                body="AI runs through a provider you control. Hosted mode uses Kinevo's included AI allowance. BYOK connects your own provider key and never touches your hosted credits. 'Not configured' or 'Unavailable' means AI actions pause until a provider is reachable."
+            />
 
             <!-- Section 1 · Runtime Status -->
             <section class="surface-secondary p-4 flex flex-col gap-2" data-testid="ai-section-status">

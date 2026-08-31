@@ -192,6 +192,14 @@ e2e-clean:
 	$(COMPOSE) exec -T postgres psql -U kinevo -d kinevo -c "TRUNCATE goals, milestones, subtasks, tasks, task_assignments, notes, knowledge_links, attachments, programs, progress_events, focus_sessions, execution_sessions, boost_targets, break_periods, pause_events, recharge_sessions, schedule_overrides, scheduler_runs, hard_landscape_events, adaptive_context, ai_proposals, ai_runs, canvas_documents, canvas_files, canvases, imports, activity_logs, offline_operations CASCADE"
 
 e2e: e2e-clean e2e-assets
+	# Phase 1 — P28-002 empty-state/audit evidence on the guaranteed-clean
+	# baseline. p28-ux-audit.spec.ts is read-only (inventory, empty states, IA,
+	# CTA) but its empty-state assertions require an EMPTY domain DB; running it
+	# before the fixture-creating suites restores the clean-sandbox precondition
+	# the spec's docblock already documents (P28 browser-failure triage).
+	docker run --rm --network host -e E2E_BASE_URL=http://127.0.0.1:8000 \
+		-v "$(CURDIR)/tests/e2e:/e2e" -w /e2e kinevo-e2e npx playwright test \
+		p28-ux-audit.spec.ts
 	$(COMPOSE) exec -T app sh < tests/e2e/scripts/seed-journey-c.sh
 	docker run --rm --network host -e E2E_BASE_URL=http://127.0.0.1:8000 \
 		-v "$(CURDIR)/tests/e2e:/e2e" -w /e2e kinevo-e2e npx playwright test

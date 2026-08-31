@@ -606,4 +606,27 @@ describe('TodayView', () => {
         expect(todayApi.today).toHaveBeenCalledTimes(2);
         expect(wrapper.find('[data-testid="boost-message"]').text()).toContain('Boost target ended');
     });
+
+    it('shows the first-session guide on a genuinely blank day and routes to goals (RET-006)', async () => {
+        const blank: TodayResponse = JSON.parse(JSON.stringify(response));
+        blank.events = [];
+        blank.empty_slots = [];
+        blank.hard_landscape = [];
+        vi.mocked(todayApi.today).mockResolvedValue(blank);
+        const pinia = createPinia();
+        setActivePinia(pinia);
+
+        const wrapper = mount(TodayView, {
+            props: { date: '2026-08-19' },
+            global: { plugins: [pinia] },
+        });
+        await flushPromises();
+
+        const guide = wrapper.find('[data-testid="first-session-guide"]');
+        expect(guide.exists()).toBe(true);
+        expect(guide.text()).toContain('Start here');
+        await wrapper.find('[data-testid="first-session-goal"]').trigger('click');
+        await flushPromises();
+        expect(useShellStore().activeView).toBe('goals');
+    });
 });

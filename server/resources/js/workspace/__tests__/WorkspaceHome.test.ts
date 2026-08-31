@@ -29,7 +29,9 @@ describe('WorkspaceHome (TASK-P19-038)', () => {
         const wrapper = mount(WorkspaceHome, { global: { plugins: [createPinia()] } });
         await flushPromises();
 
-        expect(wrapper.find('[data-testid="wh-name"]').text()).toBe('Research');
+        expect(wrapper.find('[data-testid="wh-name"]').text()).toContain('Research');
+        // P28-010: the workspace explanation control lives with the identity.
+        expect(wrapper.find('[data-testid="feature-help-workspace"]').exists()).toBe(true);
         // DOM order: identity before current-goal before today before doorways
         const ids = ['wh-identity', 'wh-current-goal', 'wh-today', 'wh-doorways'];
         const els = ids.map((id) => wrapper.find(`[data-testid="${id}"]`).element);

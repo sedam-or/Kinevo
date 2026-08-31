@@ -5,6 +5,7 @@ import { executiveSignal, executionIsLow, interpretCapacity, interpretDays, inte
 import type { DeadlineHealth, PillarKey } from './types';
 import type { ApiError } from '../api/types';
 import FeatureHelp from '../components/FeatureHelp.vue';
+import InlineError from '../components/InlineError.vue';
 import InterpretationStrip from '../components/InterpretationStrip.vue';
 import ChartMeta from '../components/ChartMeta.vue';
 import { useShellStore } from '../shell/store';
@@ -310,9 +311,7 @@ function run(fn: () => Promise<void>): void {
             Loading…
         </div>
 
-        <div v-else-if="analytics.error" class="text-sm text-danger" role="alert" data-testid="analytics-error">
-            {{ (analytics.error as ApiError).message }}
-        </div>
+        <InlineError v-else-if="analytics.error" :message="(analytics.error as ApiError).message" data-testid="analytics-error" @retry="() => load(activePreset)" />
 
         <div v-else-if="!analytics.hasData" class="text-sm text-text-muted flex flex-col gap-2" data-testid="analytics-empty">
             <span>No tracked time in this period yet.</span>

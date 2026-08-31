@@ -3,6 +3,8 @@ import { onMounted, reactive, ref, watch } from 'vue';
 import { useNoteStore } from './store';
 import KButton from '../components/KButton.vue';
 import KInput from '../components/KInput.vue';
+import FeatureHelp from '../components/FeatureHelp.vue';
+import InlineError from '../components/InlineError.vue';
 
 const emit = defineEmits<{
     (e: 'select', noteId: number): void;
@@ -48,8 +50,11 @@ async function createNote(): Promise<void> {
 <template>
     <div class="flex flex-col gap-6" data-testid="notes-view">
         <div>
+        <div class="flex items-center gap-2">
             <h1 class="text-xl font-semibold">Knowledge · Notes</h1>
-            <p class="text-sm text-text-muted">Capture what you learn and link it to your work.</p>
+            <FeatureHelp id="knowledge" title="Knowledge & Notes" body="Notes preserve context outside the plan — what you learned, decided, or need to remember. Link them to goals and tasks so thinking stays connected to execution." />
+        </div>
+        <p class="text-sm text-text-muted">Capture what you learn and link it to your work.</p>
         </div>
 
         <section class="surface-primary p-5" data-testid="note-create">
@@ -69,14 +74,14 @@ async function createNote(): Promise<void> {
         </section>
 
         <div v-if="notes.loading" class="text-sm text-text-muted" data-testid="notes-loading">Loading…</div>
-        <div v-if="notes.error" class="text-sm text-danger" role="alert" data-testid="notes-error">{{ notes.error.message }}</div>
+        <InlineError v-if="notes.error" :message="notes.error.message" data-testid="notes-error" @retry="() => void notes.loadList()" />
 
         <section data-testid="note-list" class="surface-supporting flex flex-col">
             <div
                 v-if="displayedNotes().length === 0 && !notes.loading"
                 class="border-2 border-dashed border-border/40 rounded-sm p-6 text-center text-sm text-text-muted"
                 data-testid="note-empty"
-            >No notes found. Create a note above to begin capturing knowledge.</div>
+            >Nothing here yet. Notes capture what you learn outside the plan — create one above, then link it to a goal or task so your context stays connected to execution.</div>
             <article
                 v-for="note in displayedNotes()"
                 :key="note.id"

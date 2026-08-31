@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import FeatureHelp from '../components/FeatureHelp.vue';
+import InlineError from '../components/InlineError.vue';
 import { useTaskStore } from './store';
 import { TASK_TRANSITIONS, type Task, type TaskStatusValue } from './types';
 import VisualStateBadge from '../visualstate/VisualStateBadge.vue';
@@ -107,7 +108,7 @@ async function applyStatus(task: Task, status: TaskStatusValue): Promise<void> {
         </section>
 
         <div v-if="tasks.loading" class="text-sm text-text-muted" data-testid="task-loading">Loading tasks…</div>
-        <div v-if="tasks.error" class="text-sm text-danger" role="alert" data-testid="task-error">{{ tasks.error.message }}</div>
+        <InlineError v-if="tasks.error" :message="tasks.error.message" data-testid="task-error" @retry="() => void tasks.loadList()" />
 
         <!-- List -->
         <section data-testid="task-list">
