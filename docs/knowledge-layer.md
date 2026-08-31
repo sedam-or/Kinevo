@@ -37,7 +37,9 @@ Recommended:
 - plain_text_cache;
 - created_at;
 - updated_at;
-- version.
+- base_version (optimistic-conflict contract: `note:update` sends base_version; a
+  stale base returns a stable 409 and the client reloads to reconcile — the same
+  contract as `docs/offline-sync.md`; there is no last-write-wins).
 
 ### Semantic nodes
 Optional custom nodes:
@@ -72,6 +74,9 @@ PostgreSQL full-text search is preferred before introducing an external search e
 
 ### Attachment model
 Large binary files MUST use object storage. Database stores metadata and ownership.
+Current implementation stores direct uploads; the full pipeline (Uppy → validation
+→ Pic Smaller → AssetStorage → object storage) is TARGET P31 per
+`docs/architecture.md` §8 — no large binaries inside Note/Canvas JSON.
 
 ### Knowledge deletion
 Deletion semantics MUST distinguish:

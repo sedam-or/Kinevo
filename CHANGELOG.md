@@ -619,6 +619,33 @@ Release governance: see `docs/release-management.md`.
   clean-sandbox precondition; the journey-c seed scopes its missed task to the
   owner's default workspace so the workspace-scoped task list surfaces it.
 
+### Changed — P29 Product & Architecture Convergence (2026-08-31)
+- Documentation-only release: ONE canonical authority per truth type. New
+  product truth set under `docs/product/` (Product Constitution, vision/
+  mission, product model, workspace model, commercial model with launch-price
+  hypotheses and the AI-allowance open decision), reconstructed `docs/SRS.md`
+  v3.0.0 (Workspace now first-class; 44 UNCHANGED / 17 REFINED / 1 SUPERSEDED /
+  9 NEW requirements; the v2 offline last-write-wins contradiction removed),
+  rewritten `docs/domain-model.md` (Workspace first-class; Effective Landscape,
+  schedule drafts, assignment history, offline ledger, AI proposals,
+  subscriptions, entitlements) and `docs/architecture.md` (explicit
+  CURRENT/TARGET split, provider boundaries, runtime target).
+- New UX authority set under `docs/ux/` (information architecture, design
+  system, interaction & state system, content design, motion, accessibility)
+  replacing the monolithic pre-P29 design docs; navigation decisions settled
+  (month grid = "Month", progress surface = "Progress"; renames recorded as
+  TARGET implementation tasks).
+- The complete local Stitch design export (129 screen/asset dirs) was
+  inventoried and classified as design evidence only — pricing mockups,
+  zero-knowledge/E2EE security claims, a Rust claim, and biometric privacy
+  framing were rejected at claim level; every external claim is now governed by
+  `docs/marketing/claims-registry.md`. The raw export stays local (gitignored),
+  never committed.
+- `docs/convergence/TARGET_DECISION_REGISTER.md` decisions migrated into the
+  canonical product/architecture docs and the register archived; pre-P29
+  design/audit/status docs archived under `docs/archive/`. No product code
+  behavior changed.
+
 ## [0.4.0] — 2026-08-17
 
 ### Added

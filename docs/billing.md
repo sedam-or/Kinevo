@@ -1,5 +1,9 @@
 # Kinevo — Billing Architecture & Operations (TASK-P24)
 
+> P29 pointer: the PRODUCT meaning of plans/prices/BYOK/AI allowances is canon
+> in `docs/product/commercial-model.md`; this file remains the technical billing
+> implementation authority (ledgers, firewall, downgrade safety, operations).
+
 Status: ACTIVE · TASK-P24-038 · Updated 2026-08-26
 
 Governance: provider selection is recorded in `docs/adr/ADR-012-payment-gateway.md`
@@ -148,7 +152,7 @@ Sandbox → production checklist (from ADR-012 consequences):
    fees/settlement from the merchant contract.
 4. Point the production webhook URL at the public endpoint; confirm 60/min throttle is adequate.
 5. Run the applicable P24 test set (BillingWebhookTest, BillingCheckoutTest, BillingDomainTest, adapter suite).
-6. Record cross-device entitlement evidence; update `docs/implementation-status.md`.
+6. Record cross-device entitlement evidence (execution state lives in `TASK.md`; the old progress mirror is archived at `docs/archive/implementation-status-2026-08-31.md`).
 
 ## Sandbox E2E evidence (P24-035, 2026-08-26)
 

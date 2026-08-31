@@ -1,5 +1,9 @@
 # Kinevo — AI Architecture
 
+> STATUS: AUTHORITATIVE (P29 2026-08-31). Canonical AI architecture authority
+> (provider abstraction ADR-011, metering, BYOK ledger). Commercial meaning of AI
+> allowances: `docs/product/commercial-model.md`.
+
 ### Position
 AI is optional intelligence assistance. Core product correctness MUST NOT depend on an LLM.
 

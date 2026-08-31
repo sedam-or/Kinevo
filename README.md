@@ -144,7 +144,8 @@ This repository treats quality gates as part of the product, not an afterthought
 - [`docs/scheduling-engine.md`](docs/scheduling-engine.md) — deterministic scheduling contract
 - [`docs/offline-sync.md`](docs/offline-sync.md) — local-first behavior and sync contract
 - [`docs/ai-architecture.md`](docs/ai-architecture.md) — AI providers, safety, structured outputs
-- [`docs/design.md`](docs/design.md) — UI/UX and interaction design
+- [`docs/product/product-constitution.md`](docs/product/product-constitution.md) — what Kinevo is (highest product authority)
+- [`docs/ux/design-system.md`](docs/ux/design-system.md) — UI/UX and interaction design (with `docs/ux/information-architecture.md`, `docs/ux/interaction-states.md`)
 - [`docs/api/openapi.yaml`](docs/api/openapi.yaml) — versioned API contract
 - [`docs/deployment.md`](docs/deployment.md) — deployment, operations, backup
 
@@ -156,7 +157,7 @@ This repository treats quality gates as part of the product, not an afterthought
 - [`docs/test-strategy.md`](docs/test-strategy.md) — quality gates and test pyramid
 - [`docs/release-management.md`](docs/release-management.md) — versioning, changelog, releases
 - [`docs/compatibility.md`](docs/compatibility.md) — app ↔ SRS ↔ API ↔ migration matrix
-- [`docs/implementation-status.md`](docs/implementation-status.md) — progress mirror
+- [`docs/product/commercial-model.md`](docs/product/commercial-model.md) — plans, pricing hypotheses, BYOK policy
 - [`docs/adr/`](docs/adr) — architecture decision records
 - [`docs/third-party/licenses.md`](docs/third-party/licenses.md) — license ledger
 - [`TASK.md`](TASK.md) — execution control plane (current phase, gate, conventions)

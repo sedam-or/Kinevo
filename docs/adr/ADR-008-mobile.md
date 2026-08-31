@@ -1,5 +1,10 @@
 # ADR-008 — NativePHP Mobile Architecture
 
+> **AMENDED (P29, 2026-08-31):** the parenthetical "web = Vue SPA via Inertia" is
+> superseded — Inertia was planned (ADR-002) but never installed; web is a plain
+> Vue 3 SPA. The decision's substance (NativePHP EDGE, shared Domain/Application/
+> Infrastructure layers, presentation-boundary divergence) stands.
+
 ### Decision
 Adopt **NativePHP for Mobile (v4, SuperNative/EDGE)** as the delivery vehicle for the Kinevo
 native mobile app, reusing the existing single Laravel modular-monolith codebase. The web/SaaS

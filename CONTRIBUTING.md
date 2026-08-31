@@ -91,12 +91,12 @@ Reference the relevant task when applicable, e.g.
 
 - Effect: no PRs introducing new AI features, new scheduling algorithms, new
   major domain concepts, or new dependencies are accepted during the rescue
-  phase. See `AGENTS.md` and `docs/design.md` §74–§103.
+  phase. See `AGENTS.md` and the `docs/ux/` authorities (design-system, information-architecture, interaction-states).
 - Allowed: stability, usability, integration, browser correctness, visual
-  consistency; work tracked via `docs/ui-audit.md` and `docs/browser-e2e.md`.
+  consistency; work tracked via `docs/browser-e2e.md` (pre-P29 gap audit archived under `docs/archive/design-legacy-2026-08-31/`).
 - Exemption path: P0 fixes only — data loss, auth/save failure, core feature
   blocked, canvas crash, offline mutation lost — classified per
-  `docs/ui-audit.md` §3 and logged there (§6) before the fix lands, with group
+  the pre-P29 audit taxonomy (archived `docs/archive/design-legacy-2026-08-31/ui-audit.md`) before the fix lands, with group
   approval. P1+ waits.
 - The freeze lifts only when the rescue phase (TASK-R7) completes.
 

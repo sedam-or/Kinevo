@@ -21,7 +21,7 @@ files=(
   .github/CODEOWNERS
   .github/PULL_REQUEST_TEMPLATE.md
   docs/SRS.md
-  docs/design.md
+  docs/ux/design-system.md
   docs/architecture.md
   docs/domain-model.md
   docs/scheduling-engine.md
@@ -33,7 +33,7 @@ files=(
   docs/test-strategy.md
   docs/release-management.md
   docs/compatibility.md
-  docs/implementation-status.md
+  docs/requirements/requirements-traceability.md
   docs/api/openapi.yaml
   docs/adr/ADR-001-architecture.md
   docs/adr/ADR-002-frontend.md
@@ -79,7 +79,7 @@ for d in "${dirs[@]}"; do
 done
 
 if [[ -f "$ROOT/docs/SRS.md" ]]; then
-  if grep -q 'Kinevo OS' "$ROOT/docs/SRS.md"; then
+  if grep -q 'personal operating system' "$ROOT/docs/SRS.md"; then
     echo "  [OK] SRS contains Kinevo identity"
   else
     echo " [WARN] SRS does not contain expected Kinevo identity"

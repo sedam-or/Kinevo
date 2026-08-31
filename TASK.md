@@ -31,28 +31,39 @@ satu fase terotorisasi per waktu; STOP di akhir fase; lanjut hanya dengan otoris
 ## Current phase
 
 **P28 — Product Experience Closure** — DONE 2026-08-31 (detail:
-`docs/roadmap/active/P28-product-experience-closure.md`, diarsipkan saat checkpoint).
+`docs/roadmap/archive/phases/P28-product-experience-closure-DONE-2026-08-31.md`).
 
-Status akhir: **30 DONE · 0 TODO · P28-014 GATE GREEN** (21 baseline + 9 task closure
-P28-010/011, RET-002/005/006/007/008/013, P28-013). Evidence:
-`docs/browser-e2e.md` §P28-013 (matrix Chromium/Firefox/WebKit), `docs/state-machine-ui.md`
-§P28-011 + §Retention-critical failure matrix, `docs/retention-events.md` §RET-007.
+Status akhir: **30 DONE · 0 TODO · P28-014 GATE GREEN**. Evidence:
+`docs/browser-e2e.md` §P28-013, `docs/ux/interaction-states.md` (P28-011 matrix),
+`docs/retention-events.md` §RET-007.
+
+**P29 — Product & Architecture Convergence** — **EXECUTED 2026-08-31** (detail:
+`docs/roadmap/active/P29-product-architecture-convergence-EXECUTED.md`).
+
+Satu otoritas kanonik per tipe truth: Product Constitution + product model +
+workspace model + commercial model (`docs/product/`), SRS v3.0.0, domain model,
+architecture CURRENT/TARGET, traceability 10 flows (`docs/requirements/`), IA +
+design system + interaction-states + content + motion + accessibility
+(`docs/ux/`), marketing site spec + claims registry + asset provenance
+(`docs/marketing/`). Stitch export 131 unit diklasifikasi penuh (design evidence
+only; raw export LOCAL_REFERENCE_ONLY). TARGET_DECISION_REGISTER dimigrasi lalu
+diarsipkan. Dokumen lawas diarsipkan (`docs/archive/`); ownership: docs index +
+README + AGENTS + P30–P39 refined.
 
 ## Active gate
 
-**P28-014 — Product Experience Baseline Gate** (bukan production launch gate): semua task P28
-wajib selesai; blocker pengalaman P0/P1 selesai; golden journeys A–F green; browser matrix
-Chromium+Firefox+WebKit green atau gate exception disetujui owner; accessibility green;
-offline/scheduler core journeys green; state matrix koheren; tanpa defect correctness di core loop.
-Saat hijau: checkpoint + tag + arsip dokumen fase P28 → STOP.
-
-**HASIL 2026-08-31: GATE GREEN.** Semua kriteria terpenuhi. P28 ditutup; P29 TIDAK diaktifkan
-(menunggu otorisasi owner eksplisit).
+**P29 gate — GREEN** (evaluated 2026-08-31): semua deliverable kanonik ada;
+CURRENT/TARGET eksplisit; tidak ada kontradiksi HIGH tersisa; doc-link check
+green; tidak ada implementasi fitur (nol perubahan kode produk — hanya
+doc-pointer/code-comment disclaimers). Tag milestone P28/P29 menunggu keputusan
+owner (AGENTS.md melarang agent men-tag tanpa instruksi eksplisit).
 
 ## Next phase
 
-**P29 — Product & Architecture Convergence** (`docs/roadmap/planned/P29-product-architecture-convergence.md`)
-— JANGAN dimasuki otomatis.
+**P30 — Runtime, Identity & Communication Foundation**
+(`docs/roadmap/planned/P30-runtime-identity-communication.md`) — JANGAN dimasuki
+otomatis. Rekomendasi scope awal: FrankenPHP+Octane benchmark & rollback drill,
+EmailProvider abstraction (Resend), identitas/verifikasi.
 
 ## Conventions
 
@@ -100,4 +111,16 @@ Saat hijau: checkpoint + tag + arsip dokumen fase P28 → STOP.
 ## Latest checkpoint
 
 - `cc603b1` — Master Execution Prompt V3 adoption + P28 authorization record (2026-08-31).
-- R0 documentation & roadmap rebaseline — epic ini (lihat final report di `docs/roadmap/rebaseline-2026-08.md`).
+- R0 documentation & roadmap rebaseline — lihat `docs/roadmap/rebaseline-2026-08.md`.
+- **P28 closure + P28-014 gate GREEN** — `24a608a`/`8776ec8`/`0d44bde` (implementasi, evidence, roadmap).
+- **P29 convergence executed** — product/requirements/architecture/UX/marketing
+  kanonik + Stitch reconciliation + disposisi dokumen (detail:
+  `docs/roadmap/active/P29-product-architecture-convergence-EXECUTED.md`).
+
+## Known blockers
+
+Tidak ada blocker P0/P1. Keputusan terbuka non-blocking: kuota AI produksi +
+parameter entitlement Power (P33); tag milestone P28/P29 (owner decision);
+rename label IA (Calendar→Month, Analytics→Progress) + Review surface (TARGET —
+task implementasi kecil pasca-konvergensi, dicatat di
+`docs/ux/information-architecture.md` §2–§3).

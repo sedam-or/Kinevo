@@ -1,5 +1,9 @@
 # Kinevo — Scheduling Engine Contract
 
+> STATUS: AUTHORITATIVE (P29 2026-08-31). Canonical deterministic scheduling
+> authority (ADR-015 effective schedule + ADR-016 draft lifecycle). Domain
+> meaning: `docs/domain-model.md` §3.5.
+
 ### Mission
 Generate safe, explainable, deterministic schedules and reschedule proposals while preserving user-controlled constraints.
 

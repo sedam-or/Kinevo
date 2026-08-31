@@ -1,5 +1,9 @@
 # Mobile Architecture (Phase 26)
 
+> STATUS: AUTHORITATIVE (P29 2026-08-31). Mobile architecture + feasibility
+> contract; web counterpart is the plain Vue SPA (ADR-002 amendment). P29 fixed
+> stale Inertia references; ADR-017 server contract unchanged.
+
 > **Status:** Architecture + feasibility **DONE** (verified against NativePHP official docs,
 > 2026-08-26). The **app build** is Phase 27 (P27-001..011), gated on the sync engine + API
 > stability. See `docs/adr/ADR-008-mobile.md`.
@@ -21,11 +25,11 @@ Application (use cases — the only mutation entry points)
 Infrastructure (repositories, providers, persistence adapters)
   ↑
 Presentation FRONT
-   ├─ Web : Inertia + Vue SPA  (resources/js)        ── SaaS / browser
+   ├─ Web : Vue 3 SPA  (resources/js; Inertia was planned in ADR-002 but is NOT installed) ── SaaS / browser
    └─ Mobile : NativePHP EDGE (Blade → native views) ── iOS / Android
 ```
 
-- The **Domain MUST NOT** import Vue, Inertia, HTTP, or any presentation concern
+- The **Domain MUST NOT** import Vue, HTTP, or any presentation concern
   (`docs/architecture.md` Dependency rule). NativePHP's Blade/EDGE layer respects this — it is a
   presentation adapter, not a domain change.
 - Business logic (scheduling, entitlements, AI metering, offline-sync envelope) is written **once**.
@@ -35,7 +39,7 @@ Presentation FRONT
 | Concern            | Web/SaaS                         | Mobile (NativePHP)                     |
 |--------------------|----------------------------------|----------------------------------------|
 | Runtime            | Laravel on server (PHP-FPM)      | Embedded pre-compiled PHP on device    |
-| UI                 | Vue SPA via Inertia              | Blade **EDGE** components → native views |
+| UI                 | Vue 3 SPA (no Inertia)           | Blade **EDGE** components → native views |
 | Rendering          | Browser DOM                      | Real native iOS/Android widgets        |
 | Offline            | IndexedDB cache/queue            | On-device **SQLite** + sync queue       |
 | Persistence        | PostgreSQL (authoritative)       | SQLite (local canonical) → sync → PG   |
@@ -93,7 +97,7 @@ Primary bottom tabs (**locked IA**): **Today · Tasks · Capture · Workspace ·
 - Today is the single obvious primary path from the shell.
 - More hosts Settings / Review / Notifications (no dead ends).
 - Do NOT copy the desktop sidebar; Android is a capture/decide/execute/review companion,
-  not a shrunken clone (ADR-013).
+  not a shrunken clone (mobile-IA principle; billing web-first per ADR-013).
 - Android back behavior verified during P27-001 device work.
 
 ## 7. Contracts

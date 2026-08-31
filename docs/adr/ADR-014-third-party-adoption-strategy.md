@@ -52,7 +52,7 @@ adapters only; no source copying into the MIT Kinevo Core.
 - `docs/SRS.md` — FR-65 (upload/asset pipeline), FR-66 (notification provider
   abstraction), FR-67 (AI usage firewall), FR-68 (provider price catalog),
   FR-69 (product event taxonomy + analytics boundary).
-- `docs/design.md` — third-party UI theming rule + retention UX system.
+- `docs/ux/design-system.md` (pre-P29: `docs/archive/design-legacy-2026-08-31/design.md`) — third-party UI theming rule + retention UX system.
 - `TASK.md` — PHASE 28 TPI foundation slice (P28-TPI-001..010).
 - Implementation order (spec §56): Stage 1 embedded wins (Uppy, Pic Smaller,
   Filament) → Stage 2 adapter contracts → Stage 3 service integrations →

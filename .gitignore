@@ -42,3 +42,7 @@ server/public/build/
 skills-lock.json
 ui-ux-pro-max-skill/
 storage/backups/*.sql.gz
+
+# P29: raw Stitch design export — LOCAL REFERENCE ONLY (122MB, unclassified provenance).
+# Never bulk-commit; approved assets may be copied to canonical locations later (P29 §57/P31).
+stitch_kinevo_personal_operating_system/

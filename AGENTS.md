@@ -10,19 +10,25 @@ documentation.
 ### Normative source hierarchy
 When documents disagree, use this order unless an approved ADR explicitly states
 otherwise:
-1. `docs/SRS.md`
-2. `docs/architecture.md`
-3. `docs/domain-model.md`
-4. `docs/scheduling-engine.md`
-5. `docs/knowledge-layer.md`
-6. `docs/offline-sync.md`
-7. `docs/ai-architecture.md`
-8. `docs/api/openapi.yaml`
-9. `database/migrations/`
-10. `docs/design.md`
-11. `docs/test-strategy.md`
-12. implementation source
-13. comments / temporary notes
+1. `docs/product/product-constitution.md` (and `docs/product/*` companions)
+2. `docs/SRS.md`
+3. `docs/architecture.md`
+4. `docs/domain-model.md`
+5. `docs/scheduling-engine.md`
+6. `docs/knowledge-layer.md`
+7. `docs/offline-sync.md`
+8. `docs/ai-architecture.md`
+9. `docs/api/openapi.yaml`
+10. `database/migrations/`
+11. `docs/ux/` (information-architecture, design-system, interaction-states, content-design, motion, accessibility)
+12. `docs/product/commercial-model.md` + `docs/billing.md`
+13. `docs/test-strategy.md`
+14. implementation source
+15. comments / temporary notes
+
+(Pre-P29 documents archived under `docs/archive/` — including the old
+`docs/design.md`, `design-tokens.md`, `brand.md`, `state-machine-ui.md`,
+`ui-audit.md` — are historical pointers, not authority.)
 
 `TASK.md` controls execution order/status only. It never overrides requirements.
 Lower-level documents and existing code cannot redefine higher-level
@@ -40,9 +46,11 @@ report it and determine the smallest safe correction — do not silently choose.
 - **Accepted ADRs are historical authority** — never deleted or silently edited; supersession is
   marked explicitly in the file.
 - **Archived material** (`docs/roadmap/archive/**`, `docs/archive/**`) is evidence, not authority.
-- Transitional bridge until P29: accepted ADRs + verified implementation + frozen audits +
-  `docs/convergence/TARGET_DECISION_REGISTER.md` close gaps between old canonical docs and current
-  reality.
+- Transitional bridge CLOSED at P29 (2026-08-31): TARGET_DECISION_REGISTER decisions migrated
+  into `docs/product/*` / `docs/architecture.md` and the register archived as evidence. Canonical
+  product truth: `docs/product/`; canonical UX truth: `docs/ux/`; canonical marketing truth:
+  `docs/marketing/` (claims registry governs every external claim; Stitch is design evidence
+  only — `docs/ux/stitch-reference.md`).
 
 ### Repository governance documents
 Contributors and agents MUST respect the open-source governance files:
@@ -220,27 +228,26 @@ Rule for every front-end execution: the agent MUST consult the relevant skill
 content before writing or reviewing user-facing UI (unless the change is a
 pure refactor with no visible behavior change). These skills are GUIDANCE ONLY
 and never override the normative hierarchy in the corresponding
-“Normative source hierarchy” section above: `docs/design.md`,
-`docs/design-tokens.md`, `docs/ui-audit.md`, and `docs/browser-e2e.md` remain
-the UI/UX authorities. If a skill suggestion conflicts with a design document,
-the design document wins and the conflict is recorded, not silently resolved.
+“Normative source hierarchy” section above: `docs/ux/design-system.md`,
+`docs/ux/information-architecture.md`, `docs/ux/interaction-states.md`, and
+`docs/browser-e2e.md` are the UI/UX authorities (pre-P29 design docs are
+archived under `docs/archive/design-legacy-2026-08-31/`). If a skill suggestion
+conflicts with a design document, the design document wins and the conflict is
+recorded, not silently resolved.
 Installed dirs are git-ignored (third-party, not vendored); reinstall with the
 commands in the “Local developer tooling” note.
 
-### UI/UX stabilization freeze (rescue R0–R7)
-During the rescue phase (TASK-R0…R7, see `TASK.md` Phase 16), the agent MUST NOT
-introduce new AI features, new scheduling algorithms, new major domain concepts,
-or new dependencies. `docs/design.md` (incl. §74–§103) and `docs/design-tokens.md`
-are UI/UX authority; `docs/ui-audit.md` and `docs/browser-e2e.md` are the living
-gap/browser baselines. Allowed work: stability, usability, integration, browser
-correctness, visual consistency.
-- **Exemption path:** P0 fixes only (data loss, auth/save failure, core feature
-  blocked, canvas crash, offline mutation lost), each classified per
-  `docs/ui-audit.md` §3 and logged as a bug-taxonomy record `docs/ui-audit.md`
-  §6 before the fix lands. P1+ work waits for explicit group approval.
-- **Prime objective:** the first-love loop LOGIN → TODAY → NOW TASK → START →
-  COMPLETE → PROGRESS → NEXT TASK (`docs/design.md` §99) must be made beautiful
-  and reliable before any broader redesign.
+### UI/UX stabilization freeze (rescue R0–R7) — LIFTED at P28 closure
+The rescue freeze (TASK-R0…R7) was completed with P28-014 GREEN (2026-08-31);
+`docs/browser-e2e.md` remains the living browser baseline. Historical freeze
+rules (incl. the `docs/ui-audit.md` exemption path) are preserved in
+`docs/archive/design-legacy-2026-08-31/ui-audit.md` and the archived phase docs.
+Post-freeze changes still follow the normative source hierarchy above — the
+`docs/ux/` authorities and the test policy (never weaken tests for green) bind
+every UI change.
+- **Prime objective (historical, rescue era):** the first-love loop LOGIN →
+  TODAY → NOW TASK → START → COMPLETE → PROGRESS → NEXT TASK was made beautiful
+  and reliable (P28 closure, 3-engine browser evidence).
 - The freeze lifts only when TASK-R7 (release readiness) marks the rescue phase
   complete; `DONE` at contract level (tests/typecheck/build) is never sufficient
   evidence to clear a rescue gate without real browser evidence.
