@@ -1,0 +1,26 @@
+# Kinevo — Requirements Traceability
+
+> STATUS: AUTHORITATIVE (P29, 2026-08-31). Conceptual chain: PRODUCT PRINCIPLE ↔
+> SRS REQUIREMENT ↔ DOMAIN ↔ APPLICATION/API ↔ UX SURFACE ↔ TEST EVIDENCE ↔
+> ROADMAP GAP. Requirement IDs: `docs/SRS.md` (v3.0.0). The ten product-critical
+> flows are fully mapped; everything else follows the same pattern on demand.
+> Evidence conventions: backend = PHPUnit suite (`make test`), component = Vitest,
+> browser = Playwright (`docs/browser-e2e.md`).
+
+| # | Flow | Principle (Constitution §) | SRS | Domain | Application / API | UX surface | Test evidence | Roadmap gap |
+|---|---|---|---|---|---|---|---|---|
+| 1 | **Goal-first journey** | Intention→Execution (§4) | FR-19, FR-50, FR-52, FR-62, FR-45, FR-51, FR-27 | Goal aggregate; AIProposal entity; Milestone | `POST /goals` → `POST /goals/{id}/breakdown-proposals` → `POST /ai/proposals/{id}/accept` → `GET /goals/{id}/milestones` | GoalListView create → breakdown suggestion → ProposalReviewCard (inline) → GoalDetailView (milestones + NextActionBanner) → Today | Backend: goal/AI proposal suites · Vitest: GoalViews (accept inline, continuation) · Browser: golden G2, canonical-journey, p28-golden-journeys RET-005 | — |
+| 2 | **Reality-first / KRS journey** | Reality-aware planning (§10-2) | FR-24, FR-72, FR-15, FR-11, FR-27 | HardLandscapeEvent aggregate; recurrence expansion | `POST /imports/krs-pdf` → `GET /imports/{id}` → `POST /imports/{id}/confirm` → effective landscape in Today/Week/Month | Import & Sync (KrsImport preview/edit/confirm) → Hard Landscape blocks on Today → Week/Month visibility → scheduling around blocks | Backend: KrsImportApiTest · Browser: es-effective-schedule JOURNEY B (recurring block + draft avoids it) | — |
+| 3 | **Permanent Shift** | Reality + user authority (§5-3) | FR-25, FR-72 | ScheduleOverride (series shift); schedule_assignment_history | Schedule override endpoints (ADR-015) → effective occurrence `provenance: shifted:<id>` | Schedule surface → shift preview → Apply → future effective schedule changes | Backend: override suites · Browser: es JOURNEY C | — |
+| 4 | **One-Time Exception** | Reality + user authority | FR-25 | ScheduleOverride (occurrence cancellation/exception) | override endpoints; `cancels_occurrence` | exception preview → Apply → exactly one occurrence changes; adjacent untouched | Backend: override suites · Browser: es JOURNEY D | — |
+| 5 | **Today execution** | Visible consequences (§10-6) | FR-01, FR-03, FR-08, FR-09, FR-47, FR-48 | Task aggregate; ExecutionSession; ProgressEvent | `/today` read model; `POST /api/execution/{id}/complete`; `POST /tasks/{id}/status` | TodayView NOW→NEXT→Timeline→progress; quick capture; first-session guide | Backend: execution/progress suites · Vitest: TodayView cascade · Browser: core-loop, journey-i, login spec | — |
+| 6 | **Sync Now** | Deterministic + user authority (§5-2) | FR-29, FR-28 | SchedulerRun; ScheduleDraft lifecycle | `POST /schedule/sync` (run locks); weekly `schedule:prepare-weekly` (never auto-applies) | weekly-draft banner → review impact → apply; reschedule moves with reasons | Backend: WeeklyPrepareCommandTest, ScheduleApiTest · Browser: scheduler-trigger S1–S4 | — |
+| 7 | **Offline reconciliation** | Recoverability (§10-7) | FR-44, FR-57, NFR-15 | OfflineOperation ledger; base_version conflicts | `POST /sync/reconcile` (idempotent replay; different-payload rejection; optimistic 409) | MutationQueue + SyncStatusPanel (queued/failed/conflict + Retry/Discard) | Backend: OfflineReconcileApiTest (16) · Browser: offline-reconcile O1–O4 (chromium posture) | Durable mobile queue → P36 (same protocol) |
+| 8 | **AI proposal (any surface)** | User authority (§5-1) | FR-52, FR-60…FR-63, FR-67, NFR-13 | AIProposal; AiProviderConfig; AiRun ledger | `POST /ai/proposals/{id}/accept|reject`; `GET /ai/settings|providers|status|usage` | ProposalReviewCard (review/edit/accept); AiNotConfiguredNotice gate; AI Settings (provider modes) | Backend: AiController suites, provider tests · Browser: golden H/H2/K, ai-action-audit | Production quotas → P33 |
+| 9 | **Workspace isolation** | Context continuity + ownership (§10-3) | FR-70…FR-75 | Workspace aggregate; scoped repositories | workspace CRUD/archive; `?workspace_id` scoped lists; `?workspace_id` analytics | WorkspaceSwitcher, WorkspaceHome/Manager; scoped lists (goals/tasks/notes/canvas); cross-workspace Today | Backend: workspace suites (scoping, adoption, archive) · Browser: workspace-journey, p28-ux-audit | Today/Week/Month filter wiring → TARGET (FR-73/74) |
+| 10 | **Subscription / entitlement baseline** | Ownership + commercial honesty (§6, §8) | FR-71b…FR-74b | Subscription; Entitlement (EntitlementService) | plan endpoints; `GET /ai/usage`; entitlement exceptions (403 UpgradeNotice) | PlanSettingsView; AiUsageSummaryCard (hosted vs BYOK ledger); UpgradeNotice on ENTITLEMENT_LIMIT | Backend: billing/pricing delta suites (D-001..D-008) · Browser: delta-pricing, plans surfaces | Production Midtrans flip + quota lock → P33 |
+
+Chain rules: every row's UX surface must have its states covered by
+`docs/ux/interaction-states.md`; every API named here is contractual in
+`docs/api/openapi.yaml`; every gap column entry must exist in a planned phase doc
+(`docs/roadmap/planned/`). Historical requirement meaning: SRS v2.0.0 archive.
