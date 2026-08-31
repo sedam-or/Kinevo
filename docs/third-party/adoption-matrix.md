@@ -1,7 +1,7 @@
 # Third-Party Adoption Matrix
 
 > **Status:** PLANNING BASELINE — 2026-08-29. Source of requirements:
-> `KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md` (§3, §5–§8).
+> `docs/roadmap/archive/planning-specs/KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md` (§3, §5–§8).
 > Decision record: `docs/adr/ADR-014-third-party-adoption-strategy.md`.
 >
 > **Rule:** No new dependency may be introduced without a row here. Every row

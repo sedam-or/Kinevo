@@ -117,7 +117,7 @@ added when they are adopted:
 
 ### Adoption baseline (post-P27 planning)
 
-`KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md` adds an
+`docs/roadmap/archive/planning-specs/KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md` adds an
 adoption baseline (Uppy, Pic Smaller, Filament, Open SaaS-patterns, Gotify,
 Lago, OpenPanel, Langfuse, GlitchTip) tracked in
 `docs/third-party/adoption-matrix.md` + `docs/third-party/licenses.md`

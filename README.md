@@ -33,9 +33,10 @@ untrusted assistant that proposes and validates, never decides.
 
 - **Deterministic scheduling engine** — same inputs, same plan, every time. No
   black-box reordering of your day; the schedule is explainable and testable.
-- **Offline-first by design** — a PWA shell with a queued mutation outbox
-  (operation UUIDs, last-write-wins reconciliation) keeps you working on a
-  plane, on a train, or on a bad connection.
+- **Offline that respects the server** — a durable IndexedDB mutation queue
+  (operation UUIDs) reconciles through a server-side operation ledger with
+  idempotent replay and optimistic conflict handling — never last-write-wins —
+  so you keep working on a plane, on a train, or on a bad connection.
 - **AI that knows its place** — optional local (Ollama) or remote providers
   break down goals into reviewable milestones. Schema-validated, domain-checked,
   human-approved before anything is applied.
@@ -87,7 +88,7 @@ Production deployment (Docker Compose, backups, restore) is documented in
 
 ```text
 Browser / PWA
-    ├── Vue 3 + TypeScript + Inertia · Pinia · Service Worker · IndexedDB
+    ├── Vue 3 + TypeScript SPA · Pinia · Service Worker · IndexedDB
     ▼
 Laravel Modular Monolith
     ├── Planning / Goals / Milestones / Programs
@@ -110,11 +111,11 @@ Tiptap owns editing, Ollama owns inference — Kinevo owns business semantics.**
 
 This repository treats quality gates as part of the product, not an afterthought:
 
-- **890 backend tests** (2,952 assertions) — domain, application, and API suites
-- **499 frontend unit tests** across 68 files (Vitest)
-- **253-check real-browser matrix** — Playwright across Chromium, Firefox, and
-  WebKit, including the full golden journey, offline recovery, accessibility
-  (axe WCAG 2.2 A/AA), and mobile width sweeps
+- **1,125 backend tests** (3,944 assertions) — domain, application, and API suites
+- **531 frontend unit tests** across 75 files (Vitest)
+- **Real-browser Playwright matrix** — Chromium, Firefox, and WebKit, including
+  golden journeys, effective-schedule journeys, scheduler lifecycle, offline
+  reconciliation, accessibility (axe WCAG 2.2 A/AA), and mobile width sweeps
 - **PHPStan** static analysis and **Pint** style gates in CI
 - Contract-first: versioned OpenAPI, migration discipline, optimistic
   concurrency with stable `409` conflicts
@@ -124,17 +125,19 @@ This repository treats quality gates as part of the product, not an afterthought
 | Layer | Choice |
 | --- | --- |
 | Backend | PHP 8.4 · Laravel (modular monolith) |
-| Frontend | Vue 3 · TypeScript · Inertia.js · Vite · Pinia |
+| Frontend | Vue 3 · TypeScript · Vite · Pinia (SPA) |
 | Database | PostgreSQL 17 |
 | Rich text | Tiptap (behind a Kinevo editor adapter) |
 | Canvas | Excalidraw (behind a bounded integration adapter) |
-| Offline | Service Worker · Cache Storage · IndexedDB (cache/queue, never authoritative) |
+| Offline | Service Worker (app shell) · IndexedDB queue → server operation ledger (`POST /sync/reconcile`) |
 | Jobs | Laravel Queue + Scheduler (Redis optional, never mandatory) |
 | AI | Provider abstraction; Ollama for local inference (optional) |
 | Infrastructure | Docker · Nginx · S3-compatible object storage |
 
 ## Documentation
 
+- [`docs/README.md`](docs/README.md) — documentation authority index (start here)
+- [`docs/roadmap/`](docs/roadmap) — master execution program, active phase, planned phases
 - [`docs/SRS.md`](docs/SRS.md) — normative requirements (single source of truth)
 - [`docs/architecture.md`](docs/architecture.md) — system structure and boundaries
 - [`docs/domain-model.md`](docs/domain-model.md) — entities, invariants, state machines
@@ -156,7 +159,7 @@ This repository treats quality gates as part of the product, not an afterthought
 - [`docs/implementation-status.md`](docs/implementation-status.md) — progress mirror
 - [`docs/adr/`](docs/adr) — architecture decision records
 - [`docs/third-party/licenses.md`](docs/third-party/licenses.md) — license ledger
-- [`TASK.md`](TASK.md) — execution board (status, not requirements)
+- [`TASK.md`](TASK.md) — execution control plane (current phase, gate, conventions)
 - [`AGENTS.md`](AGENTS.md) — operating contract for AI agents and contributors
 
 </details>
@@ -175,11 +178,12 @@ privately; security issues never belong in public issues.
 
 ## Status and roadmap
 
-Kinevo is **pre-1.0**: requirements and architecture baselines are frozen
-(SRS v2.0.0), Phase 17 product-cohesion work is complete and browser-proven,
-and the first tagged release is being prepared under
+Kinevo is **pre-1.0**: the scheduling, offline-reconciliation, and product-experience
+stabilization epics (ADR-015/016/017) are complete and browser-proven; the P28 product-experience
+closure phase is active; P29–P39 (product convergence → release candidate) are planned under
+[`docs/roadmap/`](docs/roadmap). Release policy:
 [`docs/release-management.md`](docs/release-management.md). Live progress:
-[`TASK.md`](TASK.md) and [`docs/implementation-status.md`](docs/implementation-status.md).
+[`TASK.md`](TASK.md) and [`docs/roadmap/active/`](docs/roadmap/active).
 
 ## License
 

@@ -4,7 +4,7 @@
 - **Supersedes:** none
 - **Amends:** ADR-015 (Effective Landscape authority and locked-task immutability are preserved unchanged)
 - **Resolves:** BLOCKER-SCHED-01 (weekly job + run lock + Sync Now absent; FR-27/FR-29 trigger semantics)
-- **Companion:** `docs/convergence/PRE_CONVERGENCE_BASELINE.md` (blocker register), `docs/scheduling-engine.md`
+- **Companion:** `docs/roadmap/archive/convergence/PRE_CONVERGENCE_BASELINE.md` (blocker register), `docs/scheduling-engine.md`
 
 ## 1. Context
 

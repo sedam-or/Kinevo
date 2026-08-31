@@ -11,6 +11,18 @@ version** (v1) are tracked separately in `docs/SRS.md` and
 Release governance: see `docs/release-management.md`.
 
 ## [Unreleased]
+### Changed
+- Documentation & roadmap rebaseline (R0): `TASK.md` reconstructed into a slim execution control
+  plane (detailed task history moved verbatim to `docs/roadmap/archive/task-legacy/`); new
+  canonical master execution program (`docs/roadmap/KINEVO_MASTER_EXECUTION_PROGRAM.md`, R0 → P39)
+  superseding both prior root execution prompts (archived); P28 detail migrated to
+  `docs/roadmap/active/P28-product-experience-closure.md`; planned phase docs created for P29–P39;
+  old→new phase mapping + document migration matrix recorded in
+  `docs/roadmap/rebaseline-2026-08.md`; documentation authority index added (`docs/README.md`);
+  ADR-009/010/011 reconstructed from implementation evidence (resolving the dangling-reference
+  blocker); SRS/architecture/README/AGENTS received narrow current-truth corrections (SPA
+  frontend without Inertia, ADR-017 offline semantics instead of last-write-wins, truthful mobile
+  offline status); convergence registers archived after completion. No product behavior changed.
 ### Added
 - Offline mutation reconciliation & operation ledger (ADR-017): a server-authoritative
   idempotency ledger (`offline_operations`) now backs replay of offline mutations for a

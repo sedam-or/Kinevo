@@ -29,6 +29,21 @@ Lower-level documents and existing code cannot redefine higher-level
 requirements. If a conflict exists between implementation and requirements,
 report it and determine the smallest safe correction — do not silently choose.
 
+### Documentation map (R0 rebaseline, 2026-08-31)
+- **Documentation authority index:** `docs/README.md` — start there; do not guess.
+- **Execution authority:** `docs/roadmap/KINEVO_MASTER_EXECUTION_PROGRAM.md` (R0 → P39).
+- **`TASK.md` is a slim control plane ONLY** (current phase, gate, next phase, conventions,
+  links). Detailed task bodies live in `docs/roadmap/active/` and `docs/roadmap/planned/`.
+- **Task IDs are immutable.** Never recycle; supersession is explicit; renumbering only via the
+  mapping in `docs/roadmap/rebaseline-2026-08.md`.
+- **`docs/audit/*` dated snapshots are FROZEN** — never rewritten; new audits get new dated files.
+- **Accepted ADRs are historical authority** — never deleted or silently edited; supersession is
+  marked explicitly in the file.
+- **Archived material** (`docs/roadmap/archive/**`, `docs/archive/**`) is evidence, not authority.
+- Transitional bridge until P29: accepted ADRs + verified implementation + frozen audits +
+  `docs/convergence/TARGET_DECISION_REGISTER.md` close gaps between old canonical docs and current
+  reality.
+
 ### Repository governance documents
 Contributors and agents MUST respect the open-source governance files:
 - `CONTRIBUTING.md` — contributor guide (branch/commit/PR rules, SRS/ADR/migration/API processes).

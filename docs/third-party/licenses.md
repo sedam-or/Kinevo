@@ -70,7 +70,7 @@ integration.
 
 ## Adoption baseline (planned — NOT yet adopted)
 
-> Source: `KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md`
+> Source: `docs/roadmap/archive/planning-specs/KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md`
 > §3/§9 + `docs/third-party/adoption-matrix.md`. These are **planning baselines
 > only**. Per the ledger rules above, none of these may be listed as
 > license-approved for adoption until the exact package/version is checked at

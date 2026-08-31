@@ -16,7 +16,7 @@ notifications move billing state — never the browser, never a client-supplied
 success flag. Money moves in integer minor units (IDR ×100). No card/CVV/bank
 data ever touches Kinevo storage.
 
-## Pricing Delta (owner decision 2026-08-28 — `revisi-finance.md`)
+## Pricing Delta (owner decision 2026-08-28 — `docs/roadmap/archive/planning-specs/revisi-finance.md`)
 
 Commercial delta patch supersedes ADR-013 prices. Authoritative statuses:
 
@@ -66,7 +66,7 @@ AI quota numbers remain DECISION_REQUIRED (D-004 simulation evidence in
 
 - `docs/adr/ADR-012-payment-gateway.md` — why Midtrans (Core API Subscription), Xendit-ready seam.
 - `docs/adr/ADR-013-product-tiers-pricing.md` — tiers & prices AS RECORDED 2026-08-26 (Free Rp0;
-  Pro IDR 34,900/mo; Power IDR 49,900/mo). **Prices SUPERSEDED 2026-08-28 by `revisi-finance.md`
+  Pro IDR 34,900/mo; Power IDR 49,900/mo). **Prices SUPERSEDED 2026-08-28 by `docs/roadmap/archive/planning-specs/revisi-finance.md`
   (see §Pricing Delta below)**; ADR body is preserved history. Annual unpriced until an explicit
   owner decision; web-first billing — no Google Play checkout in Android v1; one subscription
   covers Web + Android.

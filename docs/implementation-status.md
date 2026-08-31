@@ -175,11 +175,15 @@ AI settings discoverability (FR-60)      ✅ DONE (TASK-P17-028: unconfigured/of
                                            header overflow fixed; 18 passed ×3)
  Roadmap re-baseline P28–P39               ✅ DONE (2026-08-28: adopted
                                            KINEVO_POST_P27_MASTER_EXECUTION_PROMPT.md
+                                           (now docs/roadmap/archive/master-prompts/)
                                            as post-P27 execution authority; old
                                            PHASE 28/29/30 renumbered to 31/37/39
                                            with zero status/evidence changes; new
-                                           PHASE 28 UX Audit active, P28-001 READY)
+                                           PHASE 28 UX Audit active, P28-001 READY;
+                                           SUPERSEDED 2026-08-31 by Master Execution
+                                           Program V3 — docs/roadmap/)
  Commercial pricing delta                  🟡 REGISTERED (2026-08-28: revisi-finance.md
+                                           (now docs/roadmap/archive/planning-specs/)
                                            adopted — Pro IDR 49,900 / Power IDR 89,900
                                            LOCKED as launch hypotheses; AI quota
                                            20/150/500 → DEPRECATED BASELINE pending

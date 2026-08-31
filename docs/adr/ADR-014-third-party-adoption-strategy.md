@@ -6,7 +6,7 @@ by a documented owner decision.
 
 ### Decision
 Adopt the five-mode integration model from
-`KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md`:
+`docs/roadmap/archive/planning-specs/KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md`:
 
 1. **EMBED** — package/component inside Kinevo, wrapped behind a Kinevo boundary
    (Excalidraw, Tiptap, Uppy, Pic Smaller engine, Filament).

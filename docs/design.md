@@ -3557,8 +3557,8 @@ Rules of maintenance:
 
 ## 105. Retention UX & Third-Party UI Contract (post-P27, ADR-014)
 
-> Source of requirements: `KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_
-> RETENTION_UX_SPEC.md` (§14–§24, §46–§49, §55, §63–§64). This section is the
+> Source of requirements: `docs/roadmap/archive/planning-specs/
+> KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md` (§14–§24, §46–§49, §55, §63–§64). This section is the
 > design authority for retention UX; §60 (Empty/Onboarding) and §94
 > (Information Hierarchy) remain in force and are extended — not replaced —
 > here. Skill input (design-taste-frontend): empty states beautifully composed

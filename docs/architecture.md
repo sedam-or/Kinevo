@@ -15,7 +15,7 @@ Kinevo uses a **modular monolith**. It is one deployable Laravel application wit
 ### High-level architecture
 ```text
 Browser
-├── Vue 3 / TypeScript / Inertia
+├── Vue 3 / TypeScript (SPA)
 ├── Service Worker
 └── IndexedDB
         │ HTTPS
@@ -36,7 +36,7 @@ Laravel
 
 ### Layering rules
 #### Presentation
-Controllers, Inertia pages, API resources, request validation, UI-facing orchestration. No complex business algorithms.
+Controllers, API resources, request validation, UI-facing orchestration. No complex business algorithms. (Frontend is a Vue 3 SPA — Inertia planned in ADR-002 but never installed.)
 
 #### Application
 Use cases/commands/queries, transaction boundaries, orchestration of domain services.
@@ -67,7 +67,7 @@ Eloquent repositories, storage adapters, queue adapters, HTTP clients, AI provid
 - Audit
 
 ### Dependency rule
-Domain MUST NOT import Vue, Inertia, HTTP controllers, Laravel presentation concerns, Excalidraw, Tiptap, or Ollama directly.
+Domain MUST NOT import Vue, HTTP controllers, Laravel presentation concerns, Excalidraw, Tiptap, or Ollama directly.
 
 Infrastructure adapters implement interfaces consumed by application/domain layers.
 
@@ -93,8 +93,11 @@ LLMs are untrusted external-like providers. All outputs pass schema validation a
 ### Mobile boundary
 NativePHP (Phase 26/27) is a **presentation front, not a second backend**. It reuses the Domain +
 Application + Infrastructure layers; its Blade/EDGE native UI sits above the same dependency rule
-(architecture.md top). On-device SQLite is the local canonical store and reconciles to PostgreSQL
-via the offline-sync envelope. See `docs/mobile-architecture.md` and `docs/adr/ADR-008-mobile.md`.
+(architecture.md top). On-device SQLite as the local canonical store reconciling to PostgreSQL via the
+offline-sync envelope is the TARGET, not current mobile reality: shipped mobile screens show
+`offline`/`queued` status labels only (no durable on-device queue), and all mobile mutations are
+live HTTP. Durable mobile offline lands in P36 using the ADR-017 protocol unchanged (no second
+protocol). See `docs/mobile-architecture.md`, `docs/adr/ADR-008-mobile.md`, `docs/adr/ADR-017-offline-mutation-reconciliation-and-operation-ledger.md`.
 
 ### Scheduler boundary
 Scheduler is a domain subsystem, not a controller or job implementation. Jobs trigger scheduler runs but do not implement scheduling decisions.
@@ -258,8 +261,8 @@ external capability it may use — NO domain semantic is ever delegated:
 
 | Capability | Kinevo owner (authority) | External capability (never authority) |
 |---|---|---|
-| Identity / auth / sessions | `Domain\Identity`, Sanctum tokens | OAuth providers (P29, as credential source only) |
-| Email | `config/mail.php` abstraction (P29-004) | Postmark/Resend/SES drivers (transport only) |
+| Identity / auth / sessions | `Domain\Identity`, Sanctum tokens | OAuth providers (P30, as credential source only) |
+| Email | `config/mail.php` abstraction (P30) | Postmark/Resend/SES drivers (transport only) |
 | Workspaces / goals / milestones / programs / tasks | `Domain\Goals`, `Domain\Tasks`, `Domain\Workspaces` | — (none) |
 | Notes / knowledge | `Domain\Notes`, `Domain\Knowledge` | Tiptap (editing UX only) |
 | Canvas / scene | `Domain\Canvas` + `CanvasAdapter` (ADR-005) | Excalidraw (drawing UX only) |
@@ -270,7 +273,7 @@ external capability it may use — NO domain semantic is ever delegated:
 | Product analytics events | event taxonomy (P32-001, Kinevo-owned) | OpenPanel (ingestion/aggregation sink) |
 | Notifications / preferences | `Domain\Notifications` | Gotify (transport only) |
 | Error telemetry | Kinevo redaction layer (SRS §15/NFR-03) | GlitchTip (aggregation UI) |
-| Privacy / export / deletion | `Application\ActivityLogs`, data-ownership phase (P30) | — (none) |
+| Privacy / export / deletion | `Application\ActivityLogs`, privacy gate (P37) | — (none) |
 
 ### Adapter contract inventory (TPI-005 / ports-before-services)
 
@@ -281,12 +284,12 @@ port are the ones the owning module must honor.
 | Port (interface) | Owning module | Backends (planned/existing) | Contract/failure semantics |
 |---|---|---|---|
 | `AssetStorage` | `Application\Attachments` | local/S3 disk now; Uppy upstream | Upload visible; resumable; retry on failure; ownership/authorization still Kinevo (SRS FR-65) |
-| `ImageCompressionProvider` | attachment pipeline | Pic Smaller engine (P30) | Compression failure → original bytes proceed + notice; never blocks save |
-| `NotificationProvider` | `Domain\Notifications` | in-app center now; Gotify transport (P34) | Outage → in-app delivery continues; external queue retries; preferences honored |
+| `ImageCompressionProvider` | attachment pipeline | Pic Smaller engine (P31) | Compression failure → original bytes proceed + notice; never blocks save |
+| `NotificationProvider` | `Domain\Notifications` | in-app center now; Gotify transport (P35) | Outage → in-app delivery continues; external queue retries; preferences honored |
 | `BillingAdapter` | `Domain\Billing`, `BillingService` | MidtransGateway now; Lago metering (P24/P32) | Billing fails safe; entitlements never fabricated; reconcile job (BillingReconcileCommand) |
-| `AnalyticsAdapter` | event taxonomy (P32-001) | derived analytics now; OpenPanel sink (P31/P32) | No event meaning change on outage; same taxonomy to any sink |
-| `AIObservabilityProvider` | `Domain\Ai\BillingLedger` | ledger now; Langfuse traces (P31) | Ledger is billing truth regardless; traces best-effort |
-| `ErrorTelemetryProvider` | Kinevo redaction layer | none now; GlitchTip (P34) | Redaction first; telemetry outage never corrupts business data |
+| `AnalyticsAdapter` | event taxonomy (P32) | derived analytics now; OpenPanel sink (P32) | No event meaning change on outage; same taxonomy to any sink |
+| `AIObservabilityProvider` | `Domain\Ai\BillingLedger` | ledger now; Langfuse traces (P32) | Ledger is billing truth regardless; traces best-effort |
+| `ErrorTelemetryProvider` | Kinevo redaction layer | none now; GlitchTip (P35) | Redaction first; telemetry outage never corrupts business data |
 
 Development resource profiles: external services start explicitly via Docker
 profiles (`core` always; `billing`/`analytics`/`ai-obs`/`notifications`/

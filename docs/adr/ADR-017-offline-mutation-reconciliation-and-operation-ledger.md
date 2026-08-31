@@ -6,7 +6,7 @@
 - **Amends:** none
 - **Resolves:** BLOCKER-OFFLINE-01 (client offline concepts exist but no
   authoritative server reconciliation contract)
-- **Companion:** `docs/convergence/PRE_CONVERGENCE_BASELINE.md`,
+- **Companion:** `docs/roadmap/archive/convergence/PRE_CONVERGENCE_BASELINE.md`,
   `docs/offline-sync.md` (rewritten to match reality)
 
 ## 1. Context — current offline reality

@@ -2,7 +2,7 @@
 
 ### Status
 Accepted — 2026-08-30. Authoritative for Effective Schedule stabilization work
-(P28_STABILIZATION_PLAN steps 1–5). No feature implementation is authorized by this
+(P28 active phase doc execution order (formerly P28_STABILIZATION_PLAN) steps 1–5). No feature implementation is authorized by this
 document; implementation proceeds only through the ES-IMPL slices it defines.
 
 **Amendment (2026-08-30, ES-FIX-00):** during ES-IMPL-01 verification a narrow engine gap
@@ -460,7 +460,7 @@ starts.
 | **ES-IMPL-08** Integration/E2E regression | KRS journey (B), shift journey (C), exception journey (D) E2E contracts; full-suite regression; docs sync (scheduling-engine.md, SRS narrow deltas) | `tests/e2e/tests/*`, docs | end-to-end correctness of the pipeline | journeys B/C/D green; entire suite green | low |
 
 Dependency chain: 01 → 02 → 03; 04 and 05 after 01 (parallelizable); 06 and 07 independent
-of 04/05; 08 last. This matches P28_STABILIZATION_PLAN steps 2–5 and feeds JOURNEY B/C/D.
+of 04/05; 08 last. This matches P28 active phase doc execution order (formerly P28_STABILIZATION_PLAN) steps 2–5 and feeds JOURNEY B/C/D.
 
 ### Blocker mapping
 
@@ -476,5 +476,5 @@ of 04/05; 08 last. This matches P28_STABILIZATION_PLAN steps 2–5 and feeds JOU
 
 - SRS FR-25/FR-27/FR-29 restatement + scheduling-engine.md update: only the narrow deltas
   needed per slice; full SRS/architecture rewrite remains a convergence-phase task
-  (DOCUMENT_DRIFT_TRIAGE).
+  (docs/roadmap/archive/convergence/DOCUMENT_DRIFT_TRIAGE.md).
 - Scheduler trigger / Sync Now (BLOCKER-SCHED-01): separate decision after slices 2–5.

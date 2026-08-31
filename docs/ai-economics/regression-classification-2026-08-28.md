@@ -1,6 +1,6 @@
 # Commercial Pricing Delta — Regression Search Classification
 
-Status: ACTIVE · Evidence date: 2026-08-28 · Source: `revisi-finance.md` §21
+Status: ACTIVE · Evidence date: 2026-08-28 · Source: `docs/roadmap/archive/planning-specs/revisi-finance.md` §21
 
 Every repository occurrence of the old commercial assumptions was searched and
 classified. Migration history and changelog history are PRESERVE (never
@@ -46,7 +46,7 @@ rewritten). Active commercial config and tests are REPLACE.
 
 - `docs/adr/ADR-013-product-tiers-pricing.md` — decision history; SUPERSEDED (prices only) banner
   added, body untouched.
-- `KINEVO_POST_P27_MASTER_EXECUTION_PROMPT.md` §2.1/§2.2 — original numbers + explicit
+- `docs/roadmap/archive/master-prompts/KINEVO_POST_P27_MASTER_EXECUTION_PROMPT.md` §2.1/§2.2 — original numbers + explicit
   DELTA banner (2026-08-28) atop §2; §2 bodies kept as recorded baseline.
 - `TASK.md` old phase execution records (P24 lines referencing the 2026-08-26 prices) — historical
   execution log, preserved.

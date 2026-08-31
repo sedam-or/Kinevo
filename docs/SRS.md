@@ -33,7 +33,7 @@
 | Requirement Owner | Product/System Owner |
 | Primary User | Single owner/user |
 | Architecture Style | Modular monolith |
-| Frontend | Vue 3 + TypeScript + Inertia.js + Vite + Pinia |
+| Frontend | Vue 3 + TypeScript + Vite + Pinia (SPA, API-driven; Inertia was planned in ADR-002 but is NOT installed) |
 | Backend | Laravel modular monolith |
 | Database | PostgreSQL |
 | Offline | Service Worker + IndexedDB + Cache Storage |
@@ -184,7 +184,7 @@ Setiap FR di bawah memiliki: kode, nama, priority, requirement `shall`, actor, p
 5. UI menampilkan event chronologically.
 6. Empty slot ≥15 menit ditampilkan sebagai fillable slot.
 
-**Alternative Flows:** Tanggal dapat berpindah ke hari lain dari navigasi; bila offline, gunakan cached Today data.
+**Alternative Flows:** Tanggal dapat berpindah ke hari lain dari navigasi. Offline (implementation note, ADR-017 2026-08-31): a cached offline Today READ view is not implemented; offline keeps the authenticated session, queues allowlisted mutations (task create/update/status, subtask create, note create/update), and rehydrates via `/sync/reconcile` on reconnect/boot.
 
 **Exception Flows:** Jika data tidak dapat dimuat dan cache tidak tersedia, tampilkan error non-destructive dan retry action.
 
@@ -1323,19 +1323,19 @@ Setiap FR di bawah memiliki: kode, nama, priority, requirement `shall`, actor, p
 
 **Prioritas:** Must-Have
 
-**Deskripsi:** Service Worker SHALL cache all Today data needed for execution and Quick Capture SHALL work offline using an outbound mutation queue with last-write-wins synchronization.
+**Deskripsi (amended by ADR-017, 2026-08-31 — supersedes the original last-write-wins wording):** offline work uses a durable IndexedDB mutation queue reconciled through the server operation ledger (`POST /sync/reconcile`) — idempotent replay, payload-hash REUSED rejection, and optimistic base_version conflicts; there is NO last-write-wins and client clocks never decide precedence. The Service Worker caches the app shell only (never business API traffic). Quick Capture is ONLINE_ONLY (its placement writes the canonical schedule); the offline alternative is creating a task offline (task:create is allowlisted) and using schedule Sync Now online.
 
 **Aktor:** User; Service Worker; Sync service.
 
 **Preconditions:** Today has been loaded online at least once for full baseline cache.
 
-**Postconditions:** offline mutation persisted locally; eventual sync applies last-write-wins policy.
+**Postconditions:** offline mutation persisted locally (durable queue); eventual sync reconciles through the server operation ledger with canonical outcomes (applied / conflict / rejected).
 
 **Normal Flow:** online load → cache Today → connection lost → user Quick Capture → create queue item → connection restored → sync queue in order → server acknowledgement → remove queue item.
 
-**Alternative Flows:** multiple offline edits to same entity collapse to latest mutation where safe.
+**Alternative Flows:** replay of the same operation id + identical payload returns the recorded outcome (response-loss safe); same id + different payload is rejected (REUSED); stale base_version produces a VERSION_CONFLICT surfaced for review.
 
-**Exception Flows:** stale version conflict resolved by last-write-wins; attachment upload requires online state unless specifically queued.
+**Exception Flows:** stale version conflict is NEVER auto-resolved — server state wins and the client surfaces a review/discard state; attachments/uploads are online-only.
 
 **Business Rules:** IndexedDB/local cache is not authoritative. Local encryption depends on browser OS storage security; app must not claim encrypted-at-rest field semantics.
 
@@ -1559,7 +1559,7 @@ Setiap FR di bawah memiliki: kode, nama, priority, requirement `shall`, actor, p
 
 **Prioritas:** Should-Have
 
-**Deskripsi:** When enabled, Notes and Canvas mutations SHALL be queueable offline using IndexedDB and synchronized when online.
+**Deskripsi (implementation scope per ADR-017 capability matrix, 2026-08-31):** offline queueing covers note:create and note:update (and task create/update/status, subtask create). Canvas mutations are ONLINE_ONLY and fail visibly offline; canvas scene persistence is not queued.
 
 **Acceptance Criteria:** Offline edit survives tab close, remains queued, and either synchronizes or enters an explicit conflict state after reconnect.
 
@@ -1834,7 +1834,7 @@ Kinevo SHALL use a **modular monolith**. All principal business domains run in o
 
 Browser
   |
-  +-- Vue 3 / TypeScript / Inertia / Pinia
+  +-- Vue 3 / TypeScript / Pinia (SPA)
   +-- Service Worker
   +-- IndexedDB
   +-- Canvas React Island -> Canvas Adapter -> Excalidraw
@@ -1857,7 +1857,7 @@ Domain MUST NOT import Vue, Inertia, HTTP controllers, Excalidraw, Tiptap, Ollam
 
 ### 5.3.1 Presentation Layer
 
-Responsible for route handling, HTTP concerns, Inertia page composition, validation feedback, UI state, and serialization.
+Responsible for route handling, HTTP concerns, SPA view composition (Vue shell), validation feedback, UI state, and serialization.
 
 ### 5.3.2 Application Layer
 
@@ -2829,7 +2829,7 @@ Sensitive content MUST NOT be logged.
 Before Canvas enters production scope, the following spike criteria MUST pass:
 
 ```text
-Vue/Inertia
+Vue (SPA)
    ↓
 Canvas Adapter
    ↓
@@ -2961,19 +2961,28 @@ The scheduling engine SHALL separate feasibility from ranking and SHALL expose m
 
 | ADR | Decision | Status |
 |---|---|---|
+> Register corrected 2026-08-31 (R0) to match the actual `docs/adr/` files; the pre-R0 table
+> listed an older internal numbering (historical text preserved in git history).
+
+| ADR | Decision | Status |
+|---|---|---|
 | ADR-001 | Modular monolith | Accepted |
-| ADR-002 | Laravel backend | Accepted |
-| ADR-003 | Vue 3 + TypeScript + Inertia | Accepted |
-| ADR-004 | PostgreSQL | Accepted |
-| ADR-005 | Service Worker + IndexedDB offline | Accepted |
-| ADR-006 | Laravel Queue/Scheduler; Redis optional | Accepted |
-| ADR-007 | Deterministic scheduler with hard/soft split | Accepted |
-| ADR-008 | Goal + Milestone first-class domain model | Accepted |
-| ADR-009 | Tiptap-based Knowledge Editor boundary | Accepted |
-| ADR-010 | Excalidraw Canvas Adapter boundary | Accepted pending spike gate |
-| ADR-011 | AI Provider abstraction; Ollama optional | Accepted |
-| ADR-012 | Oracle Cloud as deployment profile, not platform dependency | Accepted |
-| ADR-013 | Open-source license/attribution ledger | Accepted |
+| ADR-002 | Vue 3 + TypeScript + Vite + Pinia frontend (Inertia planned, NOT installed — amendment note in file) | Accepted |
+| ADR-003 | Deterministic two-layer scheduler | Accepted |
+| ADR-004 | Native knowledge layer with headless editor | Accepted |
+| ADR-005 | Excalidraw behind a canvas adapter | Accepted |
+| ADR-006 | Provider-abstraction AI | Accepted |
+| ADR-007 | Containerized portable deployment | Accepted |
+| ADR-008 | NativePHP mobile architecture | Accepted |
+| ADR-009 | Knowledge editor boundary (Tiptap) — reconstructed 2026-08-31 | Accepted |
+| ADR-010 | Canvas adapter boundary (Excalidraw) — reconstructed 2026-08-31; spike gate satisfied by shipped adapter | Accepted |
+| ADR-011 | AI provider abstraction; Ollama optional — reconstructed 2026-08-31 | Accepted |
+| ADR-012 | Payment gateway selection (Midtrans) | Accepted |
+| ADR-013 | Product tiers & pricing (locked business decisions; prices later re-locked by owner delta 2026-08-28) | Accepted |
+| ADR-014 | Third-party adoption strategy (integration modes & boundaries) | Accepted |
+| ADR-015 | Effective schedule resolution and override precedence | Accepted |
+| ADR-016 | Scheduler trigger, Sync Now, draft approval lifecycle | Accepted |
+| ADR-017 | Offline mutation reconciliation and operation ledger | Accepted |
 
 ## 19.1 Retired v1 Decisions
 
@@ -2993,7 +3002,7 @@ Equivalent security/ownership guarantees remain mandatory; implementation is now
 ## Phase 0 — Foundation
 
 - Repository structure.
-- Laravel + Vue/Inertia baseline.
+- Laravel + Vue SPA baseline.
 - PostgreSQL migrations.
 - Auth.
 - CI.
