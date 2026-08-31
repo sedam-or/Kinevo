@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -13,9 +14,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $user_id
  * @property int $assignment_id
  * @property int $task_id
- * @property \Carbon\CarbonImmutable $date
- * @property \Carbon\CarbonImmutable $start_at
- * @property \Carbon\CarbonImmutable $end_at
+ * @property CarbonImmutable $date
+ * @property CarbonImmutable $start_at
+ * @property CarbonImmutable $end_at
  * @property int $duration_minutes
  * @property string $status
  * @property string $source
@@ -25,7 +26,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $superseded_by_schedule_version
  * @property string|null $superseded_by
  * @property string|null $reason
- * @property \Carbon\CarbonImmutable $acted_at
+ * @property CarbonImmutable $acted_at
  * @property string|null $created_at
  * @property string|null $updated_at
  */

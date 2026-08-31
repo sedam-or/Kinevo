@@ -1,14 +1,14 @@
 <?php
 
+use App\NativeComponents\BreakdownScreen;
 use App\NativeComponents\CanvasDetailScreen;
 use App\NativeComponents\CanvasScreen;
 use App\NativeComponents\CaptureScreen;
-use App\NativeComponents\BreakdownScreen;
 use App\NativeComponents\GoalDetailScreen;
 use App\NativeComponents\GoalScreen;
 use App\NativeComponents\MoreScreen;
-use App\NativeComponents\NotesScreen;
 use App\NativeComponents\NoteDetailScreen;
+use App\NativeComponents\NotesScreen;
 use App\NativeComponents\NotificationsScreen;
 use App\NativeComponents\ReviewScreen;
 use App\NativeComponents\TaskDetailScreen;

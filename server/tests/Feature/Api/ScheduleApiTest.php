@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api;
 
+use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
 use App\Domain\Scheduling\HardLandscapeEvent;
 use App\Domain\Scheduling\ScheduleAssignment;
@@ -218,7 +219,7 @@ final class ScheduleApiTest extends TestCase
 
     private function createRecurringLandscape(int $userId, string $recurrence, string $start = '2026-08-17T09:00:00', string $end = '2026-08-17T10:30:00'): void
     {
-        app(\App\Domain\Scheduling\Contracts\HardLandscapeRepository::class)->create(
+        app(HardLandscapeRepository::class)->create(
             HardLandscapeEvent::create(
                 $userId,
                 'KRS: Algorithms',

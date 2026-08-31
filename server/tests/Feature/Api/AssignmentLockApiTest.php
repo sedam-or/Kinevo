@@ -2,8 +2,11 @@
 
 namespace Tests\Feature\Api;
 
+use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
+use App\Domain\Scheduling\HardLandscapeEvent;
 use App\Domain\Scheduling\ScheduleAssignment;
+use App\Domain\Scheduling\ValueObjects\HardLandscapeType;
 use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentSource;
 use App\Models\Task;
 use App\Models\User;
@@ -156,11 +159,11 @@ final class AssignmentLockApiTest extends TestCase
             ->assertStatus(200);
 
         // A Hard Landscape block lands exactly on the locked placement.
-        app(\App\Domain\Scheduling\Contracts\HardLandscapeRepository::class)->create(
-            \App\Domain\Scheduling\HardLandscapeEvent::create(
+        app(HardLandscapeRepository::class)->create(
+            HardLandscapeEvent::create(
                 $user->id,
                 'New commitment',
-                \App\Domain\Scheduling\ValueObjects\HardLandscapeType::oneTime(),
+                HardLandscapeType::oneTime(),
                 '2026-08-19T09:00:00',
                 '2026-08-19T10:00:00',
             ),

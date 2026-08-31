@@ -3,9 +3,13 @@
 namespace Tests\Feature\Api;
 
 use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
+use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
 use App\Domain\Scheduling\Contracts\ScheduleOverrideRepository;
 use App\Domain\Scheduling\HardLandscapeEvent;
+use App\Domain\Scheduling\ScheduleAssignment;
 use App\Domain\Scheduling\ValueObjects\HardLandscapeType;
+use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentSource;
+use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -243,10 +247,10 @@ final class ScheduleOverrideApiTest extends TestCase
             'override_end_at' => '2026-09-16T14:00:00',
         ])->assertStatus(201);
 
-        app(\App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository::class)->create(
-            \App\Domain\Scheduling\ScheduleAssignment::create(
+        app(ScheduleAssignmentRepository::class)->create(
+            ScheduleAssignment::create(
                 userId: $user->id,
-                taskId: \App\Models\Task::query()->create([
+                taskId: Task::query()->create([
                     'user_id' => $user->id,
                     'title' => 'Deep work',
                     'status' => 'backlog',
@@ -259,7 +263,7 @@ final class ScheduleOverrideApiTest extends TestCase
                 date: '2026-09-16',
                 startAt: '2026-09-16T13:30:00',
                 endAt: '2026-09-16T14:30:00',
-                source: \App\Domain\Scheduling\ValueObjects\ScheduleAssignmentSource::draft(),
+                source: ScheduleAssignmentSource::draft(),
                 scheduleVersion: 1,
             ),
         );

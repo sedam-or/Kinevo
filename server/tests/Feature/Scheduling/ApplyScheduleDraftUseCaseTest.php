@@ -4,6 +4,7 @@ namespace Tests\Feature\Scheduling;
 
 use App\Application\Scheduling\ApplyScheduleDraftUseCase;
 use App\Application\Scheduling\ScheduleApplyResult;
+use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
 use App\Domain\Scheduling\DraftAssignment;
 use App\Domain\Scheduling\ScheduleAssignmentLockedConflict;
 use App\Domain\Scheduling\ScheduleAssignmentOverlap;
@@ -15,6 +16,7 @@ use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -301,7 +303,7 @@ final class ApplyScheduleDraftUseCaseTest extends TestCase
 
     public function test_schedule_assignment_history_table_exists(): void
     {
-        $this->assertTrue(\Illuminate\Support\Facades\Schema::hasTable('schedule_assignment_history'));
+        $this->assertTrue(Schema::hasTable('schedule_assignment_history'));
     }
 
     public function test_superseded_placement_is_archived_with_provenance(): void
@@ -329,7 +331,7 @@ final class ApplyScheduleDraftUseCaseTest extends TestCase
 
         // ADR-015 minimum query surface: the placement timeline is
         // reconstructable per task.
-        $timeline = app(\App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository::class)
+        $timeline = app(ScheduleAssignmentRepository::class)
             ->historyForTask($user->id, $task->id);
         $this->assertCount(1, $timeline);
         $this->assertSame('2026-08-19T09:00:00.000000Z', $timeline[0]['start_at']);
@@ -366,7 +368,7 @@ final class ApplyScheduleDraftUseCaseTest extends TestCase
 
         // The draft supersedes A's prior placement, then fails on the overlap
         // — the whole transaction (history + live mutation) must roll back.
-        $this->expectException(\App\Domain\Scheduling\ScheduleAssignmentOverlap::class);
+        $this->expectException(ScheduleAssignmentOverlap::class);
         $this->applyDraft($user->id, $this->draft([
             $this->assignment($taskA->id, '2026-08-19T09:30:00', '2026-08-19T10:30:00'),
         ]), new ScheduleVersion(2));
@@ -403,7 +405,7 @@ final class ApplyScheduleDraftUseCaseTest extends TestCase
                 $this->assignment($taskA->id, '2026-08-19T09:30:00', '2026-08-19T10:30:00'),
             ]), new ScheduleVersion(2));
             $this->fail('Expected the overlapping draft to fail.');
-        } catch (\App\Domain\Scheduling\ScheduleAssignmentOverlap) {
+        } catch (ScheduleAssignmentOverlap) {
         }
 
         $this->assertSame(0, $this->historyCount($user->id), 'A failed apply must archive nothing.');
