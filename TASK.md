@@ -8502,6 +8502,38 @@ New tasks not covered by an existing owner:
 
 ## PHASE 29 — IDENTITY, EMAIL, RECOVERY, SECURITY TRUST
 
+### SCHED-01 — Scheduler Trigger, Sync Now & Draft Approval Lifecycle (ADR-016)
+- Status: DONE · Priority: P0 · Depends On: ES-IMPL-08
+- Business Decision: ADR-016 — weekly trigger prepares a persisted pending draft
+  (never auto-applies); manual Sync Now returns no_changes/proposal/run_in_progress
+  (read-only diff via the SAME DynamicRescheduler); reality changes produce a bounded
+  review-needed state; per-user cache run locks; apply keeps optimistic 409 semantics;
+  AI excluded from scheduling authority
+- Files: docs/adr/ADR-016-*.md; database/migrations/2026_08_31_* (schedule_drafts,
+  schedule_states, tasks.is_sacred_anchor); app/Console/Commands/PrepareWeeklyScheduleCommand.php;
+  app/Application/Scheduling/{AssembleScheduleInput,PrepareWeeklyDraftUseCase,SyncNowUseCase,
+  ScheduleImpactService,DiscardScheduleDraftUseCase}.php; ScheduleDraftController (sync/drafts/
+  discard endpoints); routes/api.php (+3); NotificationType (+2); TaskController + Tasks domain
+  (is_sacred_anchor); ScheduleQueryService (+schedule_needs_review); bootstrap/app.php (schedule
+  entry); Makefile (e2e-scheduler); frontend: schedulerdraft store/api/types + views (Sync Now,
+  weekly banner), today (needs-review pill), task detail (Sacred Anchor toggle)
+- Acceptance: [x] weekly draft generated, never auto-applied (WeeklyPrepareCommandTest ×6) ·
+  [x] duplicate weekly run idempotent · [x] stale draft refreshed in place · [x] applied week not
+  regenerated · [x] no-work user gets nothing · [x] Sync Now no_changes/proposal/run_in_progress
+  (ScheduleSyncApiTest ×7) · [x] locked work never proposed for a move · [x] synced proposal
+  applies via existing endpoint · [x] horizon bounded 14 days · [x] reality change flags review
+  + one notification only, outside-window no-op, manual placements exempt (ScheduleImpactTest ×5)
+  · [x] draft lifecycle apply/discard/stale/owner-scoped (ScheduleDraftsApiTest ×6) · [x] Sacred
+  Anchor producer at-most-one validation + generator placement (SacredAnchorApiTest ×4) ·
+  [x] OpenAPI synchronized (sync/drafts/discard, needs_review, is_sacred_anchor) · [x] browser
+  journeys S1–S4 green (make e2e-scheduler, see docs/browser-e2e.md)
+- Verification: [x] Feature (backend 1109/1109 container) · [x] Vitest 522/522 · [x] typecheck ·
+  [x] build (container) · [x] PHPStan 0 · [x] Pint · [x] openapi check · [x] browser (chromium)
+  · Known Limitations: FR-04 XP/study-modes/multi-track anchors deferred; S1 requires clean+seeded
+  sandbox (`make e2e-scheduler`); notification channel stays DB-poll (no push/email per boundary)
+  · Notes: BLOCKER-SCHED-01 RESOLVED; queue infra intentionally NOT adopted (synchronous bounded
+  computation suffices); scheduler_runs extended as telemetry
+
 > Objective: verified identity, reliable transactional email, safe recovery. Source:
 > KINEVO_POST_P27_MASTER_EXECUTION_PROMPT.md §7 (execution authority).
 

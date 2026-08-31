@@ -895,6 +895,8 @@ Setiap FR di bawah memiliki: kode, nama, priority, requirement `shall`, actor, p
 
 **Acceptance Criteria:** AC-09 applies: 60% recent realization results in materially reduced next-week load and recommendation.
 
+**Implementation note (ADR-016, 2026-08-31):** the weekly trigger is implemented as `schedule:prepare-weekly` (daily pass; prepares a persisted pending draft for users whose LOCAL week just started, per-user cache lock, idempotent per week anchor, `weekly_draft_ready` notification). The draft proposes placement of unscheduled flexible work only; it never auto-applies. The lock acquisition failure deterministically skips the pass (next day retries). "Persist draft with version" is `schedule_drafts.base_version` + the `schedule_version` conflict semantics on apply.
+
 **Traceability:** PRD FR-27, FR-49; US-15.
 
 ---
@@ -946,6 +948,8 @@ Setiap FR di bawah memiliki: kode, nama, priority, requirement `shall`, actor, p
 **Business Rules:** Sync Now is non-destructive until approval where applicable.
 
 **Acceptance Criteria:** **When** Sync Now clicked, **Then** scheduler executes or reports in-progress state without duplicate jobs.
+
+**Implementation note (ADR-016, 2026-08-31):** implemented as `POST /schedule/sync` — a synchronous, read-only deterministic diff over the current Effective Landscape (ADR-015) using the same rescheduler computation; returns `no_changes` (also acknowledges review state), `proposal` (applied only via the explicit reschedule-apply endpoint), or `run_in_progress` (per-user cache lock). Bounded to a 14-day horizon (default: profile-local current week). Telemetry via `scheduler_runs`.
 
 **Traceability:** PRD FR-29.
 

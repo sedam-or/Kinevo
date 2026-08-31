@@ -12,6 +12,18 @@ Release governance: see `docs/release-management.md`.
 
 ## [Unreleased]
 ### Added
+- Scheduler trigger, Sync Now & draft approval lifecycle (ADR-016): a weekly
+  planning trigger (`schedule:prepare-weekly`) now prepares a persisted,
+  review-ready draft for the user's local week — it never auto-applies. Manual
+  Sync Now (`POST /schedule/sync`) returns a deterministic read-only diff
+  (no_changes / proposal / run_in_progress) that is applied only through the
+  explicit apply endpoint. Reality changes (Hard Landscape, KRS/ICS imports,
+  schedule overrides) mark the accepted schedule as "needs review" with an
+  in-app attention notice, bounded to the planning window. Weekly drafts have a
+  lifecycle (pending/applied/discarded/superseded) with derived staleness, and
+  per-user run locks prevent duplicate calculations. Tasks can be marked as the
+  user's single Sacred Anchor (placed first by the scheduler). FR-27/FR-29
+  trigger semantics are now implemented; BLOCKER-SCHED-01 resolved.
 - Effective Schedule resolution (ADR-015): recurring Hard Landscape (e.g. KRS-confirmed weekly
   courses) now appears on every occurrence date in Today/Week/Calendar, the deterministic
   scheduler draft, the rescheduler, and ICS export. Permanent Shift and One-Time Exception

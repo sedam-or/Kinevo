@@ -154,3 +154,51 @@ source event → recurrence expansion → base occurrence → override resolutio
   `POST /tasks/{taskId}/assignment/lock|unlock`; the scheduler and rescheduler receive
   `isLocked` input and never move them (existing hard-rule + apply-conflict contracts
   unchanged). AI has no path into schedule authority.
+## Scheduler Trigger, Sync Now & Draft Lifecycle (ADR-016, implemented 2026-08-31)
+
+**Weekly trigger.** `schedule:prepare-weekly` (daily 04:00 UTC pass,
+`withoutOverlapping`) prepares a persisted pending planning draft for each user
+whose LOCAL date is Monday (profile timezone decides the week). Horizon: local
+Monday–Sunday. Idempotent per `(user, weekly, week anchor)` — one row per
+user/week ever; duplicate runs skip; a stale pending draft is refreshed in
+place; an applied/discarded week is never regenerated. No schedulable work →
+no draft, no notification. The draft proposes placement of unscheduled flexible
+work into effective free slots (Sacred Anchor first when present); it NEVER
+auto-applies. `weekly_draft_ready` notification, deduped per week anchor.
+
+**Sync Now.** `POST /schedule/sync` returns `no_changes` / `proposal` /
+`run_in_progress` — the SAME deterministic rescheduler diff over the current
+Effective Landscape (ADR-015), read-only, bounded horizon (≤ 14 days or the
+profile-local week). Apply stays the explicit reschedule-apply endpoint (409
+on stale base). `no_changes` acknowledges the review state.
+
+**Reality-change trigger.** Hard Landscape create/update/delete, KRS/ICS
+import confirm, and Schedule Override create/update/delete run a bounded,
+failure-isolated post-commit impact check: accepted auto-sourced placements
+(draft/reschedule/quick_capture) overlapping effective occurrences within
+[today−7, today+14] (local) → `schedule_states.needs_review = true` +
+`schedule_needs_review` attention notification (false→true transition, deduped
+per local day). Read payloads (Today/Week/Month/range) expose
+`schedule_needs_review`. Never auto-applies; outside-window changes trigger
+nothing; a mutation never fails because impact detection failed.
+
+**Run lock.** `Cache::lock('schedule:sync:{userId}' | 'schedule:weekly:{userId}')`
+(database lock store, TTL 60 s, non-blocking) guards computation. Apply is NOT
+lock-guarded — the optimistic `base_version`/409 semantics remain the single
+write-concurrency authority. Lock contention: Sync Now → `run_in_progress`;
+weekly pass → skip (next day retries).
+
+**Draft lifecycle.** Weekly drafts persist in `schedule_drafts`
+(pending → applied | discarded | superseded); manual drafts remain ephemeral
+client-held JSON. Staleness is derived (base_version ≠ current version).
+Applying with `draft_id` closes the draft and acknowledges review state.
+Discard never mutates accepted placements.
+
+**Run lock telemetry.** Weekly prepare and Sync Now record `scheduler_runs`
+(`schedule:prepare-weekly`, `schedule:sync`).
+
+**Sacred Anchor producer.** `tasks.is_sacred_anchor` (at most one per user,
+validated on create/update) feeds the generator's anchor placement (25 min,
+first qualifying slot at/after 06:00 — a slot starting before 06:00 that
+contains 06:00 qualifies with the anchor clipped to 06:00). FR-04 XP/study
+modes/multi-track remain deferred.

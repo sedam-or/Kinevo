@@ -903,3 +903,31 @@ es-effective-schedule.spec.ts` — **4 passed (26.2s)**.
 Regression run same day: es spec + golden-journeys + canonical-journey + core-loop +
 continuity + next-action + journey-c-e → **22 passed (6.2m, chromium)**. Firefox/WebKit not
 run for the ES spec (single-engine decision above); the config retains all three projects.
+### ADR-016 — Scheduler trigger / Sync Now browser journeys (2026-08-31)
+
+New spec `tests/e2e/tests/scheduler-trigger.spec.ts` (chromium, single-owner
+sandbox posture). Prerequisite: `make e2e-scheduler` (clean sandbox →
+`seed-journey-s.sh` drives the REAL `schedule:prepare-weekly` → run). Other
+suites accumulate tasks/placements that change what the deterministic
+generator can place — run the scheduler journeys on a clean+seeded sandbox,
+not after the shared suites. Record: **4/4 passed (26.4s)** via
+`make e2e-scheduler`.
+
+- **JOURNEY S1 (weekly draft)**: the persisted weekly draft surfaces as a
+  reviewable banner on Schedule → Apply → Today reflects the accepted change
+  (UI banner + apply + in-context Today payload).
+- **JOURNEY S2 (impacted → preview → Cancel)**: Hard Landscape created
+  overlapping an accepted placement → Today marked `schedule_needs_review`
+  (text pill, not color-only) → Sync Now shows "Changes found" diff → Cancel →
+  accepted schedule unchanged (placement coordinates intact).
+- **JOURNEY S3 (impacted → Sync Now → Apply)**: diff applied through the
+  explicit apply endpoint → work now sits outside the new reality.
+- **JOURNEY S4 (locked retention)**: locked placement + colliding reality →
+  Sync Now proposes no move for the locked task; conflicts remain visible;
+  locked placement survives on Today.
+
+Regression: full chromium suite on a truncated sandbox + journey-c seed →
+**98 passed / 3 failed (14.4m)** — the 3 being S1 (needs `make e2e-scheduler`
+seeding, above) plus two PRE-EXISTING WIP failures outside this epic
+(p28-ux-audit goals empty state; theme mobile 375px) — flagged for the P28-013
+full-engine evidence gate.
