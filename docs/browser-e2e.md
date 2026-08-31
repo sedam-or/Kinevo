@@ -7,7 +7,7 @@
 > rescue Phase R1 (real browser smoke test) and maintained through R6 (visual
 > regression) and R7 (release readiness).
 >
-> **Contract:** `docs/design.md` §35, §71, §72, §73, §86, §87, §99; SRS §17.4,
+> **Contract:** the `docs/ux/` authorities (design-system, information-architecture, interaction-states, motion, accessibility; section numbers from the archived `docs/archive/design-legacy-2026-08-31/design.md` §35–§99 remain historical pointers); SRS §17.4,
 > docs/test-strategy.md.
 
 ---
