@@ -6,8 +6,12 @@ use App\Application\Knowledge\CreateNoteUseCase;
 use App\Application\Knowledge\GetNoteUseCase;
 use App\Application\Knowledge\ListNotesUseCase;
 use App\Application\Knowledge\UpdateNoteUseCase;
+use App\Application\OfflineSync\OfflineReconciliationService;
 use App\Application\Workspaces\ResolveWorkspaceContext;
 use App\Domain\Knowledge\NoteVersionConflict;
+use App\Domain\OfflineSync\OperationApplyResult;
+use App\Domain\OfflineSync\OperationEnvelope;
+use App\Domain\OfflineSync\OperationOutcome;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,7 +26,63 @@ final class NoteController extends Controller
         private readonly ResolveWorkspaceContext $workspaceContext,
         private readonly GetNoteUseCase $getNoteUseCase,
         private readonly UpdateNoteUseCase $updateNoteUseCase,
+        private readonly OfflineReconciliationService $reconciliation,
     ) {}
+
+    /**
+     * ADR-017 §2.11 — optional online convergence for note mutations.
+     */
+    private function applyOnlineNoteMutation(
+        Request $request,
+        string $operationType,
+        ?int $noteId,
+        array $payload,
+        ?int $baseVersion,
+        callable $apply,
+        int $successStatus,
+    ): JsonResponse {
+        $operationId = $request->header('X-Operation-Id');
+        if ($operationId === null || $operationId === '') {
+            return response()->json($apply($request->user()->id), $successStatus);
+        }
+
+        $envelope = OperationEnvelope::fromArray([
+            'operation_id' => $operationId,
+            'operation_type' => $operationType,
+            'entity_type' => 'note',
+            'entity_id' => $noteId,
+            'payload' => $payload,
+            'base_version' => $baseVersion,
+            'workspace_id' => array_key_exists('workspace_id', $payload) ? $payload['workspace_id'] : null,
+        ]);
+
+        $outcome = $this->reconciliation->reconcileOne(
+            $request->user()->id,
+            $envelope,
+            fn () => new OperationApplyResult($apply($request->user()->id), null, null),
+        );
+
+        if ($outcome->status === OperationOutcome::CONFLICT) {
+            return response()->json(['error' => $outcome->error, 'code' => $outcome->code], 409);
+        }
+
+        if ($outcome->replay) {
+            $entityId = $outcome->result->entityId;
+            if ($entityId !== null) {
+                try {
+                    $note = $this->getNoteUseCase->__invoke($request->user()->id, $entityId);
+
+                    return response()->json(['note' => $note->toArray()], $successStatus);
+                } catch (InvalidArgumentException) {
+                    return response()->json(['recorded' => $outcome->result->result], $successStatus);
+                }
+            }
+
+            return response()->json(['recorded' => $outcome->result->result], $successStatus);
+        }
+
+        return response()->json($outcome->result->result, $successStatus);
+    }
 
     public function index(Request $request): JsonResponse
     {
@@ -64,16 +124,27 @@ final class NoteController extends Controller
             return response()->json(['error' => $e->getMessage()], 422);
         }
 
-        $note = $this->createNoteUseCase->__invoke(
-            $request->user()->id,
-            $data['title'],
-            $data['document_json'] ?? null,
-            $data['markdown_cache'] ?? null,
-            $data['plain_text_cache'] ?? null,
-            $workspaceId,
-        );
+        $payload = $data;
+        if (($payload['workspace_id'] ?? null) === null) {
+            $payload['workspace_id'] = $workspaceId;
+        }
 
-        return response()->json(['note' => $note->toArray()], 201);
+        return $this->applyOnlineNoteMutation(
+            $request,
+            'note:create',
+            null,
+            $data,
+            null,
+            fn (int $userId) => ['note' => $this->createNoteUseCase->__invoke(
+                $userId,
+                $data['title'],
+                $data['document_json'] ?? null,
+                $data['markdown_cache'] ?? null,
+                $data['plain_text_cache'] ?? null,
+                $workspaceId,
+            )->toArray()],
+            201,
+        );
     }
 
     public function show(Request $request, int $noteId): JsonResponse
@@ -104,21 +175,27 @@ final class NoteController extends Controller
         $data = $validator->validated();
 
         try {
-            $note = $this->updateNoteUseCase->__invoke(
-                $request->user()->id,
+            return $this->applyOnlineNoteMutation(
+                $request,
+                'note:update',
                 $noteId,
-                $data['base_version'],
-                $data['title'] ?? null,
-                $data['document_json'] ?? null,
-                $data['markdown_cache'] ?? null,
-                $data['plain_text_cache'] ?? null,
+                $data,
+                (int) $data['base_version'],
+                fn (int $userId) => ['note' => $this->updateNoteUseCase->__invoke(
+                    $userId,
+                    $noteId,
+                    (int) $data['base_version'],
+                    $data['title'] ?? null,
+                    $data['document_json'] ?? null,
+                    $data['markdown_cache'] ?? null,
+                    $data['plain_text_cache'] ?? null,
+                )->toArray()],
+                200,
             );
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 404);
         } catch (NoteVersionConflict $e) {
             return response()->json(['error' => $e->getMessage()], 409);
         }
-
-        return response()->json(['note' => $note->toArray()]);
     }
 }

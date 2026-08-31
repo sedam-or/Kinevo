@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\ScheduleController;
 use App\Http\Controllers\Api\ScheduleDraftController;
 use App\Http\Controllers\Api\ScheduleExportController;
 use App\Http\Controllers\Api\ScheduleOverrideController;
+use App\Http\Controllers\Api\SyncReconcileController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\TodayController;
 use App\Http\Controllers\Api\WeekController;
@@ -265,6 +266,12 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::get('/schedule/drafts', [ScheduleDraftController::class, 'drafts']);
     Route::post('/schedule/drafts/{draftId}/discard', [ScheduleDraftController::class, 'discardDraft'])
         ->whereNumber('draftId');
+
+    // ADR-017 — OFFLINE MUTATION RECONCILIATION. Deliberately NOT under
+    // /schedule/* — schedule "Sync Now" is a different feature (ADR-016).
+    // Dedicated throttle so an aggressive offline drain cannot starve the API.
+    Route::post('/sync/reconcile', [SyncReconcileController::class, 'reconcile'])
+        ->middleware('throttle:reconcile');
 
     // Mini Pause (FR-07): move all eligible today tasks to the next day.
     Route::post('/schedule/mini-pause', [MiniPauseController::class, 'store']);

@@ -27,6 +27,7 @@ use App\Domain\Milestones\Contracts\MilestoneRepository;
 use App\Domain\Notifications\Contracts\NotificationRepository;
 use App\Domain\Observability\Contracts\SchedulerRunRepository;
 use App\Domain\Observability\ObservabilityService;
+use App\Domain\OfflineSync\Contracts\OfflineOperationRepository;
 use App\Domain\Pauses\Contracts\PauseEventRepository;
 use App\Domain\Programs\Contracts\ProgramRepository;
 use App\Domain\Progress\Contracts\ProgressEventRepository;
@@ -70,6 +71,7 @@ use App\Infrastructure\Knowledge\EloquentNoteRepository;
 use App\Infrastructure\Milestones\EloquentMilestoneRepository;
 use App\Infrastructure\Notifications\EloquentNotificationRepository;
 use App\Infrastructure\Observability\EloquentSchedulerRunRepository;
+use App\Infrastructure\OfflineSync\EloquentOfflineOperationRepository;
 use App\Infrastructure\Pauses\EloquentPauseEventRepository;
 use App\Infrastructure\Programs\EloquentProgramRepository;
 use App\Infrastructure\Progress\EloquentProgressEventRepository;
@@ -123,6 +125,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ScheduleOverrideRepository::class, EloquentScheduleOverrideRepository::class);
         $this->app->singleton(ScheduleDraftRepository::class, EloquentScheduleDraftRepository::class);
         $this->app->singleton(ScheduleReviewRepository::class, EloquentScheduleReviewRepository::class);
+        $this->app->singleton(OfflineOperationRepository::class, EloquentOfflineOperationRepository::class);
         $this->app->singleton(ScheduleDraftGenerator::class, static fn () => new ScheduleDraftGenerator(
             new SlotCalculator,
             HardConstraintEngine::default(),
@@ -194,6 +197,12 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('uploads', function (Request $r) {
             return [Limit::perMinute(20)->by(($r->user()->id ?? $r->ip()).'|uploads')];
         });
+        RateLimiter::for('reconcile', function (Request $r) {
+            // ADR-017 §2.20 — bounded reconcile traffic; a bursty offline drain
+            // gets a per-minute budget that still absorbs a full batch + retries.
+            return Limit::perMinute(120)->by(($r->user()->id ?? $r->ip()).'|reconcile');
+        });
+
         RateLimiter::for('exports', function (Request $r) {
             return [Limit::perMinute(10)->by(($r->user()->id ?? $r->ip()).'|exports')];
         });

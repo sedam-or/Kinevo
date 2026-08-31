@@ -237,4 +237,14 @@ final class Task
     {
         return $this->reborn(['isSacredAnchor' => $isSacredAnchor]);
     }
+
+    /**
+     * ADR-017 §2.11 — any content mutation bumps the optimistic version so
+     * task edits participate in conflict detection (previously only status
+     * transitions bumped it).
+     */
+    public function withBumpedVersion(): self
+    {
+        return $this->reborn(['version' => $this->version + 1]);
+    }
 }

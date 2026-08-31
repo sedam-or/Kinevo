@@ -29,6 +29,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // (profile timezone). Persisted draft, never auto-applied;
         // idempotent per (user, week anchor); per-user run lock.
         $schedule->command('schedule:prepare-weekly')->dailyAt('04:00')->withoutOverlapping();
+
+        // Offline operation ledger retention (ADR-017 §2.5): bounded ledger
+        // growth; safe replays are short-lived because clients remove applied
+        // items immediately after reconciliation.
+        $schedule->command('offline:prune-ledger')->dailyAt('03:00');
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(function (Request $request): ?string {

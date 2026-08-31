@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\OfflineSync\OfflineReconciliationService;
 use App\Application\Scheduling\AutoSwapUseCase;
 use App\Application\Scheduling\QuickCapturePlacementUseCase;
 use App\Application\Scheduling\SetAssignmentLockUseCase;
@@ -16,10 +17,15 @@ use App\Application\Tasks\ToggleSubtaskUseCase;
 use App\Application\Tasks\UpdateSubtaskUseCase;
 use App\Application\Tasks\UpdateTaskUseCase;
 use App\Application\Workspaces\ResolveWorkspaceContext;
+use App\Domain\OfflineSync\OperationApplyResult;
+use App\Domain\OfflineSync\OperationEnvelope;
+use App\Domain\OfflineSync\OperationOutcome;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
 use App\Domain\Scheduling\ScheduleAssignmentVersionConflict;
 use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentStatus;
 use App\Domain\Tasks\Contracts\SubtaskRepository;
+use App\Domain\Tasks\Task;
+use App\Domain\Tasks\TaskVersionConflict;
 use App\Domain\Tasks\ValueObjects\TaskStatus;
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
@@ -40,6 +46,7 @@ final class TaskController extends Controller
         private readonly AddSubtaskUseCase $addSubtaskUseCase,
         private readonly ToggleSubtaskUseCase $toggleSubtaskUseCase,
         private readonly UpdateSubtaskUseCase $updateSubtaskUseCase,
+        private readonly OfflineReconciliationService $reconciliation,
         private readonly PromoteSubtaskUseCase $promoteSubtaskUseCase,
         private readonly PartialCompleteTaskUseCase $partialCompleteTaskUseCase,
         private readonly QuickCapturePlacementUseCase $quickCapturePlacementUseCase,
@@ -210,6 +217,72 @@ final class TaskController extends Controller
         ]);
     }
 
+    /**
+     * ADR-017 §2.11 — optional online convergence: when the client sends
+     * `X-Operation-Id`, the mutation flows through the SAME reconciliation
+     * ledger as offline replays, so a response-loss retry never double-applies.
+     * Absent the header, the legacy path is unchanged.
+     *
+     * @param  callable(int $userId): array<string, mixed>  $apply
+     * @param  callable(int $userId, int $entityId): array<string, mixed>  $rehydrate
+     */
+    private function applyOnlineMutation(
+        Request $request,
+        string $operationType,
+        string $entityType,
+        ?int $entityId,
+        array $payload,
+        ?int $baseVersion,
+        callable $apply,
+        int $successStatus,
+        callable $rehydrate,
+    ): JsonResponse {
+        $operationId = $request->header('X-Operation-Id');
+        if ($operationId === null || $operationId === '') {
+            $result = $apply($request->user()->id);
+
+            return response()->json($result, $successStatus);
+        }
+
+        $envelope = OperationEnvelope::fromArray([
+            'operation_id' => $operationId,
+            'operation_type' => $operationType,
+            'entity_type' => $entityType,
+            'entity_id' => $entityId,
+            'payload' => $payload,
+            'base_version' => $baseVersion,
+            'workspace_id' => array_key_exists('workspace_id', $payload) ? $payload['workspace_id'] : null,
+        ]);
+
+        $outcome = $this->reconciliation->reconcileOne(
+            $request->user()->id,
+            $envelope,
+            fn () => new OperationApplyResult($apply($request->user()->id), null, null),
+        );
+
+        if ($outcome->status === OperationOutcome::CONFLICT) {
+            return response()->json(['error' => $outcome->error, 'code' => $outcome->code], 409);
+        }
+
+        if ($outcome->replay) {
+            // applied/replay outcomes always carry a result (the ledger recorded
+            // outcome) — the conflict branch returned above.
+            $entityId = $outcome->result->entityId;
+            if ($entityId !== null) {
+                try {
+                    return response()->json($rehydrate($request->user()->id, $entityId), $successStatus);
+                } catch (InvalidArgumentException) {
+                    // entity deleted since apply — surface the bounded record.
+                    return response()->json(['recorded' => $outcome->result->result], $successStatus);
+                }
+            }
+
+            return response()->json(['recorded' => $outcome->result->result], $successStatus);
+        }
+
+        return response()->json($outcome->result->result, $successStatus);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -232,26 +305,34 @@ final class TaskController extends Controller
         $data = $validator->validated();
 
         try {
-            $task = $this->createTaskUseCase->__invoke(
-                $request->user()->id,
-                $data['title'],
-                $data['description'] ?? null,
-                $data['program_id'] ?? null,
-                $data['goal_id'] ?? null,
-                $data['milestone_id'] ?? null,
-                $data['priority_tier'] ?? 3,
-                $data['estimated_minutes'] ?? null,
-                isset($data['due_at']) ? CarbonImmutable::parse($data['due_at']) : null,
-                // TASK-P19-013/024 — raw context; the use case owns the
-                // precedence rules (explicit > inherited > default).
-                $data['workspace_id'] ?? null,
-                $data['is_sacred_anchor'] ?? false,
+            return $this->applyOnlineMutation(
+                $request,
+                'task:create',
+                'task',
+                null,
+                $data,
+                null,
+                fn (int $userId) => ['task' => $this->createTaskUseCase->__invoke(
+                    $userId,
+                    $data['title'],
+                    $data['description'] ?? null,
+                    $data['program_id'] ?? null,
+                    $data['goal_id'] ?? null,
+                    $data['milestone_id'] ?? null,
+                    $data['priority_tier'] ?? 3,
+                    $data['estimated_minutes'] ?? null,
+                    isset($data['due_at']) ? CarbonImmutable::parse($data['due_at']) : null,
+                    // TASK-P19-013/024 — raw context; the use case owns the
+                    // precedence rules (explicit > inherited > default).
+                    $data['workspace_id'] ?? null,
+                    $data['is_sacred_anchor'] ?? false,
+                )->toArray()],
+                201,
+                fn (int $userId, int $entityId) => ['task' => $this->getTaskUseCase->__invoke($userId, $entityId)->toArray()],
             );
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         }
-
-        return response()->json(['task' => $task->toArray()], 201);
     }
 
     public function update(Request $request, int $taskId): JsonResponse
@@ -266,6 +347,7 @@ final class TaskController extends Controller
             'estimated_minutes' => ['sometimes', 'nullable', 'integer', 'min:1'],
             'due_at' => ['sometimes', 'nullable', 'date'],
             'is_sacred_anchor' => ['sometimes', 'boolean'],
+            'base_version' => ['sometimes', 'integer', 'min:1'],
         ]);
 
         if ($validator->fails()) {
@@ -275,19 +357,32 @@ final class TaskController extends Controller
         $data = $validator->validated();
 
         try {
-            $task = $this->updateTaskUseCase->__invoke(
-                $request->user()->id,
+            return $this->applyOnlineMutation(
+                $request,
+                'task:update',
+                'task',
                 $taskId,
-                $data['title'] ?? null,
-                $data['description'] ?? null,
-                $data['program_id'] ?? null,
-                $data['goal_id'] ?? null,
-                $data['milestone_id'] ?? null,
-                $data['priority_tier'] ?? null,
-                $data['estimated_minutes'] ?? null,
-                isset($data['due_at']) ? CarbonImmutable::parse($data['due_at']) : null,
-                $data['is_sacred_anchor'] ?? null,
+                $data,
+                isset($data['base_version']) ? (int) $data['base_version'] : null,
+                fn (int $userId) => ['task' => $this->updateTaskUseCase->__invoke(
+                    $userId,
+                    $taskId,
+                    $data['title'] ?? null,
+                    $data['description'] ?? null,
+                    $data['program_id'] ?? null,
+                    $data['goal_id'] ?? null,
+                    $data['milestone_id'] ?? null,
+                    $data['priority_tier'] ?? null,
+                    $data['estimated_minutes'] ?? null,
+                    isset($data['due_at']) ? CarbonImmutable::parse($data['due_at']) : null,
+                    $data['is_sacred_anchor'] ?? null,
+                    isset($data['base_version']) ? (int) $data['base_version'] : null,
+                )->toArray()],
+                200,
+                fn (int $userId, int $entityId) => ['task' => $this->getTaskUseCase->__invoke($userId, $entityId)->toArray()],
             );
+        } catch (TaskVersionConflict $e) {
+            return response()->json(['error' => $e->getMessage(), 'code' => 'VERSION_CONFLICT'], 409);
         } catch (InvalidArgumentException $e) {
             if ($e->getMessage() === 'Task not found.') {
                 return response()->json(['error' => $e->getMessage()], 404);
@@ -295,8 +390,6 @@ final class TaskController extends Controller
 
             return response()->json(['error' => $e->getMessage()], 422);
         }
-
-        return response()->json(['task' => $task->toArray()]);
     }
 
     public function status(Request $request, int $taskId): JsonResponse
@@ -325,11 +418,23 @@ final class TaskController extends Controller
             }
         }
 
+        $data = $validator->validated();
+
         try {
-            $task = $this->setTaskStatusUseCase->__invoke(
-                $request->user()->id,
+            return $this->applyOnlineMutation(
+                $request,
+                'task:status',
+                'task',
                 $taskId,
-                new TaskStatus($validator->validated()['status']),
+                $data,
+                isset($data['version']) ? (int) $data['version'] : null,
+                fn (int $userId) => ['task' => $this->setTaskStatusUseCase->__invoke(
+                    $userId,
+                    $taskId,
+                    new TaskStatus($data['status']),
+                )->toArray()],
+                200,
+                fn (int $userId, int $entityId) => ['task' => $this->getTaskUseCase->__invoke($userId, $entityId)->toArray()],
             );
         } catch (InvalidArgumentException $e) {
             if ($e->getMessage() === 'Task not found.') {
@@ -338,8 +443,6 @@ final class TaskController extends Controller
 
             return response()->json(['error' => $e->getMessage()], 422);
         }
-
-        return response()->json(['task' => $task->toArray()]);
     }
 
     public function partialComplete(Request $request, int $taskId): JsonResponse
@@ -375,12 +478,32 @@ final class TaskController extends Controller
         $data = $validator->validated();
 
         try {
-            $subtask = $this->addSubtaskUseCase->__invoke(
-                $request->user()->id,
+            return $this->applyOnlineMutation(
+                $request,
+                'subtask:create',
+                'subtask',
                 $taskId,
-                $data['title'],
-                $data['notes'] ?? null,
-                $data['sequence'] ?? null,
+                $data,
+                null,
+                fn (int $userId) => ['subtask' => $this->addSubtaskUseCase->__invoke(
+                    $userId,
+                    $taskId,
+                    $data['title'],
+                    $data['notes'] ?? null,
+                    $data['sequence'] ?? null,
+                )->toArray()],
+                201,
+                // Replay rehydrates the subtask through the task's list.
+                function (int $userId, int $entityId) use ($taskId): array {
+                    $subtasks = $this->subtaskRepository->listForTask($userId, $taskId);
+                    foreach ($subtasks as $subtask) {
+                        if ((int) $subtask->id === $entityId) {
+                            return ['subtask' => $subtask->toArray()];
+                        }
+                    }
+
+                    throw new InvalidArgumentException('Subtask not found.');
+                },
             );
         } catch (InvalidArgumentException $e) {
             if ($e->getMessage() === 'Task not found.') {
@@ -389,8 +512,6 @@ final class TaskController extends Controller
 
             return response()->json(['error' => $e->getMessage()], 422);
         }
-
-        return response()->json(['subtask' => $subtask->toArray()], 201);
     }
 
     public function subtasks(Request $request, int $taskId): JsonResponse

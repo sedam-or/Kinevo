@@ -4,6 +4,7 @@ namespace App\Application\Tasks;
 
 use App\Domain\Tasks\Contracts\TaskRepository;
 use App\Domain\Tasks\Task;
+use App\Domain\Tasks\TaskVersionConflict;
 use Carbon\CarbonImmutable;
 use InvalidArgumentException;
 
@@ -28,8 +29,16 @@ final readonly class UpdateTaskUseCase
         ?int $estimatedMinutes = null,
         ?CarbonImmutable $dueAt = null,
         ?bool $isSacredAnchor = null,
+        ?int $baseVersion = null,
     ): Task {
         $task = (new GetTaskUseCase($this->tasks))($userId, $taskId);
+
+        // ADR-017 §2.11 — optimistic concurrency guard: a provided base_version
+        // that no longer matches the current task version is a deterministic
+        // conflict (409), never a silent overwrite of newer state.
+        if ($baseVersion !== null && $task->version !== $baseVersion) {
+            throw new TaskVersionConflict($baseVersion, $task->version);
+        }
 
         if ($title !== null) {
             $task = $task->withTitle($title);
@@ -57,6 +66,9 @@ final readonly class UpdateTaskUseCase
             $task = $task->withSacredAnchor($isSacredAnchor);
             $this->assertSingleSacredAnchor($userId, $task);
         }
+
+        // ADR-017 §2.11 — a content update is a new version (conflict guard).
+        $task = $task->withBumpedVersion();
 
         return $this->tasks->update($task);
     }
