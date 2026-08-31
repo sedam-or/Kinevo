@@ -19,6 +19,8 @@ const range = reactive({
 
 const proposed = ref(false);
 const appliedMessage = ref<string | null>(null);
+const syncMessage = ref<string | null>(null);
+const synced = ref(false);
 
 function iso(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -44,19 +46,47 @@ async function propose(): Promise<void> {
     await sd.propose(range.from, range.to);
 }
 
+/**
+ * ADR-016 §2.2 — Sync Now: deterministic diff against current reality,
+ * never a write. The diff is reviewed and applied through the same
+ * explicit Apply / Cancel flow as a manual reschedule.
+ */
+async function syncNow(): Promise<void> {
+    synced.value = true;
+    proposed.value = true;
+    appliedMessage.value = null;
+    syncMessage.value = null;
+    const response = await sd.sync();
+    if (response === null) {
+        return;
+    }
+    if (response.status === 'no_changes') {
+        syncMessage.value = 'Schedule is up to date.';
+    } else if (response.status === 'run_in_progress') {
+        syncMessage.value = 'Another sync is running — try again in a moment.';
+    } else if (response.status === 'proposal' && response.proposal !== null) {
+        syncMessage.value = response.proposal.conflict_task_ids.length > 0
+            ? 'Changes found — conflicts remain for some tasks.'
+            : 'Changes found — review the diff below.';
+    }
+}
+
 async function apply(): Promise<void> {
     const ok = await sd.applyProposal();
     if (ok) {
         appliedMessage.value = sd.rescheduleApplyResult?.applied
             ? `Reschedule applied at version ${sd.rescheduleApplyResult?.version}.`
             : 'Reschedule was already applied (no changes).';
+        syncMessage.value = null;
     }
 }
 
 function cancel(): void {
     proposed.value = false;
+    synced.value = false;
     sd.clearProposal();
     appliedMessage.value = null;
+    syncMessage.value = null;
 }
 </script>
 
@@ -81,9 +111,16 @@ function cancel(): void {
                 <KButton variant="primary" type="button" :disabled="sd.busy" data-testid="reschedule-propose" @click="propose">
                     {{ sd.busy ? 'Proposing…' : 'Propose Reschedule' }}
                 </KButton>
+                <KButton variant="secondary" type="button" :disabled="sd.busy" data-testid="schedule-sync" @click="syncNow">
+                    {{ sd.busy ? 'Syncing…' : 'Sync Now' }}
+                </KButton>
             </div>
             <div v-if="sd.error" class="text-sm text-danger mt-2" role="alert" data-testid="reschedule-error">{{ sd.error.message }}</div>
         </section>
+
+        <template v-if="synced && syncMessage">
+            <div class="text-sm text-text-muted" role="status" data-testid="sync-status">{{ syncMessage }}</div>
+        </template>
 
         <template v-if="proposed && sd.proposal">
             <div v-if="appliedMessage" class="text-sm text-success" data-testid="reschedule-applied">{{ appliedMessage }}</div>

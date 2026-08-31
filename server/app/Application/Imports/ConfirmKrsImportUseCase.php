@@ -2,6 +2,8 @@
 
 namespace App\Application\Imports;
 
+use App\Application\Scheduling\ScheduleImpactService;
+use App\Domain\Identity\Contracts\ProfileRepository;
 use App\Domain\Imports\Contracts\KrsImportRepository;
 use App\Domain\Imports\KrsImport;
 use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
@@ -22,6 +24,8 @@ final readonly class ConfirmKrsImportUseCase
     public function __construct(
         private KrsImportRepository $imports,
         private HardLandscapeRepository $hardLandscape,
+        private ScheduleImpactService $impact,
+        private ProfileRepository $profiles,
     ) {}
 
     public function __invoke(int $userId, int $importId): KrsImport
@@ -56,7 +60,17 @@ final readonly class ConfirmKrsImportUseCase
             return $this->imports->update($import->confirmed());
         });
 
+        // ADR-016 §2.3 — confirmed KRS reality may impact accepted work
+        // (bounded window; failure-isolated; never auto-applies).
+        $localToday = CarbonImmutable::now($this->userTimezone($userId))->startOfDay();
+        $this->impact->assess($userId, $localToday->subDays(7), $localToday->addDays(14), 'krs_import_confirmed', [$importId]);
+
         return $confirmed;
+    }
+
+    private function userTimezone(int $userId): string
+    {
+        return $this->profiles->findForUser($userId)?->settings->timezone ?? config('app.timezone');
     }
 
     private function nextOccurrence(string $dayKey, string $time): CarbonImmutable

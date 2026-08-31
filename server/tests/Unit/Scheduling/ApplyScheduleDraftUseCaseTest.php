@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Scheduling;
 
+use App\Application\ActivityLogs\RecordActivityUseCase;
 use App\Application\Scheduling\ApplyScheduleDraftUseCase;
 use App\Domain\Scheduling\DraftAssignment;
 use App\Domain\Scheduling\ScheduleAssignment;
@@ -13,7 +14,10 @@ use App\Domain\Scheduling\ValueObjects\ScheduleVersion;
 use App\Domain\Scheduling\ValueObjects\TimeRange;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Support\FakeActivityLogRepository;
 use Tests\Support\FakeAssignmentStore;
+use Tests\Support\FakeScheduleDraftStore;
+use Tests\Support\FakeScheduleReviewStore;
 use Tests\TestCase;
 
 /**
@@ -27,14 +31,19 @@ final class ApplyScheduleDraftUseCaseTest extends TestCase
 
     private ApplyScheduleDraftUseCase $useCase;
 
+    private FakeScheduleDraftStore $stores;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->store = new FakeAssignmentStore;
+        $this->stores = new FakeScheduleDraftStore;
         $this->useCase = new ApplyScheduleDraftUseCase(
             $this->store,
-            new \App\Application\ActivityLogs\RecordActivityUseCase(new \Tests\Support\FakeActivityLogRepository),
+            new RecordActivityUseCase(new FakeActivityLogRepository),
+            new FakeScheduleReviewStore,
+            $this->stores,
         );
     }
 

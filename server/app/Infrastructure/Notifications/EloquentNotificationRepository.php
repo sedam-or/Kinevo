@@ -33,6 +33,17 @@ final class EloquentNotificationRepository implements NotificationRepository
         return $model === null ? null : $this->toDomain($model);
     }
 
+    public function findForDay(int $userId, NotificationType $type, CarbonImmutable $day): ?Notification
+    {
+        $model = NotificationModel::query()
+            ->where('user_id', $userId)
+            ->where('type', $type->value)
+            ->whereDate('scheduled_for', $day->toDateString())
+            ->first();
+
+        return $model === null ? null : $this->toDomain($model);
+    }
+
     public function create(Notification $notification): Notification
     {
         $model = NotificationModel::query()->create([

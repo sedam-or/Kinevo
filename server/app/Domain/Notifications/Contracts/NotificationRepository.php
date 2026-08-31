@@ -3,6 +3,7 @@
 namespace App\Domain\Notifications\Contracts;
 
 use App\Domain\Notifications\Notification;
+use App\Domain\Notifications\ValueObjects\NotificationType;
 use Carbon\CarbonImmutable;
 
 interface NotificationRepository
@@ -18,6 +19,12 @@ interface NotificationRepository
      * null. FR-39: exactly one H-3 notification per break period.
      */
     public function findBreakEndForPeriod(int $userId, int $breakPeriodId): ?Notification;
+
+    /**
+     * A notification of the given type already created for a user and local
+     * day, or null. ADR-016 §2.9 — dedup key for schedule attention types.
+     */
+    public function findForDay(int $userId, NotificationType $type, CarbonImmutable $day): ?Notification;
 
     public function create(Notification $notification): Notification;
 

@@ -12,6 +12,7 @@ final readonly class UpdateScheduleOverrideUseCase
 {
     public function __construct(
         private ScheduleOverrideRepository $overrides,
+        private ScheduleImpactService $impact,
     ) {}
 
     public function __invoke(
@@ -46,6 +47,16 @@ final readonly class UpdateScheduleOverrideUseCase
             $existing->updatedAt,
         );
 
-        return $this->overrides->update($updated);
+        $saved = $this->overrides->update($updated);
+
+        $this->impact->assess(
+            $userId,
+            $existing->effectiveFrom->min($saved->effectiveFrom)->min($existing->overrideStartAt)->min($saved->overrideStartAt),
+            $existing->effectiveTo->max($saved->effectiveTo)->max($existing->overrideEndAt)->max($saved->overrideEndAt),
+            'schedule_override_updated',
+            [$saved->id],
+        );
+
+        return $saved;
     }
 }

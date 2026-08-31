@@ -35,8 +35,14 @@ use App\Domain\Saas\Contracts\SubscriptionRepository;
 use App\Domain\Saas\Contracts\UsageRepository;
 use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
+use App\Domain\Scheduling\Contracts\ScheduleDraftRepository;
 use App\Domain\Scheduling\Contracts\ScheduleOverrideRepository;
+use App\Domain\Scheduling\Contracts\ScheduleReviewRepository;
+use App\Domain\Scheduling\DynamicRescheduler;
 use App\Domain\Scheduling\HardConstraintEngine;
+use App\Domain\Scheduling\ScheduleDraftGenerator;
+use App\Domain\Scheduling\SlotCalculator;
+use App\Domain\Scheduling\TaskRankingEngine;
 use App\Domain\Tasks\Contracts\SubtaskRepository;
 use App\Domain\Tasks\Contracts\TaskRepository;
 use App\Domain\Workspaces\Contracts\WorkspaceRepository;
@@ -72,11 +78,14 @@ use App\Infrastructure\Saas\EloquentSubscriptionRepository;
 use App\Infrastructure\Saas\EloquentUsageRepository;
 use App\Infrastructure\Scheduling\EloquentHardLandscapeRepository;
 use App\Infrastructure\Scheduling\EloquentScheduleAssignmentRepository;
+use App\Infrastructure\Scheduling\EloquentScheduleDraftRepository;
 use App\Infrastructure\Scheduling\EloquentScheduleOverrideRepository;
+use App\Infrastructure\Scheduling\EloquentScheduleReviewRepository;
 use App\Infrastructure\Tasks\EloquentSubtaskRepository;
 use App\Infrastructure\Tasks\EloquentTaskRepository;
 use App\Infrastructure\Workspaces\EloquentWorkspaceRepository;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Container\Container;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -112,6 +121,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ScheduleAssignmentRepository::class, EloquentScheduleAssignmentRepository::class);
         $this->app->singleton(HardLandscapeRepository::class, EloquentHardLandscapeRepository::class);
         $this->app->singleton(ScheduleOverrideRepository::class, EloquentScheduleOverrideRepository::class);
+        $this->app->singleton(ScheduleDraftRepository::class, EloquentScheduleDraftRepository::class);
+        $this->app->singleton(ScheduleReviewRepository::class, EloquentScheduleReviewRepository::class);
+        $this->app->singleton(ScheduleDraftGenerator::class, static fn () => new ScheduleDraftGenerator(
+            new SlotCalculator,
+            HardConstraintEngine::default(),
+            TaskRankingEngine::default(),
+        ));
+        $this->app->singleton(DynamicRescheduler::class, static fn (Container $app) => new DynamicRescheduler(
+            $app->make(ScheduleDraftGenerator::class),
+            HardConstraintEngine::default(),
+        ));
         $this->app->singleton(AttachmentRepository::class, EloquentAttachmentRepository::class);
         $this->app->singleton(KrsImportRepository::class, EloquentKrsImportRepository::class);
         $this->app->singleton(IcalImportRepository::class, EloquentIcalImportRepository::class);

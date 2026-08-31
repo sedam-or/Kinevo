@@ -56,3 +56,31 @@ export interface RescheduleApplyResponse {
     applied: boolean;
     conflict_task_ids: string[];
 }
+
+/** ADR-016 §2.2 — manual Sync Now response. */
+export interface SyncNowResponse {
+    status: 'no_changes' | 'proposal' | 'run_in_progress';
+    needs_review: boolean;
+    base_version: number;
+    new_version: number | null;
+    proposal: RescheduleProposal | null;
+}
+
+/** ADR-016 §2.5 — persisted (weekly) draft record. */
+export interface ScheduleDraftRecord {
+    id: number;
+    source: string;
+    status: 'pending' | 'applied' | 'discarded' | 'superseded';
+    stale: boolean;
+    payload: DraftResponse;
+    base_version: number;
+    horizon_from: string;
+    horizon_to: string;
+    generated_for_week: string | null;
+    created_at: string | null;
+}
+
+export interface ScheduleDraftsResponse {
+    drafts: ScheduleDraftRecord[];
+    base_version: number;
+}

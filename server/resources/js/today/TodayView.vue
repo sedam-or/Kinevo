@@ -66,6 +66,9 @@ const capacityStatus = computed(() => today.capacity?.status ?? 'ok');
 
 const statusLabel = computed(() => shell.syncState);
 
+// ADR-016 §2.3 — "Schedule needs review" attention state (text, not color-only).
+const scheduleNeedsReview = computed(() => today.scheduleNeedsReview);
+
 const currentEvent = computed<TodayEvent | null>(() => {
     const nowMs = now.value.getTime();
     return [...today.events]
@@ -337,6 +340,14 @@ async function endBoostTarget(): Promise<void> {
                         {{ workspaces.activeWorkspace.name }}
                     </span>
                     <span v-else class="text-text-muted" data-testid="today-sync">Status: {{ statusLabel }}</span>
+                </p>
+                <p
+                    v-if="scheduleNeedsReview"
+                    class="mt-1 text-xs rounded-sm bg-surface border border-primary text-primary px-2 py-0.5 inline-flex"
+                    role="status"
+                    data-testid="today-needs-review"
+                >
+                    Schedule needs review — open Schedule to sync.
                 </p>
             </div>
             <!-- Capacity feedback (design.md §22): a load bar; the reveal row is a

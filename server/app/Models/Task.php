@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $progress
  * @property int $version
  * @property int|null $workspace_id
+ * @property bool $is_sacred_anchor
  */
 #[Fillable([
     'user_id',
@@ -37,6 +38,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'progress',
     'version',
     'workspace_id',
+    'is_sacred_anchor',
 ])]
 class Task extends Model
 {

@@ -12,6 +12,7 @@ final readonly class UpdateHardLandscapeUseCase
 {
     public function __construct(
         private HardLandscapeRepository $events,
+        private ScheduleImpactService $impact,
     ) {}
 
     public function __invoke(
@@ -41,6 +42,17 @@ final readonly class UpdateHardLandscapeUseCase
             $event->updatedAt,
         );
 
-        return $this->events->update($updated);
+        $saved = $this->events->update($updated);
+
+        // ADR-016 §2.3 — assess the union of the old and new windows.
+        $this->impact->assess(
+            $userId,
+            $event->startAt->min($updated->startAt),
+            $event->endAt->max($updated->endAt),
+            'hard_landscape_updated',
+            [$saved->id],
+        );
+
+        return $saved;
     }
 }

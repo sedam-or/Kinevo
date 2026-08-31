@@ -141,6 +141,10 @@ async function toggleAssignmentLock(): Promise<void> {
     await tasks.setAssignmentLock(props.taskId, !(tasks.assignmentLocked ?? false));
 }
 
+async function toggleSacredAnchor(): Promise<void> {
+    await tasks.toggleSacredAnchor(props.taskId, !(tasks.current?.is_sacred_anchor ?? false));
+}
+
 async function addSubtask(): Promise<void> {
     subtaskError.value = null;
     if (newSubtaskTitle.value.trim() === '') {
@@ -307,6 +311,16 @@ const relatedLinks = computed<EntityLink[]>(() => {
                     :data-testid="tasks.assignmentLocked ? 'task-detail-unlock' : 'task-detail-lock'"
                     @click="toggleAssignmentLock"
                 >{{ tasks.assignmentLocked ? 'Unlock placement' : 'Lock placement' }}</KButton>
+                <span
+                    v-if="tasks.current?.is_sacred_anchor === true"
+                    class="text-xs rounded-sm bg-surface border border-primary text-primary px-2 py-0.5"
+                    data-testid="task-detail-sacred-badge"
+                >Sacred Anchor</span>
+                <KButton
+                    variant="secondary"
+                    :data-testid="tasks.current?.is_sacred_anchor ? 'task-detail-sacred-remove' : 'task-detail-sacred-set'"
+                    @click="toggleSacredAnchor"
+                >{{ tasks.current?.is_sacred_anchor ? 'Remove Sacred Anchor' : 'Set as Sacred Anchor' }}</KButton>
                 <KButton
                     variant="secondary"
                     :disabled="clarifying"

@@ -10,6 +10,7 @@ use App\Domain\Programs\Contracts\ProgramRepository;
 use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
 use App\Domain\Scheduling\Contracts\ScheduleOverrideRepository;
+use App\Domain\Scheduling\Contracts\ScheduleReviewRepository;
 use App\Domain\Scheduling\Resolution\EffectiveLandscapeResolver;
 use App\Domain\Scheduling\Resolution\RecurrenceResolutionWarning;
 use App\Domain\Scheduling\ScheduleAssignment;
@@ -44,6 +45,7 @@ final readonly class ScheduleQueryService
         private MilestoneRepository $milestones,
         private ProgramRepository $programs,
         private SlotCalculator $slots,
+        private ScheduleReviewRepository $reviews,
     ) {}
 
     /**
@@ -100,6 +102,7 @@ final readonly class ScheduleQueryService
         return [
             'date' => $date->toDateString(),
             'schedule_version' => $version->value,
+            'schedule_needs_review' => $this->reviews->findForUser($userId)->needsReview,
             'pause' => $this->pauseInfo($userId, $date),
             'break' => $this->breakInfo($userId, $date),
             'events' => $events,
@@ -137,6 +140,7 @@ final readonly class ScheduleQueryService
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
             'schedule_version' => $this->assignments->currentScheduleVersion($userId)->value,
+            'schedule_needs_review' => $this->reviews->findForUser($userId)->needsReview,
             'hard_landscape' => $landscape,
             'events' => array_map(
                 fn (ScheduleAssignment $assignment) => $this->event(
@@ -181,6 +185,7 @@ final readonly class ScheduleQueryService
             'start' => $start->toDateString(),
             'end' => $start->addDays(6)->toDateString(),
             'schedule_version' => $this->assignments->currentScheduleVersion($userId)->value,
+            'schedule_needs_review' => $this->reviews->findForUser($userId)->needsReview,
             'pause' => $this->pauseInfo($userId, $start),
             'break' => $this->breakInfo($userId, $start),
             'days' => $days,
@@ -224,6 +229,7 @@ final readonly class ScheduleQueryService
             'year' => $year,
             'month' => $month,
             'schedule_version' => $this->assignments->currentScheduleVersion($userId)->value,
+            'schedule_needs_review' => $this->reviews->findForUser($userId)->needsReview,
             'days' => $days,
         ];
     }

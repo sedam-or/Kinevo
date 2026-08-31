@@ -31,6 +31,7 @@ final class Task
         public readonly int $progress,
         public readonly int $version,
         public readonly ?int $workspaceId = null,
+        public readonly bool $isSacredAnchor = false,
     ) {}
 
     public static function create(
@@ -177,6 +178,7 @@ final class Task
             'progress' => $this->progress,
             'version' => $this->version,
             'workspace_id' => $this->workspaceId,
+            'is_sacred_anchor' => $this->isSacredAnchor,
         ];
     }
 
@@ -201,6 +203,7 @@ final class Task
             'progress' => $this->progress,
             'version' => $this->version,
             'workspaceId' => $this->workspaceId,
+            'isSacredAnchor' => $this->isSacredAnchor,
         ], $props);
 
         return new self(
@@ -219,6 +222,7 @@ final class Task
             $merged['progress'],
             $merged['version'],
             $merged['workspaceId'],
+            $merged['isSacredAnchor'],
         );
     }
 
@@ -226,5 +230,11 @@ final class Task
     public function withWorkspace(int $workspaceId): self
     {
         return $this->reborn(['workspaceId' => $workspaceId]);
+    }
+
+    /** ADR-016 §2.10 — Sacred Anchor producer flag (at most one per user). */
+    public function withSacredAnchor(bool $isSacredAnchor): self
+    {
+        return $this->reborn(['isSacredAnchor' => $isSacredAnchor]);
     }
 }

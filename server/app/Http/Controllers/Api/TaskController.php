@@ -77,6 +77,7 @@ final class TaskController extends Controller
             'goal_id' => ['nullable', 'integer'],
             'date' => ['nullable', 'date'],
             'workspace_id' => ['nullable', 'integer', 'min:1'],
+            'is_sacred_anchor' => ['sometimes', 'boolean'],
         ]);
 
         if ($validator->fails()) {
@@ -221,6 +222,7 @@ final class TaskController extends Controller
             'estimated_minutes' => ['nullable', 'integer', 'min:1'],
             'due_at' => ['nullable', 'date'],
             'workspace_id' => ['nullable', 'integer', 'min:1'],
+            'is_sacred_anchor' => ['sometimes', 'boolean'],
         ]);
 
         if ($validator->fails()) {
@@ -243,6 +245,7 @@ final class TaskController extends Controller
                 // TASK-P19-013/024 — raw context; the use case owns the
                 // precedence rules (explicit > inherited > default).
                 $data['workspace_id'] ?? null,
+                $data['is_sacred_anchor'] ?? false,
             );
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
@@ -262,6 +265,7 @@ final class TaskController extends Controller
             'priority_tier' => ['sometimes', 'integer', 'between:1,3'],
             'estimated_minutes' => ['sometimes', 'nullable', 'integer', 'min:1'],
             'due_at' => ['sometimes', 'nullable', 'date'],
+            'is_sacred_anchor' => ['sometimes', 'boolean'],
         ]);
 
         if ($validator->fails()) {
@@ -282,6 +286,7 @@ final class TaskController extends Controller
                 $data['priority_tier'] ?? null,
                 $data['estimated_minutes'] ?? null,
                 isset($data['due_at']) ? CarbonImmutable::parse($data['due_at']) : null,
+                $data['is_sacred_anchor'] ?? null,
             );
         } catch (InvalidArgumentException $e) {
             if ($e->getMessage() === 'Task not found.') {

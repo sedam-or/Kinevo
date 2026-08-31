@@ -23,6 +23,22 @@ const range = reactive({
 const generated = ref(false);
 const appliedMessage = ref<string | null>(null);
 
+onMounted(() => {
+    isoWeekRange();
+    void sd.loadWeeklyDrafts();
+});
+
+async function applyWeekly(record: import('./types').ScheduleDraftRecord): Promise<void> {
+    await sd.applyWeeklyDraft(record);
+    if (sd.weeklyDraftMessage) {
+        appliedMessage.value = sd.weeklyDraftMessage;
+    }
+}
+
+async function discardWeekly(record: import('./types').ScheduleDraftRecord): Promise<void> {
+    await sd.discardWeeklyDraft(record);
+}
+
 function isoWeekRange(): void {
     const today = new Date();
     const day = (today.getDay() + 6) % 7;
@@ -37,8 +53,6 @@ function isoWeekRange(): void {
 function toIso(d: Date): string {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
-
-onMounted(isoWeekRange);
 
 async function generate(): Promise<void> {
     generated.value = true;
@@ -75,6 +89,36 @@ function reasonLabel(reason: string): string {
     <div class="flex flex-col gap-4" data-testid="schedule-draft-view">
         <h1 class="text-xl font-semibold">Schedule Draft</h1>
 
+        <!-- ADR-016 §2.1 — persisted weekly draft (review-ready, never auto-applied) -->
+        <section
+            v-for="record in sd.weeklyDrafts"
+            :key="record.id"
+            class="surface-secondary p-4 border-l-4 border-primary"
+            data-testid="weekly-draft-banner"
+        >
+            <div class="text-xs uppercase text-text-muted mb-1">Weekly draft ready</div>
+            <p class="text-sm mb-1">
+                Your plan for {{ record.horizon_from }} → {{ record.horizon_to }} is ready for review.
+                <span v-if="record.stale" class="text-danger" data-testid="weekly-draft-stale">It is stale — applying will be checked against the latest schedule.</span>
+            </p>
+            <p class="text-xs text-text-muted mb-2">
+                {{ record.payload.draft.assignments.length }} placement(s) proposed;
+                {{ record.payload.draft.unassigned.length }} task(s) could not be placed.
+            </p>
+            <ul v-if="record.payload.draft.assignments.length > 0" class="text-sm space-y-1 mb-2" data-testid="weekly-draft-item">
+                <li v-for="a in record.payload.draft.assignments" :key="a.task_id" class="flex items-center justify-between">
+                    <span>{{ a.title }}</span>
+                    <span class="text-xs font-mono text-text-muted">{{ formatDate(a.start) }} {{ formatTime(a.start) }}–{{ formatTime(a.end) }}</span>
+                </li>
+            </ul>
+            <div class="flex gap-2">
+                <KButton variant="primary" type="button" :disabled="sd.busy" data-testid="weekly-draft-apply" @click="applyWeekly(record)">Apply</KButton>
+                <KButton variant="secondary" type="button" :disabled="sd.busy" data-testid="weekly-draft-discard" @click="discardWeekly(record)">Cancel</KButton>
+            </div>
+        </section>
+
+        <div v-if="sd.weeklyDraftMessage" class="text-sm text-success" role="status" data-testid="weekly-draft-applied">{{ sd.weeklyDraftMessage }}</div>
+
         <!-- Range + generate -->
         <section class="surface-secondary p-4" data-testid="draft-controls">
             <div class="flex flex-wrap gap-3 items-end">
@@ -88,6 +132,9 @@ function reasonLabel(reason: string): string {
                 </label>
                 <KButton variant="primary" type="button" :disabled="sd.busy" data-testid="draft-generate" @click="generate">
                     {{ sd.busy ? 'Generating…' : 'Generate Draft' }}
+                </KButton>
+                <KButton variant="secondary" type="button" data-testid="draft-reschedule" @click="emit('reschedule')">
+                    Dynamic Reschedule
                 </KButton>
             </div>
             <div v-if="sd.error" class="text-sm text-danger mt-2" role="alert" data-testid="draft-error">{{ sd.error.message }}</div>
@@ -137,9 +184,6 @@ function reasonLabel(reason: string): string {
                     {{ sd.busy ? 'Applying…' : 'Apply Draft' }}
                 </KButton>
                 <KButton variant="secondary" type="button" data-testid="draft-cancel" @click="cancel">Cancel</KButton>
-                <KButton variant="secondary" type="button" data-testid="draft-reschedule" @click="emit('reschedule')">
-                    Dynamic Reschedule
-                </KButton>
             </div>
         </template>
 

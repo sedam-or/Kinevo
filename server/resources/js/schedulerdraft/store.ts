@@ -9,6 +9,8 @@ import type {
     RescheduleProposal,
     RescheduleResponse,
     ScheduleDraft,
+    ScheduleDraftRecord,
+    SyncNowResponse,
 } from './types';
 
 export const useScheduleDraftStore = defineStore('scheduleDraft', () => {
@@ -22,6 +24,12 @@ export const useScheduleDraftStore = defineStore('scheduleDraft', () => {
     const proposal = ref<RescheduleProposal | null>(null);
     const proposalHasChanges = ref(false);
     const rescheduleApplyResult = ref<RescheduleApplyResponse | null>(null);
+
+    // ADR-016 — Sync Now + persisted weekly draft lifecycle.
+    const syncStatus = ref<SyncNowResponse['status'] | null>(null);
+    const syncNeedsReview = ref(false);
+    const weeklyDrafts = ref<ScheduleDraftRecord[]>([]);
+    const weeklyDraftMessage = ref<string | null>(null);
 
     async function generate(from: string, to: string): Promise<DraftResponse | null> {
         busy.value = true;
@@ -105,6 +113,78 @@ export const useScheduleDraftStore = defineStore('scheduleDraft', () => {
         rescheduleApplyResult.value = null;
     }
 
+    // --- ADR-016: Sync Now (never applies; diff reviewed via applyProposal) ---
+
+    async function sync(): Promise<SyncNowResponse | null> {
+        busy.value = true;
+        error.value = null;
+        clearProposal();
+        try {
+            const response = await scheduleDraftApi.sync();
+            syncStatus.value = response.status;
+            syncNeedsReview.value = response.needs_review;
+            if (response.status === 'proposal' && response.proposal !== null) {
+                proposal.value = response.proposal;
+                proposalHasChanges.value = response.proposal.moves.length > 0;
+            }
+            return response;
+        } catch (err) {
+            error.value = err as ApiError;
+            return null;
+        } finally {
+            busy.value = false;
+        }
+    }
+
+    // --- ADR-016: persisted weekly drafts ---
+
+    async function loadWeeklyDrafts(): Promise<void> {
+        error.value = null;
+        try {
+            const response = await scheduleDraftApi.listDrafts();
+            weeklyDrafts.value = response.drafts;
+        } catch (err) {
+            error.value = err as ApiError;
+        }
+    }
+
+    async function applyWeeklyDraft(record: ScheduleDraftRecord): Promise<boolean> {
+        busy.value = true;
+        error.value = null;
+        try {
+            draftApplyResult.value = await scheduleDraftApi.applyDraft(
+                record.payload.draft,
+                record.payload.base_version,
+                record.id,
+            );
+            weeklyDraftMessage.value = draftApplyResult.value?.applied
+                ? `Weekly draft applied at schedule version ${draftApplyResult.value.version}.`
+                : 'Weekly draft was already applied (no changes).';
+            weeklyDrafts.value = weeklyDrafts.value.filter((d) => d.id !== record.id);
+            return true;
+        } catch (err) {
+            error.value = err as ApiError;
+            return false;
+        } finally {
+            busy.value = false;
+        }
+    }
+
+    async function discardWeeklyDraft(record: ScheduleDraftRecord): Promise<boolean> {
+        busy.value = true;
+        error.value = null;
+        try {
+            await scheduleDraftApi.discardDraft(record.id);
+            weeklyDrafts.value = weeklyDrafts.value.filter((d) => d.id !== record.id);
+            return true;
+        } catch (err) {
+            error.value = err as ApiError;
+            return false;
+        } finally {
+            busy.value = false;
+        }
+    }
+
     return {
         busy,
         error,
@@ -120,5 +200,13 @@ export const useScheduleDraftStore = defineStore('scheduleDraft', () => {
         applyProposal,
         clearDraft,
         clearProposal,
+        syncStatus,
+        syncNeedsReview,
+        weeklyDrafts,
+        weeklyDraftMessage,
+        sync,
+        loadWeeklyDrafts,
+        applyWeeklyDraft,
+        discardWeeklyDraft,
     };
 });

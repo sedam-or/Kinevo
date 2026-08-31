@@ -31,6 +31,7 @@ final readonly class CreateTaskUseCase
         ?int $estimatedMinutes = null,
         ?CarbonImmutable $dueAt = null,
         mixed $workspaceId = null,
+        bool $isSacredAnchor = false,
     ): Task {
         // TASK-P19-013 — precedence: explicit parent context > explicit
         // workspace > owner default; conflicts are rejected server-side.
@@ -52,7 +53,24 @@ final readonly class CreateTaskUseCase
             $task = $task->withWorkspace($workspaceId);
         }
 
+        if ($isSacredAnchor) {
+            $task = $task->withSacredAnchor(true);
+            $this->assertSingleSacredAnchor($userId, $task);
+        }
+
         return $this->tasks->create($userId, $task);
+    }
+
+    /**
+     * ADR-016 §2.10 — at most one Sacred Anchor task per user.
+     */
+    private function assertSingleSacredAnchor(int $userId, Task $task): void
+    {
+        foreach ($this->tasks->listForUser($userId) as $other) {
+            if ($other->id !== $task->id && $other->isSacredAnchor) {
+                throw new InvalidArgumentException('A user can have only one Sacred Anchor task.');
+            }
+        }
     }
 
     /**

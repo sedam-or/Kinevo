@@ -23,6 +23,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Holiday-end notification (FR-39/FR-41): H-3 before an active break
         // ends, exactly once per break period.
         $schedule->command('break:notify-end')->dailyAt('20:30');
+
+        // Weekly planning trigger (ADR-016 §2.1): the pass runs daily, but a
+        // draft is only prepared for users whose LOCAL week just started
+        // (profile timezone). Persisted draft, never auto-applied;
+        // idempotent per (user, week anchor); per-user run lock.
+        $schedule->command('schedule:prepare-weekly')->dailyAt('04:00')->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(function (Request $request): ?string {

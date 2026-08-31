@@ -6,6 +6,7 @@ use App\Application\ActivityLogs\RecordActivityUseCase;
 use App\Domain\ActivityLogs\ActivityLog;
 use App\Domain\ActivityLogs\ValueObjects\ActivityEventType;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
+use App\Domain\Scheduling\Contracts\ScheduleReviewRepository;
 use App\Domain\Scheduling\RescheduleProposal;
 use App\Domain\Scheduling\ScheduleAssignment;
 use App\Domain\Scheduling\ScheduleAssignmentLockedConflict;
@@ -38,6 +39,7 @@ final readonly class ApplyRescheduleProposalUseCase
     public function __construct(
         private ScheduleAssignmentRepository $assignments,
         private RecordActivityUseCase $recordActivity,
+        private ScheduleReviewRepository $reviews,
     ) {}
 
     public function __invoke(int $userId, RescheduleProposal $proposal): RescheduleApplyResult
@@ -48,6 +50,8 @@ final readonly class ApplyRescheduleProposalUseCase
         // version ahead (successful earlier apply of the same proposal).
         if ($current->value === $proposal->baseVersion->value + 1
             && $this->proposalMatchesPersisted($userId, $proposal, $current)) {
+            $this->reviews->markReviewed($userId, $current->value);
+
             return new RescheduleApplyResult(
                 $current,
                 [],
@@ -71,6 +75,9 @@ final readonly class ApplyRescheduleProposalUseCase
 
             return $persisted;
         });
+
+        // ADR-016 §2.3 — an explicit apply acknowledges the review state.
+        $this->reviews->markReviewed($userId, $newVersion->value);
 
         // ADR-015 history model: the apply is an auditable schedule mutation.
         $this->recordActivity->__invoke(ActivityLog::create(

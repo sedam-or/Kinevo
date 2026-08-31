@@ -260,6 +260,12 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('/schedule/reschedule', [ScheduleDraftController::class, 'reschedule']);
     Route::post('/schedule/reschedule/apply', [ScheduleDraftController::class, 'rescheduleApply']);
 
+    // ADR-016 — Sync Now + persisted (weekly) draft lifecycle
+    Route::post('/schedule/sync', [ScheduleDraftController::class, 'sync']);
+    Route::get('/schedule/drafts', [ScheduleDraftController::class, 'drafts']);
+    Route::post('/schedule/drafts/{draftId}/discard', [ScheduleDraftController::class, 'discardDraft'])
+        ->whereNumber('draftId');
+
     // Mini Pause (FR-07): move all eligible today tasks to the next day.
     Route::post('/schedule/mini-pause', [MiniPauseController::class, 'store']);
 

@@ -13,6 +13,8 @@ export interface Task {
     progress: number;
     version: number;
     workspace_id?: number | null;
+    /** ADR-016 §2.10 — Sacred Anchor producer flag (at most one per user). */
+    is_sacred_anchor?: boolean;
     created_at?: string;
     updated_at?: string;
 }

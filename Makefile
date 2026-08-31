@@ -196,8 +196,18 @@ e2e: e2e-clean e2e-assets
 	docker run --rm --network host -e E2E_BASE_URL=http://127.0.0.1:8000 \
 		-v "$(CURDIR)/tests/e2e:/e2e" -w /e2e kinevo-e2e npx playwright test
 
+# ADR-016 — scheduler trigger / Sync Now journeys (S1–S4). The weekly-draft
+# journey needs the weekly trigger seeded on a CLEAN sandbox: other browser
+# suites accumulate tasks/placements that change what the deterministic
+# generator can place, so run this BEFORE (not after) the shared suites.
+e2e-scheduler: e2e-clean e2e-assets
+	$(COMPOSE) exec -T app sh < tests/e2e/scripts/seed-journey-s.sh
+	docker run --rm --network host -e E2E_BASE_URL=http://127.0.0.1:8000 \
+		-v "$(CURDIR)/tests/e2e:/e2e" -w /e2e kinevo-e2e npx playwright test \
+		--project=chromium scheduler-trigger.spec.ts
+
 e2e-assets:
-	cd server && KINEVO_E2E_SEAM=1 npm run build
+	$(COMPOSE) run --rm --entrypoint sh app -c "cd /var/www/html && KINEVO_E2E_SEAM=1 npm run build"
 
 lint:
 	$(APP) vendor/bin/pint --test

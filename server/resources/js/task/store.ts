@@ -70,6 +70,21 @@ export const useTaskStore = defineStore('task', () => {
         }
     }
 
+    const sacredAnchor = ref<boolean | null>(null);
+
+    async function toggleSacredAnchor(taskId: number, isAnchor: boolean): Promise<void> {
+        error.value = null;
+        try {
+            await taskApi.setSacredAnchor(taskId, isAnchor);
+            if (current.value && current.value.id === taskId) {
+                current.value = { ...current.value, is_sacred_anchor: isAnchor };
+            }
+            sacredAnchor.value = isAnchor;
+        } catch (err) {
+            error.value = err as ApiError;
+        }
+    }
+
     async function setAssignmentLock(taskId: number, locked: boolean): Promise<void> {
         error.value = null;
         try {
@@ -167,6 +182,8 @@ export const useTaskStore = defineStore('task', () => {
         create,
         setStatus,
         setAssignmentLock,
+        toggleSacredAnchor,
+        sacredAnchor,
         apiUpdate,
         addSubtask,
         toggleSubtask,

@@ -46,6 +46,13 @@ export const taskApi = {
         });
     },
 
+    setSacredAnchor(taskId: number, isAnchor: boolean): Promise<TaskResponse> {
+        return apiClient.request<TaskResponse>(`/tasks/${taskId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ is_sacred_anchor: isAnchor }),
+        });
+    },
+
     setAssignmentLock(taskId: number, locked: boolean): Promise<AssignmentLockResponse> {
         return apiClient.request<AssignmentLockResponse>(`/tasks/${taskId}/assignment/${locked ? 'lock' : 'unlock'}`, {
             method: 'POST',

@@ -98,6 +98,8 @@ export interface BreakPeriodInfo {
 export interface TodayResponse {
     date: string;
     schedule_version: number;
+    /** ADR-016 §2.3 — reality changed and the accepted schedule may be impacted. */
+    schedule_needs_review?: boolean;
     pause: PauseInfo | null;
     break: BreakPeriodInfo | null;
     events: TodayEvent[];

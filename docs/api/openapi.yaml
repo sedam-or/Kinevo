@@ -1740,6 +1740,69 @@ paths:
         '409': { description: Version conflict }
         '422': { description: Validation error }
 
+  /schedule/sync:
+    post:
+      tags: [Scheduling]
+      summary: Sync Now — deterministic diff of the accepted schedule against current reality (FR-29, ADR-016)
+      description: >
+        Loads the current Effective Landscape (ADR-015), compares it with the
+        accepted placements using the same deterministic rescheduler diff, and
+        returns a previewable state. Never force-writes, never calls AI, never
+        re-imports calendars, never discards locked work. The returned diff is
+        applied only through POST /schedule/reschedule/apply. Bounded horizon:
+        client range of at most 14 days, or the profile-local current week.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyncNowRequest'
+      responses:
+        '200':
+          description: Sync state (no_changes, proposal, or run_in_progress)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncNowResponse'
+        '401': { description: Unauthorized }
+        '422': { description: Validation error }
+
+  /schedule/drafts:
+    get:
+      tags: [Scheduling]
+      summary: List pending persisted drafts (weekly planning trigger, ADR-016)
+      responses:
+        '200':
+          description: Pending drafts with derived staleness
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleDraftsResponse'
+        '401': { description: Unauthorized }
+
+  /schedule/drafts/{draftId}/discard:
+    post:
+      tags: [Scheduling]
+      summary: Discard a pending draft (ADR-016 draft lifecycle)
+      parameters:
+        - name: draftId
+          in: path
+          required: true
+          schema: {type: integer}
+      responses:
+        '200':
+          description: Discarded (accepted schedule unchanged)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [discarded]
+                properties:
+                  discarded: {type: boolean}
+        '401': { description: Unauthorized }
+        '404': { description: Draft not found }
+        '422': { description: Draft is not pending }
+
   /schedule/mini-pause:
     post:
       tags: [Scheduling]
@@ -4015,6 +4078,7 @@ components:
         priority_tier: {type: integer, minimum: 1, maximum: 3, default: 3}
         estimated_minutes: {type: integer, minimum: 1, nullable: true}
         due_at: {type: string, format: date-time, nullable: true}
+        is_sacred_anchor: {type: boolean, default: false, description: 'ADR-016: mark as the user''s single Sacred Anchor task (scheduling slice of FR-04). Rejected with 422 when another anchor exists.'}
     TaskUpdateRequest:
       type: object
       properties:
@@ -4026,6 +4090,7 @@ components:
         priority_tier: {type: integer, minimum: 1, maximum: 3}
         estimated_minutes: {type: integer, minimum: 1, nullable: true}
         due_at: {type: string, format: date-time, nullable: true}
+        is_sacred_anchor: {type: boolean, nullable: true, description: 'ADR-016: set/clear the Sacred Anchor flag (at most one per user).'}
     TaskStatusRequest:
       type: object
       required: [status]
@@ -4049,6 +4114,7 @@ components:
         progress_mode: {type: string, enum: [derived, manual], default: derived}
         progress: {type: integer, minimum: 0, maximum: 100, default: 0}
         version: {type: integer}
+        is_sacred_anchor: {type: boolean, default: false, description: 'ADR-016: Sacred Anchor producer flag.'}
     TaskResponse:
       type: object
       required: [task]
@@ -4163,6 +4229,7 @@ components:
       properties:
         date: {type: string, format: date}
         schedule_version: {type: integer}
+        schedule_needs_review: {type: boolean, description: 'ADR-016 additive: a reality change may have impacted the accepted schedule.'}
         pause: {$ref: '#/components/schemas/PauseEvent', nullable: true}
         break: {$ref: '#/components/schemas/BreakPeriod', nullable: true}
         events:
@@ -4182,12 +4249,57 @@ components:
         from: {type: string, format: date}
         to: {type: string, format: date}
         schedule_version: {type: integer}
+        schedule_needs_review: {type: boolean, description: 'ADR-016 additive: a reality change may have impacted the accepted schedule.'}
         hard_landscape:
           type: array
           items: {$ref: '#/components/schemas/EffectiveLandscapeOccurrence'}
         events:
           type: array
           items: {$ref: '#/components/schemas/ScheduleEvent'}
+    SyncNowRequest:
+      type: object
+      properties:
+        from: {type: string, format: date, description: Optional bounded horizon start (defaults to the profile-local current week).}
+        to: {type: string, format: date, description: Optional bounded horizon end; at most 14 days after from.}
+    SyncNowResponse:
+      type: object
+      required: [status, needs_review, base_version, new_version, proposal]
+      properties:
+        status:
+          type: string
+          enum: [no_changes, proposal, run_in_progress]
+          description: 'no_changes = schedule consistent (also acknowledges review state); proposal = diff found, apply via POST /schedule/reschedule/apply; run_in_progress = another sync/weekly run holds the user scheduling lock.'
+        needs_review: {type: boolean}
+        base_version: {type: integer}
+        new_version: {type: integer, nullable: true}
+        proposal: {$ref: '#/components/schemas/RescheduleProposalResponse', nullable: true}
+    ScheduleDraftsResponse:
+      type: object
+      required: [drafts, base_version]
+      properties:
+        base_version: {type: integer}
+        drafts:
+          type: array
+          items: {$ref: '#/components/schemas/ScheduleDraftRecord'}
+    ScheduleDraftRecord:
+      type: object
+      required: [id, source, status, stale, payload, base_version, horizon_from, horizon_to, generated_for_week]
+      properties:
+        id: {type: integer}
+        source: {type: string, enum: [weekly]}
+        status: {type: string, enum: [pending, applied, discarded, superseded]}
+        stale: {type: boolean, description: 'Derived: base_version differs from the current schedule version.'}
+        payload:
+          type: object
+          required: [draft, base_version]
+          properties:
+            draft: {$ref: '#/components/schemas/ScheduleDraft'}
+            base_version: {type: integer}
+        base_version: {type: integer}
+        horizon_from: {type: string, format: date}
+        horizon_to: {type: string, format: date}
+        generated_for_week: {type: string, format: date, nullable: true}
+        created_at: {type: string, format: date-time, nullable: true}
     ScheduleDraftRequest:
       type: object
       required: [from, to]
@@ -4226,6 +4338,8 @@ components:
     ScheduleDraftApplyRequest:
       type: object
       required: [draft, base_version]
+      properties:
+        draft_id: {type: integer, minimum: 1, nullable: true, description: 'ADR-016 additive: closes the applied persisted (weekly) draft.'}
       properties:
         draft: {$ref: '#/components/schemas/ScheduleDraft'}
         base_version: {type: integer}

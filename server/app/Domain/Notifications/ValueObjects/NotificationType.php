@@ -13,9 +13,15 @@ final class NotificationType
 
     public const BREAK_END = 'break_end';
 
+    public const WEEKLY_DRAFT_READY = 'weekly_draft_ready';
+
+    public const SCHEDULE_NEEDS_REVIEW = 'schedule_needs_review';
+
     private const TYPES = [
         self::RECONCILIATION,
         self::BREAK_END,
+        self::WEEKLY_DRAFT_READY,
+        self::SCHEDULE_NEEDS_REVIEW,
     ];
 
     public function __construct(
@@ -34,6 +40,16 @@ final class NotificationType
     public static function breakEnd(): self
     {
         return new self(self::BREAK_END);
+    }
+
+    public static function weeklyDraftReady(): self
+    {
+        return new self(self::WEEKLY_DRAFT_READY);
+    }
+
+    public static function scheduleNeedsReview(): self
+    {
+        return new self(self::SCHEDULE_NEEDS_REVIEW);
     }
 
     public function equals(self $other): bool

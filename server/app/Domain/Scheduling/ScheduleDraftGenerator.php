@@ -203,15 +203,31 @@ final class ScheduleDraftGenerator
     }
 
     /**
+     * First qualifying anchor slot: at least ANCHOR_DURATION_MINUTES long and
+     * startable at/after ANCHOR_EARLIEST_HOUR (06:00 local). A slot that
+     * starts before 06:00 but contains 06:00 qualifies — the anchor is
+     * clipped to 06:00 (SRS glossary: "first qualifying slot ≥ 25 min at/
+     * after 06:00").
+     *
      * @param  array<int, TimeRange>  $slots
      */
     private function findAnchorSlot(array $slots): ?TimeRange
     {
         foreach ($slots as $slot) {
-            if ($slot->start->hour >= self::ANCHOR_EARLIEST_HOUR
-                && $slot->durationMinutes()->value() >= self::ANCHOR_DURATION_MINUTES) {
-                return new TimeRange($slot->start, $slot->start->addMinutes(self::ANCHOR_DURATION_MINUTES));
+            if ($slot->durationMinutes()->value() < self::ANCHOR_DURATION_MINUTES) {
+                continue;
             }
+
+            $earliest = $slot->start->hour >= self::ANCHOR_EARLIEST_HOUR
+                ? $slot->start
+                : $slot->start->setTime(self::ANCHOR_EARLIEST_HOUR, 0);
+
+            if ($earliest->lt($slot->start)
+                || $earliest->addMinutes(self::ANCHOR_DURATION_MINUTES)->gt($slot->end)) {
+                continue;
+            }
+
+            return new TimeRange($earliest, $earliest->addMinutes(self::ANCHOR_DURATION_MINUTES));
         }
 
         return null;

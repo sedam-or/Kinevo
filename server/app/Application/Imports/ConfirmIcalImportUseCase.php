@@ -2,6 +2,8 @@
 
 namespace App\Application\Imports;
 
+use App\Application\Scheduling\ScheduleImpactService;
+use App\Domain\Identity\Contracts\ProfileRepository;
 use App\Domain\Imports\Contracts\IcalImportRepository;
 use App\Domain\Imports\IcalImport;
 use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
@@ -24,6 +26,8 @@ final readonly class ConfirmIcalImportUseCase
         private IcalImportRepository $imports,
         private HardLandscapeRepository $hardLandscape,
         private IcalConflictResolver $conflicts,
+        private ScheduleImpactService $impact,
+        private ProfileRepository $profiles,
     ) {}
 
     public function __invoke(int $userId, int $importId): IcalImport
@@ -38,7 +42,7 @@ final readonly class ConfirmIcalImportUseCase
             throw new InvalidArgumentException('Import has already been resolved.');
         }
 
-        return DB::transaction(function () use ($import) {
+        $confirmed = DB::transaction(function () use ($import) {
             $rows = $this->conflicts->resolve($import->userId, $import->rows);
 
             foreach ($rows as $row) {
@@ -62,5 +66,17 @@ final readonly class ConfirmIcalImportUseCase
 
             return $this->imports->update($import->confirmed($rows));
         });
+
+        // ADR-016 §2.3 — confirmed calendar reality may impact accepted work
+        // (bounded window; failure-isolated; never auto-applies).
+        $localToday = CarbonImmutable::now($this->userTimezone($userId))->startOfDay();
+        $this->impact->assess($userId, $localToday->subDays(7), $localToday->addDays(14), 'ics_import_confirmed', [$importId]);
+
+        return $confirmed;
+    }
+
+    private function userTimezone(int $userId): string
+    {
+        return $this->profiles->findForUser($userId)?->settings->timezone ?? config('app.timezone');
     }
 }

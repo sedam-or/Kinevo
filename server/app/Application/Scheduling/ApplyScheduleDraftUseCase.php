@@ -6,12 +6,15 @@ use App\Application\ActivityLogs\RecordActivityUseCase;
 use App\Domain\ActivityLogs\ActivityLog;
 use App\Domain\ActivityLogs\ValueObjects\ActivityEventType;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
+use App\Domain\Scheduling\Contracts\ScheduleDraftRepository;
+use App\Domain\Scheduling\Contracts\ScheduleReviewRepository;
 use App\Domain\Scheduling\DraftAssignment;
 use App\Domain\Scheduling\ScheduleAssignment;
 use App\Domain\Scheduling\ScheduleAssignmentLockedConflict;
 use App\Domain\Scheduling\ScheduleDraft;
 use App\Domain\Scheduling\ScheduleVersionConflict;
 use App\Domain\Scheduling\ValueObjects\ScheduleAssignmentSource;
+use App\Domain\Scheduling\ValueObjects\ScheduleDraftStatus;
 use App\Domain\Scheduling\ValueObjects\ScheduleSupersession;
 use App\Domain\Scheduling\ValueObjects\ScheduleVersion;
 use Illuminate\Support\Facades\DB;
@@ -35,9 +38,11 @@ final readonly class ApplyScheduleDraftUseCase
     public function __construct(
         private ScheduleAssignmentRepository $assignments,
         private RecordActivityUseCase $recordActivity,
+        private ScheduleReviewRepository $reviews,
+        private ScheduleDraftRepository $drafts,
     ) {}
 
-    public function __invoke(int $userId, ScheduleDraft $draft, ScheduleVersion $baseVersion): ScheduleApplyResult
+    public function __invoke(int $userId, ScheduleDraft $draft, ScheduleVersion $baseVersion, ?int $draftId = null): ScheduleApplyResult
     {
         $current = $this->assignments->currentScheduleVersion($userId);
 
@@ -45,6 +50,8 @@ final readonly class ApplyScheduleDraftUseCase
         // version ahead (successful earlier apply of the same draft).
         if ($current->value === $baseVersion->value + 1
             && $this->draftMatchesPersisted($userId, $draft, $current)) {
+            $this->markReviewed($userId, $current->value, $draftId);
+
             return new ScheduleApplyResult($current, [], applied: false);
         }
 
@@ -75,7 +82,22 @@ final readonly class ApplyScheduleDraftUseCase
             payload: ['schedule_version' => $newVersion->value, 'placements' => count($created)],
         ));
 
+        $this->markReviewed($userId, $newVersion->value, $draftId);
+
         return new ScheduleApplyResult($newVersion, $created, applied: true);
+    }
+
+    /**
+     * ADR-016 §2.3/§2.5 — an explicit apply is the review acknowledgement:
+     * clear the needs-review flag and close out the applied weekly draft.
+     */
+    private function markReviewed(int $userId, int $version, ?int $draftId): void
+    {
+        $this->reviews->markReviewed($userId, $version);
+
+        if ($draftId !== null) {
+            $this->drafts->updateStatus($userId, $draftId, ScheduleDraftStatus::applied());
+        }
     }
 
     private function place(int $userId, DraftAssignment $planned, ScheduleVersion $newVersion): ScheduleAssignment

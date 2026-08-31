@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Scheduling;
 
+use App\Application\ActivityLogs\RecordActivityUseCase;
 use App\Application\Scheduling\ApplyRescheduleProposalUseCase;
 use App\Domain\Scheduling\RescheduleProposal;
 use App\Domain\Scheduling\ScheduleAssignment;
@@ -13,7 +14,9 @@ use App\Domain\Scheduling\ValueObjects\ScheduleVersion;
 use App\Domain\Scheduling\ValueObjects\TimeRange;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Support\FakeActivityLogRepository;
 use Tests\Support\FakeAssignmentStore;
+use Tests\Support\FakeScheduleReviewStore;
 use Tests\TestCase;
 
 /**
@@ -34,7 +37,8 @@ final class ApplyRescheduleProposalUseCaseTest extends TestCase
         $this->store = new FakeAssignmentStore;
         $this->useCase = new ApplyRescheduleProposalUseCase(
             $this->store,
-            new \App\Application\ActivityLogs\RecordActivityUseCase(new \Tests\Support\FakeActivityLogRepository),
+            new RecordActivityUseCase(new FakeActivityLogRepository),
+            new FakeScheduleReviewStore,
         );
     }
 

@@ -161,6 +161,7 @@ class TaskTest extends TestCase
             'progress' => 0,
             'version' => 1,
             'workspace_id' => null,
+            'is_sacred_anchor' => false,
         ], $task->toArray());
     }
 }

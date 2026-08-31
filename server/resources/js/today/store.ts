@@ -13,6 +13,7 @@ export const useTodayStore = defineStore('today', () => {
     const emptySlots = ref<EmptySlot[]>([]);
     const hardLandscape = ref<TodayResponse['hard_landscape']>([]);
     const capacity = ref<CapacityIndicators | null>(null);
+    const scheduleNeedsReview = ref(false);
     const loading = ref(false);
     const error = ref<ApiError | null>(null);
 
@@ -27,6 +28,7 @@ export const useTodayStore = defineStore('today', () => {
         emptySlots.value = response.empty_slots;
         hardLandscape.value = response.hard_landscape;
         capacity.value = response.capacity;
+        scheduleNeedsReview.value = response.schedule_needs_review ?? false;
         error.value = null;
     }
 
@@ -51,6 +53,7 @@ export const useTodayStore = defineStore('today', () => {
         emptySlots.value = [];
         hardLandscape.value = [];
         capacity.value = null;
+        scheduleNeedsReview.value = false;
         error.value = null;
     }
 
@@ -63,6 +66,7 @@ export const useTodayStore = defineStore('today', () => {
         emptySlots,
         hardLandscape,
         capacity,
+        scheduleNeedsReview,
         loading,
         error,
         hasData,

@@ -20,6 +20,7 @@ final readonly class CreateScheduleOverrideUseCase
         private HardLandscapeRepository $hardLandscape,
         private EffectiveLandscapeResolver $landscapeResolver,
         private RecordActivityUseCase $recordActivity,
+        private ScheduleImpactService $impact,
     ) {}
 
     public function __invoke(
@@ -69,6 +70,16 @@ final readonly class CreateScheduleOverrideUseCase
                 'cancels_occurrence' => $created->cancelsOccurrence,
             ],
         ));
+
+        // ADR-016 §2.3 — the override changed the effective landscape; flag
+        // impacted accepted work (bounded window, never auto-applies).
+        $this->impact->assess(
+            $userId,
+            $created->effectiveFrom->min($created->overrideStartAt),
+            $created->effectiveTo->max($created->overrideEndAt),
+            'schedule_override_created',
+            [$created->id],
+        );
 
         return $created;
     }

@@ -102,6 +102,7 @@ final class EloquentTaskRepository implements TaskRepository
             $model->progress,
             $model->version,
             $model->workspace_id,
+            $model->is_sacred_anchor,
         );
     }
 }

@@ -2,36 +2,31 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Application\Boosts\GetEffectiveTargetUseCase;
 use App\Application\Scheduling\ApplyRescheduleProposalUseCase;
 use App\Application\Scheduling\ApplyScheduleDraftUseCase;
-use App\Domain\Goals\Contracts\GoalRepository;
-use App\Domain\Milestones\Contracts\MilestoneRepository;
-use App\Domain\Scheduling\Contracts\HardLandscapeRepository;
+use App\Application\Scheduling\AssembleScheduleInput;
+use App\Application\Scheduling\DiscardScheduleDraftUseCase;
+use App\Application\Scheduling\SyncNowResult as SyncNowUseCaseResult;
+use App\Application\Scheduling\SyncNowUseCase;
 use App\Domain\Scheduling\Contracts\ScheduleAssignmentRepository;
-use App\Domain\Scheduling\Contracts\ScheduleOverrideRepository;
+use App\Domain\Scheduling\Contracts\ScheduleDraftRepository;
 use App\Domain\Scheduling\DraftAssignment;
-use App\Domain\Scheduling\DraftInput;
 use App\Domain\Scheduling\DynamicRescheduler;
 use App\Domain\Scheduling\HardConstraintEngine;
 use App\Domain\Scheduling\RescheduleProposal;
-use App\Domain\Scheduling\Resolution\EffectiveLandscapeResolver;
-use App\Domain\Scheduling\Resolution\HardLandscapeOccurrence;
 use App\Domain\Scheduling\ScheduleAssignment;
 use App\Domain\Scheduling\ScheduleAssignmentLockedConflict;
 use App\Domain\Scheduling\ScheduleDraft;
 use App\Domain\Scheduling\ScheduleDraftGenerator;
+use App\Domain\Scheduling\ScheduleDraftRecord;
 use App\Domain\Scheduling\ScheduleState;
-use App\Domain\Scheduling\ScheduleTask;
 use App\Domain\Scheduling\ScheduleVersionConflict;
 use App\Domain\Scheduling\SlotCalculator;
 use App\Domain\Scheduling\TaskMove;
 use App\Domain\Scheduling\TaskRankingEngine;
 use App\Domain\Scheduling\UnassignedTask;
-use App\Domain\Scheduling\ValueObjects\PriorityTier;
 use App\Domain\Scheduling\ValueObjects\ScheduleVersion;
 use App\Domain\Scheduling\ValueObjects\TimeRange;
-use App\Domain\Tasks\Contracts\TaskRepository;
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
@@ -40,10 +35,11 @@ use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
 
 /**
- * Schedule Draft / Dynamic Rescheduler (FR-27/FR-28; SRS §7.1). Generates a
- * deterministic draft or reschedule proposal for an owner-scoped date range,
- * and explicitly applies an approved draft/proposal at the next schedule
- * version. Generating/previewing never mutates the schedule.
+ * Schedule Draft / Dynamic Rescheduler / Sync Now (FR-27/FR-28; ADR-016).
+ * Generates a deterministic draft, reschedule proposal, or sync diff for an
+ * owner-scoped date range, and explicitly applies an approved draft/proposal
+ * at the next schedule version. Generating/previewing never mutates the
+ * schedule; only the explicit apply endpoints persist it.
  */
 final class ScheduleDraftController extends Controller
 {
@@ -54,14 +50,11 @@ final class ScheduleDraftController extends Controller
     public function __construct(
         private readonly ApplyScheduleDraftUseCase $applyDraft,
         private readonly ApplyRescheduleProposalUseCase $applyProposal,
+        private readonly ScheduleDraftRepository $draftRepository,
+        private readonly AssembleScheduleInput $assembleInput,
+        private readonly SyncNowUseCase $syncNow,
+        private readonly DiscardScheduleDraftUseCase $discardDraft,
         private readonly ScheduleAssignmentRepository $assignments,
-        private readonly HardLandscapeRepository $hardLandscape,
-        private readonly ScheduleOverrideRepository $overrides,
-        private readonly EffectiveLandscapeResolver $landscapeResolver,
-        private readonly TaskRepository $tasks,
-        private readonly GoalRepository $goals,
-        private readonly MilestoneRepository $milestones,
-        private readonly GetEffectiveTargetUseCase $effectiveBoostTarget,
     ) {
         $this->generator = new ScheduleDraftGenerator(
             new SlotCalculator,
@@ -91,7 +84,7 @@ final class ScheduleDraftController extends Controller
         $to = CarbonImmutable::parse($validated['to']);
 
         try {
-            $assembled = $this->assemble($userId, $from, $to);
+            $assembled = ($this->assembleInput)($userId, $from, $to);
             $draft = $this->generator->generate($assembled['input']);
         } catch (InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
@@ -135,6 +128,7 @@ final class ScheduleDraftController extends Controller
             'draft.unassigned.*.title' => ['required', 'string'],
             'draft.unassigned.*.reason' => ['required', 'string'],
             'base_version' => ['required', 'integer', 'min:1'],
+            'draft_id' => ['sometimes', 'integer', 'min:1'],
         ]);
 
         if ($validator->fails()) {
@@ -166,7 +160,12 @@ final class ScheduleDraftController extends Controller
                 ),
             );
 
-            $result = $this->applyDraft->__invoke($userId, $draft, $baseVersion);
+            $result = $this->applyDraft->__invoke(
+                $userId,
+                $draft,
+                $baseVersion,
+                isset($data['draft_id']) ? (int) $data['draft_id'] : null,
+            );
         } catch (ScheduleVersionConflict $e) {
             return response()->json(['error' => $e->getMessage()], 409);
         } catch (ScheduleAssignmentLockedConflict $e) {
@@ -206,7 +205,7 @@ final class ScheduleDraftController extends Controller
         $to = CarbonImmutable::parse($validated['to']);
 
         try {
-            $assembled = $this->assemble($userId, $from, $to);
+            $assembled = ($this->assembleInput)($userId, $from, $to);
             $state = new ScheduleState($assembled['base_version'], $assembled['slots_by_task']);
             $proposal = $this->rescheduler->propose($state, $assembled['input']);
         } catch (InvalidArgumentException $e) {
@@ -297,111 +296,92 @@ final class ScheduleDraftController extends Controller
     }
 
     /**
-     * Assemble a DraftInput (and the current in-range schedule snapshot) for a
-     * user from the persisted repositories. Terminal tasks are ineligible.
-     *
-     * @return array{
-     *     input: DraftInput,
-     *     base_version: ScheduleVersion,
-     *     slots_by_task: array<string, TimeRange>,
-     * }
+     * ADR-016 §2.2 — manual Sync Now: deterministic diff of the accepted
+     * schedule against the current Effective Landscape. Read-only; the diff
+     * is applied only via the explicit reschedule-apply endpoint.
      */
-    private function assemble(int $userId, CarbonImmutable $from, CarbonImmutable $to): array
+    public function sync(Request $request): JsonResponse
     {
-        $horizon = new TimeRange($from->startOfDay(), $to->endOfDay());
-        $baseVersion = $this->assignments->currentScheduleVersion($userId);
+        $validator = Validator::make($request->all(), [
+            'from' => ['sometimes', 'date'],
+            'to' => ['sometimes', 'date', 'after_or_equal:from'],
+        ]);
 
-        // Effective Hard Landscape (ADR-015): the deterministic scheduler
-        // consumes RESOLVED occurrences — recurring series expanded into the
-        // horizon, overrides applied — never raw source rows.
-        $resolution = $this->landscapeResolver->resolve(
-            $this->hardLandscape->listForUser($userId),
-            $this->overrides->listForUser($userId),
-            $horizon->start,
-            $horizon->end,
-        );
-
-        $hardLandscape = array_map(
-            static fn (HardLandscapeOccurrence $occurrence) => $occurrence->timeRange(),
-            $resolution->occurrences,
-        );
-
-        /** @var array<string, TimeRange> $slotsByTask */
-        $slotsByTask = [];
-        $lockedByTask = [];
-
-        foreach ($this->assignments->listForUserInRange($userId, $from, $to->endOfDay()) as $assignment) {
-            $slotsByTask[(string) $assignment->taskId] = $assignment->timeRange();
-
-            // ADR-015 locked-task contract: a locked placement is a
-            // user-fixed placement — its lock state must reach the
-            // scheduler/rescheduler input so automation can never move it.
-            if ($assignment->locked) {
-                $lockedByTask[(string) $assignment->taskId] = true;
-            }
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $tasks = [];
-        foreach ($this->tasks->listForUser($userId) as $task) {
-            if ($task->status->isTerminal()) {
-                continue;
-            }
+        $userId = $request->user()->id;
+        $validated = $validator->validated();
 
-            $tasks[] = new ScheduleTask(
-                taskId: (string) $task->id,
-                title: $task->title,
-                durationMinutes: $task->estimatedMinutes ?? 45,
-                priorityTier: new PriorityTier($task->priorityTier),
-                goalDeadline: $this->goalDeadline($userId, $task->goalId),
-                milestoneDeadline: $this->milestoneDeadline($userId, $task->milestoneId),
-                taskDeadline: $task->dueAt,
-                progress: $task->progress,
-                isLocked: $lockedByTask[(string) $task->id] ?? false,
-                isSacredAnchor: false,
-                existingSlot: $slotsByTask[(string) $task->id] ?? null,
+        try {
+            $result = ($this->syncNow)(
+                $userId,
+                isset($validated['from']) ? CarbonImmutable::parse($validated['from']) : null,
+                isset($validated['to']) ? CarbonImmutable::parse($validated['to']) : null,
             );
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
 
-        return [
-            'input' => new DraftInput(
-                $horizon,
-                hardLandscape: $hardLandscape,
-                existingAssignments: array_values($slotsByTask),
-                tasks: $tasks,
-                dailyCapacityPercent: $this->effectiveBoostPercent($userId, $from),
-            ),
-            'base_version' => $baseVersion,
-            'slots_by_task' => $slotsByTask,
-        ];
+        return response()->json([
+            'status' => $result->status,
+            'needs_review' => $result->needsReview,
+            'base_version' => $result->baseVersion->value,
+            'new_version' => $result->newVersion,
+            'proposal' => $result->status === SyncNowUseCaseResult::PROPOSAL ? [
+                'base_version' => $result->baseVersion->value,
+                'new_version' => $result->newVersion,
+                'moves' => array_map(
+                    static fn (TaskMove $move) => [
+                        'task_id' => $move->taskId,
+                        'title' => $move->title,
+                        'from' => $move->fromSlot !== null ? [
+                            'start' => $move->fromSlot->start->toISOString(),
+                            'end' => $move->fromSlot->end->toISOString(),
+                        ] : null,
+                        'to' => [
+                            'start' => $move->toSlot->start->toISOString(),
+                            'end' => $move->toSlot->end->toISOString(),
+                        ],
+                    ],
+                    $result->moves,
+                ),
+                'conflict_task_ids' => array_values($result->conflictTaskIds),
+            ] : null,
+        ]);
     }
 
     /**
-     * Effective boost capacity percent for the horizon start (SRS FR-38). When a
-     * confirmed Break Mode period has an active boost target covering the date,
-     * the draft is constrained to that percentage of daily capacity; otherwise
-     * the normal target applies (null ceiling).
+     * ADR-016 §2.5 — pending persisted drafts (weekly trigger) for review.
      */
-    private function effectiveBoostPercent(int $userId, CarbonImmutable $from): ?int
+    public function drafts(Request $request): JsonResponse
     {
-        return $this->effectiveBoostTarget->__invoke($userId, $from)?->targetPercent;
+        $userId = $request->user()->id;
+        $currentVersion = $this->assignments->currentScheduleVersion($userId)->value;
+
+        $records = array_map(
+            fn (ScheduleDraftRecord $record) => $record->toArray($currentVersion),
+            $this->draftRepository->listPendingForUser($userId),
+        );
+
+        return response()->json(['drafts' => $records, 'base_version' => $currentVersion]);
     }
 
-    private function goalDeadline(int $userId, ?int $goalId): ?CarbonImmutable
+    /**
+     * ADR-016 §2.5 — discard a pending draft. Never mutates the schedule.
+     */
+    public function discardDraft(Request $request, int $draftId): JsonResponse
     {
-        if ($goalId === null) {
-            return null;
+        try {
+            ($this->discardDraft)($request->user()->id, $draftId);
+        } catch (InvalidArgumentException $e) {
+            $status = $e->getMessage() === 'Draft not found.' ? 404 : 422;
+
+            return response()->json(['error' => $e->getMessage()], $status);
         }
 
-        return $this->goals->findForUser($userId, $goalId)?->targetDate;
-    }
-
-    private function milestoneDeadline(int $userId, ?int $milestoneId): ?CarbonImmutable
-    {
-        if ($milestoneId === null) {
-            return null;
-        }
-
-        return $this->milestones->findForUser($userId, $milestoneId)?->targetDate;
+        return response()->json(['discarded' => true]);
     }
 
     private function moveFromPayload(array $move): TaskMove
