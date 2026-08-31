@@ -1,3 +1,7 @@
+> ARCHIVED 2026-08-31 (R0): superseded by the canonical master execution program —
+> `docs/roadmap/KINEVO_MASTER_EXECUTION_PROGRAM.md`. Preserved verbatim as owner-issued
+> historical evidence. NOT an execution authority.
+
 # KINEVO MASTER EXECUTION PROMPT V3
 # P28 CLOSURE → PRODUCT CONVERGENCE → PRODUCTION → RELEASE CANDIDATE
 

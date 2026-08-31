@@ -1,3 +1,8 @@
+> ARCHIVED 2026-08-31 (R0): convergence register COMPLETE — all registered blockers resolved
+> (ES-01..05, SCHED-01, OFFLINE-01 with evidence; BLOCKER-DOC-01 resolved via ADR-009/010/011
+> reconstruction). Historical status artifact — NOT current authority. Current status: TASK.md +
+> docs/roadmap/active/P28-product-experience-closure.md.
+
 # KINEVO PRE-CONVERGENCE BASELINE — 2026-08-30
 
 Status: ACTIVE · Authority: governance record for the convergence phase ·

@@ -1,3 +1,6 @@
+> ARCHIVED 2026-08-31 (R0): drift triage superseded by the R0 rebaseline
+> (docs/roadmap/rebaseline-2026-08.md). Historical evidence.
+
 # DOCUMENT DRIFT TRIAGE — 2026-08-30
 
 Status: ACTIVE · disposition of every item in `docs/audit/DOCUMENTATION_DRIFT_REGISTER_2026-08-30.md`.

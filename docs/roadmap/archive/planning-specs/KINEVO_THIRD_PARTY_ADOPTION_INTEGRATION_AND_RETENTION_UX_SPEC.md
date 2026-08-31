@@ -1,3 +1,8 @@
+> ARCHIVED 2026-08-31 (R0): owner planning input (2026-08-29). Decisions were migrated into
+> ADR-014, docs/third-party/*, architecture.md §Third-Party, design.md §105, and the P28-TPI
+> task records (see docs/roadmap/active/P28-product-experience-closure.md). Historical
+> evidence — NOT an execution authority.
+
 # KINEVO — THIRD-PARTY ADOPTION, INTEGRATION & RETENTION UX SPECIFICATION
 
 **Status:** Proposed authoritative implementation specification for third-party adoption after P27.  

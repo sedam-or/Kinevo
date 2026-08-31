@@ -1,3 +1,8 @@
+> ARCHIVED 2026-08-31 (R0): owner pricing revision patch (2026-08-28). Migrated into
+> docs/billing.md (Pricing Delta), ADR-013 (superseding-price note), the D-001..D-008 records
+> (docs/roadmap/archive/task-legacy/commercial-pricing-delta-post-p27.md), and
+> docs/ai-economics/. Historical evidence — NOT current policy by itself.
+
 # KINEVO — COMMERCIAL & AI ECONOMICS DELTA PATCH
 # SCOPE: ONLY PRICING / ENTITLEMENT / AI ECONOMICS CHANGES
 # PURPOSE: Replace the previous Free/Pro/Power commercial assumptions.
