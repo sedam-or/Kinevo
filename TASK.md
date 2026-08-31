@@ -30,10 +30,13 @@ satu fase terotorisasi per waktu; STOP di akhir fase; lanjut hanya dengan otoris
 
 ## Current phase
 
-**P28 — Product Experience Closure** — ACTIVE (detail: `docs/roadmap/active/P28-product-experience-closure.md`).
+**P28 — Product Experience Closure** — DONE 2026-08-31 (detail:
+`docs/roadmap/active/P28-product-experience-closure.md`, diarsipkan saat checkpoint).
 
-Status: 21 DONE · 9 TODO · 1 GATED. Eksekusi task berikutnya menunggu otorisasi eksplisit
-(terakhir: R0 documentation rebaseline dijalankan sebagai P0 sebelum eksekusi fitur).
+Status akhir: **30 DONE · 0 TODO · P28-014 GATE GREEN** (21 baseline + 9 task closure
+P28-010/011, RET-002/005/006/007/008/013, P28-013). Evidence:
+`docs/browser-e2e.md` §P28-013 (matrix Chromium/Firefox/WebKit), `docs/state-machine-ui.md`
+§P28-011 + §Retention-critical failure matrix, `docs/retention-events.md` §RET-007.
 
 ## Active gate
 
@@ -42,6 +45,9 @@ wajib selesai; blocker pengalaman P0/P1 selesai; golden journeys A–F green; br
 Chromium+Firefox+WebKit green atau gate exception disetujui owner; accessibility green;
 offline/scheduler core journeys green; state matrix koheren; tanpa defect correctness di core loop.
 Saat hijau: checkpoint + tag + arsip dokumen fase P28 → STOP.
+
+**HASIL 2026-08-31: GATE GREEN.** Semua kriteria terpenuhi. P28 ditutup; P29 TIDAK diaktifkan
+(menunggu otorisasi owner eksplisit).
 
 ## Next phase
 

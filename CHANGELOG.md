@@ -582,6 +582,43 @@ Release governance: see `docs/release-management.md`.
   your own AI key; Free uses Kinevo-hosted credits only. Annual billing remains
   architecturally supported but unpriced until a future decision.
 
+### Added — P28 Product Experience Closure (2026-08-31)
+- Contextual feature explanation layer (P28-010): in-product education now
+  covers Workspace, Knowledge & Notes, Canvas, and AI provider modes
+  (`features/registry.ts` + `FeatureHelp`), each answering what it is / why it
+  matters / what to do next — no tours, no coach-mark spam.
+- Global user-facing state matrix (P28-011) and retention-critical failure
+  matrix (RET-013) recorded in `docs/state-machine-ui.md`; data-load failures
+  on Today/Goals/Tasks/Notes/Canvas/Analytics now show a uniform message + a
+  `Try again` recovery path (`InlineError.vue`) instead of a dead-end error.
+- Empty-state guidance deepened (RET-002) on Canvas and Notes surfaces; Goals/
+  Tasks/Today/Analytics already answered the four questions.
+- First-session journey (RET-006): a genuinely blank Today shows a "Start
+  here" guide with two real paths — capture a quick task (focuses the input) or
+  start from a goal. No forced tutorial.
+- First-week retention event taxonomy (RET-007): canonical semantic contract in
+  `docs/retention-events.md` (13 events with meaning/trigger/payload/dedup/
+  privacy/success). Semantics only — instrumentation lands in P32.
+- Progress feedback (RET-008): the completion toast now reports the concrete
+  progress delta (`Task completed · X/Y done`) alongside the existing progress
+  bar and next-task spotlight.
+- AI breakdown continuation (RET-005) verified end-to-end: accept → milestones
+  visible → goal detail points to Today via the Next Action banner.
+- New browser journey evidence: `p28-golden-journeys.spec.ts` (Knowledge
+  continuity task→note→link→canvas; RET-005 continuation) and P28-010/first-
+  session assertions in `p28-ux-audit.spec.ts`; A–F golden journey matrix
+  recorded across Chromium/Firefox/WebKit (`docs/browser-e2e.md` §P28-013).
+
+### Changed
+- Topbar made responsive (P28 theme fix): the shell header now wraps on small
+  screens so the theme control is always reachable at 375px; the Kinevo
+  wordmark hides below `sm` and the current-section label truncates instead of
+  overflowing.
+- `make e2e` runs `p28-ux-audit.spec.ts` as its own first phase on the
+  `e2e-clean` baseline so the empty-state assertions keep their documented
+  clean-sandbox precondition; the journey-c seed scopes its missed task to the
+  owner's default workspace so the workspace-scoped task list surfaces it.
+
 ## [0.4.0] — 2026-08-17
 
 ### Added

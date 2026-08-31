@@ -24,8 +24,9 @@
 | **Canvas** | `adr/ADR-010`, `adr/ADR-005` | Excalidraw owns drawing only |
 | **AI architecture** | `ai-architecture.md` + `adr/ADR-011` | AI proposes, user decides |
 | **API contract** | `api/openapi.yaml` | contract of record; `bash scripts/check-openapi.sh` |
-| **UX/design** | `design.md` (authority incl. §74–103), `design-tokens.md`, `state-machine-ui.md` | full design convergence → P29 (future docs/ux/) |
+| **UX/design** | `design.md` (authority incl. §74–103), `design-tokens.md`, `state-machine-ui.md` | full design convergence → P29 (future docs/ux/); P28-011 state matrix + RET-013 failure matrix live in `state-machine-ui.md` |
 | **UX audits (living)** | `ui-audit.md`, `browser-e2e.md` | gap + run baselines |
+| **Retention semantics** | `retention-events.md` | RET-007 v1 event taxonomy (semantic contract only; P32 instruments it) |
 | **Brand** | `brand.md` | |
 | **Commercial/billing** | `billing.md`, `adr/ADR-013`, `ai-economics/` | prices are launch hypotheses; quotas NOT locked (→ P33) |
 | **Third-party/licenses** | `third-party/licenses.md`, `third-party/adoption-matrix.md`, `third-party/attributions.md` | check BEFORE copying external source |
