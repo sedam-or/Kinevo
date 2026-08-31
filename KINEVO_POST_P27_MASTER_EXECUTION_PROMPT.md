@@ -4,6 +4,11 @@
 # → GROWTH → OPEN-SOURCE SPLIT → CLOUD OPERATIONS → ANDROID HARDENING
 # → BETA → COMPLIANCE/TRUST → V1.0 RELEASE
 
+> **SUPERSEDED (2026-08-31):** execution authority for P28 closure → P39 RC now lives in
+> `KINEVO_MASTER_EXECUTION_PROMPT_V3.md` (owner-issued umbrella prompt). This file is preserved
+> as historical planning evidence; its phase numbering/rebaseline decisions referenced by
+> `TASK.md` remain historical record. Do not execute new work against this file.
+
 ## 0. PURPOSE
 
 This document supersedes prior generic post-P27 roadmaps.

@@ -3,6 +3,13 @@
 Status: ACTIVE execution order for post-reconciliation work. This plan DEFINES order and
 preconditions; it does not implement anything itself.
 
+2026-08-31 — Master Execution Prompt V3 (`KINEVO_MASTER_EXECUTION_PROMPT_V3.md`) authorizes the
+P28 closure phase and re-confirms this plan's remaining steps (9–12) with explicit additions:
+known browser-failure triage BEFORE final P28-013 evidence (V3 §27), RET-007 semantic taxonomy
+within P28 with provider transport deferred to P32 (V3 §26), golden-journey regression legs for
+scheduler Sync Now / weekly draft / locked task / offline reconnect+replay+conflict (V3 §28),
+and the 3-engine browser matrix (V3 §29). Stitch is NOT implementation authority in P28 (V3 §20).
+
 Entry condition: baseline accepted (docs/convergence/PRE_CONVERGENCE_BASELINE.md), P28 tracking
 reconciled (TASK.md phase 28 header: 21 DONE · 9 TODO · 1 GATED).
 
@@ -17,8 +24,8 @@ reconciled (TASK.md phase 28 header: 21 DONE · 9 TODO · 1 GATED).
 | 5 | **Locked-task reachability** | implementation | 1 | **DONE 2026-08-30** — ES-IMPL-07: user lock/unlock endpoints + UI toggle/badge + `isLocked` wired into scheduler/rescheduler input; locked placements never auto-move (resolves BLOCKER-ES-05; browser LOCK journey) |
 | 6 | **Scheduler trigger / Sync Now decision** | ADR + decision record | 2-5 landed (or explicitly descoped by ADR) | **DONE 2026-08-31** — ADR-016 recorded AND implemented: weekly `schedule:prepare-weekly` (persisted draft, never auto-applies), per-user cache run locks, `POST /schedule/sync`, reality-change review state, draft lifecycle (pending/applied/discarded/superseded), Sacred Anchor producer (scheduling slice); weekly + sync + impact + lifecycle tests; browser journeys S1–S4 (resolves BLOCKER-SCHED-01) |
 | 7 | **Offline reconciliation ADR** | ADR (decision) | — | **DONE 2026-08-31** — ADR-017 recorded AND implemented: server `offline_operations` ledger, idempotent replay, conflict semantics, `/sync/reconcile`, web MutationQueue integration, retention, online convergence; server + client + browser evidence; BLOCKER-OFFLINE-01 resolved (web/server); mobile durable queue formally deferred to Android hardening (ADR-017 §2.19) |
-| 8 | **Offline server ledger/reconciliation** | implementation | 7 | server accepts operation-UUID mutation envelopes, reconciles + responds with canonical state; client queue drains; integration tests (resolves BLOCKER-OFFLINE-01) |
-| 9 | **Remaining P28 UX tasks** | implementation | — (parallel track; P28-013 evidence waits on 2-4) | P28-010 (4 missing education subjects), P28-011 (state matrix), RET-002/005/006/008 semantic+UX work |
+| 8 | **Offline server ledger/reconciliation** | implementation | 7 | **DONE 2026-08-31** — implemented in the same slice as step 7 (ADR-017): `offline_operations` ledger (unique (user_id, operation_id) + payload hash), `POST /sync/reconcile` (batch ≤50, transaction-per-op), idempotent replay / REUSED rejection, task/note version conflicts, online X-Operation-Id convergence, web MutationQueue drain (boot + reconnect); evidence: OfflineReconcileApiTest (16) + browser journeys O1–O4 (resolves BLOCKER-OFFLINE-01) |
+| 9 | **Remaining P28 UX tasks** | implementation | — (parallel track; P28-013 evidence waits on 2-4) | P28-010 (4 missing education subjects), P28-011 (state matrix), RET-002/005/006/008 semantic+UX work, RET-007 first-week retention SEMANTIC taxonomy (provider transport/instrumentation deferred to P32 per V3 §26) |
 | 10 | **Browser Golden Journeys (P28-013)** | E2E evidence | 2, 3, 4, 5, 9 core loop legs | journeys A-F (below) recorded on chromium+firefox+webkit; recorded under P28-013 |
 | 11 | **Retention Failure E2E (P28-RET-013)** | E2E evidence | 9 (RET-002/005), P28-006 | `tests/e2e/tests/retention-failures.spec.ts` green (chromium minimum) |
 | 12 | **Product Experience Baseline Gate (P28-014)** | gate | ALL above + all P28 items | gate checklist green with compiled browser evidence; entry into convergence phase |

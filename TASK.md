@@ -3,13 +3,63 @@
 ### Purpose
 `TASK.md` adalah execution control document. Ia memecah implementation roadmap menjadi unit kerja yang dapat dieksekusi AI/human, mencatat dependency, status, evidence, dan blocking condition.
 
-### Roadmap authority (post-P27)
-Eksekusi P28–P39 mengikuti `KINEVO_POST_P27_MASTER_EXECUTION_PROMPT.md` (execution authority §0 —
-supersedes prior generic post-P27 roadmaps). Fase lama direnumber pada re-baseline ini:
-old PHASE 28 (Intelligence/Wrapped) → **PHASE 31** · old PHASE 29 (Beta/Growth) → **PHASE 37** ·
-old PHASE 30 (Release) → **PHASE 39**. Tidak ada status DONE/evidence yang berubah; hanya penomoran
-dan penempatan. Keputusan bisnis terkunci (tier/price/entitlement/AI accounting/mobile billing) ada
-di §2 master prompt dan TIDAK BOLEH diubah diam-diam oleh agen.
+### Roadmap authority (V3, 2026-08-31)
+Eksekusi P28 closure → P39 Release Candidate mengikuti `KINEVO_MASTER_EXECUTION_PROMPT_V3.md`
+(owner-issued umbrella execution authority; SUPERSEDES
+`KINEVO_POST_P27_MASTER_EXECUTION_PROMPT.md` — file lama dipertahankan sebagai riwayat dengan
+banner supersession). V3 tidak mengubah status DONE/evidence apa pun; ia mengunci identitas
+produk, semantik Workspace, AI authority, model komersial Free/Pro/Power (harga-hipotesis
+0/49.900/89.900), kebijakan licensing, dan mengotorisasi rekonstruksi dokumentasi P29 (TASK.md →
+slim control plane + docs/roadmap). AUTO_CONTINUE_PHASES = FALSE: satu fase terotorisasi per
+waktu; STOP di akhir fase; lanjut hanya dengan otorisasi owner. Re-baseline penomoran fase lama
+tetap berlaku: old PHASE 28 (Intelligence/Wrapped) → **PHASE 31** · old PHASE 29 (Beta/Growth) →
+**PHASE 37** · old PHASE 30 (Release) → **PHASE 39**; pemetaan ulang P30–P39 versi V3 akan
+direkam pada re-baseline P29 (V3 §6/§7/§47). Keputusan bisnis terkunci TIDAK BOLEH diubah
+diam-diam oleh agen.
+
+## P28 CLOSURE — MASTER PROMPT V3 AUTHORIZATION (2026-08-31)
+
+Fase aktif terotorisasi: **P28 — PRODUCT EXPERIENCE CLOSURE** (V3 §23–§31, §111).
+Status eksekusi: **NOT STARTED** (checkpoint dokumentasi ini BUKAN eksekusi tugas).
+
+Scope terotorisasi (V3):
+1. Verifikasi snapshot repo + re-audit TASK.md/P28 tracking vs implementasi aktual (V3 §23:
+   jangan percaya hitungan lama).
+2. P28-010 — feature explanation (Workspace, Knowledge, Canvas, AI provider modes); contextual
+   education (apa ini / kenapa penting / apa selanjutnya), BUKAN intrusive onboarding tour;
+   jangan duplikasi perilaku Goal/Analytics yang sudah ada (V3 §24).
+3. P28-011 — global user-facing state matrix (loading/empty/success/partial/offline/stale/
+   conflict/failed/permission-entitlement blocked); dokumentasikan perilaku wajib + implementasi
+   state bernilai tinggi yang hilang; bukan kombinasi Kartesius mekanis (V3 §25).
+4. RET-002/005/006/008 — retention UX closure (empty-state refinement; AI Breakdown aha;
+   first session journey; progress feedback) (V3 §26).
+5. RET-007 — semantic taxonomy first-week retention DI P28; transport/instrumentasi provider DI
+   P32; tanpa dependency cycle baru (V3 §26).
+6. Triage regresi browser yang diketahui SEBELUM evidence final: p28-ux-audit goals empty-state;
+   theme mobile; scheduler S1 harness/seed. Klasifikasi REAL PRODUCT REGRESSION / TEST HARNESS
+   DEFECT / STALE TEST / ENVIRONMENT ISSUE; perbaiki cacat sah; dilarang menghapus asersi
+   bermakna demi hijau (V3 §27, §101).
+7. P28-013 — final golden journeys A–F (goal-first; reality-first KRS; permanent shift;
+   one-time exception; knowledge continuity; reflection) + regresi: scheduler Sync Now, weekly
+   draft, locked task, offline reconnect/replay/conflict. Dijalankan HANYA setelah item 2–6
+   selesai (V3 §28).
+8. P28 browser matrix — evidence wajib Chromium + Firefox + WebKit (bukan klaim dari Chromium
+   saja); catat command/engine/pass/fail/skip/duration/environment (V3 §29).
+9. RET-013 — failure E2E: AI unavailable; network failure; offline queued mutation; offline
+   conflict; stale schedule proposal; no scheduling slot; empty first-session; billing/
+   entitlement degradation bila relevan. Kegagalan harus understandable & recoverable (V3 §30).
+10. P28-014 — PRODUCT EXPERIENCE BASELINE GATE (BUKAN production launch gate): semua task P28
+    wajib selesai; blocker pengalaman P0/P1 selesai; golden journeys green; 3 engine green atau
+    gate exception yang disetujui eksplisit; accessibility green; offline/scheduler journeys
+    green; state matrix koheren; tanpa defect correctness di core loop. Saat hijau: checkpoint +
+    tag + arsipkan dokumen fase P28 → STOP (V3 §31).
+
+Batas tegas (V3):
+- JANGAN masuk P29 otomatis — STOP setelah laporan final P28-014 dan tunggu otorisasi owner.
+- Stitch TIDAK dipakai sebagai otoritas implementasi di P28 (V3 §20).
+- RET-007: semantik di P28; transport/instrumentasi di P32.
+- Pre-commit protocol penuh (AGENTS.md + COMMIT-PROTOCOL.md) sebelum setiap commit; commit
+  koheren per slice; laporan final format V3 §108.
 
 ### Third-party adoption input (pra-P28, 2026-08-29)
 > Sumber: `KINEVO_THIRD_PARTY_ADOPTION_INTEGRATION_AND_RETENTION_UX_SPEC.md` (owner, 2026-08-29) —
