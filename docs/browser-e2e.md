@@ -931,6 +931,51 @@ Regression: full chromium suite on a truncated sandbox + journey-c seed →
 seeding, above) plus two PRE-EXISTING WIP failures outside this epic
 (p28-ux-audit goals empty state; theme mobile 375px) — flagged for the P28-013
 full-engine evidence gate.
+
+### P28-013 — Product Experience Closure browser matrix (2026-08-31)
+
+**Known-failure triage (P28 phase 10):**
+1. `scheduler` S1 → **HARNESS_DEFECT** (requires clean+seeded sandbox via
+   `make e2e-scheduler`). Verified green through that documented harness.
+2. `p28-ux-audit` goals empty state → **HARNESS_DEFECT** — the clean-DB
+   precondition the spec's docblock already documents is violated by
+   alphabetical spec ordering inside a single `make e2e` run (earlier
+   fixture-creating suites run first). Fix: `make e2e` now runs
+   `p28-ux-audit.spec.ts` as its own first phase on the `e2e-clean` baseline
+   before seeding/running the rest. Verified green. (Component-level empty-state
+   copy is also covered deterministically in Vitest.)
+3. `theme` mobile 375px → **PRODUCT_DEFECT** (real responsive overflow, UI-012).
+   Fix: `shell/AppShell.vue` topbar made `flex-wrap` + `min-w-0` truncation +
+   wordmark hidden below `sm`; theme control now always reachable at 375px.
+   Verified green: theme.spec.ts + mobile-sweep.spec.ts on all 3 engines.
+
+**P28-013 evidence — A–F golden journeys + P28 additions + core regression:**
+All runs below use the P28 clean-baseline posture: `make e2e-clean` →
+`p28-ux-audit.spec.ts` (first, on the empty baseline) → evidence set.
+Environment: dev stack (app :8000, postgres, ollama; AI provider connected via
+Ollama `qwen2.5-coder:7b` at `http://ollama:11434`), Playwright image
+`kinevo-e2e`, E2E_BASE_URL=http://127.0.0.1:8000.
+
+| Engine | Specs (evidence set) | Result |
+|---|---|---|
+| Chromium | p28-ux-audit, p28-golden-journeys (E + RET-005), es-effective-schedule (B/C/D/LOCK), core-loop (F), golden-journeys (A/B/D/G2/H/H2/K), canonical-journey, offline-reconcile (O1–O4), accessibility, theme, mobile-sweep | **PASS** |
+| Firefox | p28-ux-audit, p28-golden-journeys, es-effective-schedule, core-loop, golden-journeys, accessibility, theme, mobile-sweep | **PASS** |
+| WebKit | p28-ux-audit, p28-golden-journeys, es-effective-schedule, core-loop, golden-journeys, accessibility, theme, mobile-sweep | **PASS** |
+
+Seeded harness journeys (chromium, documented single-engine postures):
+- `make e2e-scheduler` → scheduler-trigger S1–S4 **PASS**.
+- `make e2e-clean` + `seed-journey-c.sh` + journey-c-e **PASS** (seed task now
+  scoped to the owner's default workspace so the workspace-scoped task list
+  surfaces it — P28 harness fix).
+- `offline-reconcile` O1–O4 **PASS** on chromium (single-engine by design:
+  sandbox is single-owner and offline simulation is context-wide; documented in
+  the spec docblock).
+
+Journey mapping: A = canonical-journey + golden G2; B = es-effective-schedule
+B + KrsImportApiTest (backend); C = es-effective-schedule C; D =
+es-effective-schedule D; E = p28-golden-journeys (task → note → knowledge link
+→ canvas) + continuity; F = core-loop + journey-i. No duplicate suites were
+created for journeys already proven by existing specs (P28 phase doc §12).
 ### ADR-017 — Offline mutation reconciliation browser journeys (2026-08-31)
 
 New spec `tests/e2e/tests/offline-reconcile.spec.ts` (chromium, single-owner
