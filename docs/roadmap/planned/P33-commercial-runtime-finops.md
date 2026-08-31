@@ -21,3 +21,7 @@ Production Midtrans behavior proven; upgrade path resolved; entitlements authori
 
 ## Known open decisions
 Final hosted AI allowances (evidence-gated); exact Power entitlements; Lago adoption yes/no.
+
+## P29 convergence refinements (2026-08-31)
+- Open decisions inventory moved to `docs/product/commercial-model.md` §5 (AI quotas, Power parameters, top-up, annual, proration/grace).
+- Config 20/300/1000 remains DEPRECATED BASELINE — never publishable (claims registry #10).

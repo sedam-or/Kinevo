@@ -17,3 +17,6 @@ Documented capacity envelope; known bottlenecks; resource budget; benchmark evid
 
 ## Known open decisions
 Launch infra sizing; horizontal-scaling trigger thresholds.
+
+## P29 convergence refinements (2026-08-31)
+- Benchmark posture inherited from `docs/architecture.md` §3 (BENCHMARK_REQUIRED until measured).

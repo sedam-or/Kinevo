@@ -23,7 +23,7 @@ Verified implementation milestones (evidence in ADRs + `docs/browser-e2e.md` + T
 | Phase | Name | One-line purpose |
 |---|---|---|
 | P28 | Product Experience Closure | finish UX/RET work, golden journeys A–F, 3-engine matrix, P28-014 gate |
-| P29 | Product & Architecture Convergence | one canonical authority per truth type; SRS v3; TASK/roadmap rebuild |
+| P29 | Product & Architecture Convergence | **EXECUTED 2026-08-31** — one canonical authority per truth type; SRS v3; Stitch reconciled |
 | P30 | Runtime, Identity & Communication | Octane+FrankenPHP (benchmarked), identity, EmailProvider |
 | P31 | Assets & Content Infrastructure | Uppy→Pic Smaller→AssetStorage→object storage pipeline |
 | P32 | Analytics, AI Observability & Retention | Kinevo-owned event taxonomy; OpenPanel/Langfuse adapters; ledger stays truth |

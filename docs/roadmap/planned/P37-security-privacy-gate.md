@@ -17,3 +17,7 @@ No P0/P1 known security blocker; privacy docs match implementation; account dele
 
 ## Known open decisions
 Data residency statement; retention schedule numbers.
+
+## P29 convergence refinements (2026-08-31)
+- Marketing gate: claims registry #12/#13/#15/#16 (E2EE/GDPR/SOC2/export/purge) stay PROHIBITED until this phase delivers evidence.
+- Define export + deletion semantics (the Stitch data_privacy mock's biometric framing is REJECT content).

@@ -54,8 +54,8 @@ NO product feature implementation occurred during R0.
 
 | Phase | Name | Status |
 |---|---|---|
-| P28 | Product Experience Closure | **ACTIVE** — `active/P28-product-experience-closure.md` |
-| P29 | Product & Architecture Convergence | planned |
+| P28 | Product Experience Closure | **DONE 2026-08-31** — `archive/phases/P28-product-experience-closure-DONE-2026-08-31.md` (P28-014 gate GREEN) |
+| P29 | Product & Architecture Convergence | **ACTIVE (executed 2026-08-31)** — `active/P29-product-architecture-convergence-EXECUTED.md` |
 | P30 | Runtime, Identity & Communication Foundation | planned |
 | P31 | Assets & Content Infrastructure | planned |
 | P32 | Analytics, AI Observability & Retention Instrumentation | planned |
@@ -68,7 +68,8 @@ NO product feature implementation occurred during R0.
 | P39 | Release Candidate | planned |
 
 Detailed per-phase objective/scope/workstreams/dependencies/non-goals/gate:
-`docs/roadmap/planned/P29…P39-*.md` (created at rebaseline; detailed microtasks are authored at
+`docs/roadmap/planned/P30…P39-*.md` (created at rebaseline; P29 executed 2026-08-31 via
+`active/P29-product-architecture-convergence-EXECUTED.md`; detailed microtasks are authored at
 phase activation — never fabricated in advance).
 
 Gate highlights (full criteria in each phase doc):

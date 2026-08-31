@@ -21,3 +21,7 @@ Versioned event semantics; provider abstractions; integrations (if adopted); pri
 
 ## Known open decisions
 OpenPanel vs alternative adoption; Langfuse self-host vs cloud; Wrapped scope deferral.
+
+## P29 convergence refinements (2026-08-31)
+- Canonical event taxonomy v1 = `docs/retention-events.md` (RET-007) — version the envelope, do NOT redefine semantics.
+- North Star WGPU definition: `docs/product/product-constitution.md` §11.

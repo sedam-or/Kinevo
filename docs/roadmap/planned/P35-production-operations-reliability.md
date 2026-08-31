@@ -20,3 +20,6 @@ Health/metrics/alerts/error tracking live; backup + restore drill green; DR runb
 
 ## Known open decisions
 Monitoring stack choice; alert routing ownership.
+
+## P29 convergence refinements (2026-08-31)
+- System/error identity assets (loading/maintenance/status/404) classified in `docs/marketing/asset-provenance.md` — regenerate as originals before production use.

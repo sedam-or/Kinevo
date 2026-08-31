@@ -10,9 +10,9 @@ docs/roadmap/
 ├── rebaseline-2026-08.md                  ← old→new phase mapping + document migration matrix
 ├── KINEVO_MASTER_EXECUTION_PROGRAM.md     ← CANONICAL master execution program (R0 → P39)
 ├── active/                                ← the currently authorized phase
-│   └── P28-product-experience-closure.md
-├── planned/                               ← future phases (P29–P39), detailed at activation
-│   └── P29…P39-*.md
+│   └── P29-product-architecture-convergence-EXECUTED.md
+├── planned/                               ← future phases (P30–P39), detailed at activation
+│   └── P30…P39-*.md
 └── archive/                               ← historical evidence (NOT authority)
     ├── master-prompts/                    ← superseded execution prompts (verbatim)
     ├── planning-specs/                    ← owner planning inputs (third-party spec, finance revision)

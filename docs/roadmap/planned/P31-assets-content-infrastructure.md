@@ -20,3 +20,7 @@ Production pipeline + Notes/Canvas/Task-attachment integration + object-storage 
 
 ## Known open decisions
 Storage provider for launch (local vs S3/R2); quota numbers (evidence-driven).
+
+## P29 convergence refinements (2026-08-31)
+- Asset provenance ledger: `docs/marketing/asset-provenance.md` — NO Stitch PNG may be committed; regenerate canonical diagrams (D01–D08, dia_01–07) as original SVGs here.
+- Attachment contract: `docs/knowledge-layer.md` attachment model (no large binaries in Note/Canvas JSON).

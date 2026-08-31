@@ -18,3 +18,8 @@ Secure auth; durable offline; core companion flows; assets; notifications; entit
 
 ## Known open decisions
 iOS timing (explicitly deferred); device matrix floor.
+
+## P29 convergence refinements (2026-08-31)
+- Durable mobile offline MUST reuse the ADR-017 protocol (no second protocol) — `docs/architecture.md` §5.
+- Visual direction: Stitch mobile frames (APPROVED_WITH_REFINEMENT, `docs/ux/stitch-convergence-matrix.md` §4); locked mobile IA (`docs/mobile-architecture.md`) wins over mockups.
+- Store-listing source: `kinevo_android_aso_metadata.txt` (local export) + claims registry.

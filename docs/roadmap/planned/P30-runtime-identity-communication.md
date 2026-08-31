@@ -20,3 +20,8 @@ FrankenPHP functional parity + worker isolation + memory soak + benchmark eviden
 
 ## Known open decisions
 Worker topology; email provider fallback ordering; session control depth.
+
+## P29 convergence refinements (2026-08-31)
+- EmailProvider abstraction is a LOCKED decision (register #20/#21, migrated to `docs/architecture.md` §8); Resend = first provider.
+- Runtime TARGET (FrankenPHP+Octane) + BENCHMARK_REQUIRED restated in `docs/architecture.md` §3.
+- Add: unify active-workspace authority across web/mobile if session/identity work touches it (`docs/product/workspace-model.md` §4).

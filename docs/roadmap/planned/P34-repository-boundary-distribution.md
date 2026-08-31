@@ -20,3 +20,6 @@ Three boundaries coherent; Core/Cloud/Site all build; license boundaries valid; 
 
 ## Known open decisions
 Cloud secret/config distribution mechanism; site stack choice.
+
+## P29 convergence refinements (2026-08-31)
+- Core/Cloud boundary restated in `docs/architecture.md` §13; Core stays MIT (Constitution §8). Site spec: `docs/marketing/site-specification.md`.

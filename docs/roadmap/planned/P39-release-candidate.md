@@ -21,3 +21,6 @@ v1.0.0 tag ONLY with operator approval (agent never tags/releases autonomously);
 
 ## Known open decisions
 Launch market scope (Indonesia-first); support channel commitments.
+
+## P29 convergence refinements (2026-08-31)
+- Pre-GO sweep: `docs/marketing/claims-registry.md` re-audit (no PROHIBITED claim published anywhere).
