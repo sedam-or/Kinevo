@@ -52,6 +52,21 @@ export class IndexedDbQueueStore implements OfflineMutationStore {
         await txComplete(tx);
     }
 
+    async listFailed(): Promise<MutationEnvelope[]> {
+        const all = await this.getAll();
+        return all.filter((m) => m.status === 'failed_permanent');
+    }
+
+    private async getAll(): Promise<MutationEnvelope[]> {
+        const db = await this.db();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('mutations', 'readonly');
+            const req = tx.objectStore('mutations').getAll();
+            req.onsuccess = () => resolve((req.result ?? []) as MutationEnvelope[]);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
     async listPending(): Promise<MutationEnvelope[]> {
         const db = await this.db();
         return new Promise((resolve, reject) => {

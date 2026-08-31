@@ -38,6 +38,10 @@ class MemoryQueueStore implements OfflineMutationStore {
         this.mutations.set(envelope.operationId, envelope);
     }
 
+    async listFailed(): Promise<MutationEnvelope[]> {
+        return [];
+    }
+
     async listPending(): Promise<MutationEnvelope[]> {
         return [...this.mutations.values()]
             .filter(

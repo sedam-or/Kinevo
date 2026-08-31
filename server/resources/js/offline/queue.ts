@@ -94,7 +94,7 @@ export class MutationQueue {
      */
     async enqueue(
         entityType: string,
-        entityId: number,
+        entityId: number | null,
         operationType: string,
         payload: Record<string, unknown>,
         baseVersion?: number,
@@ -178,6 +178,28 @@ export class MutationQueue {
     /** Discard a conflict after the caller has reconciled. */
     async resolve(operationId: string): Promise<void> {
         await this.store.markApplied(operationId);
+    }
+
+    /**
+     * ADR-017 §2.18 — discard ALL local changes that conflicted with the
+     * server (user-confirmed review action). Server canonical state wins; the
+     * local intent is dropped. Returns the number discarded.
+     */
+    async discardConflicts(): Promise<number> {
+        const failed = await this.store.listFailed();
+        let count = 0;
+        for (const envelope of failed) {
+            if (envelope.lastError?.includes('CONFLICT')) {
+                await this.store.markApplied(envelope.operationId);
+                this.queuedCount = Math.max(0, this.queuedCount - 1);
+                count++;
+            }
+        }
+        if (count > 0) {
+            this.refreshState(false, false, false);
+        }
+
+        return count;
     }
 
     private async collapseDuplicates(newest: MutationEnvelope): Promise<void> {

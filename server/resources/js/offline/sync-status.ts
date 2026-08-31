@@ -138,6 +138,11 @@ export class SyncStatusController {
         this.publish();
     }
 
+    /** Number of operations currently in the queue (queued + pending retry). */
+    getQueuedCount(): number {
+        return this.queuedCount;
+    }
+
     /** Current visible sync status. */
     getStatus(): SyncStatus {
         return this.buildStatus(this.queue.getState());

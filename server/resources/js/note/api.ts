@@ -19,12 +19,20 @@ export const noteApi = {
         return apiClient.request<NoteResponse>(`/notes/${noteId}`);
     },
 
-    create(payload: CreateNotePayload): Promise<NoteResponse> {
-        return apiClient.request<NoteResponse>('/notes', { method: 'POST', body: JSON.stringify(payload) });
+    create(payload: CreateNotePayload, operationId?: string): Promise<NoteResponse> {
+        return apiClient.request<NoteResponse>('/notes', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            ...(operationId ? { headers: { 'X-Operation-Id': operationId } } : {}),
+        });
     },
 
-    update(noteId: number, payload: UpdateNotePayload): Promise<NoteResponse> {
-        return apiClient.request<NoteResponse>(`/notes/${noteId}`, { method: 'PATCH', body: JSON.stringify(payload) });
+    update(noteId: number, payload: UpdateNotePayload, operationId?: string): Promise<NoteResponse> {
+        return apiClient.request<NoteResponse>(`/notes/${noteId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+            ...(operationId ? { headers: { 'X-Operation-Id': operationId } } : {}),
+        });
     },
 
     search(query: string): Promise<SearchResponse> {

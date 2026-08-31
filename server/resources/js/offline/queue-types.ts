@@ -11,7 +11,8 @@
 export interface MutationEnvelope {
     operationId: string;
     entityType: string;
-    entityId: number;
+    /** Server id, or null for creates (client_reference_id correlates them). */
+    entityId: number | null;
     operationType: string;
     payload: Record<string, unknown>;
     clientTimestamp: string;
@@ -46,6 +47,9 @@ export interface OfflineMutationStore {
     enqueue(envelope: MutationEnvelope): Promise<void>;
     /** All non-terminal (not applied/permanent-failed) mutations, FIFO by timestamp. */
     listPending(): Promise<MutationEnvelope[]>;
+
+    /** All permanently-failed envelopes (conflict/rejected) for review/discard. */
+    listFailed(): Promise<MutationEnvelope[]>;
     markSyncing(operationId: string): Promise<void>;
     markApplied(operationId: string): Promise<void>;
     markFailed(

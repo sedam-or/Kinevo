@@ -24,6 +24,7 @@ export const useShellStore = defineStore('shell', () => {
     const syncQueuedCount = ref(0);
     const syncError = ref<string | null>(null);
     const retrySync = ref<(() => void) | null>(null);
+    const discardConflicts = ref<(() => void) | null>(null);
     const notifications = ref<ShellNotification[]>([]);
     const errorMessage = ref<string | null>(null);
 
@@ -105,6 +106,10 @@ export const useShellStore = defineStore('shell', () => {
         retrySync.value = action;
     }
 
+    function registerDiscardConflicts(action: (() => void) | null): void {
+        discardConflicts.value = action;
+    }
+
     function setNotifications(items: ShellNotification[]): void {
         notifications.value = items;
     }
@@ -122,6 +127,7 @@ export const useShellStore = defineStore('shell', () => {
         syncQueuedCount,
         syncError,
         retrySync,
+        discardConflicts,
         notifications,
         errorMessage,
         navItems,
@@ -138,6 +144,7 @@ export const useShellStore = defineStore('shell', () => {
         setSyncQueuedCount,
         setSyncError,
         registerRetrySync,
+        registerDiscardConflicts,
         setNotifications,
         setError,
     };

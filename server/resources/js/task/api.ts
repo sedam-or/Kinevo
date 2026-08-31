@@ -21,10 +21,11 @@ export const taskApi = {
         return apiClient.request<TaskListResponse>(`/tasks${query}`);
     },
 
-    create(payload: CreateTaskPayload): Promise<TaskResponse> {
+    create(payload: CreateTaskPayload, operationId?: string): Promise<TaskResponse> {
         return apiClient.request<TaskResponse>('/tasks', {
             method: 'POST',
             body: JSON.stringify(payload),
+            ...(operationId ? { headers: { 'X-Operation-Id': operationId } } : {}),
         });
     },
 
@@ -32,17 +33,19 @@ export const taskApi = {
         return apiClient.request<TaskDetailResponse>(`/tasks/${taskId}`);
     },
 
-    update(taskId: number, payload: UpdateTaskPayload): Promise<TaskResponse> {
+    update(taskId: number, payload: UpdateTaskPayload, operationId?: string): Promise<TaskResponse> {
         return apiClient.request<TaskResponse>(`/tasks/${taskId}`, {
             method: 'PUT',
             body: JSON.stringify(payload),
+            ...(operationId ? { headers: { 'X-Operation-Id': operationId } } : {}),
         });
     },
 
-    setStatus(taskId: number, status: TaskStatusValue): Promise<TaskResponse> {
+    setStatus(taskId: number, status: TaskStatusValue, operationId?: string): Promise<TaskResponse> {
         return apiClient.request<TaskResponse>(`/tasks/${taskId}/status`, {
             method: 'POST',
             body: JSON.stringify({ status }),
+            ...(operationId ? { headers: { 'X-Operation-Id': operationId } } : {}),
         });
     },
 
@@ -69,10 +72,11 @@ export const taskApi = {
         return apiClient.request<SubtaskListResponse>(`/tasks/${taskId}/subtasks`);
     },
 
-    addSubtask(taskId: number, title: string, notes?: string | null): Promise<SubtaskResponse> {
+    addSubtask(taskId: number, title: string, notes?: string | null, operationId?: string): Promise<SubtaskResponse> {
         return apiClient.request<SubtaskResponse>(`/tasks/${taskId}/subtasks`, {
             method: 'POST',
             body: JSON.stringify({ title, notes: notes ?? null }),
+            ...(operationId ? { headers: { 'X-Operation-Id': operationId } } : {}),
         });
     },
 

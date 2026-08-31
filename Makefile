@@ -189,7 +189,7 @@ e2e-build:
 # accumulation broke layout-dependent gates (P17-021: 671 accumulated goals
 # pushed the Analytics surface past the 32767px full-page capture cap).
 e2e-clean:
-	$(COMPOSE) exec -T postgres psql -U kinevo -d kinevo -c "TRUNCATE goals, milestones, subtasks, tasks, task_assignments, notes, knowledge_links, attachments, programs, progress_events, focus_sessions, execution_sessions, boost_targets, break_periods, pause_events, recharge_sessions, schedule_overrides, scheduler_runs, hard_landscape_events, adaptive_context, ai_proposals, ai_runs, canvas_documents, canvas_files, canvases, imports, activity_logs CASCADE"
+	$(COMPOSE) exec -T postgres psql -U kinevo -d kinevo -c "TRUNCATE goals, milestones, subtasks, tasks, task_assignments, notes, knowledge_links, attachments, programs, progress_events, focus_sessions, execution_sessions, boost_targets, break_periods, pause_events, recharge_sessions, schedule_overrides, scheduler_runs, hard_landscape_events, adaptive_context, ai_proposals, ai_runs, canvas_documents, canvas_files, canvases, imports, activity_logs, offline_operations CASCADE"
 
 e2e: e2e-clean e2e-assets
 	$(COMPOSE) exec -T app sh < tests/e2e/scripts/seed-journey-c.sh

@@ -5,8 +5,12 @@ import { useShellStore } from '../shell/store';
 import { useApiStore } from '../api/store';
 import { MutationQueue } from '../offline/queue';
 import { IndexedDbQueueStore } from '../offline/queue-store';
-import { HttpMutationApplier } from '../offline/http-applier';
+import { ReconcileMutationApplier } from '../offline/reconcile-applier';
 import { SyncStatusController } from '../offline/sync-status';
+import { setOfflineQueue } from '../offline/queue-access';
+import { useTaskStore } from '../task/store';
+import { useNoteStore } from '../note/store';
+import { useTodayStore } from '../today/store';
 import AppShell from '../shell/AppShell.vue';
 import AppErrorBoundary from '../shell/AppErrorBoundary.vue';
 import LoginView from './LoginView.vue';
@@ -61,7 +65,28 @@ function handleOnline(): void {
     shell.setSyncState('online');
     if (syncController !== null) {
         syncController.refresh();
-        void syncController.sync();
+        const hadQueued = syncController.getQueuedCount() > 0;
+        void syncController.sync().then(() => {
+            if (hadQueued) {
+                rehydrateAffectedStores();
+            }
+        });
+    }
+}
+
+/**
+ * ADR-017 §2.17 — bounded canonical rehydration after a drain. Reloads the
+ * stores the allowlist touches instead of trusting stale optimistic values or
+ * forcing a full page reload.
+ */
+function rehydrateAffectedStores(): void {
+    const tasks = useTaskStore();
+    const notes = useNoteStore();
+    const today = useTodayStore();
+    void tasks.loadList();
+    void notes.loadList();
+    if (today.date !== null) {
+        void today.load(today.date);
     }
 }
 
@@ -78,7 +103,8 @@ function bootSyncController(): void {
     if (typeof indexedDB === 'undefined') {
         return;
     }
-    const queue = new MutationQueue(new IndexedDbQueueStore(), new HttpMutationApplier());
+    const queue = new MutationQueue(new IndexedDbQueueStore(), new ReconcileMutationApplier());
+    setOfflineQueue(queue);
     syncController = new SyncStatusController(queue, (status) => {
         shell.setSyncState(status.state);
         shell.setSyncQueuedCount(status.queuedCount);
@@ -86,6 +112,10 @@ function bootSyncController(): void {
     }, isOnline);
     shell.registerRetrySync(() => {
         void syncController?.retry();
+    });
+    shell.registerDiscardConflicts(async () => {
+        await queue.discardConflicts();
+        syncController?.refresh();
     });
     syncController.refresh();
 }
@@ -95,7 +125,9 @@ function shutdownSyncController(): void {
         syncController.dispose();
         syncController = null;
     }
+    setOfflineQueue(null);
     shell.registerRetrySync(null);
+    shell.registerDiscardConflicts(null);
 }
 
 onMounted(async () => {
@@ -106,6 +138,15 @@ onMounted(async () => {
     }
     bootSyncController();
     await auth.restoreSession();
+    if (auth.isAuthenticated && syncController !== null) {
+        // ADR-017 §2.15/§2.16 — reload-with-queued: drain what survived the
+        // reload once online, then rehydrate the affected stores.
+        const hadQueued = syncController.getQueuedCount() > 0;
+        if (hadQueued) {
+            await syncController.sync();
+            rehydrateAffectedStores();
+        }
+    }
     ready.value = true;
 });
 

@@ -65,6 +65,17 @@ describe('auth store', () => {
         expect(localStorage.getItem('kinevo.auth.token')).toBeNull();
     });
 
+    it('restoreSession keeps the session on an OFFLINE network failure (ADR-017 §2.16)', async () => {
+        localStorage.setItem('kinevo.auth.token', 'good');
+        vi.mocked(authApi.me).mockRejectedValue({ status: 0, message: 'offline', retryable: true });
+
+        const auth = useAuthStore();
+        await auth.restoreSession();
+
+        expect(auth.status).toBe('unknown');
+        expect(localStorage.getItem('kinevo.auth.token')).toBe('good');
+    });
+
     it('login stores the token and user', async () => {
         vi.mocked(authApi.login).mockResolvedValue({ user, token: 'tok' });
 

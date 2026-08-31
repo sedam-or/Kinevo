@@ -13,9 +13,14 @@ const error = computed(() => shell.syncError);
 const explanation = computed(() => SYNC_STATE_EXPLANATIONS[state.value] ?? '');
 
 const showRetry = computed(() => state.value === 'retrying' || state.value === 'failed');
+const showDiscard = computed(() => state.value === 'conflict');
 
 function retry(): void {
     shell.retrySync?.();
+}
+
+function discard(): void {
+    shell.discardConflicts?.();
 }
 </script>
 
@@ -49,5 +54,14 @@ function retry(): void {
         <span v-if="error && showRetry" class="text-xs text-danger" data-testid="sync-error">
             {{ error }}
         </span>
+        <button
+            v-if="showDiscard"
+            type="button"
+            class="text-xs border border-border/30 rounded-sm px-2 py-0.5"
+            data-testid="sync-discard-conflicts"
+            @click="discard"
+        >
+            Discard local change
+        </button>
     </div>
 </template>

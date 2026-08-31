@@ -22,6 +22,10 @@ class MemoryQueueStore implements OfflineMutationStore {
         this.mutations.set(envelope.operationId, envelope);
     }
 
+    async listFailed(): Promise<MutationEnvelope[]> {
+        return [...this.mutations.values()].filter((m) => m.status === 'failed_permanent');
+    }
+
     async listPending(): Promise<MutationEnvelope[]> {
         return [...this.mutations.values()]
             .filter((m) => m.status === 'queued' || m.status === 'syncing' || m.status === 'failed_retryable')

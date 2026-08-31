@@ -2,8 +2,10 @@ import { defineStore } from 'pinia';
 import { useWorkspaceStore } from '../workspace/store';
 import { ref } from 'vue';
 import { taskApi } from './api';
+import { submitOfflineAware } from '../offline/reconcile-submit';
+import { getOfflineQueue } from '../offline/queue-access';
 import type { ApiError } from '../api/types';
-import type { Subtask, Task, TaskStatusValue, UpdateTaskPayload } from './types';
+import type { Subtask, SubtaskResponse, Task, TaskResponse, TaskStatusValue, UpdateTaskPayload } from './types';
 
 export const useTaskStore = defineStore('task', () => {
     const tasks = ref<Task[]>([]);
@@ -47,7 +49,26 @@ export const useTaskStore = defineStore('task', () => {
 
     async function create(payload: { title: string; description?: string | null; priority_tier?: number; estimated_minutes?: number | null; due_at?: string | null }): Promise<Task | null> {
         error.value = null;
+        const queue = getOfflineQueue();
         try {
+            if (queue !== null) {
+                const result = await submitOfflineAware<TaskResponse>(
+                    queue,
+                    { entityType: 'task', operationType: 'task:create', entityId: null, payload: { ...payload } },
+                    (operationId) => taskApi.create(payload, operationId),
+                );
+                // ADR-017 §2.14 — offline: durably queued; it surfaces on drain
+                // (no optimistic row) and the shell shows "Waiting to sync".
+                if (result.queued) {
+                    return null;
+                }
+                const task = result.value?.task ?? null;
+                if (task !== null) {
+                    tasks.value = [task, ...tasks.value];
+                    return task;
+                }
+                return null;
+            }
             const { task } = await taskApi.create(payload);
             tasks.value = [task, ...tasks.value];
             return task;
@@ -59,7 +80,26 @@ export const useTaskStore = defineStore('task', () => {
 
     async function setStatus(taskId: number, status: TaskStatusValue): Promise<void> {
         error.value = null;
+        const queue = getOfflineQueue();
         try {
+            if (queue !== null) {
+                const result = await submitOfflineAware<TaskResponse>(
+                    queue,
+                    { entityType: 'task', operationType: 'task:status', entityId: taskId, payload: { status } },
+                    (operationId) => taskApi.setStatus(taskId, status, operationId),
+                );
+                if (result.queued) {
+                    return;
+                }
+                if (result.value?.task !== undefined) {
+                    const task = result.value.task;
+                    replaceInList(task);
+                    if (current.value?.id === taskId) {
+                        current.value = task;
+                    }
+                    return;
+                }
+            }
             const { task } = await taskApi.setStatus(taskId, status);
             replaceInList(task);
             if (current.value?.id === taskId) {
@@ -97,8 +137,32 @@ export const useTaskStore = defineStore('task', () => {
 
     async function apiUpdate(taskId: number, payload: UpdateTaskPayload): Promise<void> {
         error.value = null;
+        const queue = getOfflineQueue();
+        // ADR-017 §2.11 — snapshot the optimistic version for conflict detection.
+        const baseVersion = current.value?.id === taskId ? current.value.version : undefined;
+        const offlinePayload: UpdateTaskPayload & { base_version?: number } = baseVersion !== undefined
+            ? { ...payload, base_version: baseVersion }
+            : payload;
         try {
-            const { task } = await taskApi.update(taskId, payload);
+            if (queue !== null) {
+                const result = await submitOfflineAware<TaskResponse>(
+                    queue,
+                    { entityType: 'task', operationType: 'task:update', entityId: taskId, payload: { ...offlinePayload } as Record<string, unknown>, baseVersion },
+                    (operationId) => taskApi.update(taskId, offlinePayload, operationId),
+                );
+                if (result.queued) {
+                    return;
+                }
+                if (result.value?.task !== undefined) {
+                    const task = result.value.task;
+                    replaceInList(task);
+                    if (current.value?.id === taskId) {
+                        current.value = task;
+                    }
+                    return;
+                }
+            }
+            const { task } = await taskApi.update(taskId, offlinePayload);
             replaceInList(task);
             if (current.value?.id === taskId) {
                 current.value = task;
@@ -110,7 +174,22 @@ export const useTaskStore = defineStore('task', () => {
 
     async function addSubtask(taskId: number, title: string): Promise<void> {
         error.value = null;
+        const queue = getOfflineQueue();
         try {
+            if (queue !== null) {
+                const result = await submitOfflineAware<SubtaskResponse>(
+                    queue,
+                    { entityType: 'subtask', operationType: 'subtask:create', entityId: taskId, payload: { title } },
+                    (operationId) => taskApi.addSubtask(taskId, title, null, operationId),
+                );
+                if (result.queued) {
+                    return;
+                }
+                if (result.value?.subtask !== undefined) {
+                    subtasks.value = [...subtasks.value, result.value.subtask];
+                    return;
+                }
+            }
             const { subtask } = await taskApi.addSubtask(taskId, title);
             subtasks.value = [...subtasks.value, subtask];
         } catch (err) {

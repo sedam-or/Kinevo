@@ -33,7 +33,15 @@ export const useAuthStore = defineStore('auth', () => {
             const { user: nextUser } = await authApi.me();
             user.value = nextUser;
             status.value = 'authenticated';
-        } catch {
+        } catch (error) {
+            // ADR-017 §2.16 — an OFFLINE network failure must NOT log the user
+            // out (offline reload keeps the session). Only security/401
+            // failures clear the stored token.
+            const isNetworkFailure = error instanceof Error && (error as { status?: number }).status === 0;
+            if (isNetworkFailure || (error as { retryable?: boolean }).retryable === true) {
+                status.value = 'unknown';
+                return;
+            }
             clearToken();
             user.value = null;
             profile.value = null;
