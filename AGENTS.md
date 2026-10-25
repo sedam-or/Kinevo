@@ -43,6 +43,7 @@ Until M1 creates the `justfile` (D-38):
 | `python3 scripts/spec_tool.py check` | Spec consistency: file references, ids, error codes, policy keys, permissions (exit 0 = clean) |
 | `python3 scripts/contrast.py` | Design-token contrast and gamut check (TST-10) |
 | `python3 scripts/tasks_index.py --check` | Task files valid, DAG acyclic, `tasks/index.md` up to date |
+| `scripts/setup-dev.sh [--sudo] [--android] [--browsers] [--rustup] [--all]` | Installs the whole toolchain (D-53); idempotent; maintainer runs the `sudo` and licence parts |
 | `scripts/preflight.sh` | Checks and installs tools for a stacked implementation run, creates the issue labels (BRANCHING.md §6) |
 | `scripts/dev-postgres.sh env` | Throwaway PostgreSQL for tests without testcontainers; prints `KINEVO_TEST_DATABASE_URL` |
 

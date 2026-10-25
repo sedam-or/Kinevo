@@ -4,6 +4,7 @@
 # Never prints secrets. Safe to re-run.
 set -uo pipefail
 cd "$(dirname "$0")/.."
+export PATH="$HOME/.cargo/bin:$PATH"  # rustup and cargo-installed tools live here
 HARD=0; ok() { printf 'OK        %s\n' "$*"; }; lim() { printf 'ENV-LIMITED %s\n' "$*"; }; bad() { printf 'BLOCKER   %s\n' "$*"; HARD=1; }
 
 git rev-parse --git-dir >/dev/null 2>&1 && ok "git repository" || bad "not a git repository"
@@ -25,7 +26,7 @@ install_cargo_tool cargo-nextest cargo-nextest
 install_cargo_tool cargo-deny cargo-deny
 if command -v rustup >/dev/null; then
   rustup target list --installed 2>/dev/null | grep -q wasm32-unknown-unknown && ok "wasm32 target" || { rustup target add wasm32-unknown-unknown >/dev/null 2>&1 && ok "wasm32 target (installed)" || lim "wasm32 target missing (WASM parity)"; }
-else lim "rustup missing: wasm32 target unavailable (WASM parity)"; fi
+else lim "rustup missing: wasm32 target unavailable (WASM parity); run scripts/setup-dev.sh --rustup"; fi
 command -v wasm-pack >/dev/null && ok wasm-pack || { cargo install --locked wasm-pack >/dev/null 2>&1 && ok "wasm-pack (installed)" || lim "wasm-pack missing (WASM parity)"; }
 
 # database: Docker (testcontainers) or KINEVO_TEST_DATABASE_URL via scripts/dev-postgres.sh
@@ -42,5 +43,5 @@ if [ "$HARD" -eq 0 ]; then
   gh label create blocked --color b60205 --description "Task blocked, question open" --force >/dev/null 2>&1 || true
 fi
 [ -d android ] && { command -v java >/dev/null && ok "java" || lim "java missing (Android build)"; }
-printf '\nPlaywright browsers and the Android SDK are installed later by their tasks (pnpm exec playwright install --with-deps; scripts/android-sdk.sh).\n'
+printf '\nPlaywright browsers and the Android SDK are installed later by their tasks (pnpm exec playwright install --with-deps; scripts/android-sdk.sh). Everything at once: scripts/setup-dev.sh --all (D-53).\n'
 [ "$HARD" -eq 0 ] && { echo "PREFLIGHT: no hard blockers"; exit 0; } || { echo "PREFLIGHT: hard blockers present"; exit 2; }
