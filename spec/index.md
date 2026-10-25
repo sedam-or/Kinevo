@@ -1,6 +1,6 @@
 # Kinevo specification — index
 
-This directory is the **source of rules** for the rebuild. Tasks (`tasks/`) say *what* to build; this spec says *which rules* it must obey; `CLAUDE.md` says *how* an agent works. A change to behaviour is a change to a spec file first (rule M: the same commit also updates this index, `AGENTS.md`, `CODEOWNERS`, `13-roadmap.md` and affected tasks, with grep/script evidence).
+This directory is the **source of rules** for the rebuild. Tasks (`tasks/`) say *what* to build; this spec says *which rules* it must obey; `CLAUDE.md` says *how* an agent works. Process rules live at the repository root: `AGENTS.md` (binding rules, precedence, repository map, commands), `WORKFLOW.md` (task steps, blocking, status lifecycle, report), `COMMIT_CONVENTION.md` and `BRANCHING.md`. A change to behaviour is a change to a spec file first (rule M: the same commit also updates this index, `AGENTS.md`, `CODEOWNERS`, `13-roadmap.md` and affected tasks, with grep/script evidence).
 
 Legacy behaviour is cited as `legacy-v0:<path>` and read with `git show legacy-v0:<path>`. The archived ZIP in `legacy/` is never opened.
 

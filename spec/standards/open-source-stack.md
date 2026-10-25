@@ -101,4 +101,5 @@ Deliberately **not** adopted: an ORM, a DI framework, a job-queue crate (the DB 
 | Secret scanning | gitleaks | SEC-13 |
 | Docs/link/typo checks | lychee (links), typos, actionlint, markdownlint-cli2 | CI |
 | Container scan | Trivy (or Grype) | CI |
+| Task runner | just (`justfile` at the repository root; recipes `setup`, `dev`, `fmt`, `lint`, `test`, `check`, `spec`) | D-38; CI calls the same recipes |
 | Repo scripts | Python 3 stdlib only (`scripts/*.py`) so they run anywhere without installs | `contrast.py`, `spec_tool.py`, `tasks_index.py` |
