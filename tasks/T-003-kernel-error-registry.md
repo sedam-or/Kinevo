@@ -3,7 +3,7 @@ id: T-003
 title: Add the error-code registry and AppError to the kernel
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-001]
 requirements: [ERR-01, ERR-02, ERR-03, ERR-05, API-20, API-21, CQ-09, VAL-01]
 branch: m1-t003-kernel-error-registry
@@ -109,14 +109,63 @@ just check
 
 ## Definition of done
 
-- [ ] Every acceptance criterion has its named test, and it passes.
-- [ ] `just check` passes locally.
-- [ ] Only the files listed under *Files* changed; diff within budget (the enum is long but mechanical).
-- [ ] Report below is filled in.
+- [x] Every acceptance criterion has its named test, and it passes.
+- [x] `just check` passes locally.
+- [ ] Only the files listed under *Files* changed; diff within budget (the enum is long but mechanical). Implementation changes are limited to listed files; the budget overage is recorded under Deviations per D-55.
+- [x] Report below is filled in.
 
 ## Report
 
 _Filled in by the implementer (WORKFLOW.md §4)._
+
+### Summary
+
+Added the closed API error registry, field and process code types, typed `AppError`/`FieldError` values, and registry synchronization tests. The static enum matches 122 API codes and all 24 field codes in the spec.
+
+### Acceptance results
+
+| Criterion | Named test | Result |
+|---|---|---|
+| AC-1 | `error_registry::err_01_enum_matches_spec_registry` | pass |
+| AC-2 | `error_registry::err_01_field_codes_match_spec` | pass |
+| AC-3 | `error_registry::process_codes_are_not_api_codes` | pass |
+| AC-4 | `errors::tests::api_21_validation_keeps_all_errors` | pass |
+| AC-5 | `errors::tests::version_conflict_metadata` | pass |
+| ERR-03 key restriction | `errors::tests::err_03_details_only_emit_registry_keys` | pass |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| `cargo fetch` | 0 | Resolved `regex` 1.13.1 and three transitive packages; lockfile updated. |
+| Pre-implementation `cargo nextest run -p kinevo-kernel` | 101 (expected red phase) | Registry and error types were not yet defined; test compilation failed on missing imports. |
+| `cargo nextest run -p kinevo-kernel` | 101 (fixed before final run) | Initial implementation needed the `serde` derive feature; enabled it and corrected the integration test closure. |
+| `cargo nextest run -p kinevo-kernel --filter-expr 'test(err_03_details_only_emit_registry_keys)'` | 100 (expected red phase) | The test failed because an unregistered details key was still accepted; added the registry key allow-list. |
+| `cargo nextest run -p kinevo-kernel` | 0 | 13 passed, 0 skipped, including the five named T-003 acceptance tests and the ERR-03 key restriction test. |
+| `just check` | 0 | 16 passed, 0 skipped; format, Clippy, cargo-deny, spec, contrast, and task-index gates passed. Cargo-deny emitted 7 unused-license-allowance warnings; Clippy emitted the existing unreachable `uuid::Uuid::new_v4` configuration warning. |
+| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md`; 0 problems in 132 tasks. |
+| `python3 scripts/spec_tool.py check` | 0 | 0 findings in 60 spec files. |
+| `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks. |
+
+### Files changed
+
+`Cargo.lock`; `crates/kinevo-kernel/Cargo.toml`, `crates/kinevo-kernel/src/lib.rs`, `crates/kinevo-kernel/src/errors/mod.rs`, `crates/kinevo-kernel/src/errors/codes.rs`, `crates/kinevo-kernel/tests/error_registry.rs`; this task file; generated `tasks/index.md`.
+
+### Deviations
+
+Added `regex` 1.13.1 as a test-only dependency because the stack map lists regex as approved and unresolved for M1, and the task requires a registry-table pattern check. Enabled the existing `serde` dependency's derive feature so the kernel error values serialize as stable snake-case JSON values. Registry detail keys are restricted to the union of keys documented in `error-handling.md`; unregistered keys are dropped. The implementation adds 524 non-lockfile lines and removes 1, exceeding the 420-line guidance by 104 lines; this is recorded per D-55 and is not blocking. Cargo-deny reports 7 unused license allowances; all gates exit successfully.
+
+### Spec issues noticed
+
+None. Database error mapping and HTTP rendering remain in their owning later tasks, as scoped.
+
+### Environment-limited
+
+None.
+
+### Not done / not verified
+
+No T-003 acceptance criteria remain unverified. T-004 and later tasks have not started.
 
 ## Questions
 
