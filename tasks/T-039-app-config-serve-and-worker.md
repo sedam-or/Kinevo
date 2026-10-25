@@ -1,0 +1,117 @@
+---
+id: T-039
+title: Wire configuration, `serve`, the worker, health endpoints and graceful shutdown
+milestone: M1
+kind: feature
+status: todo
+depends_on: [T-030, T-038, T-037, T-036, T-034, T-033, T-032]
+requirements: [ARCH-01, ARCH-02, ARCH-22, CA-13, OPS-01, OPS-02, OPS-09, SET-06, D-42, D-43]
+branch: m1-t039-app-config-serve-and-worker
+budget_lines: 400
+assignee: ""
+---
+
+# T-039: Wire configuration, `serve`, the worker, health endpoints and graceful shutdown
+
+## Goal
+
+`kinevo serve` boots from environment variables into a running server: migrations (optional), isolation self-check, setup token, routes of every compiled module, the worker loops, `/livez`, `/readyz` and a clean shutdown.
+
+## Context
+
+> **CA-13** (`spec/standards/clean-architecture.md`): configuration is read once at the composition root (`kinevo-app`) into typed structs; modules receive what they need through constructors, not globals.
+> **Environment** (`spec/11-operations.md` §3): `KINEVO_DATABASE_URL`/`_FILE` (app role), `KINEVO_MIGRATOR_DATABASE_URL`/`_FILE`, `KINEVO_SYSTEM_DATABASE_URL`/`_FILE`, `KINEVO_SECRET_KEY`/`_FILE` (32 bytes, base64), `KINEVO_PUBLIC_URL`, `KINEVO_LISTEN` (default `0.0.0.0:8080`), `KINEVO_TRUSTED_PROXIES`, `KINEVO_AUTO_MIGRATE` (default `true`), `KINEVO_LOG_LEVEL`/`KINEVO_LOG_FORMAT` (`info`/`json`), `KINEVO_DB_POOL_MAX` (10), `KINEVO_JOBS_TICK_SECONDS` (300), `KINEVO_METRICS_*`, `KINEVO_ANDROID_ORIGIN` (true), `KINEVO_SETUP_*`, `KINEVO_SMTP_URL`/`_PASSWORD_FILE`, `KINEVO_MAX_BODY_BYTES` (1048576), `KINEVO_SETUP_SESSION_TTL` (24 h). A `_FILE` variant reads the secret from a file; both set is an error.
+> **OPS-02**: `/livez` returns 200 while the process runs; `/readyz` returns 200 only when the database answers, migrations are current and the isolation self-check passed; both return only `{status}`. **OPS-09**: the app compares its clock to the database `now()` at start and in `/readyz`; skew > 5 s reports `degraded`.
+> **ARCH-01/02**: one executable `kinevo` with subcommands `serve`, `migrate`, `admin`, `openapi`, `version`, `health`; the SPA is embedded (served in T-043+).
+> **SET-06**: `KINEVO_SETUP_EMAIL` and `KINEVO_SETUP_PASSWORD_FILE` pre-create the first account via the use case of T-037; `KINEVO_SETUP_TEMPLATE` default `personal`.
+> **D-42**: a `e2e-fake-clock` cargo feature (never in release builds) lets an environment variable fix the clock for Playwright; the release build contains no such code path.
+> **D-43**: each module crate exports `MODULE`, `router()`, `jobs()`, `subscribers()`, `provisioners()`, `exporters()` and `migrations()`; the composition root calls them in dependency order. Startup validates the graph (`validate_graph`), unique export sections, permission/policy/message registries (MOD-08) and refuses to start on any failure with `config_invalid`/`isolation_check_failed` process errors (exit code 1, no secrets in the message).
+
+## Scope
+
+**In:**
+- `config.rs`: typed `Config` parsed from an env map (pure function, testable), with `_FILE` handling, `Secret` wrapping and redacted `Debug`.
+- `runtime.rs` additions: real adapters for ports (`PolicyReader`, `ModuleSwitches`, `InstanceState`, `SecretStore`, `IdempotencyPort`, `AccountCreation`, `Mailer` selection by `KINEVO_SMTP_URL` else the no-op/log-less mailer) and the fake clock behind `e2e-fake-clock`.
+- `serve`: logging setup (json/pretty, request-id spans, redaction layer from T-016), pools, optional auto-migrate, `verify_isolation`, `ensure_token` (prints the setup URL once), router assembly from descriptors with the route table, worker task (job loop, outbox dispatcher, schedule tick), `/livez`, `/readyz`, graceful shutdown on SIGTERM/SIGINT (stop accepting, drain in-flight, finish current jobs within 30 s).
+- `health` subcommand: HTTP GET to `/readyz` of the local listener for container `HEALTHCHECK`.
+
+**Out:**
+- The embedded SPA and security headers for HTML: T-043/T-055 (headers for API responses are T-016).
+- Other CLI commands: T-040. OpenAPI generation: T-041.
+
+## Files
+
+| Path | Action | Notes |
+|---|---|---|
+| `crates/kinevo-app/src/config.rs` | create | `Config`, env parsing |
+| `crates/kinevo-app/src/runtime.rs` | modify | adapters, fake clock |
+| `crates/kinevo-app/src/serve.rs` | create | startup sequence, shutdown |
+| `crates/kinevo-app/src/worker.rs` | create | loops |
+| `crates/kinevo-app/src/health.rs` | create | livez/readyz, skew |
+| `crates/kinevo-app/src/cli.rs` | modify | `serve`, `health` |
+| `crates/kinevo-app/tests/config.rs, tests/serve.rs` | create | AC-1…AC-8 |
+
+## Interfaces
+
+```rust
+pub struct Config { pub database_url: Secret<String>, pub system_database_url: Secret<String>, pub secret_key: MasterKey, pub public_url: Url, pub listen: SocketAddr,
+                    pub auto_migrate: bool, pub pool_max: u32, pub jobs_tick: Duration, pub setup: SetupBootstrap, /* … */ }
+impl Config { pub fn from_env(env: &dyn Fn(&str) -> Option<String>, read_file: &dyn Fn(&Path) -> io::Result<String>) -> Result<Self, Vec<ConfigIssue>>; }
+pub async fn serve(cfg: Config, shutdown: impl Future<Output = ()>) -> Result<(), StartupError>;
+// GET /livez → 200 {"status":"ok"} ; GET /readyz → 200 {"status":"ok"|"degraded"} or 503 {"status":"unavailable"}
+```
+
+## Business rules
+
+1. All configuration problems are reported at once (one list), each naming the variable and the rule, never the value.
+2. Startup order: config → pools → (auto-migrate) → isolation check → graph validation → token → router → worker → listen. A failure at any step exits non-zero before listening.
+3. `/readyz` is 503 until migrations are current and isolation passed; skew over 5 s gives 200 with `degraded`.
+4. Job kinds and subscribers of a disabled module are not claimed or delivered (MOD-05); the worker consults `ModuleSwitches` each tick.
+5. `KINEVO_PUBLIC_URL` must be https unless the host is loopback (`https_url` rules).
+
+## Security
+
+- Secrets come from env or `_FILE` only; they are held in `Secret`/`MasterKey` and never logged, including on parse errors (ERR process codes).
+- The `e2e-fake-clock` feature is excluded from `default`, release profiles and the Docker build; a CI check greps the release binary's feature list.
+- `/livez` and `/readyz` expose no version, hostnames or counts.
+
+## Implementation notes
+
+- Test `Config::from_env` with closures instead of touching the real environment.
+- The shutdown future is passed in so tests trigger it without signals.
+- Use `tokio::select!` over the server, worker and shutdown; await the worker's graceful stop with a deadline.
+
+## Acceptance
+
+| # | Given / When / Then | Test name |
+|---|---|---|
+| AC-1 | **Given** an env map missing the database URL and with a bad secret key **When** parsed **Then** both issues are listed with variable names and no values | `config::ops_config_reports_all_issues_without_values` |
+| AC-2 | **Given** `KINEVO_DATABASE_URL` and `_FILE` both set **When** parsed **Then** an issue is returned | `config::file_and_value_conflict` |
+| AC-3 | **Given** a fresh database **When** `serve` starts **Then** migrations run, the setup URL is logged once, `/readyz` is 200 | `serve::ops_02_ready_after_migrate` |
+| AC-4 | **Given** an unmigrated database and `KINEVO_AUTO_MIGRATE=false` **When** `/readyz` is called **Then** 503 | `serve::ops_02_not_ready_without_migrations` |
+| AC-5 | **Given** a database clock 10 s off **When** `/readyz` **Then** `degraded` | `serve::ops_09_clock_skew_degraded` |
+| AC-6 | **Given** a role without RLS forced **When** `serve` starts **Then** it exits with `isolation_check_failed` before listening | `serve::sec_06_startup_refuses_without_rls` |
+| AC-7 | **Given** an in-flight request and a shutdown signal **When** shutting down **Then** the request completes and the process exits 0 | `serve::graceful_shutdown_drains` |
+| AC-8 | **Given** `KINEVO_SETUP_EMAIL` and a password file **When** `serve` starts on a fresh instance **Then** the instance is ready and audited | `serve::set_06_env_bootstrap_at_startup` |
+
+## Tests
+
+```
+cargo nextest run -p kinevo-app --features kinevo-db/testing   # DB tests environment-limited without Docker/PostgreSQL
+just check
+```
+
+## Definition of done
+
+- [ ] Every acceptance criterion has its named test, and it passes (or is marked environment-limited with the exact command not run).
+- [ ] `just check` passes locally.
+- [ ] Only the files listed under *Files* changed; diff within budget.
+- [ ] Report below is filled in.
+
+## Report
+
+_Filled in by the implementer (WORKFLOW.md §4)._
+
+## Questions
+
+_None yet._

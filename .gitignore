@@ -17,3 +17,4 @@
 # Agent-local state
 .claude/
 .agents/
+__pycache__/
