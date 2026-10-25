@@ -36,7 +36,7 @@ The status lives in the task file's front matter (`status:`). `tasks/index.md` i
 4. **Write the tests first.** Turn every *Acceptance* criterion (Given/When/Then) into the test named next to it. Run them and see them fail for the expected reason.
 5. **Implement the minimum.** Make the tests pass, touching only the files under *Files*. Follow *Interfaces*, *Business rules*, *Security* and *Implementation notes* literally. No extra features, no speculative abstractions, no drive-by refactors (`CLAUDE.md` §2–3).
 6. **Run the full gate.** `just check` (before M1 exists: the scripts listed in `AGENTS.md`). Everything must pass. Never weaken, skip or delete a test to get there.
-7. **Self-review.** Walk the *Definition of done* line by line, then the task's *Security* section, then CQ and CA (`spec/standards/code-quality.md`, `clean-architecture.md`). Check the diff size against the task budget (about 400 changed lines). If it is over 1.5× the budget, block (§3) instead of shipping.
+7. **Self-review.** Walk the *Definition of done* line by line, then the task's *Security* section, then CQ and CA (`spec/standards/code-quality.md`, `clean-architecture.md`). Check the diff size against the task budget (about 400 changed lines). Lockfiles (`Cargo.lock`, `pnpm-lock.yaml`) and generated files (OpenAPI snapshots, insta snapshots, catalogue exports) are not counted (D-55). Going over budget is never a blocker: record the actual size and the reason under *Deviations* in the Report and ship; split the work only if the task itself says so.
 8. **Regenerate contracts the task names.** Only those: OpenAPI document, `cargo sqlx prepare` metadata, i18n catalogues, `tasks/index.md`. Commit the regenerated files.
 9. **Write the Report** in the task file (§4).
 10. **Request review.** Set `status: review`. Commit following `COMMIT_CONVENTION.md` with `[T-nnn]` in the subject, signed off (`git commit -s`).
@@ -52,7 +52,6 @@ The status lives in the task file's front matter (`status:`). `tasks/index.md` i
 - the work needs a file that is not listed under *Files*, or a change outside *Scope In*;
 - an acceptance criterion cannot be satisfied as written, or cannot be tested;
 - a precondition from step 2 fails and fixing it is outside the task;
-- the diff would exceed 1.5× the line budget;
 - a dependency, licence or security concern is not covered by the spec.
 
 **Then:**
