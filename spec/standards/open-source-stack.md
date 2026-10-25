@@ -59,6 +59,7 @@ Deliberately **not** adopted: an ORM, a DI framework, a job-queue crate (the DB 
 
 | Capability | Choice | Version ✔ | Licence (expected) | Why / alternatives | Main risk |
 |---|---|---|---|---|---|
+| Package manager | **pnpm** (via corepack) | resolve in T-043 | MIT | D-48; strict dependency tree, committed lockfile (SEC-13) | — |
 | UI library | **React** + react-dom | 19.3.1 ✔ | MIT | Excalidraw and Tiptap React bindings are first-class (D-07); Vue/Svelte need bridges | — |
 | Build | **Vite** | 8.3.5 ✔ | MIT | fast dev, WASM + PWA plugin support | major upgrades |
 | Language | **TypeScript** — start on **6.0.3** (latest 6.x ✔); evaluate 7.x (7.0.2 ✔ exists) in a dedicated upgrade task once tooling (Biome, Vite, vue-tsc-equivalents, vitest) is confirmed compatible | 6.0.3 ✔ | Apache-2.0 | stability first | tooling lag for 7 |

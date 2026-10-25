@@ -20,6 +20,7 @@ Single application node is the supported shape in 1.0 (in-process rate limiter, 
 |---|---|---|---|
 | `KINEVO_DATABASE_URL` / `_FILE` | yes | — | `postgres://kinevo_app:…@host/db` (application role) |
 | `KINEVO_MIGRATOR_DATABASE_URL` / `_FILE` | for `migrate` | — | migrator role |
+| `KINEVO_BOOTSTRAP_DATABASE_URL` / `_FILE` | only for `migrate --bootstrap` | — | role-creating login used once to create the three roles (D-50) |
 | `KINEVO_SYSTEM_DATABASE_URL` / `_FILE` | yes | — | system role (login lookups, worker bookkeeping, ARCH-24) |
 | `KINEVO_SECRET_KEY` / `_FILE` | yes | — | 32 random bytes, base64; **back this up separately** |
 | `KINEVO_PUBLIC_URL` | yes | — | external base URL (https in production); drives cookies, HSTS, ICS UIDs, CSP |

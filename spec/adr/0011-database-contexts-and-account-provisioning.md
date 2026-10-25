@@ -20,14 +20,14 @@ ADR-0004 forces RLS on every tenant table and gives the system role `kinevo_syst
 | `Tx::begin_admin(account_id)` | `kinevo_app` | `app.account_id`, `app.instance_admin = 'on'` | requests whose actor is an `instance_admin` (role derived from the account row, never from token claims, API-12) that write instance-level rows; setup Finish |
 | `SystemTx::begin()` | `kinevo_system` | none | login lookup and counters, refresh rotation, worker claim/dispatch, instance maintenance jobs |
 
-**Role-scoped RLS policies.** Besides `tenant_isolation` (applies to all roles), the three auth tables get a permissive policy limited to the system role:
+**Role-scoped RLS policies.** Besides `tenant_isolation` (applies to all roles), the auth tables (`accounts`, `refresh_token_families`, `refresh_tokens`, `password_resets`) get a permissive policy limited to the system role:
 
 ```sql
-CREATE POLICY system_auth ON <accounts | refresh_token_families | refresh_tokens>
+CREATE POLICY system_auth ON <accounts | refresh_token_families | refresh_tokens | password_resets>
   TO kinevo_system USING (true) WITH CHECK (true);
 ```
 
-The system role's grants become: `accounts` SELECT, INSERT, UPDATE; `refresh_token_families` and `refresh_tokens` SELECT, INSERT, UPDATE; `outbox_events` SELECT, INSERT; `outbox_deliveries`, `jobs` SELECT, INSERT, UPDATE; `audit_log` INSERT; `instance_settings`, `instance_modules`, `policy_versions`, `invites` SELECT. It still has **no** privilege on any other tenant table. Granting it more is a security-reviewed change.
+The system role's grants become: `accounts` SELECT, INSERT, UPDATE; `refresh_token_families`, `refresh_tokens` and `password_resets` SELECT, INSERT, UPDATE; `outbox_events` SELECT, INSERT; `outbox_deliveries`, `jobs` SELECT, INSERT, UPDATE; `audit_log` INSERT; `instance_settings`, `instance_modules`, `policy_versions`, `invites` SELECT. It still has **no** privilege on any other tenant table. `audit_log` carries one more role-scoped policy, `system_insert ... FOR INSERT TO kinevo_system WITH CHECK (true)`, because login and refresh events name a subject account while no account context is set. Retention deletes run through `SECURITY DEFINER` functions owned by the migrator, with a `retention ... FOR DELETE TO kinevo_migrator` policy on the two RLS-protected platform tables (`audit_log`, `idempotency_keys`). Granting it more is a security-reviewed change.
 
 **Instance rows under the app role.** `instance_settings`, `instance_modules` and `invites` have no RLS. `kinevo_app` may SELECT them, and may UPDATE/INSERT them only through repositories that require an admin context: the repository constructor takes the admin `Tx`. `policy_versions` uses:
 

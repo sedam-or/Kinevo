@@ -2,7 +2,7 @@
 
 One script per persona journey. Each journey is (a) the acceptance narrative for its milestone, (b) the Playwright E2E test (`web/tests/e2e/jNN-*.spec.ts`), (c) the manual walkthrough for usability trials. Steps are numbered `S`; each step lists the **expected observable result** and the states touched (`standards/ux-states.md`). A journey passes only if every step's result is observed. Personas: **Sari** (self-hoster/admin), **Maya** (student), **Dion** (professional) — all fictional.
 
-Conventions: fixture emails `…@example.test`; clock injected (E2E uses a fake-clock endpoint enabled only in the test profile); viewport desktop 1280×800 and mobile 390×844 for J1 and J2; browsers Chromium, Firefox, WebKit.
+Conventions: fixture emails `…@example.test`; clock injected (E2E uses a fake-clock endpoint compiled only with the cargo feature `e2e`, D-42); viewport desktop 1280×800 and mobile 390×844 for J1 and J2; browsers Chromium, Firefox, WebKit.
 
 ## J0 — First run (Sari) — M1
 

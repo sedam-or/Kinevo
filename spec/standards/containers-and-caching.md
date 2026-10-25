@@ -6,12 +6,12 @@ Decision: D-14 (small Alpine runtime image with a shell for health/debugging, tr
 
 | Aspect | Specification |
 |---|---|
-| Build | multi-stage `Dockerfile`: (1) `node:22-alpine` builds `web/` (Vite) → static files; (2) `rust:1.99-alpine` (musl, static) builds the `kinevo` binary with the web assets embedded (`rust-embed`) and SQLx offline metadata; (3) runtime stage |
+| Build | multi-stage `Dockerfile`: (1) `node:22-alpine` builds `web/` (Vite) → static files; (2) `rust:1.99-alpine` (musl, static) builds the `kinevo` binary with the web assets embedded (`rust-embed`); no database is needed at build time (D-49); (3) runtime stage |
 | Runtime base | `alpine:3.22` `[version pinned by digest at build; update monthly by Dependabot]` with `ca-certificates` and busybox `sh`; **no** package manager at runtime |
 | Contents | `/usr/local/bin/kinevo` (static binary), `/etc/kinevo/templates/*.toml` only if not embedded (they are embedded; none needed), CA bundle |
 | User | `kinevo` UID/GID 10001, no login shell for the account, `WORKDIR /` read-only |
 | Filesystem | read-only root; `tmpfs` at `/tmp` (64 MiB); no volumes required (state is in PostgreSQL) |
-| Process | `ENTRYPOINT ["/usr/local/bin/kinevo"]`, `CMD ["serve"]`; PID 1 handles SIGTERM (OPS-03); entrypoint wrapper runs `kinevo migrate` when `KINEVO_AUTO_MIGRATE=true` |
+| Process | `ENTRYPOINT ["/usr/local/bin/kinevo"]`, `CMD ["serve"]`; PID 1 handles SIGTERM (OPS-03); `serve` runs pending migrations itself when `KINEVO_AUTO_MIGRATE=true` (D-49); no wrapper script |
 | Health | `HEALTHCHECK --interval=30s --timeout=3s --start-period=20s CMD ["kinevo","health"]` |
 | Labels | OCI annotations: source, revision, version, licenses (`AGPL-3.0-only`), created |
 | Capabilities | `cap_drop: [ALL]`, `no-new-privileges`, `read_only: true`, seccomp default |

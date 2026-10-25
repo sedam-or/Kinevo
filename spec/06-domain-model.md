@@ -22,7 +22,7 @@ only that module's repositories touch it (CA-04).
 
 ## 2. Extensions, roles and RLS
 
-Migration files and ordering: CA-18 and D-40 (timestamp prefix, one global order; `kinevo-db` files use module name `platform`).
+Migration files and ordering: CA-18, D-40 and D-44 (timestamp prefix, one global order; `kinevo-db` files use module name `platform`). The runner records applied migrations in sqlx's `_sqlx_migrations` table (owned by `kinevo_migrator`; `kinevo_app` may SELECT).
 
 ```sql
 -- first platform migration (runs as kinevo_migrator)
@@ -48,23 +48,25 @@ CREATE POLICY tenant_isolation ON T
 
 ### 2.1 Tables without a tenant column
 
-`instance_settings`, `instance_modules`, `policy_versions` (instance rows), `invites`, `billing_webhook_events`, `jobs` (system jobs), `outbox_events` (system events), `schema_migrations`. They are reachable only through repositories that require the `instance_admin` permission or the system context, and carry their own grants.
+`instance_settings`, `instance_modules`, `policy_versions` (instance rows), `invites`, `billing_webhook_events`, `jobs` (system jobs), `outbox_events` (system events), `_sqlx_migrations`. They are reachable only through repositories that require the `instance_admin` permission or the system context, and carry their own grants.
 
 ### 2.2 System role (`kinevo_system`) grants
 
-Contexts and the reasons for each grant: ADR-0011. The auth tables (`accounts`, `refresh_token_families`, `refresh_tokens`) additionally carry `CREATE POLICY system_auth ON <table> TO kinevo_system USING (true) WITH CHECK (true)`; no other tenant table has a system policy.
+Contexts and the reasons for each grant: ADR-0011. The auth tables (`accounts`, `refresh_token_families`, `refresh_tokens`, `password_resets`) additionally carry `CREATE POLICY system_auth ON <table> TO kinevo_system USING (true) WITH CHECK (true)`; no other tenant table has a system policy.
 
 | Table | Privileges | Why |
 |---|---|---|
 | `accounts` | SELECT, INSERT, UPDATE (via `system_auth`) | login lookup by email, lockout counters, `KINEVO_SETUP_*` pre-check |
 | `refresh_token_families`, `refresh_tokens` | SELECT, INSERT, UPDATE (via `system_auth`) | login issues the first token; rotation before the account context is known |
+| `password_resets` | SELECT, INSERT, UPDATE (via `system_auth`) | an admin or the CLI issues a reset token for another account; confirmation looks the token up before any account context exists |
 | `outbox_events` | SELECT, INSERT | login/refresh events; dispatch |
 | `jobs`, `outbox_deliveries` | SELECT, INSERT, UPDATE | worker claim/dispatch across accounts; tick materialisation |
+| `secrets` | SELECT (instance rows only, via `instance_secrets_read`) | the mailer and workers read instance secrets (`smtp.password`, …) without an account context; account secrets stay invisible to this role |
 | `audit_log` | INSERT | login/refresh/maintenance audit |
 | `instance_settings`, `instance_modules`, `policy_versions`, `invites` | SELECT | module switches and instance policies for the worker; invite check |
 | every other tenant table | **none** | the worker switches to the account's context (`Tx::begin(account_id)` as `kinevo_app`) for tenant work |
 
-`kinevo_app` grants: DML on every tenant table (RLS applies); SELECT on `instance_settings`, `instance_modules`, `invites`, and UPDATE/INSERT on them only through admin-context repositories (ADR-0011); INSERT only on `jobs`, `outbox_events`, `outbox_deliveries`; SELECT and INSERT on `audit_log`, never UPDATE/DELETE. `audit_log` RLS: `USING (account_id = <current> OR current_setting('app.instance_admin', true) = 'on')` (owners read their own entries, admins read all) and `WITH CHECK (account_id IS NULL OR account_id = <current>)` (instance events have no subject account). `jobs`, `outbox_events` and `outbox_deliveries` have no RLS (ids and enums only, DOM-09).
+`kinevo_app` grants: DML on every tenant table (RLS applies); SELECT on `instance_settings`, `instance_modules`, `invites`, and UPDATE/INSERT on them only through admin-context repositories (ADR-0011); INSERT only on `jobs`, `outbox_events`, `outbox_deliveries`; SELECT and INSERT on `audit_log`, never UPDATE/DELETE. `audit_log` RLS: `USING (account_id = <current> OR current_setting('app.instance_admin', true) = 'on')` (owners read their own entries, admins read all) and `WITH CHECK (account_id IS NULL OR account_id = <current>)` (instance events have no subject account). A second policy `system_insert ON audit_log FOR INSERT TO kinevo_system WITH CHECK (true)` lets `SystemTx` record login, refresh and maintenance events for any subject account. Retention (ADM-FR-07/08, jobs, outbox) runs through four `SECURITY DEFINER` functions owned by `kinevo_migrator` (`platform_prune_audit`, `platform_prune_idempotency`, `platform_prune_jobs`, `platform_prune_outbox`, each taking a cutoff instant, `EXECUTE` granted to `kinevo_system` only); `audit_log` and `idempotency_keys` carry a role-scoped `retention` policy `FOR DELETE TO kinevo_migrator USING (true)` so the forced RLS does not hide rows from those functions. The application roles hold no `DELETE` on any of the five platform tables. `jobs`, `outbox_events` and `outbox_deliveries` have no RLS (ids and enums only, DOM-09).
 
 ## 3. Instance and platform tables
 
@@ -119,10 +121,13 @@ CREATE TABLE secrets (
   updated_at  timestamptz NOT NULL DEFAULT now(),
   UNIQUE NULLS NOT DISTINCT (account_id, name)
 );
+-- RLS on secrets (D-46): `tenant_isolation` (standard text) governs rows with an account_id; instance rows (account_id IS NULL) have
+--   instance_secrets_read  FOR SELECT USING (account_id IS NULL)                                  -- ciphertext only; every role
+--   instance_secrets_write FOR ALL    USING/WITH CHECK (account_id IS NULL AND current_setting('app.instance_admin', true) = 'on')
 
 CREATE TABLE audit_log (
   id            uuid PRIMARY KEY,
-  account_id    uuid REFERENCES accounts(id) ON DELETE CASCADE,  -- subject account; null = instance event
+  account_id    uuid REFERENCES accounts(id) ON DELETE SET NULL, -- subject account; null = instance event or deleted account (ID-FR-11)
   actor_id      uuid,                                            -- who did it (no FK: survives deletion)
   action        text NOT NULL,                                   -- e.g. 'auth.login_failed', 'module.switched'
   target_type   text,
@@ -132,7 +137,7 @@ CREATE TABLE audit_log (
   occurred_at   timestamptz NOT NULL
 );
 CREATE INDEX audit_log_by_account ON audit_log (account_id, occurred_at DESC);
--- Append-only: kinevo_app has INSERT and SELECT only; a trigger raises on UPDATE/DELETE for all roles except the retention job's SECURITY DEFINER function.
+-- Append-only: kinevo_app has INSERT and SELECT only; a trigger raises on UPDATE/DELETE unless `current_user = 'kinevo_migrator'`, which covers the retention job's SECURITY DEFINER function (owned by the migrator; it sets `app.instance_admin` itself because RLS is forced) and the referential action that nulls `account_id` when an account is purged.
 
 CREATE TABLE outbox_events (
   seq         bigserial PRIMARY KEY,
@@ -202,6 +207,7 @@ CREATE TABLE accounts (
   is_instance_admin  boolean NOT NULL DEFAULT false,
   status             text NOT NULL DEFAULT 'active' CONSTRAINT account_status_ck CHECK (status IN ('active','disabled','deleting')),
   totp_enabled       boolean NOT NULL DEFAULT false,                -- seed: secret 'identity.totp_seed' via SecretStore (D-40)
+  last_login_at      timestamptz,
   failed_login_count int NOT NULL DEFAULT 0,
   failed_window_start timestamptz,
   locked_until       timestamptz,
@@ -216,6 +222,7 @@ CREATE TABLE refresh_token_families (
   id                   uuid PRIMARY KEY,
   account_id           uuid NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   device_label         text,                                      -- user-agent family only, e.g. 'Firefox on Linux'
+  mfa                  boolean NOT NULL DEFAULT false,            -- session passed a second factor at login; copied into the access-token `mfa` claim on refresh
   created_at           timestamptz NOT NULL,
   last_used_at         timestamptz NOT NULL,
   absolute_expires_at  timestamptz NOT NULL,

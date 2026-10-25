@@ -112,7 +112,7 @@ Locked + correct password → still `account_locked` (no oracle). Unknown email:
 ## 7. Events and jobs
 
 Emits: `AccountRegistered`, `AccountLoggedIn`, `AccountDisabled`, `AccountDeletionRequested`, `PasswordChanged`. Consumes: none.
-Jobs: `account.purge`, `account.export.build`, `identity.sessions.prune` (daily; deletes expired families/tokens), `identity.resets.prune`.
+Jobs: `account.purge`, `account.export.build`, `identity.sessions.prune` (daily; deletes expired families/tokens), `identity.resets.prune`, `identity.exports.prune` (daily; sets `expired` and deletes the bytes of exports past `expires_at`, SM-21).
 
 ## 8. Abuse cases (tests required)
 
