@@ -15,6 +15,12 @@
 use clap::Parser;
 use std::io::{self, Write};
 
+#[allow(
+    dead_code,
+    reason = "T-002 wires runtime ports before later consumers are implemented"
+)]
+mod runtime;
+
 #[path = "cli.rs"]
 mod kinevo_app;
 

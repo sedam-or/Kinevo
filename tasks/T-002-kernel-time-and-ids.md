@@ -3,7 +3,7 @@ id: T-002
 title: Add Clock, IdGen, TokenGen, typed ids, Instant and TimeRange to the kernel
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-001]
 requirements: [ARCH-05, ARCH-25, D-17, DOM-01, DOM-03, CQ-06, CQ-07, CQ-18, SEC-23]
 branch: m1-t002-kernel-time-ids
@@ -117,16 +117,66 @@ just check
 
 ## Definition of done
 
-- [ ] Every acceptance criterion has its named test, and it passes.
-- [ ] `just check` passes locally.
-- [ ] Only the files listed under *Files* changed; diff within budget.
-- [ ] New dependencies (`jiff`, `uuid`, `serde`, `rand_core`) are all in the stack map.
-- [ ] `// SPEC: ARCH-05`, `// SPEC: D-17` mark the relevant code.
-- [ ] Report below is filled in.
+- [x] Every acceptance criterion has its named test, and it passes.
+- [x] `just check` passes locally.
+- [ ] Only the files listed under *Files* changed; diff within budget. The listed files are the only implementation files changed; the guidance budget is exceeded and recorded under Deviations per D-55.
+- [x] New dependencies (`jiff`, `uuid`, `serde`, `rand_core`) are all in the stack map.
+- [x] `// SPEC: ARCH-05`, `// SPEC: D-17` mark the relevant code.
+- [x] Report below is filled in.
 
 ## Report
 
 _Filled in by the implementer (WORKFLOW.md §4)._
+
+### Summary
+
+Added validated UTC `Instant` and half-open `TimeRange` value types, injected system and fixed clocks, typed UUID identifiers and token generators. T-002's seven acceptance tests pass.
+
+### Acceptance results
+
+| Criterion | Named test | Result |
+|---|---|---|
+| AC-1 | `time::tests::parse_offset_formats_utc_z` | pass |
+| AC-2 | `time::tests::rejects_four_fraction_digits_and_out_of_range_year` | pass |
+| AC-3 | `time::tests::half_open_overlap` | pass |
+| AC-4 | `time::tests::empty_range_rejected` | pass |
+| AC-5 | `time::tests::fixed_clock_advances` | pass |
+| AC-6 | `id::tests::seq_id_gen_is_v7_and_ordered` | pass |
+| AC-7 | `id::tests::id_serde_round_trip` | pass |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| Pre-implementation `cargo nextest run -p kinevo-kernel -p kinevo-app` | 101 (expected red phase) | Acceptance tests failed to compile because the requested kernel types and dependencies had not yet been implemented. |
+| `cargo nextest run -p kinevo-kernel -p kinevo-app` | 0 | 10 passed, 0 skipped, including all 7 T-002 acceptance tests. |
+| `cargo build -p kinevo-kernel --target wasm32-unknown-unknown` | 101 (initial feature check) | Enabling `uuid/v7` unconditionally failed: uuid requires an RNG backend for `wasm32-unknown-unknown`. |
+| `cargo build -p kinevo-kernel --target wasm32-unknown-unknown` | 0 | Passed after making uuid/v7 target-specific; WASM uses uuid/serde without a randomness feature. |
+| `just check` | 101 (first implementation pass) | Clippy identified API annotations and formatting issues; fixed before the final run. |
+| `just check` | 0 | Format, Clippy, 10 tests, dependency checks, spec checks, contrast, and task-index check passed. Cargo-deny emitted 7 unused-license-allowance warnings; Clippy emitted the existing unreachable `uuid::Uuid::new_v4` configuration warning. |
+| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md`; 0 problems in 132 tasks. |
+| `python3 scripts/spec_tool.py check` | 0 | 0 findings in 60 spec files. |
+| `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks. |
+
+### Files changed
+
+`Cargo.lock`; `crates/kinevo-kernel/Cargo.toml`, `crates/kinevo-kernel/src/lib.rs`, `crates/kinevo-kernel/src/time.rs`, `crates/kinevo-kernel/src/id.rs`; `crates/kinevo-app/Cargo.toml`, `crates/kinevo-app/src/main.rs`, `crates/kinevo-app/src/runtime.rs`; this task file; generated `tasks/index.md`.
+
+### Deviations
+
+The task Scope describes generic `IdGen::new_id<T>` and token-size methods, while its Interfaces section specifies object-safe `IdGen::new_uuid_v7`, free `new_id<T>`, and `TokenGen::fill`. The implementation follows the Interfaces and provides token-size helpers. `rand_core` 0.10.1 does not expose the task's stated `OsRng`; `OsTokenGen` uses the stack-approved `getrandom::fill` directly and aborts if OS entropy is unavailable. The UUID v7 feature is enabled for native targets in the kernel and in the app; it is omitted for the WASM kernel target because uuid 1.29.0 requires a randomness backend there, while the kernel has no configured WASM RNG. The deterministic test generator constructs valid ordered UUIDv7 values without randomness. The implementation changes about 691 non-lockfile lines against the 400-line guidance; this covers the strict timestamp validation, typed serde IDs, runtime ports and named tests. D-55 makes the budget guidance rather than a blocker. Cargo-deny reports 7 unused license allowances; all checks exit successfully.
+
+### Spec issues noticed
+
+None. The task's Scope/Interfaces mismatch is recorded under Deviations.
+
+### Environment-limited
+
+None. The WASM target was installed and the build passed.
+
+### Not done / not verified
+
+No T-002 acceptance criteria remain unverified. The M1 integration task and later tasks have not started.
 
 ## Questions
 

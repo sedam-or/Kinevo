@@ -18,6 +18,9 @@ kinevo-db.workspace = true
 kinevo-http.workspace = true
 kinevo-mod-identity.workspace = true
 kinevo-mod-admin.workspace = true
+jiff = "0.2.38"
+getrandom = "0.4.3"
+uuid = { version = "1.29.0", features = ["v7"] }
 
 [lints]
 workspace = true
