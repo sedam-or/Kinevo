@@ -129,7 +129,8 @@ default, safe and **ratifiable by the owner** (a change is a one-line edit here 
 |---|---|---|---|---|---|
 | `jobs.lease_seconds` | duration 10–3600 | 120 | inst | A | |
 | `jobs.retry.max_attempts` | int 1–20 | 8 | inst | A | |
-| `jobs.retry.base_seconds` | duration 1–600 | 5 | inst | A | Exponential backoff base, doubled per attempt, capped at `jobs.retry.cap_seconds` (default 3600). |
+| `jobs.retry.base_seconds` | duration 1–600 | 5 | inst | A | Exponential backoff base, doubled per attempt, capped at `jobs.retry.cap_seconds` |
+| `jobs.retry.cap_seconds` | duration 60–86400 | 3600 | inst | A | Upper bound of a single backoff delay. |
 | `db.connect.retries` | int 0–30 | 10 | bootstrap only (config/env) | A | Not a stored policy; listed for completeness. |
 | `export.max_age_days` | int 1–30 | 7 | inst | A | Generated export archives are deleted after this. |
 | `billing.currency` | text ISO-4217 | **OWNER** | inst | OWNER | Billing cannot be enabled until set (D-18). |

@@ -30,16 +30,16 @@ Cross-spec: `standards/auth.md` (token mechanics), `standards/security-by-design
 | `POST /auth/password-reset/confirm` | public | 204; all families revoked | `reset_token_invalid` 422, `password_too_short` 422 |
 | `GET /account` | `identity.account.read` | 200 account profile (`id, email, display_name, locale, timezone, week_start, totp_enabled, is_instance_admin, version`) | — |
 | `PATCH /account` (If-Match) | `identity.account.update` | 200 | `version_conflict` 409, `timezone_invalid` 422, validation 422 |
-| `POST /account/password` | `identity.account.update` | 204; other families revoked | `invalid_credentials` 401, `password_too_short` 422 |
+| `POST /account/password` | `identity.account.update` | 204; other families revoked | `current_password_incorrect` 422, `password_too_short` 422 |
 | `POST /account/totp/enroll` | `identity.totp.manage` | 200 `{ otpauth_uri, recovery_codes[10] }` (shown once; TOTP not yet active) | `totp_already_enabled` 409 |
-| `POST /account/totp/confirm` `{code}` | same | 204; `totp_enabled=true` | `invalid_mfa_code` 422 |
-| `DELETE /account/totp` `{password, code}` | same | 204 | `invalid_credentials`, `invalid_mfa_code`, `totp_required_by_policy` 409 |
+| `POST /account/totp/confirm` `{code}` | same | 204; `totp_enabled=true` | `totp_code_invalid` 422 |
+| `DELETE /account/totp` `{password, code}` | same | 204 | `current_password_incorrect` 422, `totp_code_invalid` 422, `totp_required_by_policy` 409 |
 | `GET /account/sessions` | `identity.session.manage` | 200 list of families (`id, device_label, created_at, last_used_at, current`) | — |
 | `DELETE /account/sessions/{id}` | same | 204 | `not_found` 404 |
 | `POST /account/export` | `identity.account.export` | 202 `{ export_id }` | `export_in_progress` 409 |
 | `GET /account/export/{id}` | same | 200 `{ state, size_bytes?, expires_at }` | `not_found` |
 | `GET /account/export/{id}/download` | same | 200 `application/zip` | `export_not_ready` 409, `export_expired` 410 |
-| `DELETE /account` `{password, confirm: "delete my account"}` | `identity.account.delete` | 202; state `deleting`; sessions revoked | `invalid_credentials` 401, `last_admin` 409 |
+| `DELETE /account` `{password, confirm: "delete my account"}` | `identity.account.delete` | 202; state `deleting`; sessions revoked | `current_password_incorrect` 422, `last_admin` 409 |
 | `GET /admin/accounts` | `identity.admin.accounts.read` | 200 page of `{id, email, display_name, status, created_at, last_login_at}` — **no content data** | `forbidden` 403 |
 | `PATCH /admin/accounts/{id}` `{status}` | `…update` | 200 | `last_admin` 409, `version_conflict` |
 | `POST /admin/invites` `{email?}` | `…invite.create` | 201 `{ invite_url }` (token shown once) | — |

@@ -25,6 +25,8 @@ Tasks hang off goals/milestones (`modules/tasks.md`).
 | `POST /goals/{id}/milestones/reorder` `{ ids: [uuid…] }` | 200 | `reorder_set_mismatch` 422 (ids must be exactly the goal's milestones) |
 | `DELETE /milestones/{id}` (If-Match) | 204; tasks keep `goal_id` and lose `milestone_id` | — |
 
+Every goal representation includes `allowed_transitions` computed by the goal state machine for the current state (`standards/contracts.md`, SM-R6, SM-T2); the web renders status actions only from it and never hard-codes transition rules (CA-15).
+
 ## 3. Functional requirements
 
 | ID | Requirement | Acceptance |

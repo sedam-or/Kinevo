@@ -43,7 +43,7 @@ Labels: **[run]** = a command I executed (output summarised). **[src]** = read i
 6. **Transaction rule.** START/COMPLETE of execution run without a DB transaction (`legacy-v0:server/app/Application/Execution/CompleteExecutionUseCase.php:37-73`). [src]
 7. **"Core never hollowed out."** Self-host is capped by Free-plan entitlements (`legacy-v0:server/config/saas.php:37-75`, `legacy-v0:server/app/Application/Workspaces/CreateWorkspaceUseCase.php:25-27`). [src]
 8. **"WCAG 2.2 AA verified."** axe runs only the `wcag2a`/`wcag2aa` tags on 4 pages, not in CI (`legacy-v0:tests/e2e/tests/accessibility.spec.ts:32,65`). [src]
-9. **UI freeze.** CONTRIBUTING enforces a freeze that AGENTS calls lifted. TASK.md is in Indonesian; the rest is English. [src]
+9. **UI freeze.** CONTRIBUTING enforces a freeze that AGENTS calls lifted. `legacy-v0:TASK.md` is in Indonesian; the rest is English. [src]
 10. **Stale docblock.** `legacy-v0:server/app/Domain/Scheduling/Resolution/EffectiveLandscapeResolver.php:25,53` says overrides "MUST NOT alter output", but the code applies them. [src]
 11. **AI breakdown.** The product promises "goal → milestones → tasks". Accept creates milestones only (`legacy-v0:server/app/Application/Ai/AcceptAiProposalUseCase.php:47`). The default driver is `disabled`. The mock driver returns non-JSON, which yields 422. [src]
 
@@ -79,7 +79,7 @@ Labels: **[run]** = a command I executed (output summarised). **[src]** = read i
 8. **Personal data in fixtures**: a real-looking personal email address is hardcoded as the E2E owner
    account in `legacy-v0:tests/e2e/tests/helpers.ts`, `legacy-v0:tests/e2e/tests/accessibility.spec.ts`,
    `legacy-v0:tests/e2e/scripts/seed-journey-c.sh` and `seed-journey-s.sh`. It remains in public git history. New
-   fixtures must use `example.test` addresses only (`spec/testing.md`). [src]
+   fixtures must use `example.test` addresses only (`spec/12-testing.md`). [src]
 9. OSS hygiene: no provenance for `docs/assets/*` and the favicon; `CITATION.cff` has no `authors`; stale license ledger; vendored root `vendor/` (22 MB Pint binary); `:latest` images; Node 20 vs 22 mismatch. [src]
 
 ## 6. Keep / rewrite / drop
@@ -108,7 +108,7 @@ Labels: **[run]** = a command I executed (output summarised). **[src]** = read i
 drop" is delivered as per-install module switches plus easy install (D-01). A plugin API or no-code
 builder is not justified by any evidence and would multiply cost. **User demand is not
 validated:** the repo contains no interviews or usage data. The direction stays provisional
-until the validation exercise in `spec/roadmap.md` runs.
+until the validation exercise in `spec/13-roadmap.md` runs.
 
 **Rust rebuild — YES (owner choice D-02), as a respecified rebuild.** Benefits:
 - a single static binary with the SPA embedded (needs 1 and 5);
@@ -125,9 +125,9 @@ Mitigations:
 - milestones deliver the core loop first;
 - scheduler parity fixtures come from legacy tests.
 
-**Main risk:** second-system scope creep, controlled by the milestone gates in `spec/roadmap.md`.
+**Main risk:** second-system scope creep, controlled by the milestone gates in `spec/13-roadmap.md`.
 
-**Stack and main risk of each** (detail in `spec/architecture.md` and ADRs):
+**Stack and main risk of each** (detail in `spec/02-architecture.md` and ADRs):
 
 | Choice | Main risk |
 |---|---|

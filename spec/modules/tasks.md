@@ -20,6 +20,8 @@ Kind: core. Depends on: `goals`. Tables: `tasks`, `subtasks`. Prefix: `TASK`.
 | `PATCH /subtasks/{id}` (If-Match) `{ title?, completed?, position? }` | 200 | `version_conflict` |
 | `DELETE /subtasks/{id}` (If-Match) | 204 | — |
 
+Every task representation includes `allowed_transitions` computed by the task state machine for the current state (`standards/contracts.md`, SM-R6, SM-T2); the web renders status actions only from it and never hard-codes transition rules (CA-15).
+
 ## 3. Functional requirements
 
 | ID | Requirement | Acceptance |
