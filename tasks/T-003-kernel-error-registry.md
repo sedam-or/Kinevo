@@ -3,12 +3,12 @@ id: T-003
 title: Add the error-code registry and AppError to the kernel
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-001]
 requirements: [ERR-01, ERR-02, ERR-03, ERR-05, API-20, API-21, CQ-09, VAL-01]
 branch: m1-t003-kernel-error-registry
 budget_lines: 420
-assignee: ""
+assignee: "codex"
 ---
 
 # T-003: Add the error-code registry and AppError to the kernel
