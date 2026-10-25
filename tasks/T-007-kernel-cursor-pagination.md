@@ -3,12 +3,12 @@ id: T-007
 title: Add signed cursor pagination types to the kernel
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-002, T-003, T-004]
 requirements: [API-30, SEC-23]
 branch: m1-t007-kernel-cursor-pagination
 budget_lines: 250
-assignee: ""
+assignee: "codex"
 ---
 
 # T-007: Add signed cursor pagination types to the kernel
