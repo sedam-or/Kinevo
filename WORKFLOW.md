@@ -32,7 +32,7 @@ The status lives in the task file's front matter (`status:`). `tasks/index.md` i
 
 1. **Read.** Read the whole task. Open every spec section it cites. The inlined excerpts are copies: if an excerpt differs from the spec, the spec wins and you block. Read the files listed under *Files* that already exist.
 2. **Check preconditions.** Dependencies are merged on `main` (or, in a maintainer-authorised stacked run, satisfied as defined in `BRANCHING.md` §6); files the task says exist do exist, and files it creates do not; the commands under *Tests* run in your environment. Any failure here is a block, not a workaround.
-3. **Branch.** Create the branch named in the task (`BRANCHING.md` §2) from up-to-date `main`.
+3. **Branch.** Create the branch named in the task (`BRANCHING.md` §2) from up-to-date `main`; in a maintainer-authorised run use the milestone branch instead (`BRANCHING.md` §6, D-54).
 4. **Write the tests first.** Turn every *Acceptance* criterion (Given/When/Then) into the test named next to it. Run them and see them fail for the expected reason.
 5. **Implement the minimum.** Make the tests pass, touching only the files under *Files*. Follow *Interfaces*, *Business rules*, *Security* and *Implementation notes* literally. No extra features, no speculative abstractions, no drive-by refactors (`CLAUDE.md` §2–3).
 6. **Run the full gate.** `just check` (before M1 exists: the scripts listed in `AGENTS.md`). Everything must pass. Never weaken, skip or delete a test to get there.
