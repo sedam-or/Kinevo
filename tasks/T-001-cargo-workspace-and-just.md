@@ -3,7 +3,7 @@ id: T-001
 title: Create the Cargo workspace, toolchain pins and the just entry point
 milestone: M1
 kind: feature
-status: in_progress
+status: blocked
 depends_on: []
 requirements: [D-29, D-38, ARCH-01, CQ-01, CQ-02, CQ-03, CQ-04, CQ-07, CQ-08, CQ-16, SEC-13]
 branch: m1-t001-cargo-workspace
@@ -145,8 +145,64 @@ cargo run -p kinevo-app -- version
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+No application code was written. T-001 is blocked because AC-2's crate-qualified test path cannot be reconciled with the binary-only app files listed in this task without an unlisted library target or nonstandard module nesting.
+
+### Acceptance results
+
+| Criterion | Test name | Result |
+|---|---|---|
+| AC-1 | `just lint` | not run — blocked before implementation |
+| AC-2 | `kinevo_app::cli::tests::version_line_has_package_version` | not run — see Q-1 |
+| AC-3 | `lint_config::cq_07_disallowed_methods_listed` | not run — blocked before implementation |
+| AC-4 | `lint_config::cq_03_forbid_unsafe_everywhere` | not run — blocked before implementation |
+| AC-5 | `just check` | not run — blocked before implementation |
+
+### Commands run
+
+- `scripts/preflight.sh` — exit 127; `/bin/bash: line 1: scripts/preflight.sh: No such file or directory`.
+- `gh auth status` — exit 0.
+- `cargo --version` — exit 0; Cargo 1.99.1.
+- `rustc --version` — exit 0; Rust 1.99.1.
+- `PATH=/home/kepolu/.cargo/bin:$PATH rustup show` — exit 0; toolchain 1.99.1 and `wasm32-unknown-unknown` target installed.
+- `node --version` — exit 0; v22.17.0.
+- `pnpm --version` — exit 0; 9.15.9.
+- `just --version` — exit 0; 1.59.0.
+- `cargo nextest --version` — exit 0; 0.9.149.
+- `cargo deny --version` — exit 0; 0.20.2.
+- `cargo install wasm-pack --locked` — exit 0; wasm-pack was already installed under `/home/kepolu/.cargo/bin`.
+- `PATH=/home/kepolu/.cargo/bin:$PATH wasm-pack --version` — exit 0; 0.15.0.
+- `python3 --version` — exit 0; 3.14.8.
+- `docker info --format '{{.ServerVersion}}'` — exit 0; 29.9.2.
+- `python3 scripts/spec_tool.py check` — exit 0; 0 findings in 60 spec files.
+- `python3 scripts/contrast.py` — exit 0; 0 failures.
+- `python3 scripts/tasks_index.py --check` — exit 0; 0 problems in 105 tasks.
+- `just lint` — not run; no task workspace or `justfile` was created before the block.
+- `just check` — not run; no task workspace or `justfile` was created before the block.
+
+### Files changed
+
+Pending the generated index and final branch diff stat; only this task file and `tasks/index.md` are expected to change.
+
+### Deviations
+
+Implementation stopped under WORKFLOW.md §3 before code or tests. The requested preflight script is absent, so its available tool checks were run manually and recorded above.
+
+### Spec issues noticed
+
+The run instructions refer to D-51 and D-52, but `spec/decisions.md` ends at D-50; `spec/index.md` still describes the decision range as D-01 through D-37. These do not affect T-001's cited decisions.
+
+### Not done / not verified
+
+T-001 implementation and all five acceptance checks remain undone or unverified. No M1 gate was run, so later tasks were not started.
+
+### Follow-up suggestions
+
+Resolve Q-1 by aligning AC-2's test path with the binary target, or explicitly allowing a library target in the Files table.
 
 ## Questions
 
-_None yet._
+- Q-1 (implementer, 2026-10-25): AC-2 names `kinevo_app::cli::tests::version_line_has_package_version`, which denotes a `kinevo_app` crate containing a `cli` module, but the Files table allows only `crates/kinevo-app/src/main.rs` and `src/cli.rs` and describes the app as a binary named `kinevo`. The listed binary-only layout does not provide that crate-qualified test path; a normal binary unit test is under the binary target, while a library target needs additional wiring not listed here. The required source paths are currently absent, so no implementation was attempted.
+  Options: (a) add `crates/kinevo-app/src/lib.rs` and define the library/binary wiring; (b) change the acceptance test path to the binary target path and keep the current Files scope.
+  Recommendation: (b), because the task explicitly defines the app as a binary and limits the source files to `main.rs` and `cli.rs`.
