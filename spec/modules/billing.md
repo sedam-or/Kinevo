@@ -64,7 +64,7 @@ User picks a plan → `POST /billing/checkout` (idempotent) → adapter creates 
 
 ## 7. Events / jobs
 
-Emits `SubscriptionChanged`. Jobs: `billing.reconcile` (daily), `billing.webhooks.prune` (daily; > 90 days).
+Emits `SubscriptionChanged`. Jobs: `billing.reconcile` (daily), `billing.webhooks.prune` (daily; > 90 days), `billing.grace.sweep` (tick; BIL-FR-05).
 
 ## 8. Abuse cases
 

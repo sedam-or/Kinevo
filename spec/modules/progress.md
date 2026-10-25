@@ -30,7 +30,7 @@ Answers "what moved?" with **facts**, not scores. No streaks, points or badges (
 
 ## 4. Events / jobs
 
-Emits none. Consumes the events in PRG-FR-01. Job `progress.rebuild` (admin CLI `kinevo admin rebuild-progress <account>`): recomputes `progress_events` from source tables for repair; idempotent.
+Emits none. Consumes the events in PRG-FR-01. Job `progress.rebuild` (admin CLI `kinevo admin rebuild-progress <account>`): recomputes `progress_events` from source tables for repair; idempotent; the command writes audit `progress.rebuilt`.
 
 ## 5. Abuse cases
 

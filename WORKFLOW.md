@@ -15,7 +15,7 @@ draft ──► todo ──► in_progress ──► review ──► done
 
 | Transition | Who | When |
 |---|---|---|
-| `draft → todo` | architect | the milestone before has its integration task `done`, and the task passed the consistency gate |
+| `draft → todo` | architect | the milestone before has its integration task `done` (exception D-52: M3–M11 were promoted ahead of this rule), and the task passed the consistency gate |
 | `todo → in_progress` | implementer | Step 0 below; every dependency is `done` |
 | `in_progress → blocked` | implementer | the blocking procedure (§3) applies |
 | `blocked → todo` | architect | a `Resolved (architect, YYYY-MM-DD)` line answers every open question; spec and neighbouring tasks are fixed in the same commit |

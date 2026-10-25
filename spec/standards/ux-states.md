@@ -66,6 +66,7 @@ Rules: every error shows *what happened*, *why if known*, *what to do*; never on
 | `today.loading` | skeleton | — | — | — |
 | `today.empty.no_tasks` | empty | Nothing to do yet. Add a goal or a task to get started. | Belum ada yang dikerjakan. Tambahkan tujuan atau tugas untuk memulai. | New task, New goal |
 | `today.empty.nothing_scheduled` | empty | You have tasks, but none are scheduled for today. | Kamu punya tugas, tetapi belum ada yang dijadwalkan hari ini. | Plan my week |
+| `progress.empty` | empty | Nothing has moved yet. Finish a task and it shows up here. | Belum ada kemajuan. Selesaikan satu tugas dan hasilnya muncul di sini. | Go to Today |
 | `today.now.label` / `today.next.label` | label | Now / Next | Sekarang / Berikutnya | Start, Skip |
 | `today.review.needed` | banner (status) | Your schedule may be out of date: {reason}. Review proposed changes. | Jadwalmu mungkin sudah usang: {reason}. Tinjau perubahan yang diusulkan. | Review |
 | `today.counts` | text | {completed} of {total} done | {completed} dari {total} selesai | — |
@@ -150,6 +151,8 @@ Rules: every error shows *what happened*, *why if known*, *what to do*; never on
 | `ai.proposal.accepted` | toast | Added {milestones} milestones and {tasks} tasks. | Menambahkan {milestones} tahapan dan {tasks} tugas. | View goal |
 | `ai.output_invalid` | banner (alert) | The AI's answer couldn't be used. Try again or change your description. | Jawaban AI tidak dapat digunakan. Coba lagi atau ubah deskripsimu. | Try again |
 | `ai.limit` | toast (alert) | You've reached your AI limit for now. | Kamu mencapai batas AI untuk saat ini. | — |
+| `ai.provider_unavailable` | inline (alert) | The AI service isn't reachable right now. Try again in a moment. | Layanan AI sedang tidak dapat dihubungi. Coba lagi sebentar lagi. | Try again |
+| `ai.private_ip` | inline | That address isn't allowed. Use a public HTTPS address. | Alamat itu tidak diizinkan. Gunakan alamat HTTPS publik. | — |
 | `ai.provider.unavailable` | banner (alert) | The AI service didn't respond. Try again later. | Layanan AI tidak merespons. Coba lagi nanti. | Retry |
 
 ## 10. Settings, data, admin, billing
@@ -169,6 +172,10 @@ Rules: every error shows *what happened*, *why if known*, *what to do*; never on
 | `billing.processing` | banner | We're confirming your payment. This can take a few minutes. | Kami sedang mengonfirmasi pembayaranmu. Bisa memakan waktu beberapa menit. | Refresh |
 | `billing.past_due` | banner (alert) | Your last payment didn't go through. Update it by {date} to keep your plan. | Pembayaran terakhir gagal. Perbarui sebelum {date} agar paketmu tetap aktif. | Update payment |
 | `billing.over_limit` | banner | You're over your plan's limit. You can keep using what you have. | Kamu melebihi batas paketmu. Kamu masih bisa memakai yang sudah ada. | Manage plan |
+| `billing.free` | inline | You're on the free plan. | Kamu memakai paket gratis. | See plans |
+| `billing.active` | inline | Your plan is active until {date}. | Paketmu aktif sampai {date}. | Cancel plan |
+| `billing.canceled` | inline | Your plan has ended. Your data is kept. | Paketmu telah berakhir. Datamu tetap tersimpan. | See plans |
+| `billing.not_configured` | inline (admin) | Billing can't be turned on until the currency and plans are set. | Penagihan belum bisa diaktifkan sebelum mata uang dan paket diatur. | Open policies |
 
 ## 11. Requirements
 

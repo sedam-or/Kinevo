@@ -94,7 +94,7 @@ pub fn version_line() -> String  // "kinevo <version>"
 
 | Recipe | Runs |
 |---|---|
-| `setup` | `rustup show` (installs the pinned toolchain), `cargo install --locked cargo-deny cargo-nextest` if missing |
+| `setup` | `rustup show` when `rustup` exists (installs the pinned toolchain; otherwise print a notice and use the system toolchain), `cargo install --locked cargo-deny cargo-nextest` if missing |
 | `fmt` | `cargo fmt --all` |
 | `lint` | `cargo fmt --all -- --check` and `cargo clippy --workspace --all-targets -- -D warnings` |
 | `test` | `cargo nextest run --workspace` (fall back to `cargo test --workspace` if nextest is missing, with a printed notice) |

@@ -7,7 +7,7 @@ Each file `T-nnn-<slug>.md` is one unit of work for an implementer: about 400 ch
 - **Ids are stable.** A task id is never reused or renumbered. A dropped task stays with `status: done` and a note in its *Report* saying it was withdrawn and why.
 - **Strict DAG.** `depends_on` only points to tasks of the same or an earlier milestone, and the graph has no cycles.
 - **One integration task per milestone** (`kind: integration`). It depends, directly or transitively, on every other task of its milestone and runs the milestone's user journey end to end.
-- **Status gate.** Only the next milestones' tasks are `todo`; later ones are `draft`. A `draft` task may be an outline: the architect completes it before promoting it to `todo` (Phase 7 review loop), after the previous milestone's integration task is `done`.
+- **Status gate.** Since D-52 (2026-10-25) every milestone M1–M11 is `todo`. A `draft` task is still allowed for new outlines: the architect completes it before promoting it to `todo`. Tasks of later milestones were written without implementation feedback, so expect more blocking questions there.
 - **Requirement ids** in the front matter must exist in `spec/`.
 
 ## Checks

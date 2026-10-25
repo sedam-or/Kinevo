@@ -136,6 +136,8 @@ default, safe and **ratifiable by the owner** (a change is a one-line edit here 
 | `billing.currency` | text ISO-4217 | **OWNER** | inst | OWNER | Billing cannot be enabled until set (D-18). |
 | `billing.plans` | json (schema `billing_plans_v1`) | **OWNER** | inst | OWNER | Plan ids, price in minor units, interval, limits (`max_workspaces`, `ai_monthly_runs`, …). |
 | `billing.grace_days` | int 0–60 | **OWNER** | inst | OWNER | Days past due before downgrade. |
+| `billing.gateway` | enum `fake` | `fake` | inst | A | Active payment adapter; real adapters are added by their own tasks after OWNER-04. |
+| `billing.retain_invoice_totals` | bool | false | inst | A | Keep anonymised invoice totals after account deletion; OWNER-05 decides whether law requires it. |
 
 Per-module detail (semantics, validation, effects) is in `modules/*.md`; this registry is the single list of keys. A module spec may not mention a key that is not here.
 
