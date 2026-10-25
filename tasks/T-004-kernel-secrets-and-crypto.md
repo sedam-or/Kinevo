@@ -3,12 +3,12 @@ id: T-004
 title: Add the redacting Secret type and crypto helpers to the kernel
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-002]
 requirements: [SEC-03, SEC-23, CQ-10, D-19, ADM-FR-06]
 branch: m1-t004-kernel-secrets-crypto
 budget_lines: 380
-assignee: ""
+assignee: "codex"
 ---
 
 # T-004: Add the redacting Secret type and crypto helpers to the kernel
