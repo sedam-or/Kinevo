@@ -3,7 +3,7 @@ id: T-001
 title: Create the Cargo workspace, toolchain pins and the just entry point
 milestone: M1
 kind: feature
-status: in_progress
+status: blocked
 depends_on: []
 requirements: [D-29, D-38, ARCH-01, CQ-01, CQ-02, CQ-03, CQ-04, CQ-07, CQ-08, CQ-16, SEC-13]
 branch: m1-t001-cargo-workspace
@@ -145,8 +145,83 @@ cargo run -p kinevo-app -- version
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+The M1 Cargo workspace, lint/dependency policy, `just` entry point, and `kinevo version` command were implemented locally. All five acceptance checks pass, but the implementation diff is 628 added lines across the task's listed implementation files, exceeding the 525-line block threshold (1.5 × the 350-line budget). The implementation is retained locally and is not included in the blocked-task commit pending clarification about whether generated `Cargo.lock` lines count.
+
+### Acceptance results
+
+| Criterion | Test name | Result |
+|---|---|---|
+| AC-1 | `just lint` | pass |
+| AC-2 | `kinevo_app::cli::tests::version_line_has_package_version` | pass |
+| AC-3 | `lint_config::cq_07_disallowed_methods_listed` | pass |
+| AC-4 | `lint_config::cq_03_forbid_unsafe_everywhere` | pass |
+| AC-5 | `just check` | pass; 3 tests passed, cargo-deny reported no errors, spec checks passed |
+
+### Commands run
+
+The TDD red phase failed as expected before implementation: the named CLI test initially failed because `version_line` did not exist; the lint configuration tests failed because the config and workspace lints did not exist; `just lint` and `just check` exited 1 with `error: no justfile found`.
+
+| Command | Exit | Result |
+|---|---:|---|
+| `export PATH="$HOME/.cargo/bin:$PATH"; cargo test -p kinevo-app --bin kinevo version_line_has_package_version` | 0 | 1 passed |
+| `export PATH="$HOME/.cargo/bin:$PATH"; cargo test -p kinevo-app --test lint_config` | 0 | 2 passed |
+| `export PATH="$HOME/.cargo/bin:$PATH"; just fmt && just lint` | 101 | First formatting check was corrected; Clippy then required lower priority for `all` and `pedantic` lint groups. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; just lint && cargo test -p kinevo-app --bin kinevo version_line_has_package_version && cargo test -p kinevo-app --test lint_config` | 0 | Lint and all three named tests passed. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; just check && cargo run -p kinevo-app -- version` | 1 | Initial `cargo deny check` rejected `unmaintained = "deny"`; corrected to the supported `"all"` scope. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; cargo deny check` | 0 | All checks passed; seven unused license allowances were reported as warnings. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; just check && cargo run -p kinevo-app -- version` | 1 | Gates passed through spec checks; task index was stale while the task remained `in_progress`. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; python3 scripts/tasks_index.py && just check && cargo run -p kinevo-app -- version` | 0 | Task index: 0 problems in 132 tasks; nextest: 3 passed; spec tool: 0 findings; contrast: 0 failures; cargo-deny: no errors (7 unused-license warnings); version output: `kinevo 0.0.0`. |
+
+### Files changed
+
+Implementation diff before blocking: 628 insertions, 0 deletions across the 23 implementation paths below. `Cargo.lock` contributes 238 generated lines. The blocked-task commit will contain only this task report/status and the generated task index.
+
+| Path | Added | Removed |
+|---|---:|---:|
+| `Cargo.lock` | 238 | 0 |
+| `Cargo.toml` | 44 | 0 |
+| `clippy.toml` | 11 | 0 |
+| `crates/kinevo-app/Cargo.toml` | 23 | 0 |
+| `crates/kinevo-app/src/cli.rs` | 31 | 0 |
+| `crates/kinevo-app/src/main.rs` | 30 | 0 |
+| `crates/kinevo-app/tests/lint_config.rs` | 80 | 0 |
+| `crates/kinevo-db/Cargo.toml` | 12 | 0 |
+| `crates/kinevo-db/src/lib.rs` | 3 | 0 |
+| `crates/kinevo-http/Cargo.toml` | 13 | 0 |
+| `crates/kinevo-http/src/lib.rs` | 3 | 0 |
+| `crates/kinevo-kernel/Cargo.toml` | 9 | 0 |
+| `crates/kinevo-kernel/src/lib.rs` | 3 | 0 |
+| `crates/kinevo-mod-admin/Cargo.toml` | 15 | 0 |
+| `crates/kinevo-mod-admin/src/lib.rs` | 3 | 0 |
+| `crates/kinevo-mod-identity/Cargo.toml` | 15 | 0 |
+| `crates/kinevo-mod-identity/src/lib.rs` | 3 | 0 |
+| `crates/kinevo-ports/Cargo.toml` | 12 | 0 |
+| `crates/kinevo-ports/src/lib.rs` | 3 | 0 |
+| `deny.toml` | 32 | 0 |
+| `justfile` | 41 | 0 |
+| `rust-toolchain.toml` | 3 | 0 |
+| `rustfmt.toml` | 1 | 0 |
+
+### Deviations
+
+No implementation deviation. The task is blocked solely by the line-budget rule pending the question below.
+
+### Spec issues noticed
+
+None.
+
+### Not done / not verified
+
+No environment-limited checks. The implementation code is not committed or pushed. All downstream tasks are blocked transitively by T-001 and were not started.
+
+### Follow-up suggestions
+
+Clarify in the task or workflow whether generated lockfile lines count toward `budget_lines`; if they do, adjust the task budget or scope before resuming.
 
 ## Questions
 
-_None yet._
+- Q-1 (implementer, 2026-10-25): Does the 238-line generated `Cargo.lock` count toward T-001's 350-line budget? The implementation diff is 628 added lines including the lockfile, exceeding the workflow's 525-line block threshold; excluding the lockfile leaves 390 implementation lines. The named acceptance checks pass, but the task's diff-budget DoD cannot pass under the literal total.
+  Options: (a) count all changed lines and have the architect revise the budget or scope; (b) explicitly exclude generated lockfile lines from this budget check.
+  Recommendation: (a), because WORKFLOW.md §2 says to compare the diff size against the task budget and does not exclude generated files.
