@@ -82,6 +82,9 @@ default, safe and **ratifiable by the owner** (a change is a one-line edit here 
 | `auth.lockout.window` | duration 60–3600 | 900 | inst | A | |
 | `auth.lockout.duration` | duration 60–86400 | 900 | inst | A | |
 | `auth.totp.required` | bool | false | inst | A | If true, accounts must enrol at next login. |
+| `auth.refresh.grace` | duration 0–60 | 10 | inst | A | Window in which a concurrent duplicate refresh returns the same new pair (ID-FR-05). |
+| `identity.purge.delay` | duration 0–30 d | 0 | inst | A | Delay between account deletion request and purge job. |
+| `api.idempotency.ttl` | duration 1 h–7 d | 86400 | inst | A | Stored idempotent responses (API-70). |
 | `auth.invite.ttl` | duration 1 h–30 d | 604800 | inst | A | |
 | `auth.password_reset.ttl` | duration 5 m–24 h | 3600 | inst | A | Admin-issued link/token when SMTP is absent (D-27). |
 | `ratelimit.auth_per_minute` | int 1–120 | 5 | inst | L `AppServiceProvider.php` | Per client address. |

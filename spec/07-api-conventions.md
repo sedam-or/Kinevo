@@ -54,7 +54,7 @@ All non-2xx responses are `application/problem+json`:
 
 | ID | Rule |
 |---|---|
-| API-30 | List endpoints use cursor pagination: `?limit=` (default 50, max 200) and `?cursor=`. Response `{ "items": [...], "next_cursor": string|null }`. Cursors are opaque, HMAC-signed, bound to the endpoint and sort; tampered/expired → 400 `cursor_invalid`. No page numbers, no total counts (use dedicated `…/count` endpoints where a screen needs a number). |
+| API-30 | List endpoints use cursor pagination: `?limit=` (default 50, max 200) and `?cursor=`. Response `{ "items": [...], "next_cursor": string|null }`. Cursors are opaque, HMAC-signed, bound to the endpoint and sort; tampered or reused on another endpoint/sort → 400 `cursor_invalid`. No page numbers, no total counts (use dedicated `…/count` endpoints where a screen needs a number). |
 | API-31 | Sort: `?sort=field` or `?sort=-field` from an endpoint-specific allow-list, always with `id` as a final tiebreaker so order is total. Unknown sort → 422 `sort_invalid`. |
 | API-32 | Filters are explicit query parameters per endpoint (documented in OpenAPI); unknown query parameters → 422 `query_param_unknown`. Dates in filters are account-local `YYYY-MM-DD`; instants are RFC 3339. |
 
@@ -85,7 +85,7 @@ All non-2xx responses are `application/problem+json`:
 
 | ID | Rule |
 |---|---|
-| API-70 | Clients send `Idempotency-Key: <uuid>` on every `POST` that creates or commands, and on `DELETE`. The server stores `(account, key)` with a hash of method+path+body and the response for 24 h. |
+| API-70 | Clients send `Idempotency-Key: <uuid>` on every `POST` that creates or commands, and on `DELETE`. The server stores `(account, key)` with a hash of method+path+body and the response for `api.idempotency.ttl`. |
 | API-71 | Same key + same request → the stored response is replayed with header `Idempotency-Replayed: true` (also for error responses that are deterministic; **not** for 5xx or 429, which are never stored). Same key + different request → 422 `idempotency_key_reuse`. Same key while the first is in flight → 409 `idempotency_in_progress` (client retries after `Retry-After: 1`). |
 | API-72 | Idempotency keys are bound to the account; a key valid for one account is irrelevant to another. |
 | API-73 | Offline operations use `operation_id` in the sync envelope instead (`modules/sync.md`); both mechanisms may not be mixed on one request. |

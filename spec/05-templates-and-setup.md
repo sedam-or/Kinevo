@@ -57,7 +57,7 @@ The wizard runs at `/setup` while `instance.setup_completed=false`. All other ro
 | SET-02 | Finish is atomic: any failure leaves `setup_completed=false` and no account, modules or policies applied. | Fault-injection test (kill the transaction at each statement). |
 | SET-03 | Finish is idempotent per wizard session: a double-click or retry with the same `Idempotency-Key` returns the same result; a second finish after success returns 409 `setup_already_completed`. | Test. |
 | SET-04 | The setup token is 128 bits, shown once in the server log (and via `kinevo admin setup-token` for operators), never stored in plaintext (hash only) and invalid after completion. | Test + log scan test (token never appears after first print). |
-| SET-05 | Wizard state is server-side; reloading the browser resumes the same step. Abandoned wizard state expires after `setup.session.ttl` (instance bootstrap config, default 24 h). | Test. |
+| SET-05 | Wizard state is server-side; reloading the browser resumes the same step. Abandoned wizard state expires after `KINEVO_SETUP_SESSION_TTL` (bootstrap environment variable, default 24 h). | Test. |
 | SET-06 | For `docker run` demo use, `KINEVO_SETUP_EMAIL` and `KINEVO_SETUP_PASSWORD_FILE` may pre-create the first account non-interactively; this path still records the audit event and still requires module/template choice via `KINEVO_SETUP_TEMPLATE` (default `personal`). | Test. |
 
 ## 4. After setup

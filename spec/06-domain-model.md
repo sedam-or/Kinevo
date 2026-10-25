@@ -452,7 +452,7 @@ CREATE TABLE progress_events (
   id uuid PRIMARY KEY,
   account_id uuid NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   source_event_id uuid NOT NULL,                  -- outbox event id; idempotency key
-  kind text NOT NULL CHECK (kind IN ('task_completed','task_partial','milestone_done','goal_achieved','session_completed')),
+  kind text NOT NULL CHECK (kind IN ('task_completed','task_partial','task_reopened','milestone_done','goal_achieved','session_completed')),
   workspace_id uuid, goal_id uuid, milestone_id uuid, task_id uuid,
   minutes int, occurred_at timestamptz NOT NULL, local_date date NOT NULL,
   UNIQUE (account_id, source_event_id, kind)
@@ -598,7 +598,7 @@ account 1─* ai_proposal(goal) ; account 1─0..1 subscription 1─* invoice
 | DOM-21 | At most one non-terminal anchor task per account. | domain + partial unique index |
 | DOM-22 | At most one *current* assignment per task; current assignments of an account never overlap in time. | scheduler domain + exclusion constraint |
 | DOM-23 | At most one running focus session per account. | domain + partial unique index |
-| DOM-24 | A task is `completed` iff `completed_at` is set; terminal statuses (`completed`, `skipped`) have no outgoing transitions. | domain + CHECK |
+| DOM-24 | A task is `completed` iff `completed_at` is set; terminal statuses (`completed`, `skipped`) only transition to `backlog` (user reopen, D-36). | domain + CHECK |
 | DOM-25 | Exactly one default workspace per account; it cannot be archived. | domain + partial unique index |
 | DOM-26 | Policy versions and audit rows are never updated or deleted by application roles. | grants + trigger |
 | DOM-27 | `landscape_events.kind='recurring'` iff `rrule` present; end after start. | domain + CHECK |
