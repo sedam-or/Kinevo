@@ -98,6 +98,8 @@ Each module exports one `const MODULE: ModuleDescriptor` (key, display-name mess
 | Synchronous command to another module | Port trait (explicit, rare) | `ai` accepting a proposal calls `CreateMilestonesPort` + `CreateTasksPort` |
 | Reaction to something that happened | Domain event through the **outbox** | `execution` emits `TaskCompleted`; `progress` and `scheduler` subscribe |
 
+**Platform ports (D-41).** `PolicyReader`, `ModuleSwitches`, `InstanceState` and `SecretStore` live in `kinevo-ports` and are implemented by `admin`; `AccountProvisioner` (MOD-10) and `AccountExporter` (MOD-11) are implemented by any module that owns per-account data. The platform tables `audit_log`, `jobs`, `outbox_*` and `idempotency_keys` are reached only through `kinevo-db` APIs.
+
 **Outbox (ARCH-10).** A use case inserts event rows into `outbox_events` in the same transaction as the state change. A dispatcher job reads undelivered rows `FOR UPDATE SKIP LOCKED` in id order per account, calls each subscriber, and marks delivery per `(event_id, subscriber)` in `outbox_deliveries`. Delivery is **at-least-once**; every subscriber **must be idempotent** keyed by `event_id`. Failed deliveries retry with the backoff policy `jobs.retry.*` (`04-policies.md`) and then park as `dead` with an audit entry; an admin can retry them.
 
 **Disabled module behaviour (ARCH-11).** A disabled module registers no routes, jobs or subscribers. Its events are still recorded in the outbox with no subscriber from that module. Its tables and data are **retained** (not dropped) and become visible again when the module is re-enabled. Migrations for every compiled module always run, regardless of the switch.

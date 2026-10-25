@@ -1,8 +1,8 @@
 # Module `admin`
 
 Kind: core. Depends on: `identity`. Tables: `instance_settings`, `instance_modules`, `policy_versions`,
-`secrets`, `audit_log`, `jobs`, `outbox_events`, `outbox_deliveries`, `idempotency_keys` (shared platform
-tables, `06-domain-model.md` §3). Prefix: `ADM`. Cross-spec: `03-module-system.md`, `04-policies.md`, `05-templates-and-setup.md`.
+`secrets` (`06-domain-model.md` §3). Reads the platform tables (`audit_log`, `jobs`, `outbox_*`, `idempotency_keys`) only through `kinevo-db` APIs (D-41).
+Implements the platform ports `PolicyReader`, `ModuleSwitches`, `InstanceState` and `SecretStore` (D-41). Prefix: `ADM`. Cross-spec: `03-module-system.md`, `04-policies.md`, `05-templates-and-setup.md`.
 
 ## 1. Permissions
 

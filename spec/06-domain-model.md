@@ -22,10 +22,10 @@ only that module's repositories touch it (CA-04).
 
 ## 2. Extensions, roles and RLS
 
-Migration files, numbering and ordering: D-40. Each file below names its block (`kinevo-db` 0001…, `identity` 0100…, `admin` 0200…).
+Migration files and ordering: CA-18 and D-40 (timestamp prefix, one global order; `kinevo-db` files use module name `platform`).
 
 ```sql
--- migration 0001 (runs as kinevo_migrator)
+-- first platform migration (runs as kinevo_migrator)
 CREATE EXTENSION IF NOT EXISTS citext;
 CREATE EXTENSION IF NOT EXISTS btree_gist;   -- no-overlap constraint on assignments
 
@@ -67,6 +67,8 @@ Contexts and the reasons for each grant: ADR-0011. The auth tables (`accounts`, 
 `kinevo_app` grants: DML on every tenant table (RLS applies); SELECT on `instance_settings`, `instance_modules`, `invites`, and UPDATE/INSERT on them only through admin-context repositories (ADR-0011); INSERT only on `jobs`, `outbox_events`, `outbox_deliveries`; SELECT and INSERT on `audit_log`, never UPDATE/DELETE. `audit_log` RLS: `USING (account_id = <current> OR current_setting('app.instance_admin', true) = 'on')` (owners read their own entries, admins read all) and `WITH CHECK (account_id IS NULL OR account_id = <current>)` (instance events have no subject account). `jobs`, `outbox_events` and `outbox_deliveries` have no RLS (ids and enums only, DOM-09).
 
 ## 3. Instance and platform tables
+
+Ownership (D-41): `instance_settings`, `instance_modules`, `policy_versions`, `secrets` → `admin`; `audit_log`, `outbox_events`, `outbox_deliveries`, `jobs`, `idempotency_keys` → `platform` (`kinevo-db`).
 
 ```sql
 CREATE TABLE instance_settings (

@@ -47,6 +47,7 @@ Every module provides exactly one descriptor with these fields:
 | `settings_panels` | Admin/user settings sections | Served likewise |
 | `message_namespaces` | i18n namespaces | Must exist in `en` and `id` catalogues |
 | `provisioners` | `AccountProvisioner` implementations that create the module's per-account rows | Run inside the account-creation transaction (MOD-10) |
+| `exporters` | `AccountExporter` implementations that contribute the module's sections to `export_v1` | Called by the export job (MOD-11) |
 
 ## 3. Requirements
 
@@ -62,6 +63,7 @@ Every module provides exactly one descriptor with these fields:
 | MOD-08 | A test fails if a descriptor references a permission key, policy key or message key that does not exist in the registries (`standards/rbac.md`, `04-policies.md`, `standards/ux-states.md`). | Unit test over registries. |
 | MOD-09 | Clients (web, Android) must tolerate an unknown module key in `GET /api/v1/modules` by ignoring it (forward compatibility). | Contract test. |
 | MOD-10 | Account creation (register, setup Finish, `KINEVO_SETUP_*` pre-creation) runs every compiled module's `AccountProvisioner` in module dependency order inside the same transaction as the `accounts` insert (ADR-0011), whether or not a toggleable module is enabled (so re-enabling it later finds its rows). In 1.0: `workspaces` creates the default workspace (WS-FR-01) and `scheduler` creates the `schedule_states` row. A provisioner failure rolls back the whole account creation. | Test: a failing fake provisioner leaves no `accounts` row; a new account has exactly one default workspace and one schedule state. |
+| MOD-11 | The account export job (ID-FR-12) builds `data.json` from every compiled module's `AccountExporter` (each returns its named sections of `export_v1`, e.g. `workspaces[]`), whether or not a toggleable module is enabled. A section name may be claimed by one exporter only (startup check). | Test: two fake exporters → both sections present; duplicate section name → startup error. |
 
 ## 4. Enable/disable decision table
 

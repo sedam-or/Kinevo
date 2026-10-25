@@ -17,7 +17,7 @@ This file fixes **mechanics and parameters**; values that operators may change a
 
 | Token | Format | Lifetime | Storage (client) | Storage (server) |
 |---|---|---|---|---|
-| Access | Compact signed token (JWS, EdDSA/Ed25519 or HS256 per ADR-0007) with claims `sub, sid, jti, iat, exp, mfa` and header `kid` | `auth.access_token.ttl` (600 s) | JS memory only (web, Android) | none (stateless) — verified by signature; revocation = TTL + family revocation checks on refresh |
+| Access | Compact signed token (JWS, HS256 per ADR-0007) with claims `sub, sid, jti, iat, exp, mfa` and header `kid` | `auth.access_token.ttl` (600 s) | JS memory only (web, Android) | none (stateless) — verified by signature; revocation = TTL + family revocation checks on refresh |
 | Refresh | 256-bit random opaque value | idle `auth.refresh_token.idle_ttl`, absolute `auth.refresh_token.absolute_ttl` | web: cookie `__Secure-kinevo_rt` (HttpOnly, Secure, SameSite=Strict, Path=/api/v1/auth); Android: Keystore-backed encrypted storage (D-37) | `refresh_tokens.token_hash` (SHA-256) |
 
 Signing keys derive from `KINEVO_SECRET_KEY` via HKDF-SHA256 with distinct `info` labels (`kinevo/jwt/v1`, `kinevo/cursor/v1`, `kinevo/secrets/v1`, `kinevo/csrf/v1`); a `kid` identifies the derivation version to allow rotation with an overlap window of one access-token TTL.
