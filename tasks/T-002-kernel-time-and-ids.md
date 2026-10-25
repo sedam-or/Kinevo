@@ -3,12 +3,12 @@ id: T-002
 title: Add Clock, IdGen, TokenGen, typed ids, Instant and TimeRange to the kernel
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-001]
 requirements: [ARCH-05, ARCH-25, D-17, DOM-01, DOM-03, CQ-06, CQ-07, CQ-18, SEC-23]
 branch: m1-t002-kernel-time-ids
 budget_lines: 400
-assignee: ""
+assignee: "codex"
 ---
 
 # T-002: Add Clock, IdGen, TokenGen, typed ids, Instant and TimeRange to the kernel
