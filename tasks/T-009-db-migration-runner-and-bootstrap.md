@@ -3,7 +3,7 @@ id: T-009
 title: Add the multi-crate migration runner and the role bootstrap SQL to kinevo-db
 milestone: M1
 kind: feature
-status: todo
+status: blocked
 depends_on: [T-001, T-003]
 requirements: [CA-18, D-40, D-44, ARCH-21, DOM-04, TST-18, SEC-06]
 branch: m1-t009-db-migration-runner
@@ -118,8 +118,54 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Implementation is blocked pending resolution of the task's role-credential conflict with D-50 and clarification of how SQLx executes the psql-variable bootstrap script. No implementation code was started.
+
+### Acceptance results
+
+| Criterion | Named test | Result |
+|---|---|---|
+| AC-1 | `migrate::tests::ca_18_global_order_by_timestamp` | not run (blocked by bootstrap contract conflicts) |
+| AC-2 | `migrate::tests::duplicate_versions_rejected` | not run (blocked before implementation) |
+| AC-3 | `migrate::tests::d_40_file_module_matches_source` | not run (blocked before implementation) |
+| AC-4 | `migrate::tests::out_of_order_rejected` | not run (blocked before implementation) |
+| AC-5 | `tests/migrate::platform_extensions_apply_once` | not run (blocked before implementation) |
+| AC-6 | `tests/migrate::ca_18_checksum_change_detected` | not run (blocked before implementation) |
+| AC-7 | `tests/migrate::arch_21_roles_are_unprivileged_and_idempotent` | not run (blocked before implementation) |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md`; 0 problems in 132 tasks. |
+| `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks. |
+
+### Files changed
+
+This task file and generated `tasks/index.md` only. No implementation code was changed.
+
+### Deviations
+
+None. The task is blocked on the decision conflicts described in Q-1 and Q-2.
+
+### Spec issues noticed
+
+The task asks for separate `BootstrapPasswords`, while D-50 says passwords are embedded in the migrator/app/system database URLs and no separate password variables exist. The psql-variable SQL file also lacks an execution contract compatible with the specified SQLx function.
+
+### Environment-limited
+
+None.
+
+### Not done / not verified
+
+No T-009 acceptance criteria were run because the task's bootstrap credential and execution contracts conflict with the accepted architecture.
 
 ## Questions
 
-_None yet._
+- Q-1 (implementer, 2026-10-26): T-009's `bootstrap::run(admin_url, passwords: Secret<…> ×3, database_name)` and `bootstrap_roles(admin_url, pw: BootstrapPasswords)` require separate role passwords. `spec/decisions.md` D-50 says the bootstrap command uses `KINEVO_BOOTSTRAP_DATABASE_URL` and role passwords embedded in the migrator/app/system database URLs, and explicitly says no separate password variables exist.
+  Options: (a) revise the task interfaces to accept the bootstrap and role database URLs, following D-50; (b) supersede D-50 with a new decision allowing separate password values.
+  Recommendation: (a), because D-50 is already an accepted decision.
+- Q-2 (implementer, 2026-10-26): `roles.sql` must use psql `:'variable'` substitutions, but the task says an async SQLx function executes it. SQLx sends SQL to PostgreSQL and does not perform psql variable substitution; no psql runtime dependency or safe invocation contract is specified.
+  Options: (a) define a SQLx-native, parameter-safe bootstrap executor and clarify that the psql script is for operators; (b) specify a psql runtime invocation and a secret-safe way to pass variables from Rust.
+  Recommendation: (a), because it keeps role creation on the existing SQLx path without adding an external runtime requirement.
