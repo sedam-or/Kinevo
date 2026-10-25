@@ -183,7 +183,7 @@ No application code was written. T-001 is blocked because AC-2's crate-qualified
 
 ### Files changed
 
-Pending the generated index and final branch diff stat; only this task file and `tasks/index.md` are expected to change.
+Stack-parent diff (`git diff --numstat origin/m1-tasks...HEAD`): `tasks/T-001-cargo-workspace-and-just.md` → 60 added / 4 removed; `tasks/index.md` → 2 added / 2 removed. No application files changed.
 
 ### Deviations
 
