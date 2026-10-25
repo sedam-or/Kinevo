@@ -1,48 +1,19 @@
-# Kinevo — repository-level ignores
-
-# Bootstrap helper state
-.bootstrap-state/
-.aider*
-
-# Secrets — never commit
-**/.env
-**/.env.*
-!**/.env.example
-*.key
+# Build output
+/target/
+/web/node_modules/
+/web/dist/
+/android/.gradle/
+/android/app/build/
+# Local env and secrets
+.env
+.env.*
+!.env.example
 *.pem
-*.crt
-
-# Editor / IDE
+*.key
+# Editors / OS
+.DS_Store
 .idea/
 .vscode/
-*.swp
-*.swo
-
-# OS junk
-.DS_Store
-Thumbs.db
-
-# Logs / temp
-*.log
-*.tmp
-
-# PHP / Composer artifacts
-server/vendor/
-server/.phpunit.result.cache
-server/.phpunit.cache/
-
-# Node
-/node_modules/
-server/node_modules/
-server/public/build/
-
-# Third-party agent skills (installed locally, not vendored in git)
-.agents/skills/
+# Agent-local state
 .claude/
-skills-lock.json
-ui-ux-pro-max-skill/
-storage/backups/*.sql.gz
-
-# P29: raw Stitch design export — LOCAL REFERENCE ONLY (122MB, unclassified provenance).
-# Never bulk-commit; approved assets may be copied to canonical locations later (P29 §57/P31).
-stitch_kinevo_personal_operating_system/
+.agents/
