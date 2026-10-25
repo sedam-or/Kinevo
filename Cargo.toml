@@ -1,0 +1,44 @@
+[workspace]
+resolver = "3"
+members = [
+  "crates/kinevo-kernel",
+  "crates/kinevo-ports",
+  "crates/kinevo-db",
+  "crates/kinevo-http",
+  "crates/kinevo-app",
+  "crates/kinevo-mod-identity",
+  "crates/kinevo-mod-admin",
+]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+license = "AGPL-3.0-only"
+repository = "https://github.com/sedam-or/Kinevo"
+
+[workspace.dependencies]
+clap = { version = "4.6.7", features = ["derive"] }
+kinevo-kernel = { path = "crates/kinevo-kernel" }
+kinevo-ports = { path = "crates/kinevo-ports" }
+kinevo-db = { path = "crates/kinevo-db" }
+kinevo-http = { path = "crates/kinevo-http" }
+kinevo-mod-identity = { path = "crates/kinevo-mod-identity" }
+kinevo-mod-admin = { path = "crates/kinevo-mod-admin" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+unwrap_used = "deny"
+expect_used = "deny"
+indexing_slicing = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+float_arithmetic = "deny"
+disallowed_methods = "deny"
+disallowed_types = "deny"

@@ -1,0 +1,13 @@
+[package]
+name = "kinevo-http"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+kinevo-kernel.workspace = true
+kinevo-ports.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,23 @@
+[package]
+name = "kinevo-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+default-run = "kinevo"
+
+[[bin]]
+name = "kinevo"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+kinevo-kernel.workspace = true
+kinevo-ports.workspace = true
+kinevo-db.workspace = true
+kinevo-http.workspace = true
+kinevo-mod-identity.workspace = true
+kinevo-mod-admin.workspace = true
+
+[lints]
+workspace = true
