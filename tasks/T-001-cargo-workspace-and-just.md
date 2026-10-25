@@ -3,12 +3,12 @@ id: T-001
 title: Create the Cargo workspace, toolchain pins and the just entry point
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: []
 requirements: [D-29, D-38, ARCH-01, CQ-01, CQ-02, CQ-03, CQ-04, CQ-07, CQ-08, CQ-16, SEC-13]
 branch: m1-t001-cargo-workspace
 budget_lines: 350
-assignee: ""
+assignee: "codex"
 ---
 
 # T-001: Create the Cargo workspace, toolchain pins and the just entry point
