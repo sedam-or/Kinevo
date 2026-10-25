@@ -22,6 +22,8 @@ only that module's repositories touch it (CA-04).
 
 ## 2. Extensions, roles and RLS
 
+Migration files, numbering and ordering: D-40. Each file below names its block (`kinevo-db` 0001…, `identity` 0100…, `admin` 0200…).
+
 ```sql
 -- migration 0001 (runs as kinevo_migrator)
 CREATE EXTENSION IF NOT EXISTS citext;
@@ -30,7 +32,7 @@ CREATE EXTENSION IF NOT EXISTS btree_gist;   -- no-overlap constraint on assignm
 -- roles (created by `kinevo migrate --bootstrap` or documented SQL; passwords from env, never in SQL files)
 --   kinevo_migrator : owns all objects, NOSUPERUSER, NOBYPASSRLS
 --   kinevo_app      : NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE; DML on tables; no DDL
---   kinevo_system   : NOSUPERUSER NOBYPASSRLS; DML only on the tables listed in §2.2
+--   kinevo_system   : NOSUPERUSER NOBYPASSRLS; DML only on the tables listed in §2.2 (ADR-0011)
 
 -- helper applied to every tenant table T (generated in each module migration)
 ALTER TABLE T ENABLE ROW LEVEL SECURITY;
@@ -50,13 +52,19 @@ CREATE POLICY tenant_isolation ON T
 
 ### 2.2 System role (`kinevo_system`) grants
 
+Contexts and the reasons for each grant: ADR-0011. The auth tables (`accounts`, `refresh_token_families`, `refresh_tokens`) additionally carry `CREATE POLICY system_auth ON <table> TO kinevo_system USING (true) WITH CHECK (true)`; no other tenant table has a system policy.
+
 | Table | Privileges | Why |
 |---|---|---|
-| `accounts` | SELECT by email, INSERT, UPDATE of lockout/login columns | login lookup, registration, lockout |
-| `refresh_tokens`, `refresh_token_families` | SELECT, UPDATE | rotation before the account is known |
-| `jobs`, `outbox_events`, `outbox_deliveries` | SELECT, UPDATE | worker claim/dispatch across accounts |
-| `instance_settings`, `instance_modules`, `policy_versions`, `invites`, `audit_log` | SELECT, INSERT (audit: insert only) | instance maintenance |
-| every tenant table | **none** | the worker switches to the account's context (`Tx::begin(account_id)` as `kinevo_app`) for tenant work |
+| `accounts` | SELECT, INSERT, UPDATE (via `system_auth`) | login lookup by email, lockout counters, `KINEVO_SETUP_*` pre-check |
+| `refresh_token_families`, `refresh_tokens` | SELECT, INSERT, UPDATE (via `system_auth`) | login issues the first token; rotation before the account context is known |
+| `outbox_events` | SELECT, INSERT | login/refresh events; dispatch |
+| `jobs`, `outbox_deliveries` | SELECT, INSERT, UPDATE | worker claim/dispatch across accounts; tick materialisation |
+| `audit_log` | INSERT | login/refresh/maintenance audit |
+| `instance_settings`, `instance_modules`, `policy_versions`, `invites` | SELECT | module switches and instance policies for the worker; invite check |
+| every other tenant table | **none** | the worker switches to the account's context (`Tx::begin(account_id)` as `kinevo_app`) for tenant work |
+
+`kinevo_app` grants: DML on every tenant table (RLS applies); SELECT on `instance_settings`, `instance_modules`, `invites`, and UPDATE/INSERT on them only through admin-context repositories (ADR-0011); INSERT only on `jobs`, `outbox_events`, `outbox_deliveries`; SELECT and INSERT on `audit_log`, never UPDATE/DELETE. `audit_log` RLS: `USING (account_id = <current> OR current_setting('app.instance_admin', true) = 'on')` (owners read their own entries, admins read all) and `WITH CHECK (account_id IS NULL OR account_id = <current>)` (instance events have no subject account). `jobs`, `outbox_events` and `outbox_deliveries` have no RLS (ids and enums only, DOM-09).
 
 ## 3. Instance and platform tables
 
@@ -94,12 +102,13 @@ CREATE TABLE policy_versions (
 );
 CREATE INDEX policy_versions_lookup ON policy_versions (key, scope, account_id, effective_from DESC, id DESC);
 -- RLS: instance rows readable by all accounts (non-secret); account rows only by their account.
---   USING (account_id IS NULL OR account_id = <current>) ; WITH CHECK (account_id = <current>)  [instance writes via kinevo_system]
+--   USING (account_id IS NULL OR account_id = <current>)
+--   WITH CHECK (account_id = <current> OR (account_id IS NULL AND current_setting('app.instance_admin', true) = 'on'))  [ADR-0011]
 
 CREATE TABLE secrets (
   id          uuid PRIMARY KEY,
   account_id  uuid REFERENCES accounts(id) ON DELETE CASCADE,   -- null = instance secret
-  name        text NOT NULL,                                     -- e.g. 'ai.api_key', 'billing.gateway_key', 'smtp.password'
+  name        text NOT NULL,                                     -- registered names only (modules/admin.md §2); e.g. 'ai.api_key', 'identity.totp_seed'
   ciphertext  bytea NOT NULL,
   nonce       bytea NOT NULL,
   key_id      smallint NOT NULL,                                 -- which master key encrypted it
@@ -190,8 +199,7 @@ CREATE TABLE accounts (
   week_start         smallint NOT NULL DEFAULT 1 CHECK (week_start BETWEEN 1 AND 7),  -- ISO weekday
   is_instance_admin  boolean NOT NULL DEFAULT false,
   status             text NOT NULL DEFAULT 'active' CONSTRAINT account_status_ck CHECK (status IN ('active','disabled','deleting')),
-  totp_secret_id     uuid REFERENCES secrets(id) ON DELETE SET NULL,
-  totp_enabled       boolean NOT NULL DEFAULT false,
+  totp_enabled       boolean NOT NULL DEFAULT false,                -- seed: secret 'identity.totp_seed' via SecretStore (D-40)
   failed_login_count int NOT NULL DEFAULT 0,
   failed_window_start timestamptz,
   locked_until       timestamptz,
@@ -199,7 +207,8 @@ CREATE TABLE accounts (
   updated_at         timestamptz NOT NULL DEFAULT now(),
   version            bigint NOT NULL DEFAULT 1
 );
--- RLS on accounts: USING (id = <current account>). Login/registration use the system role.
+-- RLS on accounts: tenant_isolation uses id (not account_id): USING/WITH CHECK (id = <current account>).
+--   Registration inserts in the new account's own context (ADR-0011); login lookup uses the system_auth policy.
 
 CREATE TABLE refresh_token_families (
   id                   uuid PRIMARY KEY,
@@ -485,7 +494,7 @@ CREATE TABLE ai_account_providers (               -- BYOK, optional
   account_id uuid PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
   kind text NOT NULL CHECK (kind IN ('openai_compatible','ollama')),
   base_url text NOT NULL, model text NOT NULL,
-  api_key_secret_id uuid REFERENCES secrets(id) ON DELETE SET NULL,
+  -- API key: account secret 'ai.api_key' via SecretStore (D-40); no FK to secrets
   updated_at timestamptz NOT NULL, version bigint NOT NULL DEFAULT 1
 );
 CREATE TABLE ai_proposals (

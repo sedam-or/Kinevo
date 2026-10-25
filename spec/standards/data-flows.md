@@ -2,12 +2,12 @@
 
 Multi-step behaviour end to end: who writes what, in which transaction, which event follows, what happens on failure. Each flow is implemented by one use case; its transaction boundary is normative (CA-08). Detailed field-level behaviour is in the module spec named in the last column.
 
-Legend: **TX** = one database transaction in the account context (`Tx::begin(account)`), **SYS** = system context, **OUT** = outbound call (never inside a TX), **EV** = outbox event written in the same TX, **JOB** = background job.
+Legend: **TX** = one database transaction in the account context (`Tx::begin(account)`), **ADMIN-TX** = admin context (`Tx::begin_admin`), **PROV-TX** = account-provisioning transaction (`kinevo_app` in the new account's context, all `AccountProvisioner`s, ADR-0011), **SYS** = system context (`SystemTx`), **OUT** = outbound call (never inside a TX), **EV** = outbox event written in the same TX, **JOB** = background job.
 
 | ID | Flow | Steps | Failure handling | Spec |
 |---|---|---|---|---|
-| FLW-01 | Finish setup | SYS-TX: lock `instance_settings` → apply modules, policies, create first account + default workspace + schedule state + refresh family → audit → EV `InstanceSetupCompleted` → COMMIT → respond | any error ⇒ rollback; wizard session intact; idempotent retry | `admin.md` §4 |
-| FLW-02 | Register | SYS-TX: check mode/invite → insert account (+ default workspace, schedule state) → family/token → audit → EV `AccountRegistered` | duplicate email ⇒ 409; nothing persisted | `identity.md` |
+| FLW-01 | Finish setup | PROV-TX in admin context: lock `instance_settings` → apply modules, policies, create first account → provisioners (default workspace, schedule state) → refresh family → audit → EV `InstanceSetupCompleted` → COMMIT → respond | any error ⇒ rollback; wizard session intact; idempotent retry | `admin.md` §4 |
+| FLW-02 | Register | PROV-TX: check mode/invite → insert account → provisioners (default workspace, schedule state) → family/token → audit → EV `AccountRegistered` | duplicate email ⇒ 409; nothing persisted | `identity.md` |
 | FLW-03 | Login | rate-limit → SYS read account → constant-work verify → SYS-TX: counters, family/token, audit, EV | wrong ⇒ counter/lock; transient DB error ⇒ 503 | `identity.md` §5 |
 | FLW-04 | Refresh | SYS-TX: lock token + family → rotate or grace/reuse decision → audit on reuse | reuse ⇒ family revoked | `auth.md` §3 |
 | FLW-05 | Create/update task | TX: validate refs (goal, milestone, workspace) → insert/update (version check) → recompute `progress_pct` if needed → EV `TaskCreated`/`TaskUpdated`/`TaskSchedulingInputsChanged` | constraint violations mapped to registry codes | `tasks.md` |

@@ -1,6 +1,6 @@
 # Module `billing` (Kinevo Cloud)
 
-Kind: toggleable (default **off**; cloud template turns it on after OWNER-01/02 are answered). Depends on: `identity`. Tables: `subscriptions`, `invoices`, `billing_webhook_events`, `secrets` (shared). Prefix: `BIL`.
+Kind: toggleable (default **off**; cloud template turns it on after OWNER-01/02 are answered). Depends on: `identity`. Tables: `subscriptions`, `invoices`, `billing_webhook_events`; secrets through the `SecretStore` port (D-40). Prefix: `BIL`.
 Principle (D-25, D-26): billing exists only to fund the hosted service. **A self-hosted instance has every feature with no limits**; this module is off there and `EntitlementPort` answers "unlimited". The module is provider-neutral: it talks to payment providers only through the `PaymentGateway` port. Choosing the first adapter is an owner decision (OWNER-04); the legacy gateway was Midtrans (`legacy-v0:server/app/Infrastructure/Billing/MidtransGateway.php`) and its design (signed idempotent webhooks, Kinevo-owned subscription state) is kept.
 
 ## 1. Open owner decisions (nothing here is guessed)

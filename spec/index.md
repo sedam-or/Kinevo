@@ -86,6 +86,7 @@ Each file depends only on files above it (its header says `Depends on:`).
 | [0008](adr/0008-module-toggles-not-plugins.md) | "Drag and drop" = module toggles, not a plugin API | D-01 |
 | [0009](adr/0009-postgres-queue-and-outbox.md) | PostgreSQL as job queue and outbox; no Redis | D-13 |
 | [0010](adr/0010-planning-window-and-pure-scheduler.md) | Pure scheduler crate, daily planning window, server authority | D-22, D-33 |
+| [0011](adr/0011-database-contexts-and-account-provisioning.md) | Database contexts, role-scoped RLS policies, account provisioning | D-39 |
 
 A new ADR is numbered next in sequence, starts as `Proposed`, and becomes `Accepted` only through the decision log. Accepted ADRs are never edited except to mark them `Superseded by ADR-NNNN`.
 

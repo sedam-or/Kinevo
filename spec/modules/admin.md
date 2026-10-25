@@ -40,7 +40,7 @@ tables, `06-domain-model.md` §3). Prefix: `ADM`. Cross-spec: `03-module-system.
 | `GET /admin/secrets` | same | `[{ name, is_set, last4 }]` (never values) | — |
 | `DELETE /admin/secrets/{name}` | same | 204 | `not_found` |
 
-Allowed instance secret names: `smtp.password`, `ai.api_key`, `billing.gateway_key`, `billing.webhook_secret`. Account-scoped secrets (BYOK key, TOTP seed) are managed by their own modules.
+**Secret name registry** (D-40). Instance secrets (`account_id` null, managed by these endpoints): `smtp.password`, `ai.api_key`, `billing.gateway_key`, `billing.webhook_secret`. Account secrets (managed by their owning module through the `SecretStore` port in `kinevo-ports`, which this module implements): `identity.totp_seed` (identity), `ai.api_key` (ai, BYOK). Any other name → `secret_name_unknown`. `SecretStore` offers `put`, `get` (returns a redacting `Secret<String>`), `delete` and `mask` (`is_set`, `last4`) and encrypts as in ADM-FR-06.
 
 ## 3. Functional requirements
 
@@ -59,12 +59,13 @@ Allowed instance secret names: `smtp.password`, `ai.api_key`, `billing.gateway_k
 ## 4. Data flow — Finish setup (transaction boundary)
 
 ```
-BEGIN (system context)
+BEGIN (provisioning transaction, admin context: kinevo_app, app.account_id = new account id, app.instance_admin = on; ADR-0011)
   lock instance_settings row FOR UPDATE; if setup_completed → ROLLBACK 409
   apply module switches (upsert instance_modules, validate graph)
   insert policy_versions (instance scope) for template + wizard values
   create first account (hash password; is_instance_admin = true)
-  create default workspace, schedule_states row, first refresh family + token
+  run every AccountProvisioner (MOD-10): default workspace, schedule_states row
+  create first refresh family + token
   insert account-scope policy_versions from template (acct defaults)
   set instance_settings: setup_completed=true, setup_token_hash=NULL, template_id, base_url, default_locale
   insert audit_log(setup.completed) ; insert outbox(InstanceSetupCompleted)

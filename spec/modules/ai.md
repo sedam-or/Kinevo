@@ -1,6 +1,6 @@
 # Module `ai` (goal breakdown)
 
-Kind: toggleable (default **off**). Depends on: `goals`, `tasks`. Tables: `ai_account_providers`, `ai_proposals`, `ai_runs`, `secrets` (shared). Prefix: `AI`.
+Kind: toggleable (default **off**). Depends on: `goals`, `tasks`. Tables: `ai_account_providers`, `ai_proposals`, `ai_runs`; secrets through the `SecretStore` port (D-40). Prefix: `AI`.
 Principle (D-31): **AI proposes; the user decides.** Output is untrusted input:
 `user intent → provider → structured response → schema validation → domain validation → human approval → transaction`.
 AI never changes the schedule and never calls tools or APIs.
@@ -60,7 +60,7 @@ HTTP client rules: timeout `ai.request.timeout`; redirects disabled; response bo
 | AI-FR-08 | **Limits.** Per account: `ratelimit.ai_per_minute`, `ai.runs.per_day` (null = unlimited), and, when `billing` is enabled, the plan's monthly allowance via `EntitlementPort`. Failed provider calls (timeout, 5xx) do **not** consume the daily/monthly run count; successful provider responses that fail validation **do** (the provider was used). | Tests. |
 | AI-FR-09 | **Metering without content.** `ai_runs` stores kind, model, status, error code, input/output character counts, latency, `prompt_version` — never prompt or output text. Logs obey SEC-04. | Scan test over logs/DB for the test prompt text. |
 | AI-FR-10 | **Degradation.** With `ai` disabled or unconfigured, no AI UI is shown except an explanatory "AI is not set up" state with a link to settings (admin) or a note (user). Core flows are unaffected. | Module-matrix test; UI test. |
-| AI-FR-11 | **Secrets.** API keys are stored via `secrets` (AEAD), shown masked, never returned, never logged, and sent only to the configured host over TLS (or loopback http for Ollama). | Tests; SEC-AC-30. |
+| AI-FR-11 | **Secrets.** API keys are stored as the account secret `ai.api_key` through the `SecretStore` port (AEAD, D-40), shown masked, never returned, never logged, and sent only to the configured host over TLS (or loopback http for Ollama). | Tests; SEC-AC-30. |
 | AI-FR-12 | **Expiry.** Pending proposals expire after `ai.proposal.ttl` (job `ai.proposals.expire`); decided or expired proposals are deleted after `ai.proposal.retention` (job `ai.proposals.prune`). | Job tests. |
 | AI-FR-13 | **Idempotency.** Creating a proposal with a repeated `Idempotency-Key` returns the stored proposal without calling the provider again; accepting twice returns the same ids. | Tests. |
 

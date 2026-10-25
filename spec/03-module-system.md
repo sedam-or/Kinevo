@@ -46,6 +46,7 @@ Every module provides exactly one descriptor with these fields:
 | `nav` | Navigation items (key, label key, route, order, required permission) | Served by `GET /api/v1/modules` |
 | `settings_panels` | Admin/user settings sections | Served likewise |
 | `message_namespaces` | i18n namespaces | Must exist in `en` and `id` catalogues |
+| `provisioners` | `AccountProvisioner` implementations that create the module's per-account rows | Run inside the account-creation transaction (MOD-10) |
 
 ## 3. Requirements
 
@@ -60,6 +61,7 @@ Every module provides exactly one descriptor with these fields:
 | MOD-07 | Core flows (journey J1) must pass with every toggleable module disabled; each toggleable module's own journey must pass with all others disabled except its `requires`. | CI matrix job `module-matrix` (`12-testing.md` TST-07). |
 | MOD-08 | A test fails if a descriptor references a permission key, policy key or message key that does not exist in the registries (`standards/rbac.md`, `04-policies.md`, `standards/ux-states.md`). | Unit test over registries. |
 | MOD-09 | Clients (web, Android) must tolerate an unknown module key in `GET /api/v1/modules` by ignoring it (forward compatibility). | Contract test. |
+| MOD-10 | Account creation (register, setup Finish, `KINEVO_SETUP_*` pre-creation) runs every compiled module's `AccountProvisioner` in module dependency order inside the same transaction as the `accounts` insert (ADR-0011), whether or not a toggleable module is enabled (so re-enabling it later finds its rows). In 1.0: `workspaces` creates the default workspace (WS-FR-01) and `scheduler` creates the `schedule_states` row. A provisioner failure rolls back the whole account creation. | Test: a failing fake provisioner leaves no `accounts` row; a new account has exactly one default workspace and one schedule state. |
 
 ## 4. Enable/disable decision table
 

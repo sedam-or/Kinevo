@@ -25,7 +25,7 @@ and the single schedule span all workspaces (the "many projects, one life" job, 
 
 | ID | Requirement | Acceptance |
 |---|---|---|
-| WS-FR-01 | Every account has exactly one default workspace created with the account (name from message key `workspace.default_name`, locale of the account). It cannot be archived or deleted; it may be renamed. | Test; DOM-25. |
+| WS-FR-01 | Every account has exactly one default workspace created with the account by this module's `AccountProvisioner` (MOD-10; name from message key `workspace.default_name`, locale of the account). It cannot be archived or deleted; it may be renamed. | Test; DOM-25. |
 | WS-FR-02 | Names are unique among non-archived workspaces of an account, case-insensitively. | Duplicate → 409 `workspace_name_taken`. |
 | WS-FR-03 | Archiving hides the workspace from default lists and from pickers; its goals/tasks remain, and scheduled tasks **keep their assignments** (the schedule is account-wide). Archived workspaces are read-only: creating goals/tasks/notes in them → 409 `workspace_archived`. | Test. |
 | WS-FR-04 | Delete is allowed only for an empty workspace (no goals, tasks, notes, canvases). | Non-empty → 409 `workspace_not_empty` with counts. |
