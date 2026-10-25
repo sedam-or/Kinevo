@@ -461,6 +461,7 @@ dependencies = [
  "base64",
  "chacha20poly1305",
  "hkdf",
+ "hmac",
  "jiff",
  "regex",
  "serde",

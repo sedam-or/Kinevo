@@ -11,6 +11,7 @@ testing = []
 [dependencies]
 base64 = "0.23.1"
 chacha20poly1305 = "0.11.0"
+hmac = "0.13.0"
 hkdf = "0.13.0"
 jiff = { version = "0.2.38", default-features = false, features = ["std"] }
 serde = { version = "1.0.229", features = ["derive"] }
