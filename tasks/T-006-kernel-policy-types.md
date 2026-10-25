@@ -3,7 +3,7 @@ id: T-006
 title: Add policy types, typed keys and resolution to the kernel
 milestone: M1
 kind: feature
-status: todo
+status: blocked
 depends_on: [T-002, T-003]
 requirements: [POL-01, POL-03, POL-04, POL-06, POL-07, POL-08, CQ-05]
 branch: m1-t006-kernel-policy-types
@@ -125,8 +125,51 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Implementation is blocked pending clarification of the JSON policy value and schema-validation interface. No implementation code was started.
+
+### Acceptance results
+
+| Criterion | Named test | Result |
+|---|---|---|
+| AC-1 | `policy::resolve::tests::pol_resolution_account_over_instance` | not run (blocked by JSON policy interface) |
+| AC-2 | `policy::resolve::tests::scope_not_allowed_is_ignored` | not run (blocked before implementation) |
+| AC-3 | `policy::resolve::tests::pol_08_out_of_bounds_falls_back` | not run (blocked before implementation) |
+| AC-4 | `policy::tests::pol_04_effective_rules` | not run (blocked before implementation) |
+| AC-5 | `policy::tests::pol_03_validate_each_type` | not run (blocked by JSON policy interface) |
+| AC-6 | `policy_registry::pol_01_registry_matches_spec` | not run (blocked before implementation) |
+| AC-7 | `policy::resolve::tests::pol_06_snapshot_replay_is_stable` | not run (blocked before implementation) |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md`; 0 problems in 132 tasks. |
+| `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks. |
+
+### Files changed
+
+This task file and generated `tasks/index.md` only. No implementation code was changed.
+
+### Deviations
+
+None. The task is blocked on the interface gap described in Q-1.
+
+### Spec issues noticed
+
+The spec's `json` policy type requires a registered schema, but the task does not define how the schema name resolves to a validator or how a validated JSON value is represented by `PolicyValue`.
+
+### Environment-limited
+
+None.
+
+### Not done / not verified
+
+No T-006 acceptance criteria were run because the task's JSON policy interface must be clarified first.
 
 ## Questions
 
-_None yet._
+- Q-1 (implementer, 2026-10-26): `spec/04-policies.md` §1 includes schema-backed `json` policies. This task also declares `PolicyType::Json { schema }` and AC-5 requires validation for every type, but the specified `PolicyValue` enum has no JSON variant and no schema registry/validator interface is defined. A `Text` value would not be a typed JSON counterpart.
+  Options: (a) add a JSON value variant and define the schema registry/validation path for T-006; (b) defer JSON policy support and remove it from this task's type/acceptance scope, then add it with the first JSON policy key.
+  Recommendation: (a), because the task explicitly includes JSON in its policy type model and the spec requires schema validation.
