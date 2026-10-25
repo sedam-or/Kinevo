@@ -12,6 +12,8 @@
     )
 )]
 
+pub mod crypto;
 pub mod errors;
 pub mod id;
+pub mod secret;
 pub mod time;

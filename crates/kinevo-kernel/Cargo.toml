@@ -9,8 +9,14 @@ repository.workspace = true
 testing = []
 
 [dependencies]
+base64 = "0.23.1"
+chacha20poly1305 = "0.11.0"
+hkdf = "0.13.0"
 jiff = { version = "0.2.38", default-features = false, features = ["std"] }
 serde = { version = "1.0.229", features = ["derive"] }
+sha2 = "0.11.1"
+subtle = "2.6.1"
+zeroize = { version = "1.9.1", features = ["alloc"] }
 
 [dependencies.thiserror]
 version = "2.0.21"
