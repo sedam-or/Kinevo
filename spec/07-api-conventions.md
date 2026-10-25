@@ -22,7 +22,7 @@ the contract of record for field-level shapes; this file fixes the rules that ev
 | ID | Rule |
 |---|---|
 | API-10 | Authenticated endpoints require `Authorization: Bearer <access_token>`. Missing/invalid/expired → 401 `unauthenticated` with `WWW-Authenticate: Bearer`. |
-| API-11 | The refresh token lives only in cookie `__Host-kinevo_rt` (`HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`). `POST /auth/refresh` and `/auth/logout` additionally require header `X-Kinevo-Client: web|android` and a matching `Origin` (CSRF defence in depth, SEC-09). The Android shell stores its refresh token in the same cookie jar of the WebView; no other storage. |
+| API-11 | The refresh token lives only in cookie `__Host-kinevo_rt` (`HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`). `POST /auth/refresh` and `/auth/logout` additionally require header `X-Kinevo-Client: web|android` and a matching `Origin` (CSRF defence in depth, SEC-09). The Android shell (`X-Kinevo-Client: android`) instead receives and sends the refresh token in the JSON body and stores it in Keystore-backed encrypted storage (D-37, `standards/auth.md` §Android). |
 | API-12 | Access tokens are opaque-to-the-client, signed tokens whose claims are `sub` (account id), `exp`, `iat`, `jti`, `sid` (family id), `mfa` (bool). Claims never include email, role names or permissions; permissions are loaded server-side (cached, `standards/containers-and-caching.md`). |
 | API-13 | Every response carries `X-Request-Id` (echoed from the request if it is a valid UUID, else generated). |
 

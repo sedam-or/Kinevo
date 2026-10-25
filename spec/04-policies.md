@@ -106,6 +106,13 @@ default, safe and **ratifiable by the owner** (a change is a one-line edit here 
 | `sync.request.max_bytes` | int 16 KiB–4 MiB | 524288 | inst | L same | |
 | `ai.provider.kind` | enum `disabled`,`openai_compatible`,`ollama` | disabled | inst | L `config/ai.php` | |
 | `ai.allow_user_keys` | bool | true | inst | A | BYOK. |
+| `ai.provider.base_url` | text (https URL; http allowed only for loopback) | `http://localhost:11434` for kind `ollama`, `https://api.openai.com/v1` for `openai_compatible` | inst | L `config/ai.php` | Instance provider endpoint (admin-trusted; private hosts allowed). |
+| `ai.provider.model` | text 1–100 | `llama3.1` (ollama) / `gpt-4o-mini` (openai_compatible) | inst | L same | |
+| `ai.byok.allow_private_hosts` | bool | false | inst | A | If false, per-account provider URLs must resolve to public addresses (SSRF defence, SEC-15). |
+| `ai.proposal.ttl` | duration 1 h–30 d | 604800 | inst | A | Pending proposals expire. |
+| `ai.proposal.retention` | duration 1 d–365 d | 2592000 | inst | A | Decided/expired proposals are deleted after this. |
+| `ai.breakdown.max_milestones` | int 1–30 | 12 | inst | A | Output schema bound. |
+| `ai.breakdown.max_tasks_per_milestone` | int 1–30 | 15 | inst | A | Output schema bound. |
 | `ai.request.timeout` | duration 5–300 | 30 | inst | L `config/ai.php` | |
 | `ai.prompt.max_chars` | int 500–100000 | 8000 | inst | L same | |
 | `ai.output.max_tokens` | int 100–32000, nullable | null | inst | L same (nullable) | |

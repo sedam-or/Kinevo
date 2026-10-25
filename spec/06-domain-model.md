@@ -452,7 +452,7 @@ CREATE TABLE progress_events (
   id uuid PRIMARY KEY,
   account_id uuid NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   source_event_id uuid NOT NULL,                  -- outbox event id; idempotency key
-  kind text NOT NULL CHECK (kind IN ('task_completed','task_partial','task_reopened','milestone_done','goal_achieved','session_completed')),
+  kind text NOT NULL CHECK (kind IN ('task_completed','task_partial','task_missed','task_reopened','milestone_done','goal_achieved','session_completed')),
   workspace_id uuid, goal_id uuid, milestone_id uuid, task_id uuid,
   minutes int, occurred_at timestamptz NOT NULL, local_date date NOT NULL,
   UNIQUE (account_id, source_event_id, kind)

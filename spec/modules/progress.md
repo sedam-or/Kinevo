@@ -19,7 +19,7 @@ Answers "what moved?" with **facts**, not scores. No streaks, points or badges (
 
 | ID | Requirement | Acceptance |
 |---|---|---|
-| PRG-FR-01 | `progress_events` are written by this module as an outbox **subscriber** of `TaskCompleted`, `TaskReopened`, `TaskStatusChanged(partial)`, `MilestoneStatusChanged(done)`, `GoalStatusChanged(achieved)`, `SessionCompleted`. Each event carries `source_event_id`; the unique key `(account_id, source_event_id, kind)` makes replays no-ops. | Replay test: deliver each event twice ⇒ one row. |
+| PRG-FR-01 | `progress_events` are written by this module as an outbox **subscriber** of `TaskCompleted`, `TaskReopened`, `TaskStatusChanged(partial|missed)`, `MilestoneStatusChanged(done)`, `GoalStatusChanged(achieved)`, `SessionCompleted`. Each event carries `source_event_id`; the unique key `(account_id, source_event_id, kind)` makes replays no-ops. | Replay test: deliver each event twice ⇒ one row. |
 | PRG-FR-02 | `local_date` is computed from `occurred_at` in the account timezone **at the time of the event** (stored, not recomputed), so changing timezone later does not rewrite history. | Test. |
 | PRG-FR-03 | `tasks_completed` for a day = (`task_completed` events that day) − (`task_reopened` events that day), clamped at ≥ 0, so an undo on the same day cancels the completion. A reopen on a later day reduces that later day (history is not rewritten). | Table test. |
 | PRG-FR-04 | `focus_minutes` for a day = sum over `session_completed` events of whole minutes `floor((ended_at − started_at)/60 s)` carried in the event payload. | Test. |
