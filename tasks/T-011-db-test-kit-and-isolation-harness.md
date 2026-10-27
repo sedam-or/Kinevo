@@ -3,12 +3,12 @@ id: T-011
 title: Add the PostgreSQL test kit and the generated tenant-isolation harness
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-010]
 requirements: [TST-02, TST-06, TST-18, SEC-AC-01, SEC-AC-02, SEC-06, CQ-18]
 branch: m1-t011-db-test-kit
 budget_lines: 400
-assignee: ""
+assignee: Codex
 ---
 
 # T-011: Add the PostgreSQL test kit and the generated tenant-isolation harness
