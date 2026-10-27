@@ -1,6 +1,6 @@
 //! Shared, injected HTTP application state.
 
-use crate::i18n::Catalog;
+use crate::{gate::Gate, i18n::Catalog};
 use async_trait::async_trait;
 use kinevo_kernel::{
     id::{IdGen, TokenGen},
@@ -33,6 +33,8 @@ impl std::error::Error for ReadyFailure {}
 /// Dependencies shared by HTTP routes and middleware.
 #[derive(Clone)]
 pub struct HttpState {
+    /// Authentication, module, and permission gate installed by `RouteTable`.
+    pub gate: Arc<Gate>,
     /// Injected application clock.
     pub clock: Arc<dyn Clock>,
     /// Injected UUID source.
@@ -67,8 +69,10 @@ impl HttpState {
         public_url: Option<HttpsUrl>,
         cursor: Arc<CursorCodec>,
         max_body_bytes: usize,
+        gate: Arc<Gate>,
     ) -> Self {
         Self {
+            gate,
             clock,
             ids,
             tokens,

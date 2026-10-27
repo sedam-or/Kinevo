@@ -1,8 +1,14 @@
 //! Route metadata and assembly for the versioned API.
 
-use crate::{layers::request_context, problem::panic_response, state::HttpState};
+use crate::{
+    gate::{GateBuildError, GateRequestState, gate_request},
+    layers::request_context,
+    problem::panic_response,
+    state::HttpState,
+};
 use axum::http::Method;
 use axum::{Router, routing::MethodRouter};
+use std::sync::Arc;
 use tower_http::catch_panic::CatchPanicLayer;
 
 /// Whether a route is public or requires a registered permission key.
@@ -59,6 +65,8 @@ pub struct RouteSpec {
     pub idempotency: IdemMode,
     /// Human-readable `OpenAPI` summary.
     pub summary: &'static str,
+    /// Allows a disabled or deleting account through this route (only `GET /instance`).
+    pub allow_disabled: bool,
 }
 
 /// A router paired with the descriptors used to build it.
@@ -92,15 +100,25 @@ impl RouteTable {
         &self.specs
     }
 
-    /// Builds the complete router with request context and panic handling.
-    pub fn into_router(self, state: HttpState) -> Router {
-        self.router
+    /// Builds the complete router after validating route permissions and module ownership.
+    pub fn into_router(self, state: HttpState) -> Result<Router, GateBuildError> {
+        state.gate.validate_routes(&self.specs)?;
+        let gate_state = GateRequestState {
+            state: state.clone(),
+            specs: Arc::new(self.specs),
+        };
+        Ok(self
+            .router
             .layer(CatchPanicLayer::custom(|_| panic_response()))
+            .layer(axum::middleware::from_fn_with_state(
+                gate_state,
+                gate_request,
+            ))
             .layer(axum::middleware::from_fn_with_state(
                 state.clone(),
                 request_context,
             ))
-            .with_state(state)
+            .with_state(state))
     }
 }
 
@@ -110,7 +128,7 @@ impl Default for RouteTable {
     }
 }
 
-fn route_path(path: &str) -> String {
+pub(crate) fn route_path(path: &str) -> String {
     if matches!(path, "/livez" | "/readyz") || path.starts_with("/api/v1/") {
         return path.to_owned();
     }

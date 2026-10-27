@@ -3,7 +3,7 @@ id: T-017
 title: Add access-token verification, AuthCtx, and the setup, module and permission gates
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-016]
 requirements: [API-10, API-12, API-23, AUTH-02, RBAC-01, RBAC-02, RBAC-03, SEC-05, SEC-07, ADM-FR-01, MOD-04, MOD-08, ADR-0007]
 branch: m1-t017-http-auth-gates
@@ -125,8 +125,59 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+- **Summary.** Implemented HS256 access-token verification, server-derived `AuthCtx`, a bounded account authorization cache, descriptor-backed permission validation, and setup/auth/module/permission gates installed by `RouteTable`. Account roles come from `AccountAccess`; token claims cannot elevate privileges, and expiry uses the injected clock.
+- **Acceptance results.**
+
+  | Criterion | Test | Result |
+  |---|---|---|
+  | AC-1 | `token::tests::auth_02_verification_matrix` | pass |
+  | AC-2 | `token::tests::auth_02_skew_boundaries` | pass |
+  | AC-3 | `gates::api_10_missing_or_bad_bearer` | pass |
+  | AC-4 | `gates::rbac_disabled_account_blocked_except_instance` | pass |
+  | AC-5 | `gates::mod_04_module_gate_after_auth` | pass |
+  | AC-6 | `gates::rbac_02_role_matrix_generated` | pass |
+  | AC-7 | `gates::adm_fr_01_setup_gate_table` | pass |
+  | AC-8 | `rbac::tests::mod_08_unknown_permission_fails` | pass |
+  | AC-9 | `gates::api_12_claims_cannot_elevate` | pass |
+  | AC-10 | `auth::tests::cac_1_cache_invalidation_and_equivalence` | pass |
+  | AC-11 | `gates::sec_05_tenant_only_from_context` | pass |
+
+- **Commands run.**
+
+  | Command | Exit | Result |
+  |---|---:|---|
+  | `cargo fmt --all` | 0 | formatted |
+  | `cargo check -p kinevo-http` | 0 | passed after fixing middleware `Send` and cache API issues |
+  | `cargo nextest run -p kinevo-http` | 0 | 27 passed, 0 skipped |
+  | `just check` | 0 | lint passed; workspace 94 passed, 0 skipped; cargo-deny passed; spec check 0 findings/60 files; contrast 0 failures; task index 0 problems/132 tasks |
+  | `python3 scripts/tasks_index.py` | 0 | regenerated `tasks/index.md` |
+  | `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks |
+
+  Earlier iterations exited nonzero while implementing: cargo check/nextest exposed missing wiring and test fixture issues; `just check` first caught clippy findings, then cargo-deny advisory findings from jsonwebtoken's `rust_crypto` provider. Those were corrected; the final commands above pass. Final cargo-deny output includes duplicate-version and unused-license-allowance warnings; clippy emits the existing `clippy.toml` warning for `rand::thread_rng`.
+- **Files changed.**
+
+  | Path | Change |
+  |---|---|
+  | `crates/kinevo-http/Cargo.toml` | +3 / -0 |
+  | `crates/kinevo-http/src/token.rs` | +190 / -0 |
+  | `crates/kinevo-http/src/auth.rs` | +147 / -0 |
+  | `crates/kinevo-http/src/rbac.rs` | +102 / -0 |
+  | `crates/kinevo-http/src/gate.rs` | +337 / -0 |
+  | `crates/kinevo-http/src/lib.rs` | +4 / -0 |
+  | `crates/kinevo-http/src/route.rs` | +24 / -6 |
+  | `crates/kinevo-http/src/state.rs` | +5 / -1 |
+  | `crates/kinevo-http/src/system_routes.rs` | +3 / -0 |
+  | `crates/kinevo-http/tests/gates.rs` | +834 / -0 |
+  | `crates/kinevo-http/tests/http_core.rs` | +99 / -5 |
+  | `Cargo.lock` | +208 / -6 (generated; excluded from budget) |
+  | `tasks/T-017-http-auth-and-gates.md` | +54 / -3 |
+  | `tasks/index.md` | +2 / -2 (generated) |
+- **Deviations.** The AC-5 fixture uses valid module key `demo`; `x` does not satisfy `ModuleKey` grammar. Expiry is checked against the supplied `now` with 30-second leeway because jsonwebtoken's built-in `validate_exp` reads process time, which bypasses the injected clock. `jsonwebtoken` uses its explicit `aws_lc_rs` provider; `rust_crypto` caused cargo-deny advisory failures. Minimal wiring also changed `lib.rs`, `state.rs`, `system_routes.rs`, and `tests/http_core.rs`; `Cargo.lock` was generated for the approved dependencies. Excluding the generated lockfile, this task changes 1,821 lines against the 450-line guide; the acceptance coverage and required gate wiring account for the overage.
+- **Spec issues noticed.** AC-5 uses module key `x`, but `ModuleKey` requires a longer valid key. The task also asks for library `validate_exp` while requiring the injected clock.
+- **Not done / not verified.** No environment-limited items; no acceptance checks were skipped. Live database-backed account lookup is outside this task; acceptance uses the T-008 fakes as specified.
+- **Follow-up suggestions.** Architect review of Q-1 and Q-2 below.
 
 ## Questions
 
-_None yet._
+- Q-1: AC-5 gives a one-character example module key `x`, which does not satisfy the `ModuleKey` grammar. Resolved by implementer, pending architect review: use valid synthetic key `demo` while testing the same disabled-module behavior.
+- Q-2: The task asks for jsonwebtoken `validate_exp` while also requiring expiry to use the injected clock. Resolved by implementer, pending architect review: disable the library's process-clock expiry check and apply its 30-second leeway against `verify`'s `now` argument.

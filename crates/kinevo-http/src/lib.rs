@@ -2,13 +2,17 @@
 
 #![forbid(unsafe_code)]
 
+pub mod auth;
 pub mod extract;
+pub mod gate;
 pub mod i18n;
 pub mod layers;
 pub mod problem;
+pub mod rbac;
 pub mod route;
 pub mod state;
 pub mod system_routes;
+pub mod token;
 
 #[cfg(feature = "testing")]
 pub mod testing;

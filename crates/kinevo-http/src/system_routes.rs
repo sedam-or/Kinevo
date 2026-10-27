@@ -36,6 +36,7 @@ pub fn system_routes() -> RouteTable {
                 rate: RateClass::None,
                 idempotency: IdemMode::Off,
                 summary: "Process liveness",
+                allow_disabled: false,
             },
             get(livez),
         )
@@ -48,6 +49,7 @@ pub fn system_routes() -> RouteTable {
                 rate: RateClass::None,
                 idempotency: IdemMode::Off,
                 summary: "Database readiness",
+                allow_disabled: false,
             },
             get(readyz),
         )
@@ -60,6 +62,7 @@ pub fn system_routes() -> RouteTable {
                 rate: RateClass::None,
                 idempotency: IdemMode::Off,
                 summary: "Server time",
+                allow_disabled: false,
             },
             get(time),
         )

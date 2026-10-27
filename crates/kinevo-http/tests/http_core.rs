@@ -7,22 +7,30 @@ mod http_core {
         routing::{get, post},
     };
     use kinevo_http::{
+        auth::AccountCache,
         extract::{SortParam, StrictQuery, Validate, ValidatedJson},
+        gate::{Gate, ModuleKinds},
         i18n::Catalog,
         problem::ApiError,
+        rbac::PermissionTable,
         route::{Access, IdemMode, RateClass, RouteSpec, RouteTable},
         state::{HttpState, ReadyCheck, ReadyFailure},
         system_routes,
+        token::{Claims, FamilyId, KeyRing, TokenCodec},
     };
     use kinevo_kernel::{
         errors::{AppError, DetailValue, ErrorCode, FieldCode},
-        id::{IdGen, TokenGen},
+        id::{AccountId, IdGen, TokenGen},
         page::CursorCodec,
         secret::Secret,
         time::{Clock, Instant},
         validate::{Collector, net::HttpsUrl, tz::Locale},
     };
-    use kinevo_ports::platform::{InstanceInfo, InstanceState};
+    use kinevo_ports::{
+        fakes::{FakeAccountAccess, FakeModuleSwitches},
+        module::{ModuleDescriptor, ModuleKind, PermissionDef},
+        platform::{AccountAccessInfo, AccountStatus, InstanceInfo, InstanceState},
+    };
     use serde::{Deserialize, Serialize};
     use std::{
         error::Error,
@@ -33,6 +41,81 @@ mod http_core {
         },
     };
     use tower::ServiceExt;
+
+    const IDENTITY_PERMISSIONS: &[PermissionDef] = &[PermissionDef {
+        key: "identity.account.read",
+        owner: true,
+    }];
+
+    const fn descriptor(
+        key: &'static str,
+        kind: ModuleKind,
+        permissions: &'static [PermissionDef],
+    ) -> ModuleDescriptor {
+        ModuleDescriptor {
+            key,
+            kind,
+            requires: &[],
+            permissions,
+            policy_keys: &[],
+            nav: &[],
+            settings_panels: &[],
+            message_namespaces: &[],
+            jobs: &[],
+            job_schedules: &[],
+            subscriptions: &[],
+        }
+    }
+
+    const KERNEL_MODULE: ModuleDescriptor = descriptor("kernel", ModuleKind::Core, &[]);
+    const TEST_MODULE: ModuleDescriptor = descriptor("test", ModuleKind::Core, &[]);
+    const IDENTITY_MODULE: ModuleDescriptor =
+        descriptor("identity", ModuleKind::Core, IDENTITY_PERMISSIONS);
+
+    fn gate() -> Result<Arc<Gate>, Box<dyn Error>> {
+        let descriptors = [&KERNEL_MODULE, &TEST_MODULE, &IDENTITY_MODULE];
+        let permissions = Arc::new(PermissionTable::from_descriptors(&descriptors)?);
+        let module_kinds = Arc::new(ModuleKinds::from_descriptors(&descriptors)?);
+        let account_id = AccountId::from_uuid(uuid::Uuid::from_u128(111));
+        let account_access = Arc::new(FakeAccountAccess::default());
+        account_access.insert(AccountAccessInfo {
+            id: account_id,
+            status: AccountStatus::Active,
+            is_instance_admin: false,
+            version: 1,
+        })?;
+        let accounts = Arc::new(AccountCache::new(account_access));
+        let modules = Arc::new(FakeModuleSwitches::default());
+        let ring = KeyRing::new(
+            "current",
+            vec![("current".to_owned(), Secret::new([1; 32]))],
+        )?;
+        let tokens = Arc::new(TokenCodec::new(ring));
+        Ok(Arc::new(Gate::new(
+            tokens,
+            accounts,
+            modules,
+            permissions,
+            module_kinds,
+        )))
+    }
+
+    fn time_token() -> Result<String, Box<dyn Error>> {
+        let now = Instant::parse_rfc3339("2026-10-28T00:00:00Z")?;
+        let ring = KeyRing::new(
+            "current",
+            vec![("current".to_owned(), Secret::new([1; 32]))],
+        )?;
+        let codec = TokenCodec::new(ring);
+        Ok(codec.issue(&Claims {
+            sub: AccountId::from_uuid(uuid::Uuid::from_u128(111)),
+            sid: FamilyId::from_uuid(uuid::Uuid::from_u128(112)),
+            jti: uuid::Uuid::from_u128(113),
+            iat: now,
+            exp: now.checked_add_seconds(600).ok_or("invalid token expiry")?,
+            mfa: false,
+        }))
+    }
 
     struct TestClock(Instant);
 
@@ -100,6 +183,7 @@ mod http_core {
             public_url,
             Arc::new(CursorCodec::new(Secret::new([0; 32]))),
             max_body_bytes,
+            gate()?,
         ))
     }
 
@@ -112,9 +196,14 @@ mod http_core {
             rate: RateClass::None,
             idempotency: IdemMode::Off,
             summary: "test route",
+            allow_disabled: false,
         }
     }
 
+    #[allow(
+        clippy::expect_used,
+        reason = "test route descriptors must validate before the test runs"
+    )]
     fn route(
         state: HttpState,
         method: Method,
@@ -124,6 +213,7 @@ mod http_core {
         RouteTable::new()
             .route(spec(method, path, Access::Public), mr)
             .into_router(state)
+            .expect("static test route validates")
     }
 
     async fn send(
@@ -620,7 +710,7 @@ mod http_core {
             .enable_all()
             .build()?
             .block_on(async {
-                let app = system_routes::system_routes().into_router(state(false, None, 1024)?);
+                let app = system_routes::system_routes().into_router(state(false, None, 1024)?)?;
                 let live = send(
                     app.clone(),
                     Request::builder().uri("/livez").body(Body::empty())?,
@@ -652,10 +742,14 @@ mod http_core {
             .enable_all()
             .build()?
             .block_on(async {
-                let app = system_routes::system_routes().into_router(state(true, None, 1024)?);
+                let app = system_routes::system_routes().into_router(state(true, None, 1024)?)?;
+                let token = time_token()?;
                 let response = send(
                     app,
-                    Request::builder().uri("/api/v1/time").body(Body::empty())?,
+                    Request::builder()
+                        .uri("/api/v1/time")
+                        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                        .body(Body::empty())?,
                 )
                 .await?;
                 let body: serde_json::Value =
