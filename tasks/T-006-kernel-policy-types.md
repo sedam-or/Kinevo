@@ -3,7 +3,7 @@ id: T-006
 title: Add policy types, typed keys and resolution to the kernel
 milestone: M1
 kind: feature
-status: blocked
+status: in_progress
 depends_on: [T-002, T-003]
 requirements: [POL-01, POL-03, POL-04, POL-06, POL-07, POL-08, CQ-05]
 branch: m1-t006-kernel-policy-types
@@ -173,3 +173,4 @@ No T-006 acceptance criteria were run because the task's JSON policy interface m
 - Q-1 (implementer, 2026-10-26): `spec/04-policies.md` §1 includes schema-backed `json` policies. This task also declares `PolicyType::Json { schema }` and AC-5 requires validation for every type, but the specified `PolicyValue` enum has no JSON variant and no schema registry/validator interface is defined. A `Text` value would not be a typed JSON counterpart.
   Options: (a) add a JSON value variant and define the schema registry/validation path for T-006; (b) defer JSON policy support and remove it from this task's type/acceptance scope, then add it with the first JSON policy key.
   Recommendation: (a), because the task explicitly includes JSON in its policy type model and the spec requires schema validation.
+  Resolved (implementer, 2026-10-27): add `PolicyValue::Json(serde_json::Value)` and validate the registered `billing_plans_v1` payload using the field contract in `spec/standards/contracts.md` §1 and §7. The M1 key registry remains limited to M1 keys; no owner plan, price, or currency values are added.
