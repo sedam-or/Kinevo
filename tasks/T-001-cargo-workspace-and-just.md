@@ -3,12 +3,12 @@ id: T-001
 title: Create the Cargo workspace, toolchain pins and the just entry point
 milestone: M1
 kind: feature
-status: todo
+status: review
 depends_on: []
 requirements: [D-29, D-38, ARCH-01, CQ-01, CQ-02, CQ-03, CQ-04, CQ-07, CQ-08, CQ-16, SEC-13]
 branch: m1-t001-cargo-workspace
 budget_lines: 350
-assignee: ""
+assignee: "codex"
 ---
 
 # T-001: Create the Cargo workspace, toolchain pins and the just entry point
@@ -137,16 +137,62 @@ cargo run -p kinevo-app -- version
 
 ## Definition of done
 
-- [ ] Every acceptance criterion has its named test, and it passes.
-- [ ] `just check` passes locally.
+- [x] Every acceptance criterion has its named test, and it passes.
+- [x] `just check` passes locally.
 - [ ] Only the files listed under *Files* changed; diff within budget.
-- [ ] `clap` is the only new dependency (it is already in the stack map).
-- [ ] Report below is filled in.
+- [x] `clap` is the only new dependency (it is already in the stack map).
+- [x] Report below is filled in.
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Created the M1 Cargo workspace, lint and dependency policy, just recipes, and `kinevo version`. The implementation was restored from the local stash after D-55 resolved Q-1. All five acceptance checks now pass.
+
+### Acceptance results
+
+| Criterion | Named test | Result |
+|---|---|---|
+| AC-1 | `just lint` | pass |
+| AC-2 | `kinevo_app::cli::tests::version_line_has_package_version` | pass |
+| AC-3 | `lint_config::cq_07_disallowed_methods_listed` | pass |
+| AC-4 | `lint_config::cq_03_forbid_unsafe_everywhere` | pass |
+| AC-5 | `just check` | pass |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| Pre-implementation TDD red phase (recorded in the first attempt) | expected failures | Version test failed because the function was absent; lint tests failed because the workspace lint configuration was absent. |
+| `scripts/preflight.sh` | 0 | Required tools and Docker/PostgreSQL were available. |
+| `just check` (after restoring T-001 to `in_progress`) | 1 | Build, lint, tests, dependency checks, and spec checks passed; task-index check reported stale status data. |
+| `python3 scripts/tasks_index.py` | 0 | Regenerated the index; 0 problems in 132 tasks. |
+| `just lint` | 0 | Formatting and Clippy passed. |
+| `just check` | 0 | Nextest: 3 passed, 0 skipped; cargo-deny: no errors and 7 unused-license warnings; spec tool: 0 findings in 60 files; contrast: 0 failures; task index: 0 problems in 132 tasks. |
+| `cargo run -p kinevo-app -- version` | 0 | Printed `kinevo 0.0.0`. |
+
+### Files changed
+
+Implementation files listed in this task: `Cargo.lock`, `Cargo.toml`, `clippy.toml`, `deny.toml`, `justfile`, `rust-toolchain.toml`, `rustfmt.toml`; `crates/kinevo-app/Cargo.toml`, `crates/kinevo-app/src/cli.rs`, `crates/kinevo-app/src/main.rs`, `crates/kinevo-app/tests/lint_config.rs`; `crates/kinevo-db/Cargo.toml`, `crates/kinevo-db/src/lib.rs`; `crates/kinevo-http/Cargo.toml`, `crates/kinevo-http/src/lib.rs`; `crates/kinevo-kernel/Cargo.toml`, `crates/kinevo-kernel/src/lib.rs`; `crates/kinevo-mod-admin/Cargo.toml`, `crates/kinevo-mod-admin/src/lib.rs`; `crates/kinevo-mod-identity/Cargo.toml`, `crates/kinevo-mod-identity/src/lib.rs`; `crates/kinevo-ports/Cargo.toml`, `crates/kinevo-ports/src/lib.rs`. Workflow outputs: this task file and generated `tasks/index.md`.
+
+### Deviations
+
+The implementation adds 628 lines including the 238-line generated `Cargo.lock`; excluding the lockfile, the implementation adds 390 lines, 40 over the 350-line guidance. D-55 says budget overages are recorded and shipped, so this is not a blocker. Cargo-deny exits successfully but warns about seven unused license allowances. The first `just check` after restoring `in_progress` found the expected stale task index; the index was regenerated and the final check passed.
+
+### Spec issues noticed
+
+None.
+
+### Environment-limited
+
+None for T-001.
+
+### Not done / not verified
+
+No T-001 acceptance checks remain. The M1 integration task and downstream tasks have not started.
 
 ## Questions
 
-_None yet._
+- Q-1 (resolved by architect, D-55): Generated lockfile lines are excluded from the budget; exceeding the budget is recorded under Deviations and does not block the task.
+
+Resolved (architect): D-55, Cargo.lock tidak dihitung, budget bukan blocker

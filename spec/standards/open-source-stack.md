@@ -21,8 +21,9 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 | Password hashing | **argon2** (RustCrypto) | 0.6.0 ✔ | MIT/Apache-2.0 | RFC 9106, parameters in §4 | CPU/memory DoS ⇒ concurrency cap |
 | Hash/MAC/KDF | **sha2**, **hmac**, **hkdf** | sha2 0.11.1 ✔, hmac 0.13.0 ✔ | MIT/Apache-2.0 | tokens, cursors, HKDF subkeys | — |
 | AEAD | **chacha20poly1305** (XChaCha20-Poly1305) | 0.11.0 ✔ | MIT/Apache-2.0 | secrets at rest, random 24-byte nonce | key management ⇒ SEC-03 |
+| Encoding | **base64** | 0.23.1 ✔ | MIT/Apache-2.0 | master key and opaque token encoding | — |
 | Randomness | **rand_core** `OsRng` / **getrandom** | rand_core 0.10.1 ✔ | MIT/Apache-2.0 | SEC-23 | — |
-| Secret hygiene | **zeroize**, **subtle**; own `Secret<T>` wrapper (the `secrecy` crate 0.10.3 ✔ is acceptable if it meets CQ-10; decide in M1) | resolve in M1 | MIT/Apache-2.0, BSD-3 | zeroise, constant-time compare | — |
+| Secret hygiene | **zeroize**, **subtle**; own `Secret<T>` wrapper (the `secrecy` crate 0.10.3 ✔ is acceptable if it meets CQ-10; own wrapper selected in T-004) | zeroize 1.9.1 ✔, subtle 2.6.1 ✔ | MIT/Apache-2.0, BSD-3 | zeroise, constant-time compare | — |
 | Signed access tokens | **jsonwebtoken** (HS256, ADR-0007) | 11.1.0 ✔ | MIT | single issuer/verifier, no key distribution; EdDSA only if third parties verify (not in 1.0) | alg-confusion ⇒ allow-list algorithm in code |
 | TOTP | **totp-rs** | 6.0.0 ✔ | MIT | RFC 6238 | — |
 | Rate limiting | **governor** (in a tower layer) | 0.10.4 ✔ | MIT | keyed limiter, in-process; `tower_governor` 0.8.0 ✔ not used (less maintained) | single-node only |

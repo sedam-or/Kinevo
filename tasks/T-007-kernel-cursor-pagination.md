@@ -3,12 +3,12 @@ id: T-007
 title: Add signed cursor pagination types to the kernel
 milestone: M1
 kind: feature
-status: todo
+status: review
 depends_on: [T-002, T-003, T-004]
 requirements: [API-30, SEC-23]
 branch: m1-t007-kernel-cursor-pagination
 budget_lines: 250
-assignee: ""
+assignee: "codex"
 ---
 
 # T-007: Add signed cursor pagination types to the kernel
@@ -105,7 +105,55 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Added API-30 cursor signing and verification with typed canonical parts, HMAC-SHA256 binding to endpoint and sort, stable `cursor_invalid` errors, limit validation, and page trimming with a next cursor only when an extra row exists. All five acceptance tests and the text-boundary check pass.
+
+### Acceptance results
+
+| Criterion | Named test | Result |
+|---|---|---|
+| AC-1 | `page::tests::api_30_cursor_round_trip` | pass |
+| AC-2 | `page::tests::api_30_cursor_bound_to_endpoint_and_sort` | pass |
+| AC-3 | `page::tests::api_30_tampered_cursor_rejected` | pass |
+| AC-4 | `page::tests::api_30_limit_bounds` | pass |
+| AC-5 | `page::tests::next_cursor_only_when_more_rows` | pass |
+| Text bound | `page::tests::cursor_text_is_limited_to_200_scalars` | pass |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| Pre-implementation `cargo fmt --all && cargo nextest run -p kinevo-kernel` | 101 (expected red phase) | The named tests failed to compile because the cursor and page types were not implemented yet. |
+| Initial implementation `cargo nextest run -p kinevo-kernel` | 101 (fixed before final run) | HMAC's `KeyInit` trait was missing from imports; imported it and reran successfully. |
+| `cargo fmt --all` | 0 | Formatting completed. |
+| `cargo nextest run -p kinevo-kernel` | 0 | 28 passed, 0 skipped, including all five T-007 acceptance tests. |
+| Initial `just check` | 101 (fixed before final run) | Clippy rejected a guarded integer cast and `assert!(is_empty())`; replaced them with checked conversion and `assert_eq!`. |
+| `just check` | 0 | 31 passed, 0 skipped; format, Clippy, cargo-deny, spec, contrast, and task-index gates passed. Clippy reports the existing unreachable `uuid::Uuid::new_v4` configuration warning; cargo-deny emitted 6 unmatched license-allowance warnings. |
+| `python3 scripts/spec_tool.py check` | 0 | 0 findings in 60 spec files. |
+| `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks. |
+| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md` with T-007 at `review`; 0 problems in 132 tasks. |
+| `git diff --check` | 0 | No whitespace errors. |
+
+### Files changed
+
+`crates/kinevo-kernel/Cargo.toml`, `crates/kinevo-kernel/src/lib.rs`, `crates/kinevo-kernel/src/page.rs`, `Cargo.lock`; this task file and generated `tasks/index.md`.
+
+### Deviations
+
+The implementation changes 367 non-lockfile lines across implementation files, exceeding the 250-line guidance by 117; recorded per D-55. Since `encode` has no error return, an invalid position with a text part above 200 Unicode scalars fails closed as an empty cursor, and `Page::from_rows` omits an empty next cursor. `Cargo.lock` adds 1 line and is excluded per D-55.
+
+### Spec issues noticed
+
+None.
+
+### Environment-limited
+
+None.
+
+### Not done / not verified
+
+No T-007 acceptance criteria remain unverified. HTTP query extraction and SQL keyset predicates are out of scope for this task.
 
 ## Questions
 

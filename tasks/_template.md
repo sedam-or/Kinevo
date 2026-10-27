@@ -7,7 +7,7 @@ status: draft            # draft | todo | in_progress | review | changes_request
 depends_on: []           # task ids, e.g. [T-001, T-002]
 requirements: []         # spec ids this task implements or tests, e.g. [ARCH-22, SEC-AC-01]
 branch: m1-t000-short-slug
-budget_lines: 400        # expected changed lines (code + tests); > 1.5x means block (WORKFLOW.md §3)
+budget_lines: 400        # expected changed lines (code + tests); lockfiles and generated files excluded; overrun is a Report deviation, not a block (D-55)
 assignee: ""
 ---
 

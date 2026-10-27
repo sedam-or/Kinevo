@@ -1,0 +1,11 @@
+disallowed-methods = [
+    "std::time::SystemTime::now",
+    "std::time::Instant::now",
+    "uuid::Uuid::now_v7",
+    "uuid::Uuid::new_v4",
+    "jiff::Timestamp::now",
+    "jiff::Zoned::now",
+    "rand::thread_rng",
+    "rand::random",
+]
+disallowed-types = ["f32", "f64"]

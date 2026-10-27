@@ -3,12 +3,12 @@ id: T-004
 title: Add the redacting Secret type and crypto helpers to the kernel
 milestone: M1
 kind: feature
-status: todo
+status: review
 depends_on: [T-002]
 requirements: [SEC-03, SEC-23, CQ-10, D-19, ADM-FR-06]
 branch: m1-t004-kernel-secrets-crypto
 budget_lines: 380
-assignee: ""
+assignee: "codex"
 ---
 
 # T-004: Add the redacting Secret type and crypto helpers to the kernel
@@ -122,7 +122,59 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Added redacting, zeroizing `Secret<T>`, a validated 32-byte master key, HKDF domain labels, XChaCha20-Poly1305 sealing/opening, SHA-256 token hashing, base64url token encoding, constant-time equality, and D-19 masking. The eight acceptance tests, SEC-03/SEC-23 supporting tests, and compile-fail doctests pass.
+
+### Acceptance results
+
+| Criterion | Named test | Result |
+|---|---|---|
+| AC-1 | `secret::tests::cq_10_debug_is_redacted` | pass |
+| AC-2 | `secret (doctests: compile_fail)` | pass (3 compile-fail doctests) |
+| AC-3 | `crypto::tests::adm_fr_06_random_nonce_per_seal` | pass |
+| AC-4 | `crypto::tests::open_rejects_wrong_aad_and_tamper` | pass |
+| AC-5 | `crypto::tests::hkdf_labels_separate_domains` | pass |
+| AC-6 | `crypto::tests::master_key_length_checked` | pass |
+| AC-7 | `crypto::tests::d_19_mask_last4` | pass |
+| AC-8 | `crypto::tests::token_encoding_round_trip` | pass |
+| SEC-03 zeroization | `secret::tests::sec_03_secret_zeroizes_on_drop` | pass |
+| SEC-23 injected nonce source | `crypto::tests::sec_23_seal_nonce_uses_injected_token_generator` | pass |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| Pre-implementation `cargo nextest run -p kinevo-kernel` | 101 (expected red phase) | Test compilation failed on the not-yet-implemented crypto and secret APIs. |
+| Initial `cargo fmt --all` | 1 (fixed before final run) | Rust rejected inner doctest comments after `use` items; moved module docs before items. |
+| Initial implementation `cargo nextest run -p kinevo-kernel` | 101 (fixed before final run) | Compilation found the same doctest-comment placement plus a test requiring `MasterKey: Debug`; both were corrected. |
+| `cargo fmt --all` | 0 | Formatting completed. |
+| `cargo nextest run -p kinevo-kernel` | 0 | 22 passed, 0 skipped, including all eight T-004 acceptance tests and two requirement-coverage tests. |
+| `cargo test -p kinevo-kernel --doc` | 0 | 3 compile-fail doctests passed. |
+| `just check` | 0 | 25 passed, 0 skipped; format, Clippy, cargo-deny, spec, contrast, and task-index gates passed. Existing Clippy config warning for unreachable `uuid::Uuid::new_v4`; cargo-deny emitted 6 unmatched license-allowance warnings. |
+| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md` with T-004 at `review`; 0 problems in 132 tasks. |
+| `python3 scripts/spec_tool.py check` | 0 | 0 findings in 60 spec files (also run by `just check`). |
+| `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks (also run by `just check`). |
+
+### Files changed
+
+`crates/kinevo-kernel/Cargo.toml`, `crates/kinevo-kernel/src/lib.rs`, `crates/kinevo-kernel/src/secret.rs`, `crates/kinevo-kernel/src/crypto.rs`, `spec/standards/open-source-stack.md`, `Cargo.lock`; this task file and generated `tasks/index.md`.
+
+### Deviations
+
+No technical deviations. The implementation changes 414 non-lockfile lines across the task's implementation files, exceeding the 380-line guidance by 34; D-55 makes the budget advisory, so the complete scoped implementation is retained. `Cargo.lock` adds 210 lines and is excluded per D-55.
+
+### Spec issues noticed
+
+None.
+
+### Environment-limited
+
+None.
+
+### Not done / not verified
+
+No T-004 acceptance criteria remain unverified.
 
 ## Questions
 

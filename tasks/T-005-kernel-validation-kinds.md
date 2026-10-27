@@ -3,7 +3,7 @@ id: T-005
 title: Add validated newtypes and the field-kind validators to the kernel
 milestone: M1
 kind: feature
-status: todo
+status: blocked
 depends_on: [T-003, T-004]
 requirements: [VAL-01, VAL-02, VAL-03, VAL-04, VAL-05, VAL-06, VAL-10, CQ-06, DOM-07, ID-FR-14]
 branch: m1-t005-kernel-validation-kinds
@@ -150,8 +150,52 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Implementation is blocked pending clarification of the fixture scope for `SecretText`. No implementation code was started.
+
+### Acceptance results
+
+| Criterion | Named test | Result |
+|---|---|---|
+| AC-1 | `validation_fixtures::val_fixtures_all_kinds` | not run (blocked by fixture scope conflict) |
+| AC-2 | `validate::text::tests::val_04_counts_scalars` | not run (blocked before implementation) |
+| AC-3 | `validate::text::tests::val_03_zero_width_removed_or_rejected` | not run (blocked before implementation) |
+| AC-4 | `validate::net::tests::dom_07_email_lowercase_nfc` | not run (blocked before implementation) |
+| AC-5 | `validate::net::tests::https_only_except_loopback` | not run (blocked before implementation) |
+| AC-6 | `validate::tz::tests::id_fr_14_timezone_and_locale` | not run (blocked before implementation) |
+| AC-7 | `validate::tests::val_01_collects_all_errors` | not run (blocked before implementation) |
+| AC-8 | `validate::tests::val_05_safe_integer_limit` | not run (blocked before implementation) |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md`; 0 problems in 132 tasks. |
+| `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks. |
+
+### Files changed
+
+This task file and generated `tasks/index.md` only. No implementation code was changed.
+
+### Deviations
+
+None. The task is blocked on the scope conflict described in Q-1.
+
+### Spec issues noticed
+
+`spec/standards/validation.md` §5 requires shared fixtures per field kind, while this task includes `SecretText` but omits the corresponding fixture path from its Files list.
+
+### Environment-limited
+
+None.
+
+### Not done / not verified
+
+No T-005 acceptance criteria were run because the task/spec fixture scope conflict must be resolved first.
 
 ## Questions
 
-_None yet._
+- Q-1 (implementer, 2026-10-26): The task's scope includes `SecretText` and its Context says the fixtures cover the in-scope field kinds. However, `spec/standards/validation.md` §5 requires a fixture for each field kind, while the task's Files list omits `spec/fixtures/validation/secret_text.json`. Adding that fixture would touch a file not listed under Files; omitting it would leave the shared fixtures incomplete for an in-scope kind.
+  Options: (a) add `secret_text.json` to the task's Files and require the shared fixture test to cover it; (b) explicitly exclude `SecretText` from the shared fixtures and clarify how §5's per-kind requirement applies.
+  Recommendation: (a), because it keeps the task's stated scope and the spec's shared-fixture contract aligned.
