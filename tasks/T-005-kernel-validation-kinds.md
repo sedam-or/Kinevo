@@ -73,7 +73,7 @@ Field-kind table (`validation.md` §2), the kinds in scope here:
 | `crates/kinevo-kernel/src/validate/net.rs` | create | `Email`, `HttpsUrl` |
 | `crates/kinevo-kernel/src/validate/tz.rs` | create | `IanaTz`, `Locale` |
 | `crates/kinevo-kernel/tests/validation_fixtures.rs` | create | loads the fixtures |
-| `spec/fixtures/validation/{short_text,email,key,https_url,iana_tz,digits,opaque_token,enum,int}.json` | create | `{ "kind", "params", "valid":[{"input","normalised"}], "invalid":[{"input","code"}] }` |
+| `spec/fixtures/validation/{short_text,secret_text,email,key,https_url,iana_tz,digits,opaque_token,enum,int}.json` | create | `{ "kind", "params", "valid":[{"input","normalised"}], "invalid":[{"input","code"}] }`; `secret_text.json` covers: leading/trailing spaces kept verbatim, 4096 chars valid, empty → `required`, 4097 chars → `too_long` |
 | `spec/standards/open-source-stack.md` | modify | add rows for `unicode-normalization`, `regex`, `url` if missing (CQ-16) |
 
 ## Interfaces

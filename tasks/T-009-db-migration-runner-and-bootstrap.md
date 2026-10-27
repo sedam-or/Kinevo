@@ -35,7 +35,7 @@ assignee: ""
   - `merge(sources) -> Result<Migrator, MigrateError>`: orders all migrations by version, rejects duplicate versions across crates, rejects a file whose module segment does not match the crate's module name (the crate declares it), and rejects a version lower than the highest version already applied (out-of-order).
   - `run(url_migrator, sources) -> Result<Applied, MigrateError>`; `status(pool, sources)` returning applied/pending counts used by `/readyz` (T-016/T-039) and `Applied { count, last_version }`.
   - Checksum verification is sqlx's; add a test that a modified applied file fails (`MigrateError::ChecksumMismatch`).
-- Bootstrap: `crates/kinevo-db/bootstrap/roles.sql` (a psql-style script using `:'migrator_password'`, `:'app_password'`, `:'system_password'` variables; idempotent via `DO` blocks; sets `NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS`; creates no objects) and `bootstrap::run(admin_url, passwords: Secret<…> ×3, database_name)` which executes it (`GRANT CONNECT`, `GRANT CREATE ON SCHEMA public TO kinevo_migrator`, default privileges so tables created by `kinevo_migrator` grant nothing to the other roles automatically; each migration grants explicitly).
+- Bootstrap: `crates/kinevo-db/bootstrap/roles.sql` (a psql-style script using `:'migrator_password'`, `:'app_password'`, `:'system_password'` variables; idempotent via `DO` blocks; sets `NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS`; creates no objects) and `bootstrap::bootstrap_roles(admin_url, creds, database_name)` (D-50, D-56), which is **SQLx-native** and does not run `roles.sql` (the psql script is for operators who bootstrap by hand, `11-operations.md` §1 channel B). Credentials come only from the three role URLs: `RoleCredentials::from_urls(migrator_url, app_url, system_url)` takes each password (percent-decoded) from the URL's userinfo, requires the user names to be exactly `kinevo_migrator`, `kinevo_app`, `kinevo_system`, and returns the database name from the app URL path. There are no separate password variables. Each role is created or altered by a server-side statement built with `format('%I'/'%L')` from bind parameters (`SELECT format('CREATE ROLE %I LOGIN … PASSWORD %L', $1, $2)`, then the returned text is executed; if the role exists, `ALTER ROLE` is used), so Rust never concatenates a password into SQL. It also performs the grants (`GRANT CONNECT`, `GRANT CREATE ON SCHEMA public TO kinevo_migrator`, default privileges so tables created by `kinevo_migrator` grant nothing to the other roles automatically; each migration grants explicitly).
 - First migration: `crates/kinevo-db/migrations/20261101000000_platform_extensions.sql`.
 - `kinevo_db::migrations_source()` returning this crate's `MigrationSource` (`crate_name = "kinevo-db"`, module `platform`).
 
@@ -65,7 +65,9 @@ pub fn merge(sources: &[MigrationSource]) -> Result<sqlx::migrate::Migrator, Mig
 pub async fn run(migrator_url: &Secret<String>, sources: &[MigrationSource]) -> Result<Applied, MigrateError>;
 pub async fn status(pool: &PgPool, sources: &[MigrationSource]) -> Result<MigrationStatus, MigrateError>; // { applied, pending, up_to_date }
 pub enum MigrateError { Duplicate{version}, WrongModule{file,expected}, OutOfOrder{version}, ChecksumMismatch{version}, Db(sqlx::Error) }
-pub async fn bootstrap_roles(admin_url: &Secret<String>, pw: BootstrapPasswords) -> Result<(), BootstrapError>;
+pub struct RoleCredentials { /* three Secret<String> passwords, private */ }
+impl RoleCredentials { pub fn from_urls(migrator: &Secret<String>, app: &Secret<String>, system: &Secret<String>) -> Result<(Self, String /* database name */), BootstrapError>; }
+pub async fn bootstrap_roles(admin_url: &Secret<String>, creds: &RoleCredentials, database_name: &str) -> Result<(), BootstrapError>;
 ```
 
 The `MigrateError` display never prints a connection URL.
@@ -79,7 +81,7 @@ The `MigrateError` display never prints a connection URL.
 
 ## Security
 
-- Passwords reach SQL only as psql variables / bind-safe `ALTER ROLE … PASSWORD` built with `quote_literal` in a `DO` block executed with the values passed as parameters; never string-concatenated by Rust. Passwords are `Secret<String>` and never logged.
+- Passwords reach SQL only as bind parameters of a `SELECT format(… %I … %L …)` evaluated by PostgreSQL; never string-concatenated by Rust. `roles.sql` (operator script) takes psql variables and is not executed by Rust. Passwords are `Secret<String>` and never logged.
 - The script creates roles `NOSUPERUSER NOBYPASSRLS` explicitly (SEC-06).
 - `roles.sql` contains no passwords and no environment-specific database name.
 
@@ -100,6 +102,7 @@ The `MigrateError` display never prints a connection URL.
 | AC-5 | **Given** an empty database and bootstrapped roles **When** `run` executes **Then** `citext` and `btree_gist` exist, `count = 1`, and a second run applies 0 | `tests/migrate::platform_extensions_apply_once` |
 | AC-6 | **Given** an applied migration whose file text is changed **When** `run` executes **Then** `ChecksumMismatch` | `tests/migrate::ca_18_checksum_change_detected` |
 | AC-7 | **Given** bootstrapped roles **When** `pg_roles` is queried **Then** none of the three has `rolsuper`, `rolbypassrls`, `rolcreatedb`, `rolcreaterole`, and bootstrap run twice succeeds | `tests/migrate::arch_21_roles_are_unprivileged_and_idempotent` |
+| AC-8 | **Given** role URLs whose user names are correct, or one wrong **When** `RoleCredentials::from_urls` runs **Then** passwords and the database name are extracted, and a wrong user name or a missing password is an error that never prints the URL | `bootstrap::tests::d_50_credentials_from_urls` |
 
 ## Tests
 
