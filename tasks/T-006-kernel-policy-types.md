@@ -3,7 +3,7 @@ id: T-006
 title: Add policy types, typed keys and resolution to the kernel
 milestone: M1
 kind: feature
-status: in_progress
+status: blocked
 depends_on: [T-002, T-003]
 requirements: [POL-01, POL-03, POL-04, POL-06, POL-07, POL-08, CQ-05]
 branch: m1-t006-kernel-policy-types
@@ -127,38 +127,52 @@ just check
 
 ### Summary
 
-Implementation is blocked pending clarification of the JSON policy value and schema-validation interface. No implementation code was started.
+T-006 is blocked because its Security rule forbids `password` in every key except `auth.password.min_length`, while its required M1 key list includes `auth.password_reset.ttl`. The local implementation candidate is preserved in `stash@{0}`; no implementation code is committed or pushed.
 
 ### Acceptance results
 
 | Criterion | Named test | Result |
 |---|---|---|
-| AC-1 | `policy::resolve::tests::pol_resolution_account_over_instance` | not run (blocked by JSON policy interface) |
-| AC-2 | `policy::resolve::tests::scope_not_allowed_is_ignored` | not run (blocked before implementation) |
-| AC-3 | `policy::resolve::tests::pol_08_out_of_bounds_falls_back` | not run (blocked before implementation) |
-| AC-4 | `policy::tests::pol_04_effective_rules` | not run (blocked before implementation) |
-| AC-5 | `policy::tests::pol_03_validate_each_type` | not run (blocked by JSON policy interface) |
-| AC-6 | `policy_registry::pol_01_registry_matches_spec` | not run (blocked before implementation) |
-| AC-7 | `policy::resolve::tests::pol_06_snapshot_replay_is_stable` | not run (blocked before implementation) |
+| AC-1 | `policy::resolve::tests::pol_resolution_account_over_instance` | pass in local candidate; not committed |
+| AC-2 | `policy::resolve::tests::scope_not_allowed_is_ignored` | pass in local candidate; not committed |
+| AC-3 | `policy::resolve::tests::pol_08_out_of_bounds_falls_back` | pass in local candidate; not committed |
+| AC-4 | `policy::tests::pol_04_effective_rules` | pass in local candidate; not committed |
+| AC-5 | `policy::tests::pol_03_validate_each_type` | pass in local candidate; not committed |
+| AC-6 | `policy_registry::pol_01_registry_matches_spec` | pass in local candidate; not committed |
+| AC-7 | `policy::resolve::tests::pol_06_snapshot_replay_is_stable` | pass in local candidate; not committed |
+| Security | `policy_registry::policy_key_names_exclude_sensitive_segments` | fail: required key `auth.password_reset.ttl` violates the task's key-name rule |
+
+The seven acceptance tests passed before the required Security check was added. The candidate and failing test are held together in `stash@{0}`.
 
 ### Commands run
 
 | Command | Exit | Result |
 |---|---:|---|
-| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md`; 0 problems in 132 tasks. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; scripts/preflight.sh` | 0 | No hard blockers; Docker and PostgreSQL image available. |
+| `cargo fmt --all` | 0 | Formatted the workspace. |
+| `cargo nextest run -p kinevo-kernel` | 0 | 36 passed, 0 skipped on the local candidate before the Security check. |
+| `just check` | 0 | 39 passed, 0 skipped on the local candidate before the Security check; all gates completed. `cargo-deny` reported six existing unmatched license-allowance warnings; clippy reported the existing `uuid::Uuid::new_v4` configuration warning. |
+| `cargo nextest run -p kinevo-kernel --test policy_registry policy_key_names_exclude_sensitive_segments` | 100 | Fails on `auth.password_reset.ttl`, which the task both requires and forbids. |
+| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md` after setting this task to `blocked`. |
 | `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks. |
+| `python3 scripts/spec_tool.py check` | 0 | 0 findings in 60 spec files. |
 
 ### Files changed
 
-This task file and generated `tasks/index.md` only. No implementation code was changed.
+| Path | Lines added | Lines removed |
+|---|---:|---:|
+| `tasks/T-006-kernel-policy-types.md` | 31 | 15 |
+| `tasks/index.md` | 2 | 2 |
+
+Implementation candidate: 1,348 additions and 1 deletion in the local stash; no code changes are on the branch.
 
 ### Deviations
 
-None. The task is blocked on the interface gap described in Q-1.
+The local implementation candidate is 1,349 changed lines, 929 above `budget_lines: 420`; D-55 makes the budget guidance, not a blocker. Its registry uses `Immediate` and `snapshot: false` because the M1 policy table omits those fields. Its `billing_plans_v1` validator checks the required structure and scalar constraints, including the three-uppercase-letter currency shape, but does not verify ISO-4217 registry membership. None of this is the blocking reason.
 
 ### Spec issues noticed
 
-The spec's `json` policy type requires a registered schema, but the task does not define how the schema name resolves to a validator or how a validated JSON value is represented by `PolicyValue`.
+The task's Security rule conflicts with its required M1 key list: `auth.password_reset.ttl` contains `password` but is not the sole permitted exception. The Security test cannot pass while both instructions remain unchanged.
 
 ### Environment-limited
 
@@ -166,11 +180,13 @@ None.
 
 ### Not done / not verified
 
-No T-006 acceptance criteria were run because the task's JSON policy interface must be clarified first.
+No implementation code was committed or pushed. The blocked implementation candidate remains in local `stash@{0}` until Q-2 is resolved; the issue comment and milestone PR updates are pending this block commit.
 
 ## Questions
 
-- Q-1 (implementer, 2026-10-26): `spec/04-policies.md` §1 includes schema-backed `json` policies. This task also declares `PolicyType::Json { schema }` and AC-5 requires validation for every type, but the specified `PolicyValue` enum has no JSON variant and no schema registry/validator interface is defined. A `Text` value would not be a typed JSON counterpart.
+- Q-1 (resolved by implementer, 2026-10-27): `spec/04-policies.md` §1 includes schema-backed `json` policies. This task also declares `PolicyType::Json { schema }` and AC-5 requires validation for every type, but the specified `PolicyValue` enum has no JSON variant and no schema registry/validator interface is defined. A `Text` value would not be a typed JSON counterpart.
   Options: (a) add a JSON value variant and define the schema registry/validation path for T-006; (b) defer JSON policy support and remove it from this task's type/acceptance scope, then add it with the first JSON policy key.
   Recommendation: (a), because the task explicitly includes JSON in its policy type model and the spec requires schema validation.
   Resolved (implementer, 2026-10-27): add `PolicyValue::Json(serde_json::Value)` and validate the registered `billing_plans_v1` payload using the field contract in `spec/standards/contracts.md` §1 and §7. The M1 key registry remains limited to M1 keys; no owner plan, price, or currency values are added.
+- Q-2 (implementer, 2026-10-27): The Security rule requires a test to reject every key containing `password` except `auth.password.min_length`, but the required M1 key list also includes `auth.password_reset.ttl`. The test `policy_registry::policy_key_names_exclude_sensitive_segments` fails on that required key.
+  Options: (a) add `auth.password_reset.ttl` as an explicit exception in the Security rule; (b) remove or rename the M1 policy key and update the spec. Recommendation: (a), because the required key is a TTL policy and does not contain a password value.
