@@ -3,12 +3,12 @@ id: T-009
 title: Add the multi-crate migration runner and the role bootstrap SQL to kinevo-db
 milestone: M1
 kind: feature
-status: blocked
+status: in_progress
 depends_on: [T-001, T-003]
 requirements: [CA-18, D-40, D-44, ARCH-21, DOM-04, TST-18, SEC-06]
 branch: m1-t009-db-migration-runner
 budget_lines: 380
-assignee: ""
+assignee: Codex
 ---
 
 # T-009: Add the multi-crate migration runner and the role bootstrap SQL to kinevo-db
@@ -169,6 +169,8 @@ No T-009 acceptance criteria were run because the task's bootstrap credential an
 - Q-1 (implementer, 2026-10-26): T-009's `bootstrap::run(admin_url, passwords: Secret<…> ×3, database_name)` and `bootstrap_roles(admin_url, pw: BootstrapPasswords)` require separate role passwords. `spec/decisions.md` D-50 says the bootstrap command uses `KINEVO_BOOTSTRAP_DATABASE_URL` and role passwords embedded in the migrator/app/system database URLs, and explicitly says no separate password variables exist.
   Options: (a) revise the task interfaces to accept the bootstrap and role database URLs, following D-50; (b) supersede D-50 with a new decision allowing separate password values.
   Recommendation: (a), because D-50 is already an accepted decision.
+  Resolved (architect): D-56
 - Q-2 (implementer, 2026-10-26): `roles.sql` must use psql `:'variable'` substitutions, but the task says an async SQLx function executes it. SQLx sends SQL to PostgreSQL and does not perform psql variable substitution; no psql runtime dependency or safe invocation contract is specified.
   Options: (a) define a SQLx-native, parameter-safe bootstrap executor and clarify that the psql script is for operators; (b) specify a psql runtime invocation and a secret-safe way to pass variables from Rust.
   Recommendation: (a), because it keeps role creation on the existing SQLx path without adding an external runtime requirement.
+  Resolved (architect): D-56
