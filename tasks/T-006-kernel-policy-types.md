@@ -3,7 +3,7 @@ id: T-006
 title: Add policy types, typed keys and resolution to the kernel
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-002, T-003]
 requirements: [POL-01, POL-03, POL-04, POL-06, POL-07, POL-08, CQ-05]
 branch: m1-t006-kernel-policy-types
@@ -127,52 +127,47 @@ just check
 
 ### Summary
 
-T-006 is blocked because its Security rule forbids `password` in every key except `auth.password.min_length`, while its required M1 key list includes `auth.password_reset.ttl`. The local implementation candidate is preserved in `stash@{0}`; no implementation code is committed or pushed.
+Implemented the typed policy model, validation and bounds checks, effective-dating rules, deterministic resolution, snapshot replay, and M1 key registry. JSON policies use a schema-backed `PolicyValue::Json` path. D-56 allows the required `auth.password_reset.ttl` key in the sensitive-key-name check.
 
 ### Acceptance results
 
 | Criterion | Named test | Result |
 |---|---|---|
-| AC-1 | `policy::resolve::tests::pol_resolution_account_over_instance` | pass in local candidate; not committed |
-| AC-2 | `policy::resolve::tests::scope_not_allowed_is_ignored` | pass in local candidate; not committed |
-| AC-3 | `policy::resolve::tests::pol_08_out_of_bounds_falls_back` | pass in local candidate; not committed |
-| AC-4 | `policy::tests::pol_04_effective_rules` | pass in local candidate; not committed |
-| AC-5 | `policy::tests::pol_03_validate_each_type` | pass in local candidate; not committed |
-| AC-6 | `policy_registry::pol_01_registry_matches_spec` | pass in local candidate; not committed |
-| AC-7 | `policy::resolve::tests::pol_06_snapshot_replay_is_stable` | pass in local candidate; not committed |
-| Security | `policy_registry::policy_key_names_exclude_sensitive_segments` | fail: required key `auth.password_reset.ttl` violates the task's key-name rule |
-
-The seven acceptance tests passed before the required Security check was added. The candidate and failing test are held together in `stash@{0}`.
+| AC-1 | `policy::resolve::tests::pol_resolution_account_over_instance` | PASS |
+| AC-2 | `policy::resolve::tests::scope_not_allowed_is_ignored` | PASS |
+| AC-3 | `policy::resolve::tests::pol_08_out_of_bounds_falls_back` | PASS |
+| AC-4 | `policy::tests::pol_04_effective_rules` | PASS |
+| AC-5 | `policy::tests::pol_03_validate_each_type` | PASS, including schema-backed JSON validation |
+| AC-6 | `policy_registry::pol_01_registry_matches_spec` | PASS |
+| AC-7 | `policy::resolve::tests::pol_06_snapshot_replay_is_stable` | PASS |
+| Security | `policy_registry::policy_key_names_exclude_sensitive_segments` | PASS after applying D-56 exception |
 
 ### Commands run
 
 | Command | Exit | Result |
 |---|---:|---|
-| `export PATH="$HOME/.cargo/bin:$PATH"; scripts/preflight.sh` | 0 | No hard blockers; Docker and PostgreSQL image available. |
-| `cargo fmt --all` | 0 | Formatted the workspace. |
-| `cargo nextest run -p kinevo-kernel` | 0 | 36 passed, 0 skipped on the local candidate before the Security check. |
-| `just check` | 0 | 39 passed, 0 skipped on the local candidate before the Security check; all gates completed. `cargo-deny` reported six existing unmatched license-allowance warnings; clippy reported the existing `uuid::Uuid::new_v4` configuration warning. |
-| `cargo nextest run -p kinevo-kernel --test policy_registry policy_key_names_exclude_sensitive_segments` | 100 | Fails on `auth.password_reset.ttl`, which the task both requires and forbids. |
-| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md` after setting this task to `blocked`. |
-| `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks. |
+| `cargo nextest run -p kinevo-kernel --test policy_registry policy_key_names_exclude_sensitive_segments` (before D-56 exception) | 100 | Failed on the explicitly required `auth.password_reset.ttl` key; after adding the D-56 exception, the same test passed 1/1. |
+| `cargo nextest run -p kinevo-kernel` | 0 | 47 passed, 0 skipped. |
+| `just fmt` | 0 | Workspace formatting completed. |
+| `just check` | 0 | 50 tests passed, 0 skipped; cargo-deny advisories/bans/licenses/sources passed; `spec_tool.py check` reported 0 findings in 60 files; contrast reported 0 failures; task index reported 0 problems in 132 tasks. Existing non-failing clippy config and unused license-allowance warnings remain. |
 | `python3 scripts/spec_tool.py check` | 0 | 0 findings in 60 spec files. |
+| `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks. |
 
 ### Files changed
 
-| Path | Lines added | Lines removed |
-|---|---:|---:|
-| `tasks/T-006-kernel-policy-types.md` | 31 | 15 |
-| `tasks/index.md` | 2 | 2 |
-
-Implementation candidate: 1,348 additions and 1 deletion in the local stash; no code changes are on the branch.
+`crates/kinevo-kernel/Cargo.toml`, `crates/kinevo-kernel/src/lib.rs`, `crates/kinevo-kernel/src/policy/{mod.rs,resolve.rs,registry.rs}`, `crates/kinevo-kernel/tests/policy_registry.rs`, `tasks/T-006-kernel-policy-types.md`, and generated `tasks/index.md`.
 
 ### Deviations
 
-The local implementation candidate is 1,349 changed lines, 929 above `budget_lines: 420`; D-55 makes the budget guidance, not a blocker. Its registry uses `Immediate` and `snapshot: false` because the M1 policy table omits those fields. Its `billing_plans_v1` validator checks the required structure and scalar constraints, including the three-uppercase-letter currency shape, but does not verify ISO-4217 registry membership. None of this is the blocking reason.
+- The change exceeds `budget_lines: 420`; per D-55, the budget is guidance and this is recorded rather than treated as a blocker. `Cargo.lock` is generated and excluded from the budget.
+- Q-1 is resolved by implementer, pending architect review: the spec requires schema-backed JSON policies and the task includes a JSON policy type, so the implementation adds `PolicyValue::Json` and a registry-backed validator.
+- D-56 resolves Q-2 by explicitly permitting `auth.password_reset.ttl` in the sensitive-key-name check.
+- OWNER-01's currency allowlist remains undecided. The `billing_plans_v1` validator checks the three-uppercase-letter currency shape and does not invent an ISO-4217 allowlist or any business prices.
+- During stash recovery, the kernel manifest was reconciled with T-005 dependencies and `serde_json` was promoted to a normal dependency as this task requires.
 
 ### Spec issues noticed
 
-The task's Security rule conflicts with its required M1 key list: `auth.password_reset.ttl` contains `password` but is not the sole permitted exception. The Security test cannot pass while both instructions remain unchanged.
+Q-1's implementation follows the higher-precedence schema-backed JSON policy rule and remains pending architect review. Q-2 is resolved by D-56. OWNER-01 has no currency allowlist, so no membership rule was guessed.
 
 ### Environment-limited
 
@@ -180,7 +175,7 @@ None.
 
 ### Not done / not verified
 
-No implementation code was committed or pushed. The blocked implementation candidate remains in local `stash@{0}` until Q-2 is resolved; the issue comment and milestone PR updates are pending this block commit.
+None for this task. No database behavior is in scope for T-006.
 
 ## Questions
 
