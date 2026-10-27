@@ -14,6 +14,7 @@
 
 pub mod crypto;
 pub mod errors;
+pub mod event;
 pub mod id;
 pub mod page;
 pub mod policy;
