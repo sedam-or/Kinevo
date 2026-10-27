@@ -3,12 +3,12 @@ id: T-010
 title: Add pools, the three transaction contexts, verify_isolation and constraint mapping to kinevo-db
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-009, T-002, T-003, T-004]
 requirements: [ARCH-22, ARCH-24, CA-08, CA-09, SEC-06, ADR-0011, D-39, D-45, D-46, VAL-11, ERR-05, CQ-11]
 branch: m1-t010-db-tx-contexts
 budget_lines: 420
-assignee: ""
+assignee: Codex
 ---
 
 # T-010: Add pools, the three transaction contexts, verify_isolation and constraint mapping to kinevo-db
