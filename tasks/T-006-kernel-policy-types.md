@@ -85,7 +85,7 @@ impl PolicyKey<i64> { pub fn get(&self, r: &dyn Fn(&str) -> Resolved) -> i64; } 
 
 ## Security
 
-- `PolicySpec.secret` does not exist: a policy can never be a secret (POL-01). A test lists the key names and fails if any contains `secret`, `password` (other than `auth.password.min_length`), `token` (other than TTL keys) or `key` as a trailing segment.
+- `PolicySpec.secret` does not exist: a policy can never be a secret (POL-01). A test lists the key names and fails if any contains `secret`, `password` (other than `auth.password.min_length` and `auth.password_reset.ttl`), `token` (other than TTL keys) or `key` as a trailing segment.
 - Errors carry bounds and enum literals only, never the submitted value (ERR-03).
 
 ## Implementation notes

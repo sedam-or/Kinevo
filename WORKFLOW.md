@@ -47,9 +47,9 @@ The status lives in the task file's front matter (`status:`). `tasks/index.md` i
 
 **Block when any of these is true:**
 
-- the task and the spec disagree, or two spec files disagree;
+- the task and the spec disagree, or two spec files disagree, **and no higher-precedence document answers it** (decision > spec > task; if one does, follow it and record a Deviation, D-56);
 - a value the work needs is missing (a business value is a question, never a guess);
-- the work needs a file that is not listed under *Files*, or a change outside *Scope In*;
+- the work needs a change that is outside the task's purpose (a missing listed file or a small adjacent file is a Deviation, not a block, D-56);
 - an acceptance criterion cannot be satisfied as written, or cannot be tested;
 - a precondition from step 2 fails and fixing it is outside the task;
 - a dependency, licence or security concern is not covered by the spec.
