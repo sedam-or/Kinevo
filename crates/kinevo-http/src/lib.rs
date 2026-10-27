@@ -8,6 +8,7 @@ pub mod gate;
 pub mod i18n;
 pub mod layers;
 pub mod problem;
+pub mod ratelimit;
 pub mod rbac;
 pub mod route;
 pub mod state;

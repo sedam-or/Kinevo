@@ -31,6 +31,7 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 | TOTP | **totp-rs** | 6.0.0 ✔ | MIT | RFC 6238 | — |
 | Rate limiting | **governor** (in a tower layer) | 0.10.4 ✔ | MIT | keyed limiter, in-process; `tower_governor` 0.8.0 ✔ not used (less maintained) | single-node only |
 | In-process cache | **moka** | 0.12.16 ✔ | MIT/Apache-2.0 | bounded TTL caches (containers-and-caching) | — |
+| IP network parsing | **ipnet** | 2.12.2 ✔ | MIT/Apache-2.0 | parse trusted reverse-proxy CIDR ranges | — |
 | Embedded web assets | **rust-embed** | 8.13.0 ✔ | MIT | single binary (ARCH-02) | — |
 | CLI | **clap** (derive) | 4.6.7 ✔ | MIT/Apache-2.0 | `kinevo` subcommands | — |
 | Outbound HTTP | **reqwest** (rustls, no default features, no redirects for AI) | 0.13.5 ✔ | MIT/Apache-2.0 | AI/gateway/SMTP-adjacent calls | SSRF controls are ours (SEC-15) |

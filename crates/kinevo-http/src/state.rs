@@ -1,6 +1,6 @@
 //! Shared, injected HTTP application state.
 
-use crate::{gate::Gate, i18n::Catalog};
+use crate::{gate::Gate, i18n::Catalog, ratelimit::RateLimiter};
 use async_trait::async_trait;
 use kinevo_kernel::{
     id::{IdGen, TokenGen},
@@ -53,6 +53,8 @@ pub struct HttpState {
     pub cursor: Arc<CursorCodec>,
     /// Operator-configured global request body limit.
     pub max_body_bytes: usize,
+    /// Policy-backed in-process rate limiter installed by the route table.
+    pub rate_limiter: Option<Arc<RateLimiter>>,
 }
 
 impl HttpState {
@@ -82,6 +84,14 @@ impl HttpState {
             public_url,
             cursor,
             max_body_bytes,
+            rate_limiter: None,
         }
+    }
+
+    /// Attaches the rate limiter used by routes with a non-`None` rate class.
+    #[must_use]
+    pub fn with_rate_limiter(mut self, rate_limiter: Arc<RateLimiter>) -> Self {
+        self.rate_limiter = Some(rate_limiter);
+        self
     }
 }

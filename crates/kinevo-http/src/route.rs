@@ -4,6 +4,7 @@ use crate::{
     gate::{GateBuildError, GateRequestState, gate_request},
     layers::request_context,
     problem::panic_response,
+    ratelimit::{RateLimitRequestState, rate_limit_after_gate, rate_limit_public_before_gate},
     state::HttpState,
 };
 use axum::http::Method;
@@ -103,16 +104,29 @@ impl RouteTable {
     /// Builds the complete router after validating route permissions and module ownership.
     pub fn into_router(self, state: HttpState) -> Result<Router, GateBuildError> {
         state.gate.validate_routes(&self.specs)?;
+        let specs = Arc::new(self.specs);
         let gate_state = GateRequestState {
             state: state.clone(),
-            specs: Arc::new(self.specs),
+            specs: specs.clone(),
+        };
+        let rate_limit_state = RateLimitRequestState {
+            limiter: state.rate_limiter.clone(),
+            specs,
         };
         Ok(self
             .router
             .layer(CatchPanicLayer::custom(|_| panic_response()))
             .layer(axum::middleware::from_fn_with_state(
+                rate_limit_state.clone(),
+                rate_limit_after_gate,
+            ))
+            .layer(axum::middleware::from_fn_with_state(
                 gate_state,
                 gate_request,
+            ))
+            .layer(axum::middleware::from_fn_with_state(
+                rate_limit_state,
+                rate_limit_public_before_gate,
             ))
             .layer(axum::middleware::from_fn_with_state(
                 state.clone(),
