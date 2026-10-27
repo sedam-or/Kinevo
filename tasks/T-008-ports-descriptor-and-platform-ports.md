@@ -3,12 +3,12 @@ id: T-008
 title: Define the module descriptor and platform port traits in kinevo-ports
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-004, T-005, T-006, T-007]
 requirements: [D-41, D-43, ADR-0011, MOD-03, MOD-10, MOD-11, CA-10, CA-11, CQ-09]
 branch: m1-t008-ports-descriptor
 budget_lines: 400
-assignee: ""
+assignee: "Codex"
 ---
 
 # T-008: Define the module descriptor and platform port traits in kinevo-ports
