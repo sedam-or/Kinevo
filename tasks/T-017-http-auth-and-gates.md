@@ -3,12 +3,12 @@ id: T-017
 title: Add access-token verification, AuthCtx, and the setup, module and permission gates
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-016]
 requirements: [API-10, API-12, API-23, AUTH-02, RBAC-01, RBAC-02, RBAC-03, SEC-05, SEC-07, ADM-FR-01, MOD-04, MOD-08, ADR-0007]
 branch: m1-t017-http-auth-gates
 budget_lines: 450
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-017: Add access-token verification, AuthCtx, and the setup, module and permission gates
