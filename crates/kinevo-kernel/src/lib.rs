@@ -18,3 +18,4 @@ pub mod id;
 pub mod page;
 pub mod secret;
 pub mod time;
+pub mod validate;

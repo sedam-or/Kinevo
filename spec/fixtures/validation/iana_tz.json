@@ -1,0 +1,1 @@
+{"$comment":"ID-FR-14","kind":"iana_tz","params":{},"valid":[{"input":"Asia/Jakarta","normalised":"Asia/Jakarta"}],"invalid":[{"input":"","code":"timezone_invalid"},{"input":"UTC+7","code":"timezone_invalid"},{"input":"local","code":"timezone_invalid"}]}

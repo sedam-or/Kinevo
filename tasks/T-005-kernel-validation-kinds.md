@@ -3,7 +3,7 @@ id: T-005
 title: Add validated newtypes and the field-kind validators to the kernel
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-003, T-004]
 requirements: [VAL-01, VAL-02, VAL-03, VAL-04, VAL-05, VAL-06, VAL-10, CQ-06, DOM-07, ID-FR-14]
 branch: m1-t005-kernel-validation-kinds
@@ -152,39 +152,43 @@ just check
 
 ### Summary
 
-Implementation is blocked pending clarification of the fixture scope for `SecretText`. No implementation code was started.
+The kernel now normalizes and validates all ten in-scope field kinds, collects field errors in check order, and exposes constrained values through private-field newtypes. Shared fixtures cover valid and invalid boundary cases, including verbatim secret text.
 
 ### Acceptance results
 
 | Criterion | Named test | Result |
 |---|---|---|
-| AC-1 | `validation_fixtures::val_fixtures_all_kinds` | not run (blocked by fixture scope conflict) |
-| AC-2 | `validate::text::tests::val_04_counts_scalars` | not run (blocked before implementation) |
-| AC-3 | `validate::text::tests::val_03_zero_width_removed_or_rejected` | not run (blocked before implementation) |
-| AC-4 | `validate::net::tests::dom_07_email_lowercase_nfc` | not run (blocked before implementation) |
-| AC-5 | `validate::net::tests::https_only_except_loopback` | not run (blocked before implementation) |
-| AC-6 | `validate::tz::tests::id_fr_14_timezone_and_locale` | not run (blocked before implementation) |
-| AC-7 | `validate::tests::val_01_collects_all_errors` | not run (blocked before implementation) |
-| AC-8 | `validate::tests::val_05_safe_integer_limit` | not run (blocked before implementation) |
+| AC-1 | `validation_fixtures::val_fixtures_all_kinds` | PASS |
+| AC-2 | `validate::text::tests::val_04_counts_scalars` | PASS; 80 emoji accepted, 81 rejected with `details.max = 80` |
+| AC-3 | `validate::text::tests::val_03_zero_width_removed_or_rejected` | PASS |
+| AC-4 | `validate::net::tests::dom_07_email_lowercase_nfc` | PASS |
+| AC-5 | `validate::net::tests::https_only_except_loopback` | PASS |
+| AC-6 | `validate::tz::tests::id_fr_14_timezone_and_locale` | PASS |
+| AC-7 | `validate::tests::val_01_collects_all_errors` | PASS |
+| AC-8 | `validate::tests::val_05_safe_integer_limit` | PASS |
 
 ### Commands run
 
 | Command | Exit | Result |
 |---|---:|---|
-| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md`; 0 problems in 132 tasks. |
+| `cargo nextest run -p kinevo-kernel` | 0 | 38 tests passed; 0 failed or skipped. |
+| `just fmt` | 0 | `cargo fmt --all` completed. |
+| `just check` | 0 | Clippy passed; 41 tests passed; cargo-deny passed; spec check found 0 issues in 60 files; contrast failures 0; task index 0 problems in 132 tasks. Five unused-license-allowance warnings and the existing `uuid::Uuid::new_v4` clippy configuration warning remain non-failing. |
+| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md` for this task's `review` status. |
 | `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks. |
+| `python3 scripts/spec_tool.py check` | 0 | 0 findings in 60 spec files. |
 
 ### Files changed
 
-This task file and generated `tasks/index.md` only. No implementation code was changed.
+`crates/kinevo-kernel/Cargo.toml`, `Cargo.lock` (generated), `crates/kinevo-kernel/src/lib.rs`, `crates/kinevo-kernel/src/validate/{mod,text,net,tz}.rs`, `crates/kinevo-kernel/tests/validation_fixtures.rs`, ten `spec/fixtures/validation/*.json` fixtures, `spec/standards/open-source-stack.md`, `spec/index.md`, `spec/13-roadmap.md`, this task file, and generated `tasks/index.md`.
 
 ### Deviations
 
-None. The task is blocked on the scope conflict described in Q-1.
+Added `ShortText::parse_with_details` alongside the required `parse` interface so AC-2 can expose the requested `details.max` value. Enabled Jiff's bundled timezone database because this crate had default features disabled. Updated `spec/index.md` and the M1 roadmap row as required by the mapping rule; `tasks/index.md` is generated. The diff has 745 insertions and 22 deletions (767 changed lines), excluding the generated 297-line `Cargo.lock`; the ten fixture JSON lines are within the 150-line fixture cap. This exceeds the approximate 400-line guidance and ships under D-55.
 
 ### Spec issues noticed
 
-`spec/standards/validation.md` §5 requires shared fixtures per field kind, while this task includes `SecretText` but omits the corresponding fixture path from its Files list.
+None outstanding. D-56 resolved Q-1: `secret_text.json` is part of the shared fixture set.
 
 ### Environment-limited
 
@@ -192,7 +196,7 @@ None.
 
 ### Not done / not verified
 
-No T-005 acceptance criteria were run because the task/spec fixture scope conflict must be resolved first.
+No acceptance criteria remain unverified. Browser/TypeScript fixture consumption is a later task and was not run here.
 
 ## Questions
 

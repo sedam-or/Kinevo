@@ -1,0 +1,1 @@
+{"$comment":"VAL-06","kind":"enum","params":{"allowed":["en","id"]},"valid":[{"input":"en","normalised":"en"},{"input":"id","normalised":"id"}],"invalid":[{"input":"","code":"enum_invalid"},{"input":"fr","code":"enum_invalid"}]}
