@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compute sRGB gamut membership and WCAG 2.x contrast ratios for the Kinevo OKLCH palette.
+"""Compute sRGB gamut membership and WCAG 2.x contrast ratios for the Nivaras OKLCH palette.
 
 Usage: python3 scripts/contrast.py [--markdown]
 The palette below is the single source for spec/09-design-system.md section 3; the

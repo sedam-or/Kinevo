@@ -19,7 +19,7 @@ This document is engineering guidance, **not legal advice**. Anything touching r
         └── local storage: access token in memory only; IndexedDB cache/queue (S2, device-level protection)
  [kinevo process] ──TLS──▶ [AI provider] (optional, operator/user chosen)   [Payment gateway] (cloud)   [SMTP] (optional)
 ```
-Boundaries: **B1** client↔server (everything from the client is hostile input); **B2** server↔database (RLS limits blast radius of server bugs); **B3** server↔external providers (outbound; SSRF and data-minimisation controls); **B4** operator↔instance (the operator can read the database; self-host operator = user; cloud operator = Kinevo, see §4).
+Boundaries: **B1** client↔server (everything from the client is hostile input); **B2** server↔database (RLS limits blast radius of server bugs); **B3** server↔external providers (outbound; SSRF and data-minimisation controls); **B4** operator↔instance (the operator can read the database; self-host operator = user; cloud operator = Nivaras, see §4).
 
 ## 2. Threat model (STRIDE per component)
 
@@ -89,6 +89,6 @@ No analytics, advertising identifiers, third-party scripts, tracking pixels or f
 | Account owner | own data | other accounts |
 | `instance_admin` (via the product) | account list (email, name, status, created/last login), module/policy settings, audit, job health | any S2 content of others, through any endpoint |
 | Instance operator with DB access | everything in the database except secrets without the master key | — (by design; trust the operator you choose; self-host = yourself) |
-| Kinevo Cloud operator (maintainers) | as operator, under written access policy: production data access only for incident response, logged | — |
+| Nivaras Cloud operator (maintainers) | as operator, under written access policy: production data access only for incident response, logged | — |
 | AI provider (if used) | the minimal prompt (AI-FR-01) | notes, canvases, other goals, identity |
 | Payment gateway (cloud) | what the checkout needs | task/note content |

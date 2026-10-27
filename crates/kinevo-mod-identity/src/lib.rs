@@ -1,3 +1,3 @@
-//! Identity module for Kinevo.
+//! Identity module for Nivaras.
 
 #![forbid(unsafe_code)]

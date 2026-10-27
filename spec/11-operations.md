@@ -1,7 +1,7 @@
 # 11 — Operations
 
 Depends on: `02-architecture.md`, `10-security-privacy.md`, `standards/containers-and-caching.md`. Prefix: `OPS`.
-Audience: self-hosters and the Kinevo Cloud operator. Everything here must be achievable by one person with Docker and basic Linux skills.
+Audience: self-hosters and the Nivaras Cloud operator. Everything here must be achievable by one person with Docker and basic Linux skills.
 
 ## 1. Supported topologies
 

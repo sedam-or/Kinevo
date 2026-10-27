@@ -1,4 +1,4 @@
-//! Ports shared across Kinevo modules.
+//! Ports shared across Nivaras modules.
 
 #![forbid(unsafe_code)]
 

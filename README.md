@@ -1,6 +1,6 @@
-# Kinevo
+# Nivaras
 
-**Status: re-architecture in progress.** Kinevo is being rebuilt as an open-source,
+**Status: re-architecture in progress.** Nivaras is being rebuilt as an open-source,
 self-hostable personal planning system (Rust backend, React PWA, Android app).
 No runnable release exists on this branch yet.
 

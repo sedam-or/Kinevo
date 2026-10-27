@@ -1,7 +1,7 @@
-# Module `billing` (Kinevo Cloud)
+# Module `billing` (Nivaras Cloud)
 
 Kind: toggleable (default **off**; cloud template turns it on after OWNER-01/02 are answered). Depends on: `identity`. Tables: `subscriptions`, `invoices`, `billing_webhook_events`; secrets through the `SecretStore` port (D-40). Prefix: `BIL`.
-Principle (D-25, D-26): billing exists only to fund the hosted service. **A self-hosted instance has every feature with no limits**; this module is off there and `EntitlementPort` answers "unlimited". The module is provider-neutral: it talks to payment providers only through the `PaymentGateway` port. Choosing the first adapter is an owner decision (OWNER-04); the legacy gateway was Midtrans (`legacy-v0:server/app/Infrastructure/Billing/MidtransGateway.php`) and its design (signed idempotent webhooks, Kinevo-owned subscription state) is kept.
+Principle (D-25, D-26): billing exists only to fund the hosted service. **A self-hosted instance has every feature with no limits**; this module is off there and `EntitlementPort` answers "unlimited". The module is provider-neutral: it talks to payment providers only through the `PaymentGateway` port. Choosing the first adapter is an owner decision (OWNER-04); the legacy gateway was Midtrans (`legacy-v0:server/app/Infrastructure/Billing/MidtransGateway.php`) and its design (signed idempotent webhooks, Nivaras-owned subscription state) is kept.
 
 ## 1. Open owner decisions (nothing here is guessed)
 
@@ -33,12 +33,12 @@ Principle (D-25, D-26): billing exists only to fund the hosted service. **A self
 | ID | Requirement | Acceptance |
 |---|---|---|
 | BIL-FR-01 | Amounts are `bigint` minor units + ISO-4217 code; no floats; totals never recomputed from display strings. Plan prices come only from `billing.plans`; invoices and subscriptions store a `plan_snapshot` so later price changes do not alter past records (D-09, D-18). | Property test: sum of line items = total; snapshot immutability test. |
-| BIL-FR-02 | The subscription is a Kinevo-owned state machine (§5). The gateway is the source of *payment facts*; Kinevo derives state from verified events and never trusts a browser redirect. | Test: success redirect without webhook ⇒ state unchanged. |
+| BIL-FR-02 | The subscription is a Nivaras-owned state machine (§5). The gateway is the source of *payment facts*; Nivaras derives state from verified events and never trusts a browser redirect. | Test: success redirect without webhook ⇒ state unchanged. |
 | BIL-FR-03 | Webhooks: verify signature with the provider's scheme using the secret `billing.webhook_secret` (constant-time compare); reject timestamps older than 5 minutes when the provider supplies one; dedupe by `(gateway, event_id)` in `billing_webhook_events`; process in a transaction; out-of-order events are ordered by the provider's event time / sequence and stale transitions are ignored (recorded `outcome=ignored_stale`). | Tests: replay, reorder, bad signature, huge body (> 256 KiB ⇒ 413). |
 | BIL-FR-04 | Entitlements: `EntitlementPort::value(account, key)` returns the plan limit for keys `max_workspaces`, `ai_monthly_runs`, `byok_allowed`; with billing disabled returns `Unlimited`. A downgrade never deletes data: if usage exceeds the new limit the account is "over limit" (can read/edit, cannot create more of that resource). | Tests. |
 | BIL-FR-05 | `past_due` keeps full access for `billing.grace_days`, then the account becomes `downgraded` to the free plan limits (data retained). | Test with injected clock. |
 | BIL-FR-06 | Reconciliation job `billing.reconcile` (daily) compares open subscriptions with the gateway; differences are logged as audit entries (`billing.drift`) and corrected from the gateway's facts. | Job test with a fake gateway. |
-| BIL-FR-07 | Secrets (`billing.gateway_key`, `billing.webhook_secret`) are instance secrets (AEAD), never logged. Card data never touches Kinevo (hosted checkout only; PCI scope = SAQ-A style). | Scan test; architecture review. |
+| BIL-FR-07 | Secrets (`billing.gateway_key`, `billing.webhook_secret`) are instance secrets (AEAD), never logged. Card data never touches Nivaras (hosted checkout only; PCI scope = SAQ-A style). | Scan test; architecture review. |
 | BIL-FR-08 | Fake gateway adapter (`kinevo-mod-billing::infra::fake`) exists for tests and local demos; real adapters are compiled but inactive unless configured. | CI uses the fake only. |
 | BIL-FR-09 | On account deletion, the active subscription is cancelled at the gateway before the purge job proceeds; invoice rows are deleted with the account **except** records the owner must retain legally (OWNER-05 decides; default: retain anonymised invoice totals without account linkage). | Journey J7 variant. |
 

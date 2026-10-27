@@ -1,4 +1,4 @@
-//! PostgreSQL infrastructure for Kinevo.
+//! PostgreSQL infrastructure for Nivaras.
 
 #![forbid(unsafe_code)]
 

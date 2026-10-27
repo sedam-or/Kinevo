@@ -1,3 +1,3 @@
-//! Administration module for Kinevo.
+//! Administration module for Nivaras.
 
 #![forbid(unsafe_code)]

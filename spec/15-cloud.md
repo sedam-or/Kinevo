@@ -1,7 +1,7 @@
-# 15 — Kinevo Cloud (business layer)
+# 15 — Nivaras Cloud (business layer)
 
 Depends on: `modules/billing.md`, `11-operations.md`, `10-security-privacy.md`. Decisions: D-04, D-25, D-26. Prefix: `CLD`.
-Kinevo Cloud is the **optional managed service**: the same AGPL image, operated by the maintainers, funded by plans.
+Nivaras Cloud is the **optional managed service**: the same AGPL image, operated by the maintainers, funded by plans.
 It must never make the open-source build worse: self-hosters get every feature without limits (D-26).
 
 ## 1. What is open and what is private
@@ -11,7 +11,7 @@ It must never make the open-source build worse: self-hosters get every feature w
 | Application (all modules incl. `billing` with provider-neutral port and adapters, off by default) | this repository | AGPL-3.0-only |
 | Marketing site, docs | this repository (`docs/`, `site/` later) | AGPL (code) / CC-BY-4.0 (prose) `[owner to confirm]` |
 | Cloud infrastructure-as-code, runbooks with secrets, monitoring config, support tooling | **private** repository `kinevo-cloud` | proprietary (it contains no application logic) |
-| Brand: name "Kinevo", logo | this repository, subject to `TRADEMARK.md` | trademark policy (Phase 5): code is free to fork, the name/logo are not |
+| Brand: name "Nivaras", logo | this repository, subject to `TRADEMARK.md` | trademark policy (Phase 5): code is free to fork, the name/logo are not |
 
 Rule: **no feature is cloud-only.** The cloud differs by operation (hosting, backups, managed AI allowance, support), not by code. If a feature requires infrastructure (e.g., hosted AI), the code path exists for self-hosters via their own provider.
 

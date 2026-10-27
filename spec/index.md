@@ -1,4 +1,4 @@
-# Kinevo specification — index
+# Nivaras specification — index
 
 This directory is the **source of rules** for the rebuild. Tasks (`tasks/`) say *what* to build; this spec says *which rules* it must obey; `CLAUDE.md` says *how* an agent works. Process rules live at the repository root: `AGENTS.md` (binding rules, precedence, repository map, commands), `WORKFLOW.md` (task steps, blocking, status lifecycle, report), `COMMIT_CONVENTION.md` and `BRANCHING.md`. A change to behaviour is a change to a spec file first (rule M: the same commit also updates this index, `AGENTS.md`, `CODEOWNERS`, `13-roadmap.md` and affected tasks, with grep/script evidence).
 
@@ -28,7 +28,7 @@ Each file depends only on files above it (its header says `Depends on:`).
 | 12 | [`12-testing.md`](12-testing.md) | `TST` | Test layers and quality gates |
 | 13 | [`13-roadmap.md`](13-roadmap.md) | `RM` | Milestones M0–M11, validation V1–V5, 1.0 gates, risks |
 | 14 | [`14-distribution.md`](14-distribution.md) | `DST` | Channels: Docker one-liner, templates, cloud, PWA, Android |
-| 15 | [`15-cloud.md`](15-cloud.md) | `CLD` | Kinevo Cloud business layer |
+| 15 | [`15-cloud.md`](15-cloud.md) | `CLD` | Nivaras Cloud business layer |
 | — | [`standards/`](standards/) | see §3 | Cross-cutting standards bound by every file above |
 | — | [`traceability-exceptions.md`](traceability-exceptions.md) | — | Requirements deliberately without a direct test, each justified |
 
@@ -118,7 +118,7 @@ A new ADR is numbered next in sequence, starts as `Proposed`, and becomes `Accep
 | Operation ledger | The server record of offline operations (applied / conflict / rejected), keyed by operation UUID. |
 | Proposal (AI) | Untrusted AI output, schema- and domain-validated, accepted or rejected by the user. |
 | Outbox | Events written in the same transaction as the state change and delivered at-least-once to other modules. |
-| Kinevo Cloud | The optional managed hosting of the same AGPL image. |
+| Nivaras Cloud | The optional managed hosting of the same AGPL image. |
 
 ## 7. Spec → milestone → task map
 

@@ -35,7 +35,7 @@ Rules: every error shows *what happened*, *why if known*, *what to do*; never on
 | `state.server_error` | error card | Something went wrong on our side. Try again. Reference: {request_id} | Terjadi masalah di sisi server. Coba lagi. Referensi: {request_id} | Retry, Copy reference |
 | `state.rate_limited` | toast (alert) | Too many requests. Try again in {seconds, plural, one {# second} other {# seconds}}. | Terlalu banyak permintaan. Coba lagi dalam {seconds} detik. | — |
 | `state.module.disabled` | page | {module} is turned off on this server. | {module} dinonaktifkan di server ini. | Back; (admin) Open Modules |
-| `state.maintenance` | page | Kinevo is updating. This usually takes a minute. | Kinevo sedang diperbarui. Biasanya hanya satu menit. | Retry |
+| `state.maintenance` | page | Nivaras is updating. This usually takes a minute. | Nivaras sedang diperbarui. Biasanya hanya satu menit. | Retry |
 | `state.setup.required` | page | This server isn't set up yet. | Server ini belum disiapkan. | Open setup |
 
 ## 3. Auth and setup

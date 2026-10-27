@@ -1,7 +1,7 @@
 # Module `canvas` (Excalidraw boards)
 
 Kind: toggleable (default **off** in `personal`, on in `student`/`cloud`). Depends on: `workspaces`. Tables: `canvases`, `canvas_files`, `canvas_links`. Prefix: `CNV`.
-Boundary (legacy ADR-005/010, kept): **Excalidraw owns drawing behaviour; Kinevo owns identity, ownership, persistence, versioning, links and attachments.** The scene is stored as opaque, validated JSON.
+Boundary (legacy ADR-005/010, kept): **Excalidraw owns drawing behaviour; Nivaras owns identity, ownership, persistence, versioning, links and attachments.** The scene is stored as opaque, validated JSON.
 
 ## 1. Permissions
 

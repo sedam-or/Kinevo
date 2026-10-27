@@ -15,7 +15,7 @@ assignee: ""
 
 ## Goal
 
-`docker compose up` from the repository starts PostgreSQL and Kinevo, prints the setup URL once, becomes healthy, and reaches the wizard; the quick-start script generates secrets safely.
+`docker compose up` from the repository starts PostgreSQL and Nivaras, prints the setup URL once, becomes healthy, and reaches the wizard; the quick-start script generates secrets safely.
 
 ## Context
 

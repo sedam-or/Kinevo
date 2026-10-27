@@ -86,7 +86,7 @@ Status mapping: `invalid_credentials` 401, `mfa_required` 401 (`details.methods 
 ## Implementation notes
 
 - Do the password verification **before** any early return that depends on account existence or lock state, so latency does not depend on them.
-- The user-agent `device_label` helper (`domain::device::label(user_agent, client)`) produces strings such as `Firefox on Linux`, `Chrome on Android`, `Kinevo Android`, else `Unknown device`; it never stores the raw user agent.
+- The user-agent `device_label` helper (`domain::device::label(user_agent, client)`) produces strings such as `Firefox on Linux`, `Chrome on Android`, `Nivaras Android`, else `Unknown device`; it never stores the raw user agent.
 - `SystemTx` is used for lookup, counters and the final write. The final write (family, token, audit, outbox) is in the same `SystemTx` as `record_success`.
 
 ## Acceptance

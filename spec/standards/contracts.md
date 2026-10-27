@@ -115,7 +115,7 @@ Excluded: password hash, tokens, TOTP seed, recovery codes, API keys, audit log 
 
 | Kind | Canonical |
 |---|---|
-| ICS | UTF-8, CRLF, folded at 75 octets, `PRODID:-//Kinevo//<version>//EN` |
+| ICS | UTF-8, CRLF, folded at 75 octets, `PRODID:-//Nivaras//<version>//EN` |
 | Images (canvas) | stored as uploaded after validation; served with the stored MIME |
 | ZIP (export) | deflate, UTF-8 names, no absolute paths, no `..` |
 

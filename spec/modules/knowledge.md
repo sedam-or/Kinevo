@@ -1,7 +1,7 @@
 # Module `knowledge` (notes)
 
 Kind: toggleable (default on). Depends on: `workspaces`. Optional: `goals`/`tasks` (always present, core), `canvas` (links). Tables: `notes`, `note_links`. Prefix: `KNW`.
-Boundary (legacy ADR-004/009, kept): **Tiptap owns editing behaviour; Kinevo owns identity, ownership, persistence, versioning, links and search.** Tiptap's document JSON is stored as data; the server never executes or renders it as HTML.
+Boundary (legacy ADR-004/009, kept): **Tiptap owns editing behaviour; Nivaras owns identity, ownership, persistence, versioning, links and search.** Tiptap's document JSON is stored as data; the server never executes or renders it as HTML.
 
 ## 1. Permissions
 

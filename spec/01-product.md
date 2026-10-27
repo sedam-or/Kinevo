@@ -4,14 +4,14 @@ Depends on: `decisions.md`, `00-verdict.md`. Requirement prefix: `PRD`.
 Validation status: **PROVISIONAL.** No user research exists (`00-verdict.md` §7). Items marked
 `[ASSUMED]` must be confirmed by the validation exercise in `13-roadmap.md` §Validation before 1.0 scope is frozen.
 
-## 1. What Kinevo is
+## 1. What Nivaras is
 
-Kinevo turns long-horizon goals into a schedule you can follow, around the commitments you cannot
+Nivaras turns long-horizon goals into a schedule you can follow, around the commitments you cannot
 move. One sentence: **"Plans that survive contact with your life."**
 
 Loop: `GOAL → MILESTONE → TASK → SCHEDULE (around fixed commitments) → TODAY → FOCUS → PROGRESS → ADAPT`.
 
-Kinevo is a **single-user planner** (D-30): one person, one account, many workspaces (projects/areas).
+Nivaras is a **single-user planner** (D-30): one person, one account, many workspaces (projects/areas).
 It is not a team tool, not a calendar replacement, not a note-taking suite.
 
 ## 2. Users
@@ -21,7 +21,7 @@ It is not a team tool, not a calendar replacement, not a note-taking suite.
 | **Maya — ambitious student** | Fixed class/lab hours, thesis and side projects, tight deadlines `[ASSUMED]` | Import fixed hours from ICS; break a goal into milestones; see "what now"; know if a deadline is at risk |
 | **Dion — professional with many projects** | Meetings, day job, 3–5 personal projects `[ASSUMED]` | Keep projects separate (workspaces) yet scheduled together; re-plan when a meeting moves |
 | **Sari — self-hoster** | Runs the instance for herself (homelab/VPS) | Install in minutes; choose modules; back up; update |
-| **Instance admin** | Same person as Sari, or the Kinevo Cloud operator | Open/close registration, enable modules, manage accounts, view audit log |
+| **Instance admin** | Same person as Sari, or the Nivaras Cloud operator | Open/close registration, enable modules, manage accounts, view audit log |
 
 Roles in the system are `instance_admin` and `account_owner` only (D-12).
 
@@ -36,7 +36,7 @@ Roles in the system are `instance_admin` and `account_owner` only (D-12).
 | PRD-05 | When I look back, show me what moved and what is at risk. |
 | PRD-06 | When I lose connectivity, let me keep working and reconcile safely later. |
 | PRD-07 | When I think, keep notes and sketches attached to the goal or task they serve. |
-| PRD-08 | When I install Kinevo, let me be productive after a 3-step setup and own my data. |
+| PRD-08 | When I install Nivaras, let me be productive after a 3-step setup and own my data. |
 
 ## 4. Product principles
 

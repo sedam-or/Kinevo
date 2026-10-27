@@ -26,7 +26,7 @@ content. Templates ship in the binary (`templates/*.toml`, embedded) and an admi
 | `personal` (default) | core + `sync`, `knowledge` | registration `closed`, defaults from `04-policies.md` | Self-hoster |
 | `student` | `personal` + `canvas` | terms: Class & fixed hours; `scheduler.day_start` 07:00; `scheduler.day_end` 22:00 | Students `[ASSUMED]` |
 | `professional` | `personal` + `ai`(off until provider set) | terms: Commitments; `scheduler.anchor.earliest_time` 08:00 | Professionals `[ASSUMED]` |
-| `cloud` | core + `sync`, `knowledge`, `canvas`, `ai`, `billing` (off until OWNER-01 set) | registration `open` | Kinevo Cloud operator |
+| `cloud` | core + `sync`, `knowledge`, `canvas`, `ai`, `billing` (off until OWNER-01 set) | registration `open` | Nivaras Cloud operator |
 
 Template content is provisional (`[ASSUMED]`) until the validation exercise.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Task index generator and validator for Kinevo (stdlib only).
+"""Task index generator and validator for Nivaras (stdlib only).
 
 Usage
   python3 scripts/tasks_index.py           regenerate tasks/index.md

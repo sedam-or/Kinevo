@@ -1,4 +1,4 @@
-//! Shared domain primitives for Kinevo.
+//! Shared domain primitives for Nivaras.
 
 #![forbid(unsafe_code)]
 #![cfg_attr(

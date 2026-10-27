@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Installs every tool the Kinevo toolchain can use (D-53). Idempotent; safe to re-run. Never prints secrets.
+# Installs every tool the Nivaras toolchain can use (D-53). Idempotent; safe to re-run. Never prints secrets.
 #   scripts/setup-dev.sh            user-level tools only (no sudo): cargo tools, wasm32 via rustup, corepack, Postgres image
 #   scripts/setup-dev.sh --sudo     also system packages (pacman: shellcheck, jdk, adb, postgresql client)
 #   scripts/setup-dev.sh --android  also the Android SDK under ~/Android/Sdk (cmdline-tools, platform, build-tools)

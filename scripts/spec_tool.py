@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Spec tooling for Kinevo (stdlib only).
+"""Spec tooling for Nivaras (stdlib only).
 
 Subcommands
   codes   print the error codes referenced in the specs together with the HTTP statuses used next to them
