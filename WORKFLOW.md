@@ -16,7 +16,7 @@ draft ──► todo ──► in_progress ──► review ──► done
 | Transition | Who | When |
 |---|---|---|
 | `draft → todo` | architect | the milestone before has its integration task `done` (exception D-52: M3–M11 were promoted ahead of this rule), and the task passed the consistency gate |
-| `todo → in_progress` | implementer | Step 0 below; every dependency is `done` |
+| `todo → in_progress` | implementer | Step 0 below; every dependency is `done`, or `review` with its commit on `dev` in the D-57 run |
 | `in_progress → blocked` | implementer | the blocking procedure (§3) applies |
 | `blocked → todo` | architect | a `Resolved (architect, YYYY-MM-DD)` line answers every open question; spec and neighbouring tasks are fixed in the same commit |
 | `in_progress → review` | implementer | Steps 1–10 are complete and `just check` passes |
@@ -28,24 +28,28 @@ The status lives in the task file's front matter (`status:`). `tasks/index.md` i
 
 ## 2. The steps
 
-**Step 0: pick and claim.** Take the lowest-numbered task with `status: todo` whose `depends_on` are all `done`. Set `status: in_progress` and `assignee:`. Commit (`docs(tasks): start T-nnn [T-nnn]`) on the task branch (step 3) and push it, so nobody else takes the task.
+**Step 0: pick and claim.** Take the next task in topological order with `status: todo` whose dependencies are all `done`; in the D-57 run, dependencies with `status: review` count when their commits are on `dev`. Set `status: in_progress` and `assignee:`. Commit (`docs(tasks): start T-nnn [T-nnn]`) on `dev` in the D-57 run, or on the task branch otherwise, and push it, so nobody else takes the task.
 
-1. **Read.** Read the whole task. Open every spec section it cites. The inlined excerpts are copies: if an excerpt differs from the spec, the spec wins and you block. Read the files listed under *Files* that already exist.
-2. **Check preconditions.** Dependencies are merged on `main` (or, in a maintainer-authorised stacked run, satisfied as defined in `BRANCHING.md` §6); files the task says exist do exist, and files it creates do not; the commands under *Tests* run in your environment. Any failure here is a block, not a workaround.
-3. **Branch.** Create the branch named in the task (`BRANCHING.md` §2) from up-to-date `main`; in a maintainer-authorised run use the milestone branch instead (`BRANCHING.md` §6, D-54).
+1. **Read.** Read the whole task. Open every spec section it cites. The inlined excerpts are copies: if an excerpt differs from the spec, the spec wins. In the D-57 run, record and resolve the discrepancy per §6; in the ordinary workflow, use §3. Read the files listed under *Files* that already exist.
+2. **Check preconditions.** Dependencies are merged on `main` (or, in a maintainer-authorised run, satisfied as defined in `BRANCHING.md` §6); files the task says exist do exist, and files it creates do not; the commands under *Tests* run in your environment. Report run-specific environment limits as defined in `BRANCHING.md` §6.
+3. **Branch.** Use the task branch named in front matter only in the ordinary workflow (`BRANCHING.md` §2). In the D-57 run, work directly on `dev`; do not create task or milestone branches.
 4. **Write the tests first.** Turn every *Acceptance* criterion (Given/When/Then) into the test named next to it. Run them and see them fail for the expected reason.
 5. **Implement the minimum.** Make the tests pass, touching only the files under *Files*. Follow *Interfaces*, *Business rules*, *Security* and *Implementation notes* literally. No extra features, no speculative abstractions, no drive-by refactors (`CLAUDE.md` §2–3).
 6. **Run the full gate.** `just check` (before M1 exists: the scripts listed in `AGENTS.md`). Everything must pass. Never weaken, skip or delete a test to get there.
 7. **Self-review.** Walk the *Definition of done* line by line, then the task's *Security* section, then CQ and CA (`spec/standards/code-quality.md`, `clean-architecture.md`). Check the diff size against the task budget (about 400 changed lines). Lockfiles (`Cargo.lock`, `pnpm-lock.yaml`) and generated files (OpenAPI snapshots, insta snapshots, catalogue exports) are not counted (D-55). Going over budget is never a blocker: record the actual size and the reason under *Deviations* in the Report and ship; split the work only if the task itself says so.
 8. **Regenerate contracts the task names.** Only those: OpenAPI document, `cargo sqlx prepare` metadata, i18n catalogues, `tasks/index.md`. Commit the regenerated files.
 9. **Write the Report** in the task file (§4).
-10. **Request review.** Set `status: review`. Commit following `COMMIT_CONVENTION.md` with `[T-nnn]` in the subject, signed off (`git commit -s`).
-11. **Open the PR.** Push and open a PR with the PR template. The title is the squash-commit subject. The body links the task and pastes the Report's *Commands run* block.
+10. **Request review.** Set `status: review`. Commit following `COMMIT_CONVENTION.md` with `[T-nnn]` in the subject, signed off (`git commit -s`). In a D-57 run, push to `dev`.
+11. **Open the PR.** In the ordinary workflow, push and open a task PR with the template. In a D-57 run, do not open a task PR; after the milestone integration gate passes, open its draft promotion PR from `dev` to `staging` with milestone task references and Reports.
 12. **Respond to review.** On `changes_requested`, set `in_progress`, fix with new commits (no force-push), re-run step 6, update the Report and set `review` again. Never merge your own PR.
 
 ## 3. Blocking procedure
 
 **Block when any of these is true:**
+
+In the maintainer-authorised D-57 run, technical ambiguity, missing business values and environment gaps do not block. Use a conservative spec default; when no default exists, record an `[ASSUMED]` value in the policy registry with its decision rationale and continue. Follow the run's explicit hard-stop rules for privacy, secrets, destructive actions and protected Git operations.
+
+The following list governs the ordinary workflow; the D-57 run follows its exception above.
 
 - the task and the spec disagree, or two spec files disagree, **and no higher-precedence document answers it** (decision > spec > task; if one does, follow it and record a Deviation, D-56);
 - a value the work needs is missing (a business value is a question, never a guess);

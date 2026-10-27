@@ -4,7 +4,7 @@ Binding on every agent and every human contributor.
 
 ## The one rule
 
-**Work only from a task file.** Implementation starts from `tasks/T-nnn-*.md` with status `todo` and every dependency `done`, and follows [`WORKFLOW.md`](WORKFLOW.md). No task, no change. If something is missing, wrong or ambiguous, **block** the task (WORKFLOW.md §3); never guess.
+**Work only from a task file.** Implementation starts from `tasks/T-nnn-*.md` with status `todo` and every dependency `done`, and follows [`WORKFLOW.md`](WORKFLOW.md). In the maintainer-authorised D-57 run, dependencies in `review` on `dev` also count. No task, no change. If something is missing, wrong or ambiguous, follow the run-specific decision authority in [`BRANCHING.md`](BRANCHING.md) §6 and record the choice; otherwise use WORKFLOW.md §3.
 
 The architect (spec and task author) works on `spec/`, `tasks/` and repository files under the same rules, but its work items are milestones instead of task files.
 

@@ -3,7 +3,7 @@ id: T-011
 title: Add the PostgreSQL test kit and the generated tenant-isolation harness
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-010]
 requirements: [TST-02, TST-06, TST-18, SEC-AC-01, SEC-AC-02, SEC-06, CQ-18]
 branch: m1-t011-db-test-kit
@@ -115,8 +115,97 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Added the feature-gated PostgreSQL test kit with a shared cluster per integration-test binary, a fresh database per test, the three real database roles, migrations, and deterministic clock/ID/token generators. Added a catalog-driven tenant-isolation runner and self-tests, and migrated the database transaction and migration integration tests to use the kit.
+
+### Acceptance results
+
+| Criterion | Test name | Result |
+|---|---|---|
+| AC-1 | `isolation_harness::test_db_is_isolated_per_test` | pass |
+| AC-2 | `isolation_harness::pools_use_the_real_roles` | pass |
+| AC-3 | `isolation_harness::sec_ac_01_probe_table_clean` | pass |
+| AC-4 | `isolation_harness::tst_06_missing_fixture_is_a_finding` | pass |
+| AC-5 | `isolation_harness::sec_ac_02_unforced_rls_is_a_finding` | pass |
+| AC-6 | `isolation_harness::require_db_fails_in_ci` | pass |
+| AC-7 | `migrate::*`, `tx::*` | pass (3 migration tests and 9 transaction tests) |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| `export PATH="$HOME/.cargo/bin:$PATH"; eval "$(scripts/dev-postgres.sh env)"; NEXTEST_TEST_THREADS=1 cargo nextest run -p kinevo-db --features testing` | 0 | 26 passed, 0 skipped; exercised the external database URL path. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; env -u KINEVO_TEST_DATABASE_URL NEXTEST_TEST_THREADS=1 cargo nextest run -p kinevo-db --features testing` | 0 | 26 passed, 0 skipped; exercised the `testcontainers` PostgreSQL 17 path. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; cargo clippy -p kinevo-db --all-targets --features testing --message-format=short -- -D warnings` | 0 | Passed. Existing `clippy.toml` entries still report unreachable-method warnings for `uuid::Uuid::new_v4` and `rand::thread_rng`. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; cargo fmt --all; just check` | 0 | `just check`: 66 passed, 0 skipped; spec check: 0 findings in 60 files; contrast: 0 failures; task index: 0 problems in 132 tasks. `cargo-deny` exited 0 with duplicate-version and unmatched-license warnings. |
+| `python3 scripts/spec_tool.py check` | 0 | `0 finding(s) in 60 spec files`. |
+| `python3 scripts/tasks_index.py --check` | 0 | `0 problem(s) in 132 task(s)`. |
+
+An earlier external-database run exited 100 because AC-5 expected the finding to name `FORCE`; the finding now names `FORCE ROW LEVEL SECURITY`, and both final database runs pass. The first post-edit `just check` exited 1 because rustfmt requested a line-wrap correction; after `cargo fmt --all`, the final gate above exits 0. The feature-specific Clippy command initially exited 101 on testkit and integration-test lint findings; those findings were corrected and the final command above exits 0.
+
+### Files changed
+
+Relative to the T-011 claim commit `966f743`; `Cargo.lock` is generated and excluded under D-55.
+
+| Path | Added | Removed |
+|---|---:|---:|
+| `AGENTS.md` | 1 | 1 |
+| `BRANCHING.md` | 18 | 30 |
+| `WORKFLOW.md` | 11 | 7 |
+| `crates/kinevo-db/Cargo.toml` | 9 | 0 |
+| `crates/kinevo-db/src/lib.rs` | 3 | 0 |
+| `crates/kinevo-db/src/testing/isolation.rs` | 360 | 0 |
+| `crates/kinevo-db/src/testing/mod.rs` | 508 | 0 |
+| `crates/kinevo-db/tests/isolation_harness.rs` | 212 | 0 |
+| `crates/kinevo-db/tests/migrate.rs` | 46 | 205 |
+| `crates/kinevo-db/tests/tx.rs` | 120 | 332 |
+| `spec/decisions.md` | 3 | 0 |
+| `spec/index.md` | 1 | 1 |
+| `spec/standards/open-source-stack.md` | 1 | 0 |
+| `tasks/T-011-db-test-kit-and-isolation-harness.md` | 92 | 3 |
+| `tasks/index.md` | 2 | 2 |
+| `Cargo.lock` | generated dependency updates | generated dependency updates |
+
+Total changed lines excluding `Cargo.lock`: 1,968.
+
+### Deviations
+
+- D-58: used `testcontainers` 0.28 `GenericImage` instead of `testcontainers-modules`; version 0.15 resolves the core to 0.27, conflicting with the required 0.28 core dependency. Its readiness condition is PostgreSQL's explicit ready log, so no time-based sleep is used; the task's suggested `pg_isready` command probe is unavailable in the 0.28 `WaitFor` API.
+- D-59: exposed `TestAppBuilder::clock_at(Instant)` from the task's Interface section because its Scope prose specifies a different `.clock(FixedClock::at(...))` form.
+- Added the `futures` stack entry because the task's `BoxFuture` callback interface uses it.
+- Updated the decision index, agent workflow and branching instructions to record maintainer decision D-57, which replaces the old D-54 milestone-branch text with the active `dev` workflow.
+- The generated `Cargo.lock` changes are excluded from the budget. The non-lockfile diff is 1,968 changed lines, exceeding the 400-line guidance; D-55 makes that a recorded deviation, not a blocker.
+
+### Decisions made by implementer
+
+| ID | Choice and alternatives | Reason | Files changed | Reversal |
+|---|---|---|---|---|
+| D-58 | Use `GenericImage` with core 0.28 and wait for PostgreSQL's ready log; alternative: `testcontainers-modules` 0.15 / `pg_isready` wait. Pending owner review. | Module crate's core 0.27 conflicts with the required core 0.28; the log wait is an explicit condition without sleeps. | `spec/decisions.md`, `crates/kinevo-db/src/testing/mod.rs`, this task Report | Adopt a compatible modules release or add a supported command wait strategy, then update the testkit and decision log. |
+| D-59 | Use `clock_at(Instant)`; alternative: a second `.clock(FixedClock)` overload. Pending owner review. | Matches the task's Interface section and avoids duplicate builder APIs. | `spec/decisions.md`, `crates/kinevo-db/src/testing/mod.rs`, this task Report | Change the builder signature and tests if the architect resolves the task wording differently. |
+
+### Spec issues noticed
+
+- T-011's Scope and Interface sections specify different clock builder signatures; recorded as D-59.
+- T-011 requests `testcontainers-modules` with `testcontainers` 0.28, while the currently available module release resolves the core to 0.27; recorded as D-58.
+
+### Not done / not verified
+
+- No module-specific tenant fixtures exist yet; schema tasks add and register those fixtures. The current generated harness is self-tested against the T-010 probe table.
+- PostgreSQL 18 was not run locally; the configured test default is PostgreSQL 17.
+- No check was marked environment-limited; Docker and the throwaway external database both ran successfully.
+
+### Follow-up suggestions
+
+- Review D-58 and D-59 when the architect next updates the testing task and dependency map.
 
 ## Questions
 
-_None yet._
+- Q-1 (implementer, 2026-10-28): T-011 lists `testcontainers-modules` next to the required `testcontainers` 0.28 core, but module release 0.15 resolves core 0.27; the 0.28 `WaitFor` API does not provide a command probe for `pg_isready`.
+  Resolved by implementer, pending owner review: use the core `GenericImage` and wait for PostgreSQL's ready log (D-58).
+  Options: (a) downgrade the required core to 0.27; (b) use core 0.28 directly with a readiness-log condition.
+  Recommendation: (b), because the task and stack both require core 0.28 and this avoids adding an incompatible dependency.
+- Q-2 (implementer, 2026-10-28): the Scope prose gives `.clock(FixedClock::at(...))`, but the Interface section gives `clock_at(Instant)`.
+  Resolved by implementer, pending owner review: implement the Interface signature (D-59).
+  Options: (a) follow the Scope example; (b) follow the explicit Interface definition.
+  Recommendation: (b), because the Interface defines the builder's public method and argument type.

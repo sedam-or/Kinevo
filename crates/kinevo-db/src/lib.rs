@@ -9,6 +9,9 @@ pub mod migrate;
 pub mod pool;
 pub mod tx;
 
+#[cfg(feature = "testing")]
+pub mod testing;
+
 pub use pool::{ConnectError, Db, DbConfig, Sleeper, TokioSleeper};
 pub use tx::{SystemTx, Tx};
 
