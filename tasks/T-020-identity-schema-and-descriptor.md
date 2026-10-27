@@ -3,12 +3,12 @@ id: T-020
 title: Create the identity schema migration, module skeleton and descriptor
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-011, T-008, T-006]
 requirements: [DOM-01, DOM-04, DOM-05, DOM-07, ARCH-20, ADR-0011, D-39, D-44, D-45, CA-02, CA-04, CA-18, SEC-AC-01, SEC-AC-02]
 branch: m1-t020-identity-schema
 budget_lines: 380
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-020: Create the identity schema migration, module skeleton and descriptor
