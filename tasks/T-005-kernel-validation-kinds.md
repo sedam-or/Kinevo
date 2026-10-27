@@ -3,12 +3,12 @@ id: T-005
 title: Add validated newtypes and the field-kind validators to the kernel
 milestone: M1
 kind: feature
-status: blocked
+status: in_progress
 depends_on: [T-003, T-004]
 requirements: [VAL-01, VAL-02, VAL-03, VAL-04, VAL-05, VAL-06, VAL-10, CQ-06, DOM-07, ID-FR-14]
 branch: m1-t005-kernel-validation-kinds
 budget_lines: 400
-assignee: ""
+assignee: "Codex"
 ---
 
 # T-005: Add validated newtypes and the field-kind validators to the kernel
@@ -199,3 +199,4 @@ No T-005 acceptance criteria were run because the task/spec fixture scope confli
 - Q-1 (implementer, 2026-10-26): The task's scope includes `SecretText` and its Context says the fixtures cover the in-scope field kinds. However, `spec/standards/validation.md` §5 requires a fixture for each field kind, while the task's Files list omits `spec/fixtures/validation/secret_text.json`. Adding that fixture would touch a file not listed under Files; omitting it would leave the shared fixtures incomplete for an in-scope kind.
   Options: (a) add `secret_text.json` to the task's Files and require the shared fixture test to cover it; (b) explicitly exclude `SecretText` from the shared fixtures and clarify how §5's per-kind requirement applies.
   Recommendation: (a), because it keeps the task's stated scope and the spec's shared-fixture contract aligned.
+  Resolved (architect): D-56, add `secret_text.json` to the fixture set and cover its verbatim normalization, 1–4096 length bounds, and empty input.
