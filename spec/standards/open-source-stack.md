@@ -8,10 +8,10 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 |---|---|---|---|---|---|
 | Language / toolchain | Rust stable, edition 2024, `rust-toolchain.toml` pinning | 1.99.x present locally | MIT/Apache-2.0 | strongest typing for the domain (D-02) | contributor pool smaller than PHP/TS |
 | HTTP framework | **axum** | 0.8.9 ✔ | MIT | tokio-native, tower middleware, widely used; actix-web is comparable (own runtime), rejected for tower reuse | minor-version churn (0.x) |
-| Async runtime | **tokio** | 1.54.1 ✔ | MIT | de-facto standard | — |
+| Async runtime | **tokio** | 1.54.1 ✔ (`macros`, `rt-multi-thread` in `kinevo-db` tests) | MIT | de-facto standard | — |
 | Async traits | **async-trait** | 0.1.92 ✔ | MIT/Apache-2.0 | object-safe async methods in `kinevo-ports` | proc-macro expansion and allocation |
 | HTTP middleware | **tower**, **tower-http** (trace, compression, cors, limit, timeout, set-header) | tower-http 0.7.1 ✔ | MIT | avoid hand-written middleware | — |
-| Database | **PostgreSQL** 17/18 via **sqlx** (rustls, postgres, migrate, uuid, time off, json) | sqlx 0.9.0 ✔ | MIT/Apache-2.0 | compile-time checked SQL, no ORM hiding RLS/transactions; diesel/sea-orm rejected (heavier abstraction over RLS) | offline metadata (`cargo sqlx prepare`) must be committed |
+| Database | **PostgreSQL** 17/18 via **sqlx** (rustls, postgres, migrate, uuid, time off, json) | sqlx 0.9.0 ✔ (`postgres`, `runtime-tokio`, `tls-rustls-ring-native-roots`, `migrate`, `macros`, `uuid` in `kinevo-db`) | MIT/Apache-2.0 | compile-time checked SQL, no ORM hiding RLS/transactions; diesel/sea-orm rejected (heavier abstraction over RLS/transactions) | offline metadata (`cargo sqlx prepare`) must be committed |
 | Time & zones | **jiff** (+ embedded tzdb) | 0.2.38 ✔ | Unlicense/MIT | correct DST semantics, IANA zones, pure Rust (no OS tz dependency in Alpine); chrono/time rejected: weaker tz story | 0.x API |
 | Serialisation | **serde**, **serde_json** | 1.0.229 ✔ / 1.0.154 ✔ | MIT/Apache-2.0 | standard | — |
 | Canonical JSON (JCS) | **serde_jcs** (or small audited implementation if unmaintained) | resolve in M1 | MIT | RFC 8785 for hashes/goldens | maintenance — fallback to an in-repo ≤ 150-line implementation covered by RFC test vectors |

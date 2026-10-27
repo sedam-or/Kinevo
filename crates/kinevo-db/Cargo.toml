@@ -7,6 +7,11 @@ repository.workspace = true
 
 [dependencies]
 kinevo-kernel.workspace = true
+sqlx = { version = "0.9.0", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls-ring-native-roots", "migrate", "macros", "uuid"] }
+thiserror = "2.0.21"
+
+[dev-dependencies]
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }
 
 [lints]
 workspace = true
