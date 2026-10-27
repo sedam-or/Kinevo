@@ -1,0 +1,1 @@
+{"$comment":"VAL-02, VAL-03, VAL-10","kind":"key","params":{"pattern":"^[a-z][a-z0-9_]{0,19}$"},"valid":[{"input":"  Foo_2  ","normalised":"foo_2"}],"invalid":[{"input":"","code":"key_invalid"},{"input":"bad-value","code":"key_invalid"},{"input":"ab\u200bc","code":"key_invalid"}]}

@@ -1,0 +1,1 @@
+{"$comment":"VAL-10","kind":"opaque_token","params":{},"valid":[{"input":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","normalised":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}],"invalid":[{"input":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA","code":"token_invalid"},{"input":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.","code":"token_invalid"}]}

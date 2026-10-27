@@ -1,0 +1,1 @@
+{"$comment":"VAL-05","kind":"int","params":{"min":0,"max":100},"valid":[{"input":0,"normalised":0},{"input":100,"normalised":100}],"invalid":[{"input":-1,"code":"out_of_range"},{"input":101,"code":"out_of_range"},{"input":9007199254740992,"code":"out_of_range"}]}

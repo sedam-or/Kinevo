@@ -13,10 +13,14 @@ base64 = "0.23.1"
 chacha20poly1305 = "0.11.0"
 hmac = "0.13.0"
 hkdf = "0.13.0"
-jiff = { version = "0.2.38", default-features = false, features = ["std"] }
+jiff = { version = "0.2.38", default-features = false, features = ["std", "tzdb-bundle-always"] }
+regex = "1"
 serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
 sha2 = "0.11.1"
 subtle = "2.6.1"
+unicode-normalization = "0.1.26"
+url = "2.5.8"
 zeroize = { version = "1.9.1", features = ["alloc"] }
 
 [dependencies.thiserror]
@@ -27,10 +31,6 @@ uuid = { version = "1.29.0", features = ["serde", "v7"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 uuid = { version = "1.29.0", features = ["serde"] }
-
-[dev-dependencies]
-serde_json = "1.0.154"
-regex = "1"
 
 [lints]
 workspace = true

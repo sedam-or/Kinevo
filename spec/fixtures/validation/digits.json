@@ -1,0 +1,1 @@
+{"$comment":"VAL-02, VAL-03","kind":"digits","params":{"len":6},"valid":[{"input":" 123456 ","normalised":"123456"}],"invalid":[{"input":"","code":"digits_invalid"},{"input":"12345","code":"digits_invalid"},{"input":"\uff11\uff12\uff13\uff14\uff15\uff16","code":"digits_invalid"}]}

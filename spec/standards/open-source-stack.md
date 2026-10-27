@@ -8,9 +8,10 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 |---|---|---|---|---|---|
 | Language / toolchain | Rust stable, edition 2024, `rust-toolchain.toml` pinning | 1.99.x present locally | MIT/Apache-2.0 | strongest typing for the domain (D-02) | contributor pool smaller than PHP/TS |
 | HTTP framework | **axum** | 0.8.9 ✔ | MIT | tokio-native, tower middleware, widely used; actix-web is comparable (own runtime), rejected for tower reuse | minor-version churn (0.x) |
-| Async runtime | **tokio** | 1.54.1 ✔ | MIT | de-facto standard | — |
+| Async runtime | **tokio** | 1.54.1 ✔ (`macros`, `rt-multi-thread` in `kinevo-db` tests) | MIT | de-facto standard | — |
+| Async traits | **async-trait** | 0.1.92 ✔ | MIT/Apache-2.0 | object-safe async methods in `kinevo-ports` | proc-macro expansion and allocation |
 | HTTP middleware | **tower**, **tower-http** (trace, compression, cors, limit, timeout, set-header) | tower-http 0.7.1 ✔ | MIT | avoid hand-written middleware | — |
-| Database | **PostgreSQL** 17/18 via **sqlx** (rustls, postgres, migrate, uuid, time off, json) | sqlx 0.9.0 ✔ | MIT/Apache-2.0 | compile-time checked SQL, no ORM hiding RLS/transactions; diesel/sea-orm rejected (heavier abstraction over RLS) | offline metadata (`cargo sqlx prepare`) must be committed |
+| Database | **PostgreSQL** 17/18 via **sqlx** (rustls, postgres, migrate, uuid, time off, json) | sqlx 0.9.0 ✔ (`postgres`, `runtime-tokio`, `tls-rustls-ring-native-roots`, `migrate`, `macros`, `uuid` in `kinevo-db`) | MIT/Apache-2.0 | compile-time checked SQL, no ORM hiding RLS/transactions; diesel/sea-orm rejected (heavier abstraction over RLS/transactions) | offline metadata (`cargo sqlx prepare`) must be committed |
 | Time & zones | **jiff** (+ embedded tzdb) | 0.2.38 ✔ | Unlicense/MIT | correct DST semantics, IANA zones, pure Rust (no OS tz dependency in Alpine); chrono/time rejected: weaker tz story | 0.x API |
 | Serialisation | **serde**, **serde_json** | 1.0.229 ✔ / 1.0.154 ✔ | MIT/Apache-2.0 | standard | — |
 | Canonical JSON (JCS) | **serde_jcs** (or small audited implementation if unmaintained) | resolve in M1 | MIT | RFC 8785 for hashes/goldens | maintenance — fallback to an in-repo ≤ 150-line implementation covered by RFC test vectors |
@@ -36,7 +37,8 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 | JSON Schema | **jsonschema** | 0.60.1 ✔ | MIT | validate AI/imports/docs against `contracts/*.schema.json` | schema-draft support — pin draft 2020-12 |
 | ICS | **icalendar** for building/parsing basics; recurrence expansion is **own code** per LAND-R3/R4 (the `rrule` crate 0.14.0 ✔ was evaluated and not adopted: determinism and DST rules must match this spec exactly) | icalendar 0.17.15 ✔ | MIT/Apache-2.0 | adopt for the format, not for semantics | parser leniency ⇒ our bounds and fuzzing |
 | Unicode | **unicode-normalization** (NFC/NFKC) | 0.1.26 ✔ | MIT/Apache-2.0 | VAL-02 | — |
-| Regex | **regex** (linear time) | resolve in M1 | MIT/Apache-2.0 | VAL-10 | — |
+| Regex | **regex** (linear time) | 1.13.1 ✔ | MIT/Apache-2.0 | VAL-10 | — |
+| URL parsing | **url** | 2.5.8 ✔ | MIT/Apache-2.0 | Standards-compliant parsing and canonicalization for `https_url` validation; hand-written parsing rejected | Keep host and credential edge cases covered by fixtures |
 | WASM bindings | **wasm-bindgen** (+ `wasm-pack` tool) | 0.2.129 ✔ | MIT/Apache-2.0 | scheduler preview (D-22) | — |
 | Kotlin bindings (deferred) | **uniffi** | 0.32.2 ✔ | MPL-2.0 | only if native screens are justified | — |
 | Tests | **nextest**, **proptest**, **insta**, **testcontainers** | proptest 1.12.0 ✔, insta 1.49.0 ✔, testcontainers 0.28.0 ✔ | MIT/Apache-2.0 | `12-testing.md` | Docker required locally |
