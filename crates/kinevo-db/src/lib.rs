@@ -3,7 +3,14 @@
 #![forbid(unsafe_code)]
 
 pub mod bootstrap;
+pub mod errors;
+pub mod isolation;
 pub mod migrate;
+pub mod pool;
+pub mod tx;
+
+pub use pool::{ConnectError, Db, DbConfig, Sleeper, TokioSleeper};
+pub use tx::{SystemTx, Tx};
 
 static PLATFORM_MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
 

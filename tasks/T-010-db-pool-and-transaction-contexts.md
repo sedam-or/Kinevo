@@ -3,7 +3,7 @@ id: T-010
 title: Add pools, the three transaction contexts, verify_isolation and constraint mapping to kinevo-db
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-009, T-002, T-003, T-004]
 requirements: [ARCH-22, ARCH-24, CA-08, CA-09, SEC-06, ADR-0011, D-39, D-45, D-46, VAL-11, ERR-05, CQ-11]
 branch: m1-t010-db-tx-contexts
@@ -126,8 +126,75 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Implemented the app and system pools, account-scoped and admin transaction contexts, system transactions, startup isolation verification, and database error mapping. All ten named acceptance tests pass against the disposable PostgreSQL database.
+
+### Acceptance results
+
+| Criterion | Test | Result |
+|---|---|---|
+| AC-1 | `tx::arch_22_tx_scopes_rows_to_account` | pass |
+| AC-2 | `tx::arch_22_with_check_blocks_foreign_insert` | pass |
+| AC-3 | `tx::sec_05_no_context_sees_nothing` | pass |
+| AC-4 | `tx::adr_0011_admin_flag_only_in_admin_tx` | pass |
+| AC-5 | `tx::drop_rolls_back` | pass |
+| AC-6 | `tx::sec_06_verify_isolation_lists_all_findings` | pass |
+| AC-7 | `tx::sec_06_verify_isolation_ok` | pass |
+| AC-8 | `errors::tests::val_11_constraint_mapping` | pass |
+| AC-9 | `no_set_config_outside_db::adr_0011_only_kinevo_db_sets_context` | pass |
+| AC-10 | `pool::tests::connect_retries_with_backoff_and_hides_url` | pass |
+
+### Commands run
+
+- `export PATH="$HOME/.cargo/bin:$PATH"; scripts/preflight.sh` — exit 0; no hard blockers.
+- `cargo fmt --all` — exit 0.
+- `eval "$(scripts/dev-postgres.sh env)"; NEXTEST_TEST_THREADS=1 cargo nextest run -p kinevo-db` — exit 0; 20 tests passed, 0 skipped.
+- `eval "$(scripts/dev-postgres.sh env)"; just check` — exit 0; workspace tests 77/77 passed; `cargo deny` completed with existing duplicate-version warnings; `spec_tool.py` reported 0 findings in 60 files; contrast check reported 0 failures; task index check reported 0 problems across 132 tasks.
+- `python3 scripts/spec_tool.py check` — exit 0; 0 findings in 60 spec files.
+- `python3 scripts/tasks_index.py --check` — exit 0; 0 problems in 132 tasks.
+- Red test run before implementation: `cargo nextest run -p kinevo-db` — exit 101 at compile; the expected `Db`, `Tx`, `SystemTx`, and isolation APIs did not yet exist.
+- An early DB test attempt with the initial retry fixture URL was interrupted after 31.5 seconds (exit 100); replacing it with a PostgreSQL URL rejected during parsing made the retry test immediate. An intermediate isolation run exposed a PostgreSQL `42P10` catalog-query ordering error; the query was corrected before the passing final runs.
+
+### Files changed
+
+| Path | Added | Removed |
+|---|---:|---:|
+| `Cargo.lock` (generated) | 1 | 0 |
+| `crates/kinevo-db/Cargo.toml` | 2 | 0 |
+| `crates/kinevo-db/src/errors.rs` | 219 | 0 |
+| `crates/kinevo-db/src/isolation.rs` | 359 | 0 |
+| `crates/kinevo-db/src/lib.rs` | 7 | 0 |
+| `crates/kinevo-db/src/pool.rs` | 160 | 0 |
+| `crates/kinevo-db/src/tx.rs` | 98 | 0 |
+| `crates/kinevo-db/tests/no_set_config_outside_db.rs` | 63 | 0 |
+| `crates/kinevo-db/tests/tx.rs` | 466 | 0 |
+| `tasks/T-010-db-pool-and-transaction-contexts.md` (status and Report) | 70 | 3 |
+| `tasks/index.md` (generated) | 2 | 2 |
+
+### Deviations
+
+- Added `backoff: Duration` to `DbConfig`: the Scope and AC-10 require an injected base delay, while the Interfaces struct omitted it. `retries = 3` means three retries after the initial attempt, as required by AC-10's four-attempt expectation.
+- Added Tokio's `time` feature as a normal dependency for `TokioSleeper`; this reuses the already-approved Tokio package and provides the production implementation for injected sleeping.
+- Added the provisional policy name `admin_context` to the exact allow-list for `policy_versions` and `audit_log`; the cited SEC-06 wording permits those policies but does not name them. Recorded for architect review below.
+- Wrapped dynamically assembled test-only table identifiers in `sqlx::AssertSqlSafe`; table names are generated from fixed prefixes and a numeric test counter, while row values use bind parameters.
+- The task diff is +1,444/−3 lines excluding generated `Cargo.lock` and `tasks/index.md`; it exceeds the 420-line guidance because the task requires pool, transaction, isolation, and error-mapping implementations plus integration tests. D-55 makes that guidance non-blocking.
+
+### Spec issues noticed
+
+- The `DbConfig` interface omits the backoff field required by the Scope and AC-10.
+- SEC-06 does not specify the names for admin-context policies on `policy_versions` and `audit_log`.
+
+### Not done / not verified
+
+- No environment-limited checks. The current schema has no production tenant tables; AC-6 and AC-7 exercise the verifier with the task's disposable probe tables. Production migration policies will be exercised by later migration tasks.
+- No check was skipped in the final `just check` run.
+
+### Follow-up suggestions
+
+- Confirm the `admin_context` policy name and add the canonical policy names and expressions to SEC-06 or the relevant ADR before the admin migrations are implemented.
 
 ## Questions
 
-_None yet._
+- Q-1 — **Resolved by implementer, pending architect review:** `DbConfig` lists no `backoff`, although Scope and AC-10 require a configured base duration and doubling delays. The implementation adds `backoff: Duration` and treats the configured `retries` value as retries after the initial attempt.
+- Q-2 — **Resolved by implementer, pending architect review:** SEC-06 permits admin-context policies on `policy_versions` and `audit_log` without specifying their names. The implementation uses `admin_context` in the policy allow-list; please confirm or replace the name and its canonical expressions.
