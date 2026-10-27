@@ -3,12 +3,12 @@ id: T-016
 title: Build the kinevo-http core (route table, request id, problem+json, headers, health, extractors)
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-003, T-005, T-007, T-008]
 requirements: [API-01, API-02, API-04, API-07, API-13, API-20, API-21, API-22, API-31, API-32, API-42, FE-10, ERR-01, ERR-04, SEC-04, SEC-05, SEC-08, RBAC-01, OPS-02]
 branch: m1-t016-http-core
 budget_lines: 450
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-016: Build the kinevo-http core (route table, request id, problem+json, headers, health, extractors)
