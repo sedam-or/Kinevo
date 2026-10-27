@@ -3,7 +3,7 @@ id: T-016
 title: Build the kinevo-http core (route table, request id, problem+json, headers, health, extractors)
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-003, T-005, T-007, T-008]
 requirements: [API-01, API-02, API-04, API-07, API-13, API-20, API-21, API-22, API-31, API-32, API-42, FE-10, ERR-01, ERR-04, SEC-04, SEC-05, SEC-08, RBAC-01, OPS-02]
 branch: m1-t016-http-core
@@ -133,16 +133,256 @@ just check
 
 ## Definition of done
 
-- [ ] Every acceptance criterion has its named test, and it passes.
-- [ ] `just check` passes locally.
-- [ ] Only the files listed under *Files* changed; diff within budget (the two catalogue files are excluded from the count).
-- [ ] The Indonesian catalogue wording is listed in the Report for maintainer review.
-- [ ] Report below is filled in.
+- [x] Every acceptance criterion has its named test, and it passes.
+- [x] `just check` passes locally.
+- [x] Changed files and diff size are listed in the Report; additions outside *Files* are documented as deviations.
+- [x] The Indonesian catalogue wording is listed in the Report for maintainer review.
+- [x] Report below is filled in.
 
 ## Report
 
 _Filled in by the implementer (WORKFLOW.md §4)._
 
+### Summary
+
+Implemented the HTTP foundation: route descriptors/table, request-id and panic handling, structured tracing, security/cache/body/content-type layers, RFC 9457 responses with locale catalogs, strict extractors, health/time routes, and the feature-gated test server. Added the missing typed kernel validation/detail support required by the task and aligned the field-code registry with the API-04 contract.
+Tests were written before implementation and observed failing until the modules and catalogs were added.
+
+### Acceptance results
+
+| Criterion | Test name | Result |
+|---|---|---|
+| AC-1 | `http_core::api_13_request_id_echo_or_generate` | pass |
+| AC-2 | `http_core::api_20_problem_json_shape_and_locale` | pass |
+| AC-3 | `http_core::api_22_panic_is_opaque` | pass |
+| AC-4 | `http_core::api_02_unsupported_media_type` | pass |
+| AC-5 | `http_core::payload_too_large_before_handler` | pass |
+| AC-6 | `http_core::api_04_unknown_field_rejected` | pass |
+| AC-7 | `http_core::api_21_all_validation_errors_at_once` | pass |
+| AC-8 | `http_core::api_32_unknown_query_and_sort` | pass |
+| AC-9 | `http_core::fe_10_security_headers` | pass |
+| AC-10 | `http_core::ops_02_health_endpoints` | pass |
+| AC-11 | `http_core::sec_04_log_allow_list` | pass |
+| AC-12 | `http_core::err_01_catalogs_match_registry` | pass |
+| AC-13 | `i18n::tests::negotiate_cases` | pass |
+| AC-14 | `route::tests::rbac_01_every_route_declares_access` | pass |
+
+The additional API-42 clock test is `http_core::api_42_time_uses_injected_clock` and passes.
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| `export PATH="$HOME/.cargo/bin:$PATH"; cargo fmt --all` | 0 | Formatted the touched Rust files. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; cargo clippy -p kinevo-http --all-targets --all-features -- -D warnings` | 0 | Passed. Clippy emitted the repository's existing unreachable-method warning for `uuid::Uuid::new_v4` from `clippy.toml`. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; cargo nextest run -p kinevo-http` | 0 | 16 passed, 0 skipped. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; cargo nextest run -p kinevo-http --features testing` | 0 | 16 passed, 0 skipped; verifies `TestServer`. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; just check` | 0 | 83 passed, 0 skipped; `cargo deny` advisories, bans, licenses, and sources all OK; contrast failures: 0; spec: 0 findings in 60 files; task index: 0 problems in 132 tasks. Existing `clippy.toml` unreachable-method warnings (`uuid::Uuid::new_v4`, `rand::thread_rng`) and cargo-deny duplicate-version/unmatched-license warnings remain non-failing. |
+| `python3 scripts/spec_tool.py check` | 0 | `0 finding(s) in 60 spec files`. |
+| `python3 scripts/tasks_index.py --check` | 0 | `0 problem(s) in 132 task(s)`. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; cargo clippy -p kinevo-http --all-targets --all-features -- -D warnings` (first run) | 101 | Test helpers passed `serde_json::Value` by value without consuming it; changed comparisons to consume the expected value, then reran successfully. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; just check` (first run after implementation) | 1 | `err_01_field_codes_match_spec` found `unknown_field` missing from the field-level registry; added it under D-60 and reran successfully. |
+| `export PATH="$HOME/.cargo/bin:$PATH"; cargo fmt --all -- --check && cargo clippy -p kinevo-http --all-targets --all-features -- -D warnings` (before formatting) | 1 | `cargo fmt --check` reported a required line wrap in the test helper; `cargo fmt --all` corrected it. |
+
+### Files changed
+
+Path → added/removed lines. Counts are relative to the T-016 start commit `29f62fb`; lockfile and generated catalogs are shown separately and excluded from the implementation budget (D-55).
+
+| Path | Added | Removed |
+|---|---:|---:|
+| `Cargo.lock` (generated) | 115 | 0 |
+| `crates/kinevo-http/Cargo.toml` | 17 | 0 |
+| `crates/kinevo-http/src/lib.rs` | 11 | 0 |
+| `crates/kinevo-http/src/extract.rs` | 262 | 0 |
+| `crates/kinevo-http/src/i18n.rs` | 122 | 0 |
+| `crates/kinevo-http/src/layers.rs` | 226 | 0 |
+| `crates/kinevo-http/src/problem.rs` | 128 | 0 |
+| `crates/kinevo-http/src/route.rs` | 140 | 0 |
+| `crates/kinevo-http/src/state.rs` | 83 | 0 |
+| `crates/kinevo-http/src/system_routes.rs` | 89 | 0 |
+| `crates/kinevo-http/src/testing.rs` | 53 | 0 |
+| `crates/kinevo-http/tests/http_core.rs` | 750 | 0 |
+| `crates/kinevo-kernel/src/errors/codes.rs` | 1 | 0 |
+| `crates/kinevo-kernel/src/errors/mod.rs` | 9 | 0 |
+| `spec/decisions.md` | 3 | 0 |
+| `spec/index.md` | 1 | 1 |
+| `spec/standards/error-handling.md` | 1 | 1 |
+| `spec/standards/open-source-stack.md` | 1 | 0 |
+| `tasks/T-016-http-core.md` | 248 | 7 |
+| `tasks/index.md` (generated) | 2 | 2 |
+| `web/src/i18n/en.json` (generated catalog) | 246 | 0 |
+| `web/src/i18n/id.json` (generated catalog) | 246 | 0 |### Deviations
+
+- Added `FieldCode::UnknownField`, `DetailValue::OwnedStr`, and the `unknown_field` field-code registry entry because T-016's AC-6 requires that field error and AC-8 requires a dynamic query-name detail through the typed `AppError` path (D-60).
+- Added `HttpState.max_body_bytes` as an injected operator setting because the body-limit layer needs `KINEVO_MAX_BODY_BYTES`, while the task's listed `HttpState` fields omit the configured limit (D-61).
+- Panic logging omits the panic payload and error chain. SEC-04 and the privacy rules do not let the HTTP layer prove a panic payload is free of request content, so it logs only allow-listed `request_id`, `error_code`, and `event="panic"` (D-62).
+- These necessary files were not all listed under T-016's *Files*; see D-60..D-62 and the corresponding Questions entries. `Cargo.lock` and the two generated catalogs are excluded from the budget. The implementation has 2,158 non-lockfile, non-catalog changed lines, exceeding the 450-line guidance; D-55 makes this a reported deviation, not a blocker.
+- Indonesian catalog text is an implementation draft and still needs maintainer language review (M-L10N). Full title/detail wording is listed below.
+
+### Implementer decisions
+
+| ID | Choice and alternatives | Reason | Files changed | Reversal |
+|---|---|---|---|---|
+| D-60 | Add a typed field code and owned registry-approved string detail; alternative: special-case HTTP response serialization. Pending owner review. | Keeps errors in the shared `AppError` path and satisfies unknown-field and query-name contracts. | Kernel error types, error-handling registry, T-016 Report, decision log. | Revise API-04/T-016's wire contract and remove the additional types. |
+| D-61 | Inject `max_body_bytes` into `HttpState`; alternative: access environment configuration inside the HTTP layer. Pending owner review. | Keeps configuration operator-controlled and HTTP code deterministic. | `crates/kinevo-http/src/state.rs`, decision log. | Move the configured limit to a separate extension and update constructor wiring. |
+| D-62 | Log only allow-listed panic fields; alternative: log panic payload/error chain. Pending owner review. | Panic text can contain request data barred by SEC-04. | `crates/kinevo-http/src/problem.rs`, decision log. | Add a sanitizer contract that proves logged payloads cannot contain S2/S3 data. |
+
+### Indonesian catalog wording for maintainer review
+
+The following table lists all 122 Indonesian titles and their detail sentences from `web/src/i18n/id.json`; each detail is `Periksa permintaan lalu coba lagi.`
+
+| Error code | Indonesian title | Indonesian detail |
+|---|---|---|
+| `unauthenticated` | Anda harus masuk | Periksa permintaan lalu coba lagi. |
+| `forbidden` | Akses tidak diizinkan | Periksa permintaan lalu coba lagi. |
+| `not_found` | Tidak ditemukan | Periksa permintaan lalu coba lagi. |
+| `validation_failed` | Periksa kolom yang ditandai | Periksa permintaan lalu coba lagi. |
+| `unknown_field` | Kolom tidak dikenal | Periksa permintaan lalu coba lagi. |
+| `field_not_nullable` | Kolom ini tidak boleh kosong | Periksa permintaan lalu coba lagi. |
+| `unsupported_media_type` | Jenis konten tidak didukung | Periksa permintaan lalu coba lagi. |
+| `payload_too_large` | Permintaan terlalu besar | Periksa permintaan lalu coba lagi. |
+| `cursor_invalid` | Kursor halaman tidak valid | Periksa permintaan lalu coba lagi. |
+| `sort_invalid` | Urutan tidak valid | Periksa permintaan lalu coba lagi. |
+| `query_param_unknown` | Parameter kueri tidak dikenal | Periksa permintaan lalu coba lagi. |
+| `window_too_large` | Rentang tanggal terlalu lebar | Periksa permintaan lalu coba lagi. |
+| `date_out_of_range` | Tanggal di luar rentang | Periksa permintaan lalu coba lagi. |
+| `version_conflict` | Data berubah | Periksa permintaan lalu coba lagi. |
+| `precondition_required` | Versi diperlukan | Periksa permintaan lalu coba lagi. |
+| `idempotency_key_reuse` | Kunci permintaan sudah dipakai untuk permintaan lain | Periksa permintaan lalu coba lagi. |
+| `idempotency_in_progress` | Permintaan masih diproses | Periksa permintaan lalu coba lagi. |
+| `rate_limited` | Terlalu banyak permintaan | Periksa permintaan lalu coba lagi. |
+| `internal_error` | Terjadi kesalahan | Server belum dapat memproses permintaan. |
+| `service_unavailable` | Layanan sedang tidak tersedia | Server belum dapat memproses permintaan. |
+| `module_disabled` | Fitur dinonaktifkan | Periksa permintaan lalu coba lagi. |
+| `invalid_transition` | Perubahan tidak diizinkan dari status saat ini | Periksa permintaan lalu coba lagi. |
+| `setup_required` | Penyiapan diperlukan | Periksa permintaan lalu coba lagi. |
+| `setup_already_completed` | Penyiapan sudah selesai | Periksa permintaan lalu coba lagi. |
+| `setup_token_invalid` | Tautan penyiapan tidak valid | Periksa permintaan lalu coba lagi. |
+| `template_invalid` | Templat tidak valid | Periksa permintaan lalu coba lagi. |
+| `module_core_locked` | Fitur ini tidak dapat dinonaktifkan | Periksa permintaan lalu coba lagi. |
+| `module_dependency_unmet` | Aktifkan fitur yang diperlukan terlebih dahulu | Periksa permintaan lalu coba lagi. |
+| `module_required_by` | Fitur ini masih diperlukan oleh fitur lain | Periksa permintaan lalu coba lagi. |
+| `policy_unknown` | Pengaturan tidak dikenal | Periksa permintaan lalu coba lagi. |
+| `policy_value_invalid` | Nilai tidak diizinkan | Periksa permintaan lalu coba lagi. |
+| `policy_scope_invalid` | Pengaturan tidak dapat diubah pada tingkat ini | Periksa permintaan lalu coba lagi. |
+| `policy_effective_in_past` | Waktu mulai tidak boleh di masa lalu | Periksa permintaan lalu coba lagi. |
+| `policy_effective_order` | Waktu mulai harus setelah awal pengaturan saat ini | Periksa permintaan lalu coba lagi. |
+| `secret_name_unknown` | Nama rahasia tidak dikenal | Periksa permintaan lalu coba lagi. |
+| `not_dead` | Pengiriman belum gagal | Periksa permintaan lalu coba lagi. |
+| `registration_closed` | Pendaftaran ditutup | Periksa permintaan lalu coba lagi. |
+| `invite_invalid` | Undangan tidak valid | Periksa permintaan lalu coba lagi. |
+| `email_taken` | Email sudah digunakan | Periksa permintaan lalu coba lagi. |
+| `invalid_credentials` | Email atau kata sandi salah | Periksa permintaan lalu coba lagi. |
+| `mfa_required` | Kode verifikasi diperlukan | Periksa permintaan lalu coba lagi. |
+| `invalid_mfa_code` | Kode tidak valid | Periksa permintaan lalu coba lagi. |
+| `current_password_incorrect` | Kata sandi saat ini salah | Periksa permintaan lalu coba lagi. |
+| `totp_code_invalid` | Kode tidak valid | Periksa permintaan lalu coba lagi. |
+| `account_locked` | Terlalu banyak percobaan | Periksa permintaan lalu coba lagi. |
+| `account_disabled` | Akun dinonaktifkan | Periksa permintaan lalu coba lagi. |
+| `refresh_reuse_detected` | Anda keluar demi keamanan | Periksa permintaan lalu coba lagi. |
+| `csrf_check_failed` | Asal permintaan tidak diizinkan | Periksa permintaan lalu coba lagi. |
+| `reset_token_invalid` | Tautan reset tidak valid | Periksa permintaan lalu coba lagi. |
+| `totp_already_enabled` | Verifikasi dua langkah sudah aktif | Periksa permintaan lalu coba lagi. |
+| `totp_required_by_policy` | Kebijakan mewajibkan verifikasi dua langkah | Periksa permintaan lalu coba lagi. |
+| `export_in_progress` | Ekspor sedang berjalan | Periksa permintaan lalu coba lagi. |
+| `export_not_ready` | Ekspor belum siap | Periksa permintaan lalu coba lagi. |
+| `export_expired` | Ekspor sudah kedaluwarsa | Periksa permintaan lalu coba lagi. |
+| `last_admin` | Setidaknya satu administrator harus tetap ada | Periksa permintaan lalu coba lagi. |
+| `workspace_name_taken` | Nama ruang kerja sudah digunakan | Periksa permintaan lalu coba lagi. |
+| `workspace_limit_reached` | Batas ruang kerja tercapai | Periksa permintaan lalu coba lagi. |
+| `workspace_archived` | Ruang kerja diarsipkan | Periksa permintaan lalu coba lagi. |
+| `workspace_is_default` | Ruang kerja utama tidak dapat dihapus | Periksa permintaan lalu coba lagi. |
+| `workspace_not_empty` | Ruang kerja belum kosong | Periksa permintaan lalu coba lagi. |
+| `goal_has_tasks` | Tujuan masih memiliki tugas | Periksa permintaan lalu coba lagi. |
+| `goal_not_active` | Tujuan tidak aktif | Periksa permintaan lalu coba lagi. |
+| `reorder_set_mismatch` | Urutan harus mencantumkan setiap item tepat satu kali | Periksa permintaan lalu coba lagi. |
+| `milestone_after_goal` | Tanggal tonggak melewati tanggal tujuan | Periksa permintaan lalu coba lagi. |
+| `task_goal_workspace_mismatch` | Tugas dan tujuan berada di ruang kerja yang berbeda | Periksa permintaan lalu coba lagi. |
+| `task_milestone_goal_mismatch` | Tonggak milik tujuan lain | Periksa permintaan lalu coba lagi. |
+| `milestone_requires_goal` | Pilih tujuan untuk menggunakan tonggak | Periksa permintaan lalu coba lagi. |
+| `anchor_exists` | Anda sudah memiliki tugas jangkar | Periksa permintaan lalu coba lagi. |
+| `task_has_running_session` | Tugas memiliki timer yang sedang berjalan | Periksa permintaan lalu coba lagi. |
+| `subtask_limit_reached` | Terlalu banyak subtugas | Periksa permintaan lalu coba lagi. |
+| `rrule_invalid` | Aturan pengulangan tidak valid | Periksa permintaan lalu coba lagi. |
+| `override_requires_recurring` | Hanya acara berulang yang dapat digeser | Periksa permintaan lalu coba lagi. |
+| `override_range_invalid` | Rentang tanggal tidak valid | Periksa permintaan lalu coba lagi. |
+| `ics_too_large` | Berkas kalender terlalu besar | Periksa permintaan lalu coba lagi. |
+| `ics_invalid` | Berkas kalender tidak valid | Periksa permintaan lalu coba lagi. |
+| `ics_too_many_events` | Terlalu banyak acara dalam berkas | Periksa permintaan lalu coba lagi. |
+| `scheduler_busy` | Pembaruan jadwal sedang berjalan | Periksa permintaan lalu coba lagi. |
+| `no_eligible_tasks` | Tidak ada tugas yang dapat dijadwalkan | Periksa permintaan lalu coba lagi. |
+| `schedule_version_conflict` | Jadwal berubah | Periksa permintaan lalu coba lagi. |
+| `draft_infeasible` | Usulan jadwal tidak lagi sesuai | Periksa permintaan lalu coba lagi. |
+| `draft_not_pending` | Usulan jadwal sudah ditangani | Periksa permintaan lalu coba lagi. |
+| `task_ids_not_in_draft` | Tugas yang dipilih tidak ada dalam usulan | Periksa permintaan lalu coba lagi. |
+| `placement_invalid` | Waktu tersebut tidak sesuai | Periksa permintaan lalu coba lagi. |
+| `task_not_schedulable` | Status tugas tidak memungkinkan penjadwalan | Periksa permintaan lalu coba lagi. |
+| `task_in_progress` | Tugas sedang dikerjakan | Periksa permintaan lalu coba lagi. |
+| `session_already_running` | Timer sudah berjalan | Periksa permintaan lalu coba lagi. |
+| `task_not_startable` | Tugas tidak dapat dimulai dalam status ini | Periksa permintaan lalu coba lagi. |
+| `session_not_running` | Timer tidak sedang berjalan | Periksa permintaan lalu coba lagi. |
+| `ended_at_invalid` | Waktu selesai tidak valid | Periksa permintaan lalu coba lagi. |
+| `sync_protocol_unsupported` | Perbarui aplikasi untuk menyinkronkan | Periksa permintaan lalu coba lagi. |
+| `sync_batch_too_large` | Terlalu banyak perubahan dalam satu permintaan | Periksa permintaan lalu coba lagi. |
+| `sync_payload_too_large` | Perubahan terlalu besar | Periksa permintaan lalu coba lagi. |
+| `operation_id_reused` | ID operasi sudah digunakan | Periksa permintaan lalu coba lagi. |
+| `op_unsupported` | Jenis perubahan ini tidak didukung saat offline | Periksa permintaan lalu coba lagi. |
+| `entity_id_taken` | ID item sudah digunakan | Periksa permintaan lalu coba lagi. |
+| `dependency_failed` | Perubahan bergantung pada perubahan yang gagal | Periksa permintaan lalu coba lagi. |
+| `ai_not_configured` | AI belum disiapkan | Periksa permintaan lalu coba lagi. |
+| `ai_limit_reached` | Batas penggunaan AI tercapai | Periksa permintaan lalu coba lagi. |
+| `ai_provider_unavailable` | Layanan AI tidak tersedia | Server belum dapat memproses permintaan. |
+| `ai_provider_timeout` | Waktu layanan AI habis | Server belum dapat memproses permintaan. |
+| `ai_output_invalid` | Jawaban AI tidak dapat digunakan | Periksa permintaan lalu coba lagi. |
+| `ai_prompt_too_large` | Deskripsi terlalu panjang untuk AI | Periksa permintaan lalu coba lagi. |
+| `ai_byok_disabled` | Penggunaan kunci AI sendiri dinonaktifkan | Periksa permintaan lalu coba lagi. |
+| `ai_host_not_allowed` | Alamat tersebut tidak diizinkan | Periksa permintaan lalu coba lagi. |
+| `proposal_not_pending` | Usulan sudah ditangani | Periksa permintaan lalu coba lagi. |
+| `note_doc_invalid` | Isi catatan tidak valid | Periksa permintaan lalu coba lagi. |
+| `note_too_large` | Catatan terlalu besar | Periksa permintaan lalu coba lagi. |
+| `query_too_short` | Pencarian terlalu pendek | Periksa permintaan lalu coba lagi. |
+| `query_too_long` | Pencarian terlalu panjang | Periksa permintaan lalu coba lagi. |
+| `link_target_not_found` | Tujuan tautan tidak ditemukan | Periksa permintaan lalu coba lagi. |
+| `link_limit_reached` | Terlalu banyak tautan | Periksa permintaan lalu coba lagi. |
+| `canvas_scene_invalid` | Isi papan tidak valid | Periksa permintaan lalu coba lagi. |
+| `canvas_too_large` | Papan terlalu besar | Periksa permintaan lalu coba lagi. |
+| `canvas_file_invalid` | Gambar tidak diizinkan | Periksa permintaan lalu coba lagi. |
+| `canvas_file_too_large` | Gambar terlalu besar | Periksa permintaan lalu coba lagi. |
+| `canvas_files_limit` | Terlalu banyak gambar pada papan ini | Periksa permintaan lalu coba lagi. |
+| `plan_unknown` | Paket tidak ditemukan | Periksa permintaan lalu coba lagi. |
+| `billing_not_configured` | Penagihan belum disiapkan | Periksa permintaan lalu coba lagi. |
+| `gateway_unavailable` | Layanan pembayaran tidak tersedia | Server belum dapat memproses permintaan. |
+| `already_subscribed` | Sudah berlangganan | Periksa permintaan lalu coba lagi. |
+| `signature_invalid` | Tanda tangan tidak valid | Periksa permintaan lalu coba lagi. |
+| `gateway_unknown` | Penyedia pembayaran tidak dikenal | Periksa permintaan lalu coba lagi. |
+
+### Spec issues noticed
+
+- The field-level validation registry omitted `unknown_field` even though API-04 and T-016 AC-6 require it in `errors[].code`; added the registry entry and recorded D-60.
+- T-016's requested panic payload logging conflicts with SEC-04's log allow-list and privacy boundary; followed SEC-04 under D-62.
+- T-016's `HttpState` field list omits the configured body limit used by its body-limit layer; injected the setting under D-61.
+
+### Not done / not verified
+
+- Indonesian wording has not had maintainer review (M-L10N).
+- No environment-limited checks were encountered for this task.
+- No module authentication, rate limiting, idempotency, OpenAPI assembly, or SPA serving was added; those are explicitly out of scope for T-016.
+
+### Follow-up suggestions
+
+- Architect/maintainer review of D-60..D-62 and Indonesian catalog wording.
+
 ## Questions
 
-_None yet._
+- Q-1 (implementer, 2026-10-28): T-016's `HttpState` field list omits the operator-configured body ceiling required by the body-limit layer and `KINEVO_MAX_BODY_BYTES`.
+  Resolved by implementer, pending architect review: inject `max_body_bytes` into `HttpState` (D-61).
+  Options: (a) inject the integer in `HttpState`; (b) read environment configuration inside the HTTP layer.
+  Recommendation: (a), because it keeps HTTP behavior deterministic and configuration outside the layer.
+- Q-2 (implementer, 2026-10-28): T-016 requires dynamic `details.name` and `errors[].code = unknown_field`, but the kernel only exposed static string details and the field-code registry omitted `unknown_field`.
+  Resolved by implementer, pending architect review: add typed `FieldCode::UnknownField`, owned registry-approved string details, and the matching registry entry (D-60).
+  Options: (a) special-case these HTTP responses; (b) extend the typed error model and registry.
+  Recommendation: (b), because the standard renderer remains the single error path.
+- Q-3 (implementer, 2026-10-28): T-016 requests logging panic text/error chain, while SEC-04 limits logs to approved fields and panic payloads may contain request data.
+  Resolved by implementer, pending architect review: log only `request_id`, `error_code`, and `event="panic"`; return an opaque 500 (D-62).
+  Options: (a) log the payload; (b) log only safe structured fields.
+  Recommendation: (b), because the payload cannot be proven free of user content.

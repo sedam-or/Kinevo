@@ -15,6 +15,7 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 | Database | **PostgreSQL** 17/18 via **sqlx** (rustls, postgres, migrate, uuid, time off, json) | sqlx 0.9.0 ✔ (`postgres`, `runtime-tokio`, `tls-rustls-ring-native-roots`, `migrate`, `macros`, `uuid` in `kinevo-db`) | MIT/Apache-2.0 | compile-time checked SQL, no ORM hiding RLS/transactions; diesel/sea-orm rejected (heavier abstraction over RLS/transactions) | offline metadata (`cargo sqlx prepare`) must be committed |
 | Time & zones | **jiff** (+ embedded tzdb) | 0.2.38 ✔ | Unlicense/MIT | correct DST semantics, IANA zones, pure Rust (no OS tz dependency in Alpine); chrono/time rejected: weaker tz story | 0.x API |
 | Serialisation | **serde**, **serde_json** | 1.0.229 ✔ / 1.0.154 ✔ | MIT/Apache-2.0 | standard | — |
+| JSON path errors | **serde_path_to_error** | 0.1.20 | MIT/Apache-2.0 | preserve the nested field path when serde rejects a request body | — |
 | Canonical JSON (JCS) | **serde_jcs** (or small audited implementation if unmaintained) | resolve in M1 | MIT | RFC 8785 for hashes/goldens | maintenance — fallback to an in-repo ≤ 150-line implementation covered by RFC test vectors |
 | Errors | **thiserror** (libraries), **anyhow** (binary glue only) | 2.0.21 ✔ | MIT/Apache-2.0 | CQ-09 | — |
 | Logging/tracing | **tracing**, **tracing-subscriber** (json) | 0.1.44 ✔ / 0.3.23 ✔ | MIT | structured logs, span context (request id) | — |

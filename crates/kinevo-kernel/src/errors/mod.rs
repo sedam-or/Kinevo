@@ -23,6 +23,7 @@ pub enum RetryClass {
 pub enum DetailValue {
     Int(i64),
     Str(&'static str),
+    OwnedStr(String),
     Id(uuid::Uuid),
     StrList(Vec<String>),
     Bool(bool),
@@ -179,5 +180,13 @@ mod tests {
 
         assert!(details.as_map().contains_key("max"));
         assert!(!details.as_map().contains_key("unregistered_key"));
+    }
+
+    #[test]
+    fn err_03_dynamic_registered_string_detail_is_serialized_as_a_string() {
+        let details = Details::new().with_detail("name", DetailValue::OwnedStr("bogus".to_owned()));
+        let value = serde_json::to_value(details).unwrap_or_default();
+
+        assert_eq!(value["name"], "bogus");
     }
 }

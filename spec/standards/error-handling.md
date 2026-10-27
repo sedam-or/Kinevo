@@ -47,7 +47,7 @@ Legend — Retry: N = never, C = after_change, B = backoff, R = reauth. "Module"
 
 ### 2.2 Field-level validation codes (appear in `errors[].code`, status 422 via `validation_failed`)
 
-`required`, `too_long`, `too_short`, `invalid_characters`, `email_invalid`, `uuid_invalid`, `url_invalid`, `timezone_invalid`, `instant_invalid`, `date_invalid`, `time_invalid`, `int_invalid`, `out_of_range`, `money_invalid`, `enum_invalid`, `bool_invalid`, `digits_invalid`, `token_invalid`, `too_many_items`, `duplicate_item`, `schema_invalid`, `password_too_short`, `password_too_common`, `key_invalid`. `details` per code: `max`/`min`/`allowed`/`path` as relevant.
+`unknown_field`, `required`, `too_long`, `too_short`, `invalid_characters`, `email_invalid`, `uuid_invalid`, `url_invalid`, `timezone_invalid`, `instant_invalid`, `date_invalid`, `time_invalid`, `int_invalid`, `out_of_range`, `money_invalid`, `enum_invalid`, `bool_invalid`, `digits_invalid`, `token_invalid`, `too_many_items`, `duplicate_item`, `schema_invalid`, `password_too_short`, `password_too_common`, `key_invalid`. `details` per code: `max`/`min`/`allowed`/`path` as relevant.
 
 ### 2.3 Setup, admin, policies, modules
 

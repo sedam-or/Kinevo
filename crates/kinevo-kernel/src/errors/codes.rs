@@ -179,6 +179,7 @@ macro_rules! define_string_codes {
 // SPEC: API-21, VAL-01
 define_string_codes! {
     FieldCode {
+        UnknownField => "unknown_field",
         Required => "required",
         TooLong => "too_long",
         TooShort => "too_short",
