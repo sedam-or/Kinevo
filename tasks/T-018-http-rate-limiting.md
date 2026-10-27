@@ -3,12 +3,12 @@ id: T-018
 title: Add per-route rate limiting with policy-driven quotas and RateLimit headers
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-017, T-006]
 requirements: [API-50, API-51, SEC-11, POL-02]
 branch: m1-t018-http-rate-limiting
 budget_lines: 330
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-018: Add per-route rate limiting with policy-driven quotas and RateLimit headers
