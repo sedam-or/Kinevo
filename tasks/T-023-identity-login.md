@@ -3,7 +3,7 @@ id: T-023
 title: Implement POST /auth/login with lockout, constant-work verification and MFA hook
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-022, T-021, T-014, T-017, T-018, T-019]
 requirements: [ID-FR-03, ID-FR-04, ID-FR-07, SEC-AC-03, SEC-07, API-14, AUTH-05]
 branch: m1-t023-identity-login
