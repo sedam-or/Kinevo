@@ -8,7 +8,7 @@ NAME=kinevo-dev-pg
 PW_FILE="$STATE_DIR/password"
 PORT_FILE="$STATE_DIR/port"
 MODE_FILE="$STATE_DIR/mode"
-VERSION="${KINEVO_TEST_PG_VERSION:-17}"
+VERSION=17
 
 have_docker() { command -v docker >/dev/null && timeout 20 docker info >/dev/null 2>&1; }
 pg_bin() { # find a directory holding initdb and pg_ctl

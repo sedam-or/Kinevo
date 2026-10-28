@@ -177,6 +177,7 @@ Total changed lines excluding `Cargo.lock`: 1,968.
 
 ### Deviations
 
+- Run-wide override D-102 (accepted 2026-10-28): subsequent database tests must attach to the one externally started PostgreSQL server and use a uniquely named database per test. The testcontainers run recorded below is historical evidence for the original T-011 acceptance; testcontainers is no longer used or permitted as a database fallback.
 - D-58: used `testcontainers` 0.28 `GenericImage` instead of `testcontainers-modules`; version 0.15 resolves the core to 0.27, conflicting with the required 0.28 core dependency. Its readiness condition is PostgreSQL's explicit ready log, so no time-based sleep is used; the task's suggested `pg_isready` command probe is unavailable in the 0.28 `WaitFor` API.
 - D-59: exposed `TestAppBuilder::clock_at(Instant)` from the task's Interface section because its Scope prose specifies a different `.clock(FixedClock::at(...))` form.
 - Added the `futures` stack entry because the task's `BoxFuture` callback interface uses it.

@@ -28,6 +28,10 @@ The status lives in the task file's front matter (`status:`). `tasks/index.md` i
 
 ## 2. The steps
 
+### Run-wide disk guard (D-105)
+
+Immediately before each build, test, or container start, run `df -h /` and record the result. If free space is below 20 GB, inspect eligible resources first and prune only Kinevo-owned stopped containers and dangling images; record exactly what was removed. Preserve volumes, named images, active containers, and resources owned by other projects. Recheck `df -h /`; if free space is still below 15 GB, stop before the build, test, or container start and report the measured value. Never run `docker build` or pull an image. The shared PostgreSQL test server may use only the existing `postgres:17-alpine` image with `--pull=never`; otherwise use local PostgreSQL or mark database checks `environment-limited`. At each milestone boundary, run the D-104 `cargo sweep` command; do not use `cargo clean` or delete `target/` manually.
+
 **Step 0: pick and claim.** Take the next task in topological order with `status: todo` whose dependencies are all `done`; in the D-57 run, dependencies with `status: review` count when their commits are on `dev`. Set `status: in_progress` and `assignee:`. Commit (`docs(tasks): start T-nnn [T-nnn]`) on `dev` in the D-57 run, or on the task branch otherwise, and push it, so nobody else takes the task.
 
 1. **Read.** Read the whole task. Open every spec section it cites. The inlined excerpts are copies: if an excerpt differs from the spec, the spec wins. In the D-57 run, record and resolve the discrepancy per §6; in the ordinary workflow, use §3. Read the files listed under *Files* that already exist.

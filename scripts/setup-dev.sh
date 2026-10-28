@@ -45,7 +45,7 @@ if command -v corepack >/dev/null 2>&1; then corepack enable >/dev/null 2>&1; co
 
 # 4. Docker image for database tests
 if command -v docker >/dev/null && timeout 20 docker info >/dev/null 2>&1; then
-  docker image inspect postgres:17-alpine >/dev/null 2>&1 && ok "postgres:17-alpine" || { timeout 600 docker pull postgres:17-alpine >/dev/null 2>&1 && ok "postgres:17-alpine (pulled)" || lim "postgres:17-alpine pull failed; scripts/dev-postgres.sh retries"; }
+  docker image inspect postgres:17-alpine >/dev/null 2>&1 && ok "postgres:17-alpine" || lim "postgres:17-alpine is not already present; no image pull is attempted (D-105)"
 else lim "Docker daemon not reachable: database tests use KINEVO_TEST_DATABASE_URL or are environment-limited"; fi
 
 # 5. System packages (needs sudo; Codex cannot do this unattended, so it is opt-in)

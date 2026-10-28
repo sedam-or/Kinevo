@@ -49,6 +49,8 @@ Until M1 creates the `justfile` (D-38):
 
 From M1 on: `just setup` (one-time), `just dev`, `just fmt`, `just lint`, `just test`, `just check` (everything CI runs; must pass before a task goes to `review`), and `just spec` (the three scripts above).
 
+For the maintainer-authorised implementation run (D-105), run `df -h /` immediately before every build, test, or container start. Do not build Docker images or pull from a registry; database tests use the existing `postgres:17-alpine` image with pulls disabled or an installed local PostgreSQL. See `WORKFLOW.md` §2 for the low-disk threshold and cleanup limits.
+
 ## Non-negotiables
 
 1. **Never open, unzip, list or read `legacy/kinevo-legacy-v0.zip`.** Cite old behaviour as `legacy-v0:<path>` and read it with `git show legacy-v0:<path>`.
