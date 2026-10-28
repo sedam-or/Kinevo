@@ -3,7 +3,7 @@ id: T-020
 title: Create the identity schema migration, module skeleton and descriptor
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-011, T-008, T-006]
 requirements: [DOM-01, DOM-04, DOM-05, DOM-07, ARCH-20, ADR-0011, D-39, D-44, D-45, CA-02, CA-04, CA-18, SEC-AC-01, SEC-AC-02]
 branch: m1-t020-identity-schema
@@ -118,8 +118,68 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Added the identity crate's layered skeleton, static module descriptor, typed domain values, SQLx migration and constraint mapping. The migration creates all seven specified tables, forced tenant RLS on the six account-owned tables, the four role-scoped `system_auth` policies, and explicit application/system grants. The DB tests exercise the schema, account-id RLS, system-role scope, email uniqueness mapping and the shared isolation verifier.
+
+### Acceptance results
+
+| Criterion | Test name | Result |
+|---|---|---|
+| AC-1 | `identity_isolation::dom_schema_matches_spec_ddl` | pass |
+| AC-2 | `identity_isolation::sec_ac_01_identity_tables_isolated` | pass |
+| AC-3 | `identity_isolation::adr_0011_system_auth_scope` | pass |
+| AC-4 | `identity_isolation::sec_05_accounts_policy_uses_id` | pass |
+| AC-5 | `identity_isolation::adr_0011_account_insert_only_for_own_id` | pass |
+| AC-6 | `identity_isolation::dom_07_email_unique_case_insensitive` | pass |
+| AC-7 | `identity_isolation::sec_06_verify_isolation_accepts_identity` | pass |
+| AC-8 | `descriptor::mod_08_descriptor_keys_exist` | pass |
+| AC-9 | `descriptor::mod_08_policy_keys_registered` | pass |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| `cargo fmt --all` | 0 | formatted |
+| `cargo nextest run -p kinevo-ports mod_08_permission_keys_accept_spec_admin_segments` | 0 | 1 passed, 7 filtered out |
+| `cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing` | 0 | 9 passed, 0 skipped; PostgreSQL testcontainers ran successfully |
+| `just check` | 0 | fmt passed; workspace Clippy passed; 130 tests passed, 0 skipped; cargo-deny advisories/bans/licenses/sources passed; `spec_tool.py check` 0 findings in 60 files; contrast 0 failures; task index 0 problems in 132 tasks |
+
+Test-first observations: the first identity test run failed to compile while the crate skeleton and fixture module were absent. After the initial implementation, 8 of 9 identity tests passed; `mod_08_descriptor_keys_exist` exposed that the spec's four-segment admin permissions were rejected by the shared parser. The added port contract test failed on that behavior before the parser change, then passed. The first `just check` caught two Clippy issues in the schema test; moving expected columns to module scope fixed them. The final runs above are green. Existing warnings remain: `clippy.toml` names unreachable `rand::thread_rng`; cargo-deny reports duplicate lockfile versions and unused license allowances, but exits successfully.
+
+### Files changed
+
+| Path | Change |
+|---|---|
+| `crates/kinevo-mod-identity/Cargo.toml` | SQLx, serde and test dependencies |
+| `crates/kinevo-mod-identity/src/lib.rs` | descriptor, migration source and module hooks |
+| `crates/kinevo-mod-identity/src/{app,domain,http,infra}/mod.rs`, `src/ports.rs` | layered skeleton and domain types |
+| `crates/kinevo-mod-identity/src/infra/constraints.rs` | email constraint mapping |
+| `crates/kinevo-mod-identity/migrations/20261101000100_identity_accounts.sql` | seven tables, indexes, policies and grants |
+| `crates/kinevo-mod-identity/tests/{descriptor.rs,identity_isolation.rs,support/fixtures.rs}` | named acceptance tests and synthetic isolation fixtures |
+| `crates/kinevo-kernel/src/id.rs`, `crates/kinevo-http/src/token.rs` | shared `FamilyId` definition and HTTP compatibility re-export |
+| `crates/kinevo-ports/src/module.rs`, `crates/kinevo-ports/src/module/tests.rs` | permission grammar and regression test |
+| `spec/03-module-system.md`, `spec/decisions.md`, `spec/index.md`, `tasks/T-017-http-auth-and-gates.md` | decision and grammar documentation |
+| `Cargo.lock` | generated dependency metadata |
+| `tasks/T-020-identity-schema-and-descriptor.md`, `tasks/index.md` | this report, status and generated index |
+
+### Deviations and environment
+
+- Additional files outside T-020's Files table were required to keep `FamilyId` in the kernel layer, accept the permission forms explicitly listed in the spec, and record the resulting decisions. They are listed above and described by D-63–D-65.
+- The empty `jobs()` and `subscribers()` hooks return `Vec<()>` until the queue/outbox handler contracts exist (D-64); their types will need replacing when those contracts are implemented.
+- `Cargo.lock` changed as generated dependency metadata. The diff exceeds the 380-line guidance; D-55 makes that guidance non-blocking, and the overage is recorded here.
+- No environment-limited checks. Docker-backed PostgreSQL tests ran and passed.
+
+### Decisions made by implementer
+
+| ID | Choice and reason | Alternatives rejected | Files | Reversal |
+|---|---|---|---|---|
+| D-63 | Define `FamilyId` in `kinevo-kernel` so identity domain code can use the same typed ID without depending on HTTP, preserving the existing HTTP path by re-exporting it. | Importing HTTP from domain violates CA-02; a second marker creates incompatible ID types. | `crates/kinevo-kernel/src/id.rs`, `crates/kinevo-http/src/token.rs`, `tasks/T-017-http-auth-and-gates.md` | Revisit the domain boundary or token claim type, then move the marker accordingly. Pending owner review. |
+| D-64 | Keep the required empty `jobs()` and `subscribers()` hooks as empty `Vec<()>` until the queue/outbox tasks define their handler contracts. | Inventing temporary handler traits in identity would duplicate the owning contracts. | `crates/kinevo-mod-identity/src/lib.rs` | Change signatures when the owning handler contracts land. Pending owner review. |
+| D-65 | Accept exactly three- or four-segment permission keys because the identity registry explicitly uses four-segment admin keys; disallow deeper keys. | Renaming explicit spec keys or allowing arbitrary dotted depth. | `crates/kinevo-ports/src/module.rs`, `crates/kinevo-ports/src/module/tests.rs`, `spec/03-module-system.md` | Revise the registry and route references or the grammar together. Pending owner review. |
 
 ## Questions
 
-_None yet._
+- **Q-1 — Resolved by implementer, pending owner review (D-63).** T-017 located `FamilyId` in HTTP, while T-020 requires it in the identity domain and CA-02 keeps domain independent of HTTP. The marker was moved to kernel and remains re-exported from HTTP.
+- **Q-2 — Resolved by implementer, pending owner review (D-65).** The identity permission registry contains four-segment admin keys while the descriptor overview says three segments. The parser and descriptor grammar now accept exactly three or four segments.
+- **Q-3 — Resolved by implementer, pending owner review (D-64).** Job and subscriber handler types are not defined yet. T-020 exposes empty hooks using empty unit vectors until their owning contracts are implemented.

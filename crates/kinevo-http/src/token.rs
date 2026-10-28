@@ -3,12 +3,11 @@
 use jsonwebtoken::{
     Algorithm, DecodingKey, EncodingKey, Header, Validation, decode, decode_header, encode,
 };
+pub use kinevo_kernel::id::FamilyId;
 use kinevo_kernel::{id::AccountId, secret::Secret, time::Instant};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, error::Error, fmt};
 use uuid::Uuid;
-
-kinevo_kernel::define_id!(Family, FamilyId);
 
 const CLOCK_SKEW_SECONDS: u64 = 30;
 const MAX_IAT_SKEW_SECONDS: i64 = 30;

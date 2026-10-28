@@ -1633,10 +1633,14 @@ dependencies = [
 name = "kinevo-mod-identity"
 version = "0.0.0"
 dependencies = [
+ "futures",
  "kinevo-db",
  "kinevo-http",
  "kinevo-kernel",
  "kinevo-ports",
+ "serde",
+ "sqlx",
+ "tokio",
 ]
 
 [[package]]

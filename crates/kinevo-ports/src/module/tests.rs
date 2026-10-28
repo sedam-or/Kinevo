@@ -85,6 +85,13 @@ fn mod_03_graph_validation() {
 }
 
 #[test]
+fn mod_08_permission_keys_accept_spec_admin_segments() {
+    assert!(PermissionKey::parse("identity.account.read").is_ok());
+    assert!(PermissionKey::parse("identity.admin.accounts.read").is_ok());
+    assert!(PermissionKey::parse("identity.admin.password_reset.issue").is_ok());
+}
+
+#[test]
 fn mod_03_enable_rules() {
     let goals = descriptor("goals", ModuleKind::Core, &[]);
     let tasks = descriptor("tasks", ModuleKind::Core, &["goals"]);

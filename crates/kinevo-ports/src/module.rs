@@ -65,7 +65,7 @@ pub struct ModuleKeyError;
 pub struct PermissionKey(String);
 
 impl PermissionKey {
-    /// Parses exactly three lower-case key segments.
+    /// Parses a lower-case module key with a resource and optional nested resource segment.
     pub fn parse(value: &str) -> Result<Self, PermissionKeyError> {
         if !value.is_ascii() {
             return Err(PermissionKeyError);
@@ -73,14 +73,11 @@ impl PermissionKey {
         let pattern =
             PERMISSION_SEGMENT_PATTERN.get_or_init(|| Regex::new(r"^[a-z][a-z0-9_]{1,23}$"));
         let pattern = pattern.as_ref().map_err(|_| PermissionKeyError)?;
-        let mut segments = value.split('.');
-        let module = segments.next().ok_or(PermissionKeyError)?;
-        let resource = segments.next().ok_or(PermissionKeyError)?;
-        let action = segments.next().ok_or(PermissionKeyError)?;
-        if segments.next().is_some() {
+        let segments = value.split('.').collect::<Vec<_>>();
+        if !matches!(segments.as_slice(), [_, _, _] | [_, _, _, _]) {
             return Err(PermissionKeyError);
         }
-        for segment in [module, resource, action] {
+        for segment in segments {
             let key = Key::parse(segment, pattern).map_err(|_| PermissionKeyError)?;
             if key.as_str() != segment {
                 return Err(PermissionKeyError);

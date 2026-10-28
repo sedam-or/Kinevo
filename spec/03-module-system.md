@@ -37,7 +37,7 @@ Every module provides exactly one descriptor with these fields:
 | `key` | Stable lowercase id, `[a-z][a-z0-9_]{1,23}` | Never renamed after release |
 | `kind` | `core` or `toggleable` | Core modules cannot be disabled (`ERR module_core_locked`) |
 | `requires` | Module keys that must be enabled | Acyclic (validated at startup, MOD-03) |
-| `permissions` | Permission keys it defines (`<module>.<resource>.<action>`) | Listed in `standards/rbac.md` |
+| `permissions` | Permission keys it defines (`<module>.<resource>.<action>` or `<module>.<resource>.<subresource>.<action>`) | Listed in `standards/rbac.md`; keys have exactly three or four segments (D-65) |
 | `policies` | Policy keys it owns with type, default, bounds, scope | Listed in `04-policies.md` |
 | `migrations` | Ordered SQL files | Always applied (ARCH-11) |
 | `routes` | Axum router + OpenAPI fragment | Mounted only when enabled |

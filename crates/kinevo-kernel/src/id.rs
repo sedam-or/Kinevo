@@ -122,6 +122,7 @@ crate::define_id!(Account, AccountId);
 crate::define_id!(Request, RequestId);
 crate::define_id!(Event, EventId);
 crate::define_id!(Job, JobId);
+crate::define_id!(Family, FamilyId);
 
 pub trait IdGen: Send + Sync {
     #[must_use]
