@@ -3,7 +3,7 @@ id: T-025
 title: Implement POST /auth/register, the account-creation port and provisioner execution
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-024, T-021, T-008, T-014]
 requirements: [ID-FR-09, ID-FR-14, MOD-10, ADR-0011, SM-22, SEC-AC-06, FLW-02]
 branch: m1-t025-identity-register
