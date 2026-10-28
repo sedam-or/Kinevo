@@ -3,12 +3,12 @@ id: T-026
 title: Implement account profile, password change and session management endpoints
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-025, T-019]
 requirements: [ID-FR-07, ID-FR-14, AUTH-04, API-05, API-14, API-60, API-70, VAL-02]
 branch: m1-t026-identity-account-sessions
 budget_lines: 400
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-026: Implement account profile, password change and session management endpoints
