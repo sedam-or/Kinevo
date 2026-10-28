@@ -3,12 +3,12 @@ id: T-014
 title: Add the transactional outbox (emit, dispatch with per-subscriber delivery, retry, dead letters)
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-013, T-008]
 requirements: [ARCH-10, ARCH-11, CA-11, ADR-0009, D-41, TST-20, ADM-FR-05]
 branch: m1-t014-db-outbox
 budget_lines: 400
-assignee: ""
+assignee: "Codex"
 ---
 
 # T-014: Add the transactional outbox (emit, dispatch with per-subscriber delivery, retry, dead letters)
