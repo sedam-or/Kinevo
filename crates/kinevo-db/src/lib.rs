@@ -8,6 +8,7 @@ pub mod errors;
 pub mod isolation;
 pub mod jobs;
 pub mod migrate;
+pub mod outbox;
 pub mod pool;
 pub mod retention;
 pub mod tx;

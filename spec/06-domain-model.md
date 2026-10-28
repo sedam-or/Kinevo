@@ -144,8 +144,9 @@ CREATE TABLE outbox_events (
   id          uuid NOT NULL UNIQUE,
   account_id  uuid REFERENCES accounts(id) ON DELETE CASCADE,
   kind        text NOT NULL,
-  payload     jsonb NOT NULL,                                    -- ids and enums only; no content
-  created_at  timestamptz NOT NULL
+  payload     jsonb NOT NULL,                                    -- tagged ids, enums and integers only; no content (D-78)
+  created_at  timestamptz NOT NULL,                              -- EventEnvelope.occurred_at (D-78)
+  v           smallint NOT NULL CHECK (v > 0)                    -- event schema version (D-78)
 );
 CREATE TABLE outbox_deliveries (
   event_id        uuid NOT NULL REFERENCES outbox_events(id) ON DELETE CASCADE,

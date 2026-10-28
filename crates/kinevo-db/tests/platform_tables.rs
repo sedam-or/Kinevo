@@ -50,6 +50,7 @@ const EXPECTED_COLUMNS: &[TableSpec] = &[
             ("kind", "text", false),
             ("payload", "jsonb", false),
             ("created_at", "timestamptz", false),
+            ("v", "int2", false),
         ],
     ),
     (
