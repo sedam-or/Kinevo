@@ -3,12 +3,12 @@ id: T-013
 title: Add the PostgreSQL job queue (enqueue, claim, complete, retry, recurring ticks)
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-012]
 requirements: [D-13, ARCH-04, ADR-0009, MOD-05, POL-05, TST-20]
 branch: m1-t013-db-job-queue
 budget_lines: 400
-assignee: ""
+assignee: "Codex"
 ---
 
 # T-013: Add the PostgreSQL job queue (enqueue, claim, complete, retry, recurring ticks)
