@@ -28,6 +28,9 @@ test:
       cargo test --workspace
     fi
 
+test-slow:
+    cargo nextest run --workspace --run-ignored only
+
 spec:
     python3 scripts/spec_tool.py check
     python3 scripts/contrast.py

@@ -3,7 +3,7 @@ id: T-021
 title: Add password hashing, policy checks and the common-password list
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-020, T-005, T-006]
 requirements: [ID-FR-01, ID-FR-02, ID-FR-03, AUTH-03, AUTH-05, SEC-03, SEC-AC-03]
 branch: m1-t021-identity-passwords
@@ -121,8 +121,14 @@ just test-slow   # runs #[ignore] timing tests; not part of check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+- **Test-first red:** the initial `cargo nextest run -p kinevo-mod-identity` failed to compile because the password types and provenance data did not exist yet.
+- **Acceptance tests:** final `cargo nextest run -p kinevo-mod-identity` — 19 passed, 1 ignored. `cargo test --doc -p kinevo-mod-identity` — 3 compile-fail doctests passed. `just test-slow` — SEC-AC-03 timing comparison passed (1 test, 798.970 seconds; 197 other tests skipped by the recipe).
+- **Workspace gate:** `just check` — exit 0; 197 tests passed, 1 ignored; formatting and Clippy passed; `cargo deny check` passed with dependency-duplicate and unused-license-allowance warnings; `scripts/spec_tool.py check` reported 0 findings in 60 files; `scripts/contrast.py` reported 0 failures; `scripts/tasks_index.py --check` reported 0 problems across 132 tasks.
+- **Environment-limited:** none. The PostgreSQL testcontainers checks ran and passed.
+- **Files touched:** `crates/kinevo-mod-identity/Cargo.toml`, generated `Cargo.lock`, `crates/kinevo-mod-identity/src/domain/mod.rs`, `src/domain/password.rs`, `src/infra/mod.rs`, `src/infra/hasher.rs`, `crates/kinevo-mod-identity/data/common-passwords.txt`, `data/PROVENANCE.md`, `justfile`, `spec/standards/open-source-stack.md`, `spec/index.md`, `spec/13-roadmap.md`, this task file and generated `tasks/index.md`.
+- **Deviations:** the change is 854 added-plus-removed lines against the 330-line guidance; the data file is excluded by the task and the generated lockfile is excluded by D-55. Added only the two module-export declarations needed to wire the files. `Hasher` accepts the injected `Clock` required by repository rules and returns integer milliseconds from `self_check`; the ignored real-time timing test uses a monotonic timer as required by SEC-AC-03. The pinned SecLists file has 10,001 unique lowercase entries and lacks the task's required `password1234`; the embedded list keeps its first 9,999 entries and appends that required example to meet the exact 10,000-entry acceptance contract. The repository has no `.github/CODEOWNERS` file or `.github/` directory, so no owner mapping could be updated.
 
 ## Questions
 
-_None yet._
+- Resolved by implementer, pending architect review: `spec/standards/auth.md` describes the source as public-domain, while this task explicitly selects MIT-licensed SecLists. Followed the task's named source and included its full MIT notice in `PROVENANCE.md`; if the spec intended a strict public-domain-only restriction, a different source is needed.
+- Resolved by implementer, pending architect review: the pinned source has 10,001 entries and omits `password1234`, which the acceptance criteria require rejecting. Kept the first 9,999 upstream entries and added the required example as entry 10,000; an alternative is to select a different upstream list.

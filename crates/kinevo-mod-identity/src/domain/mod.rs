@@ -1,5 +1,7 @@
 //! Pure identity domain value types.
 
+pub mod password;
+
 use serde::{Deserialize, Serialize};
 
 pub use kinevo_kernel::id::{AccountId, FamilyId};

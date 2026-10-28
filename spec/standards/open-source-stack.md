@@ -21,7 +21,7 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 | Logging/tracing | **tracing**, **tracing-subscriber** (json) | 0.1.44 ✔ / 0.3.23 ✔ | MIT | structured logs, span context (request id) | — |
 | OpenAPI | **utoipa**, **utoipa-axum** | 6.0.0 ✔ / 0.3.0 ✔ | MIT/Apache-2.0 | generate the contract from handlers (API-06) | schema attribute verbosity |
 | IDs | **uuid** (v7) | 1.29.0 ✔ | Apache-2.0/MIT | time-ordered ids (ARCH-25) | — |
-| Password hashing | **argon2** (RustCrypto) | 0.6.0 ✔ | MIT/Apache-2.0 | RFC 9106, parameters in §4 | CPU/memory DoS ⇒ concurrency cap |
+| Password hashing | **argon2** (RustCrypto) | 0.6.0 ✔ | MIT/Apache-2.0 | RFC 9106, parameters in §4; embedded SecLists common-password data is MIT licensed (see `crates/kinevo-mod-identity/data/PROVENANCE.md`) | CPU/memory DoS ⇒ concurrency cap |
 | Hash/MAC/KDF | **sha2**, **hmac**, **hkdf** | sha2 0.11.1 ✔, hmac 0.13.0 ✔ | MIT/Apache-2.0 | tokens, cursors, HKDF subkeys | — |
 | AEAD | **chacha20poly1305** (XChaCha20-Poly1305) | 0.11.0 ✔ | MIT/Apache-2.0 | secrets at rest, random 24-byte nonce | key management ⇒ SEC-03 |
 | Encoding | **base64** | 0.23.1 ✔ | MIT/Apache-2.0 | master key and opaque token encoding | — |

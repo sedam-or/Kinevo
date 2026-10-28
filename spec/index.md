@@ -70,7 +70,7 @@ Each file depends only on files above it (its header says `Depends on:`).
 | [`standards/user-journeys.md`](standards/user-journeys.md) | `JRN` (J0–J9) | Persona journeys = milestone acceptance = E2E tests |
 | [`standards/state-machines.md`](standards/state-machines.md) | `SM` | State machines SM-01…24 |
 | [`standards/data-flows.md`](standards/data-flows.md) | `FLW` | Multi-step flows FLW-01…24 with transaction boundaries |
-| [`standards/open-source-stack.md`](standards/open-source-stack.md) | — | Every dependency with reason, version, licence; additions are listed with the task that adopts them |
+| [`standards/open-source-stack.md`](standards/open-source-stack.md) | — | Every dependency with reason, version, licence and embedded-data provenance; additions are listed with the task that adopts them |
 
 ## 4. ADRs
 
