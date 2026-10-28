@@ -15,11 +15,6 @@ use sqlx::{
     AssertSqlSafe, ConnectOptions, Connection, PgConnection, PgPool,
     postgres::{PgConnectOptions, PgPoolOptions},
 };
-use testcontainers::{
-    ContainerAsync, GenericImage, ImageExt,
-    core::{ContainerPort, WaitFor},
-    runners::AsyncRunner,
-};
 use thiserror::Error;
 use tokio::sync::OnceCell;
 
@@ -31,7 +26,6 @@ use crate::{
 
 pub mod isolation;
 
-const TEST_ADMIN_PASSWORD: &str = "postgres-test-secret";
 const TEST_MIGRATOR_PASSWORD: &str = "migrator-test-secret";
 const TEST_APP_PASSWORD: &str = "app-test-secret";
 const TEST_SYSTEM_PASSWORD: &str = "system-test-secret";
@@ -45,7 +39,7 @@ static NEXT_DATABASE: AtomicU64 = AtomicU64::new(0);
 #[error("PostgreSQL test database is unavailable")]
 pub struct Unavailable;
 
-/// Shared PostgreSQL server for one test binary.
+/// Shared PostgreSQL server configured through `KINEVO_TEST_DATABASE_URL`.
 #[derive(Clone)]
 pub struct PgCluster(Arc<PgClusterInner>);
 
@@ -53,55 +47,18 @@ struct PgClusterInner {
     admin_url: Secret<String>,
     admin_pool: PgPool,
     bootstrap_database: String,
-    external: bool,
-    _container: Option<ContainerAsync<GenericImage>>,
 }
 
 impl PgCluster {
-    /// Starts or attaches to the test server once per test binary.
+    /// Attaches to the shared test server once per test binary.
     pub async fn get() -> Result<Self, Unavailable> {
         let cluster = CLUSTER.get_or_try_init(Self::start).await?;
         Ok(cluster.clone())
     }
 
     async fn start() -> Result<Self, Unavailable> {
-        let (admin_url, container, external) = match std::env::var("KINEVO_TEST_DATABASE_URL") {
-            Ok(url) => (url, None, true),
-            Err(std::env::VarError::NotPresent) => {
-                let version =
-                    std::env::var("KINEVO_TEST_PG_VERSION").unwrap_or_else(|_| "17".to_owned());
-                if version.is_empty()
-                    || !version
-                        .chars()
-                        .all(|character| character.is_ascii_digit() || character == '.')
-                {
-                    return Err(Unavailable);
-                }
-                let tag = format!("{version}-alpine");
-                let image = GenericImage::new("postgres", tag.as_str())
-                    .with_exposed_port(ContainerPort::Tcp(5432))
-                    .with_wait_for(WaitFor::message_on_either_std(
-                        "database system is ready to accept connections",
-                    ))
-                    .with_env_var("POSTGRES_USER", "postgres")
-                    .with_env_var("POSTGRES_PASSWORD", TEST_ADMIN_PASSWORD)
-                    .with_env_var("POSTGRES_DB", "postgres");
-                let container = image.start().await.map_err(|_| Unavailable)?;
-                let host = container.get_host().await.map_err(|_| Unavailable)?;
-                let port = container
-                    .get_host_port_ipv4(5432)
-                    .await
-                    .map_err(|_| Unavailable)?;
-                (
-                    format!("postgres://postgres:{TEST_ADMIN_PASSWORD}@{host}:{port}/postgres"),
-                    Some(container),
-                    false,
-                )
-            }
-            Err(std::env::VarError::NotUnicode(_)) => return Err(Unavailable),
-        };
-
-        let admin_url = Secret::new(admin_url);
+        let admin_url =
+            Secret::new(std::env::var("KINEVO_TEST_DATABASE_URL").map_err(|_| Unavailable)?);
         let options = admin_url
             .expose()
             .parse::<PgConnectOptions>()
@@ -134,8 +91,6 @@ impl PgCluster {
             admin_url,
             admin_pool,
             bootstrap_database,
-            external,
-            _container: container,
         }));
         cluster.bootstrap_roles_locked().await?;
         Ok(cluster)
@@ -226,12 +181,7 @@ impl TestDb {
     pub async fn create(sources: &[MigrationSource]) -> Result<Self, Unavailable> {
         let cluster = PgCluster::get().await?;
         let sequence = NEXT_DATABASE.fetch_add(1, Ordering::Relaxed) + 1;
-        let suffix = if cluster.0.external {
-            format!("{}_{}", std::process::id(), sequence)
-        } else {
-            sequence.to_string()
-        };
-        let database_name = format!("kinevo_t_{suffix}");
+        let database_name = format!("kinevo_t_{}_{}", std::process::id(), sequence);
         let create_sql: String = sqlx::query_scalar("SELECT format('CREATE DATABASE %I', $1)")
             .bind(&database_name)
             .fetch_one(&cluster.0.admin_pool)
@@ -242,7 +192,7 @@ impl TestDb {
             .await
             .map_err(|_| Unavailable)?;
         let lease = DatabaseLease {
-            cluster: cluster.clone(),
+            admin_url: Secret::new(cluster.0.admin_url.expose().to_owned()),
             database_name: database_name.clone(),
         };
 
@@ -480,28 +430,65 @@ pub struct TestIds {
 }
 
 struct DatabaseLease {
-    cluster: PgCluster,
+    admin_url: Secret<String>,
     database_name: String,
 }
 
 impl Drop for DatabaseLease {
+    #[allow(
+        clippy::panic,
+        reason = "a test must fail when its disposable database cannot be removed"
+    )]
     fn drop(&mut self) {
-        let Ok(runtime) = tokio::runtime::Handle::try_current() else {
-            return;
-        };
-        let pool = self.cluster.0.admin_pool.clone();
+        let admin_url = Secret::new(self.admin_url.expose().to_owned());
         let database_name = self.database_name.clone();
-        runtime.spawn(async move {
-            let statement = sqlx::query_scalar::<_, String>(
-                "SELECT format('DROP DATABASE IF EXISTS %I WITH (FORCE)', $1)",
-            )
-            .bind(database_name)
-            .fetch_one(&pool)
-            .await;
-            if let Ok(statement) = statement {
-                let _ = sqlx::query(AssertSqlSafe(statement)).execute(&pool).await;
+        let cleanup = std::thread::Builder::new()
+            .name("kinevo-test-db-cleanup".to_owned())
+            .spawn(move || {
+                let Ok(runtime) = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                else {
+                    return false;
+                };
+                runtime.block_on(async move {
+                    let Ok(options) = admin_url
+                        .expose()
+                        .parse::<PgConnectOptions>()
+                        .map(PgConnectOptions::disable_statement_logging)
+                    else {
+                        return false;
+                    };
+                    let Ok(pool) = PgPoolOptions::new()
+                        .max_connections(1)
+                        .connect_with(options)
+                        .await
+                    else {
+                        return false;
+                    };
+                    let result = async {
+                        let statement = sqlx::query_scalar::<_, String>(
+                            "SELECT format('DROP DATABASE IF EXISTS %I WITH (FORCE)', $1)",
+                        )
+                        .bind(database_name)
+                        .fetch_one(&pool)
+                        .await?;
+                        sqlx::query(AssertSqlSafe(statement)).execute(&pool).await?;
+                        Ok::<(), sqlx::Error>(())
+                    }
+                    .await;
+                    pool.close().await;
+                    result.is_ok()
+                })
+            });
+        let cleanup_succeeded = cleanup.is_ok_and(|thread| thread.join().unwrap_or(false));
+        if !cleanup_succeeded {
+            if std::thread::panicking() {
+                eprintln!("test database cleanup failed while unwinding");
+            } else {
+                panic!("test database cleanup failed");
             }
-        });
+        }
     }
 }
 

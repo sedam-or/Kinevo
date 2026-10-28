@@ -24,7 +24,7 @@ Cross-spec: `standards/auth.md` (token mechanics), `standards/security-by-design
 | `POST /auth/register` | public | 201 `{ account, access_token, expires_in }` + refresh cookie | `registration_closed` 403, `invite_invalid` 422, `email_taken` 409, `password_too_short` / `password_too_common` / validation 422, `rate_limited` 429 |
 | `POST /auth/login` | public | 200 `{ account, access_token, expires_in }` + cookie | `invalid_credentials` 401, `mfa_required` 401 (`details.methods`), `invalid_mfa_code` 401, `account_locked` 429 (`Retry-After`), `account_disabled` 403, `rate_limited` 429 |
 | `POST /auth/refresh` | cookie (web) or body `{ refresh_token }` (`X-Kinevo-Client: android`) | 200 `{ access_token, expires_in }` + rotated cookie (web) or `+ refresh_token` in the body (android) | `unauthenticated` 401, `refresh_reuse_detected` 401, `csrf_check_failed` 403 |
-| `POST /auth/logout` | cookie | 204; family revoked; cookie cleared | — (idempotent) |
+| `POST /auth/logout` | cookie (web) or body `{ refresh_token }` (`X-Kinevo-Client: android`) | 204; family revoked; cookie cleared for web | — (idempotent) |
 | `POST /auth/logout-all` | `identity.session.manage` | 204; all families revoked | — |
 | `POST /auth/password-reset/request` | public | 202 always (no existence leak) | `rate_limited` |
 | `POST /auth/password-reset/confirm` | public | 204; all families revoked | `reset_token_invalid` 422, `password_too_short` 422 |

@@ -39,6 +39,7 @@ pub struct Refreshed {
     pub refresh_token: Secret<String>,
     pub account_id: AccountId,
     pub family_id: FamilyId,
+    pub refresh_cookie_max_age: u32,
 }
 
 /// Sensitive token pair held in the in-process retry cache.
@@ -48,6 +49,7 @@ pub struct GracePair {
     expires_in: u32,
     account_id: AccountId,
     family_id: FamilyId,
+    absolute_expires_at: Instant,
 }
 
 impl GracePair {
@@ -58,6 +60,7 @@ impl GracePair {
         expires_in: u32,
         account_id: AccountId,
         family_id: FamilyId,
+        absolute_expires_at: Instant,
     ) -> Self {
         Self {
             access_token,
@@ -65,16 +68,18 @@ impl GracePair {
             expires_in,
             account_id,
             family_id,
+            absolute_expires_at,
         }
     }
 
-    fn refreshed(&self) -> Refreshed {
+    fn refreshed(&self, now: Instant) -> Refreshed {
         Refreshed {
             access_token: self.access_token.expose().clone(),
             expires_in: self.expires_in,
             refresh_token: Secret::new(self.refresh_token.expose().clone()),
             account_id: self.account_id,
             family_id: self.family_id,
+            refresh_cookie_max_age: seconds_until(self.absolute_expires_at, now),
         }
     }
 }
@@ -268,7 +273,7 @@ impl RefreshService {
                     return Err(unauthenticated());
                 };
                 tx.commit().await?;
-                Ok(pair.refreshed())
+                Ok(pair.refreshed(now))
             }
             RefreshDecision::Reuse => {
                 sessions::revoke_family(&mut tx, family.id, RevocationReason::ReuseDetected, now)
@@ -293,6 +298,36 @@ impl RefreshService {
                 Err(AppError::new(ErrorCode::RefreshReuseDetected))
             }
         }
+    }
+
+    /// Revokes the family named by a cookie token; malformed and unknown tokens are idempotent.
+    pub async fn logout(&self, presented: Option<Secret<String>>) -> Result<(), AppError> {
+        let Some(presented) = presented else {
+            return Ok(());
+        };
+        let Ok(raw) = decode_token(presented.expose()) else {
+            return Ok(());
+        };
+        let hash = hash_token(&raw);
+        let now = self.clock.now();
+        let mut tx = SystemTx::begin(&self.db).await?;
+        let Some((_, family)) = sessions::lock_by_hash(&mut tx, &hash).await? else {
+            tx.rollback().await?;
+            return Ok(());
+        };
+        sessions::revoke_family(&mut tx, family.id, RevocationReason::Logout, now).await?;
+        tx.commit().await?;
+        Ok(())
+    }
+
+    /// Revokes every refresh family owned by an authenticated account.
+    pub async fn logout_all(&self, account_id: AccountId) -> Result<(), AppError> {
+        let now = self.clock.now();
+        let mut tx = SystemTx::begin(&self.db).await?;
+        sessions::revoke_all_for_account(&mut tx, account_id, RevocationReason::Logout, now, None)
+            .await?;
+        tx.commit().await?;
+        Ok(())
     }
 
     async fn rotate(
@@ -339,12 +374,18 @@ impl RefreshService {
                     policy.access_ttl,
                     row.account_id,
                     family.id,
+                    family.absolute_expires_at,
                 ),
             )
             .await;
         tx.commit().await?;
-        Ok(pair.refreshed())
+        Ok(pair.refreshed(now))
     }
+}
+
+fn seconds_until(until: Instant, now: Instant) -> u32 {
+    let remaining_seconds = until.unix_millis().saturating_sub(now.unix_millis()) / 1_000;
+    u32::try_from(remaining_seconds.max(0)).unwrap_or(u32::MAX)
 }
 
 fn unauthenticated() -> AppError {

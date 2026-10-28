@@ -45,7 +45,7 @@ Until M1 creates the `justfile` (D-38):
 | `python3 scripts/tasks_index.py --check` | Task files valid, DAG acyclic, `tasks/index.md` up to date |
 | `scripts/setup-dev.sh [--sudo] [--android] [--browsers] [--rustup] [--all]` | Installs the whole toolchain (D-53); idempotent; maintainer runs the `sudo` and licence parts |
 | `scripts/preflight.sh` | Checks and installs tools for a stacked implementation run, creates the issue labels (BRANCHING.md §6) |
-| `scripts/dev-postgres.sh env` | Throwaway PostgreSQL for tests without testcontainers; prints `KINEVO_TEST_DATABASE_URL` |
+| `scripts/dev-postgres.sh env` | Starts or reuses the one shared disposable PostgreSQL test server; prints `KINEVO_TEST_DATABASE_URL` |
 
 From M1 on: `just setup` (one-time), `just dev`, `just fmt`, `just lint`, `just test`, `just check` (everything CI runs; must pass before a task goes to `review`), and `just spec` (the three scripts above).
 

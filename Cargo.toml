@@ -42,3 +42,6 @@ unimplemented = "deny"
 float_arithmetic = "deny"
 disallowed_methods = "deny"
 disallowed_types = "deny"
+
+[profile.dev]
+debug = 0

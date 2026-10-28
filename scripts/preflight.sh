@@ -29,12 +29,14 @@ if command -v rustup >/dev/null; then
 else lim "rustup missing: wasm32 target unavailable (WASM parity); run scripts/setup-dev.sh --rustup"; fi
 command -v wasm-pack >/dev/null && ok wasm-pack || { cargo install --locked wasm-pack >/dev/null 2>&1 && ok "wasm-pack (installed)" || lim "wasm-pack missing (WASM parity)"; }
 
-# database: Docker (testcontainers) or KINEVO_TEST_DATABASE_URL via scripts/dev-postgres.sh
-if command -v docker >/dev/null && timeout 20 docker info >/dev/null 2>&1; then
-  ok "docker daemon reachable"
-  docker image inspect postgres:17-alpine >/dev/null 2>&1 && ok "postgres:17-alpine image present" || lim "postgres:17-alpine not pulled yet (first DB test will pull it; if the pull is slow run: docker pull postgres:17-alpine)"
-elif [ -n "${KINEVO_TEST_DATABASE_URL:-}" ]; then ok "KINEVO_TEST_DATABASE_URL set"
-else lim "no Docker access: try scripts/dev-postgres.sh env; otherwise DB and E2E tests are environment-limited"; fi
+# database tests attach to one shared server through KINEVO_TEST_DATABASE_URL.
+if [ -n "${KINEVO_TEST_DATABASE_URL:-}" ]; then
+  ok "shared KINEVO_TEST_DATABASE_URL set"
+elif command -v docker >/dev/null && timeout 20 docker info >/dev/null 2>&1 && docker image inspect postgres:17-alpine >/dev/null 2>&1; then
+  lim "shared PostgreSQL not started; run eval \"\$(scripts/dev-postgres.sh env)\" before DB tests (uses existing image; no pull)"
+else
+  lim "shared PostgreSQL unavailable: run eval \"\$(scripts/dev-postgres.sh env)\"; if no existing postgres:17-alpine image or local PostgreSQL, DB tests are environment-limited"
+fi
 
 # labels for the issue/PR run
 if [ "$HARD" -eq 0 ]; then

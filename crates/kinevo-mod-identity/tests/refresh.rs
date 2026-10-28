@@ -27,7 +27,6 @@ use kinevo_mod_identity::{
     migrations,
 };
 use sqlx::{PgPool, Row, types::Uuid};
-use tokio::sync::OnceCell;
 use tracing::{
     Event, Subscriber,
     field::{Field, Visit},
@@ -54,25 +53,19 @@ fn policy() -> SessionPolicy {
 }
 
 struct Harness {
-    app: &'static TestApp,
-    clock: Arc<FixedClock>,
     service: Arc<RefreshService>,
+    app: TestApp,
+    clock: Arc<FixedClock>,
 }
 
-static TEST_APP: OnceCell<TestApp> = OnceCell::const_new();
-
-async fn test_app() -> &'static TestApp {
-    TEST_APP
-        .get_or_init(|| async {
-            let sources: [MigrationSource; 2] = [kinevo_db::migrations_source(), migrations()];
-            TestApp::builder()
-                .migrations(&sources)
-                .clock_at(now())
-                .build()
-                .await
-                .expect("disposable PostgreSQL test database should start")
-        })
+async fn test_app() -> TestApp {
+    let sources: [MigrationSource; 2] = [kinevo_db::migrations_source(), migrations()];
+    TestApp::builder()
+        .migrations(&sources)
+        .clock_at(now())
+        .build()
         .await
+        .expect("disposable PostgreSQL test database should start")
 }
 
 async fn harness() -> Harness {
@@ -90,9 +83,9 @@ async fn harness() -> Harness {
         codec,
     ));
     Harness {
+        service,
         app,
         clock,
-        service,
     }
 }
 
@@ -554,6 +547,7 @@ mod tests {
                     ACCESS_TTL,
                     account,
                     family,
+                    expires_at,
                 ),
             )
             .await;
@@ -574,6 +568,7 @@ mod tests {
                         ACCESS_TTL,
                         account,
                         family,
+                        expires_at,
                     ),
                 )
                 .await;

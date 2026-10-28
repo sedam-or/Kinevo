@@ -2,7 +2,7 @@ use std::{net::SocketAddr, sync::Arc};
 
 use axum::{
     Json,
-    extract::ConnectInfo,
+    extract::{ConnectInfo, State},
     http::{HeaderMap, Method, header},
     response::Response,
     routing::{MethodRouter, post},
@@ -26,11 +26,12 @@ use crate::{
 pub fn route(service: Arc<LoginService>) -> (RouteSpec, MethodRouter<HttpState>) {
     let handler = post(
         move |ConnectInfo(address): ConnectInfo<SocketAddr>,
+              State(state): State<HttpState>,
               headers: HeaderMap,
               Json(body): Json<LoginDto>| {
             let service = Arc::clone(&service);
             async move {
-                match login(service, address, headers, body).await {
+                match login(service, state, address, headers, body).await {
                     Ok(response) => Ok::<Response, ApiError>(response),
                     Err(error) => Err(ApiError(error)),
                 }
@@ -56,6 +57,7 @@ pub fn route(service: Arc<LoginService>) -> (RouteSpec, MethodRouter<HttpState>)
 
 async fn login(
     service: Arc<LoginService>,
+    state: HttpState,
     address: SocketAddr,
     headers: HeaderMap,
     body: LoginDto,
@@ -82,5 +84,6 @@ async fn login(
             user_agent,
         )
         .await?;
-    session_response(client, outcome)
+    let secure = super::cookie::is_secure_origin(state.origin_config.public_origin.as_deref());
+    session_response(client, outcome, secure)
 }

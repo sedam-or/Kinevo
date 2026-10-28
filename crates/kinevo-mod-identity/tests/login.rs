@@ -60,7 +60,6 @@ use kinevo_ports::{
     platform::{InstanceInfo, InstanceState, ResolvedPolicies},
 };
 use sqlx::Row;
-use tokio::sync::OnceCell;
 use tower::ServiceExt;
 use tracing::{
     Event, Subscriber,
@@ -69,24 +68,18 @@ use tracing::{
     span,
 };
 
-static TEST_APP: OnceCell<TestApp> = OnceCell::const_new();
-
 fn now() -> Instant {
     Instant::parse_rfc3339("2026-11-03T00:00:00Z").expect("fixed test instant is valid")
 }
 
-async fn test_app() -> &'static TestApp {
-    TEST_APP
-        .get_or_init(|| async {
-            let sources: [MigrationSource; 2] = [kinevo_db::migrations_source(), migrations()];
-            TestApp::builder()
-                .migrations(&sources)
-                .clock_at(now())
-                .build()
-                .await
-                .expect("disposable PostgreSQL test database should start")
-        })
+async fn test_app() -> TestApp {
+    let sources: [MigrationSource; 2] = [kinevo_db::migrations_source(), migrations()];
+    TestApp::builder()
+        .migrations(&sources)
+        .clock_at(now())
+        .build()
         .await
+        .expect("disposable PostgreSQL test database should start")
 }
 
 #[derive(Default)]
@@ -135,12 +128,12 @@ impl MfaVerifier for FakeMfa {
 }
 
 struct Harness {
-    app: &'static TestApp,
+    service: Arc<LoginService>,
+    app: TestApp,
     clock: Arc<FixedClock>,
     codec: Arc<TokenCodec>,
     policies: Arc<FakePolicyReader>,
     passwords: Arc<TestPasswords>,
-    service: Arc<LoginService>,
 }
 
 fn resolved(value: PolicyValue) -> Resolved {
@@ -200,12 +193,12 @@ async fn harness(auth_per_minute: i64) -> Harness {
         codec.clone(),
     ));
     Harness {
+        service,
         app,
         clock,
         codec,
         policies,
         passwords,
-        service,
     }
 }
 

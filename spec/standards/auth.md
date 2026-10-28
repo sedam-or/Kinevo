@@ -48,12 +48,13 @@ refresh(presented_token):
 |---|---|
 | `__Secure-kinevo_rt` | `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth; Max-Age=<remaining absolute lifetime>`. The `__Host-` prefix is **not** used because it forces `Path=/`, which would send the refresh token with every request; `__Secure-` allows the narrow path. No `Domain` attribute (host-only). |
 
-Required headers on cookie endpoints: `X-Kinevo-Client: web` (or `android` for the body flow) and `Origin` equal to the public URL.
+Web cookie endpoints require `X-Kinevo-Client: web` and an `Origin` equal to the public URL. Android body-token endpoints require `X-Kinevo-Client: android` and reject cookies; native requests may omit `Origin`. When a browser `Origin` is present, CORS grants access only to the Android shell origin in D-37.
 
 ## 5. Android flow (D-37)
 
 - `POST /auth/login` with `X-Kinevo-Client: android` ⇒ body includes `refresh_token`; **no** `Set-Cookie`.
 - `POST /auth/refresh` with the same header and body `{ "refresh_token": "…" }`; rotation/reuse/grace identical (§3).
+- `POST /auth/logout` with the same header and body `{ "refresh_token": "…" }` revokes that token's family; it returns 204 without `Set-Cookie`.
 - The shell writes the refresh token through the `SecureStore` plugin immediately after each response; if the write fails the session is treated as expired (never kept in WebView storage).
 
 ## 6. Lockout and rate limits

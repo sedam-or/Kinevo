@@ -71,12 +71,18 @@ fn insert_unforced<'a>(tx: &'a mut Tx, ids: &'a TestIds) -> BoxFuture<'a, Result
 
 #[tokio::test]
 async fn test_db_is_isolated_per_test() {
-    let (first_result, second_result) =
-        tokio::join!(TestApp::builder().build(), TestApp::builder().build());
+    let (first_result, second_result, observer_result) = tokio::join!(
+        TestApp::builder().build(),
+        TestApp::builder().build(),
+        TestApp::builder().build()
+    );
     require_db!(first = first_result);
     require_db!(second = second_result);
+    require_db!(observer = observer_result);
 
     assert_ne!(first.database_name(), second.database_name());
+    let first_name = first.database_name().to_owned();
+    let second_name = second.database_name().to_owned();
     for app in [&first, &second] {
         let exists: bool = sqlx::query_scalar(
             "SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'kinevo_migrator') AND EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'kinevo_app') AND EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'kinevo_system')",
@@ -92,6 +98,18 @@ async fn test_db_is_isolated_per_test() {
         .await
         .expect("the empty database should be queryable");
         assert_eq!(tables, 0);
+    }
+
+    drop(first);
+    drop(second);
+    for database_name in [&first_name, &second_name] {
+        let exists: bool =
+            sqlx::query_scalar("SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = $1)")
+                .bind(database_name)
+                .fetch_one(observer.admin_pool())
+                .await
+                .expect("the shared PostgreSQL server should list test databases");
+        assert!(!exists, "test database {database_name} should be dropped");
     }
 }
 

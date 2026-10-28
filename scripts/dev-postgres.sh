@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Throwaway PostgreSQL for tests when testcontainers cannot be used.
+# One shared throwaway PostgreSQL server for the test suite.
 # Usage: scripts/dev-postgres.sh start|stop|env      (prints `export KINEVO_TEST_DATABASE_URL=...` for `env`)
 # Exit codes: 0 ok, 3 environment-limited (no Docker access and no local PostgreSQL binaries).
 set -euo pipefail
@@ -30,13 +30,12 @@ start() {
   [ -f "$PW_FILE" ] || { head -c 18 /dev/urandom | base64 | tr -d '/+=' > "$PW_FILE"; chmod 600 "$PW_FILE"; }
   local port; port="$(free_port)"; echo "$port" > "$PORT_FILE"
   if have_docker; then
-    # prefer a local image; pull may be slow, so retry a few times before giving up on Docker
-    if ! docker image inspect "postgres:${VERSION}-alpine" >/dev/null 2>&1; then
-      for i in 1 2 3; do timeout 300 docker pull "postgres:${VERSION}-alpine" && break || sleep 5; done
-    fi
     if docker image inspect "postgres:${VERSION}-alpine" >/dev/null 2>&1; then
-      docker rm -f "$NAME" >/dev/null 2>&1 || true
-      docker run -d --name "$NAME" -e POSTGRES_PASSWORD="$(cat "$PW_FILE")" -p "127.0.0.1:${port}:5432" "postgres:${VERSION}-alpine" >/dev/null
+      if docker container inspect "$NAME" >/dev/null 2>&1; then
+        echo "environment-limited: container $NAME already exists without a script state file; refusing to replace it" >&2
+        exit 3
+      fi
+      docker run --pull=never -d --name "$NAME" -e POSTGRES_PASSWORD="$(cat "$PW_FILE")" -p "127.0.0.1:${port}:5432" "postgres:${VERSION}-alpine" >/dev/null
       echo docker > "$MODE_FILE"
       for _ in $(seq 1 60); do docker exec "$NAME" pg_isready -U postgres >/dev/null 2>&1 && return 0; sleep 1; done
       echo "postgres container did not become ready" >&2; exit 1
@@ -49,7 +48,7 @@ start() {
     echo local > "$MODE_FILE"; return 0
   fi
   rm -f "$PORT_FILE"
-  echo "environment-limited: no Docker access and no local PostgreSQL binaries (install postgresql >= 17 or give this user Docker access)" >&2
+  echo "environment-limited: no existing postgres:${VERSION}-alpine image and no local PostgreSQL binaries (automatic image pulls are disabled)" >&2
   exit 3
 }
 

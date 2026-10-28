@@ -44,8 +44,8 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 | URL parsing | **url** | 2.5.8 ✔ | MIT/Apache-2.0 | Standards-compliant parsing and canonicalization for `https_url` validation; hand-written parsing rejected | Keep host and credential edge cases covered by fixtures |
 | WASM bindings | **wasm-bindgen** (+ `wasm-pack` tool) | 0.2.129 ✔ | MIT/Apache-2.0 | scheduler preview (D-22) | — |
 | Kotlin bindings (deferred) | **uniffi** | 0.32.2 ✔ | MPL-2.0 | only if native screens are justified | — |
-| Tests | **nextest**, **proptest**, **insta**, **testcontainers** | proptest 1.12.0 ✔, insta 1.49.0 ✔, testcontainers 0.28.0 ✔ | MIT/Apache-2.0 | `12-testing.md` | Docker required locally |
-| Supply-chain tools | **cargo-deny** 0.20.2 ✔, **cargo-audit**, **cargo-llvm-cov**, **cargo-fuzz**, **cargo-mutants**, **wasm-bindgen-cli**, **typos**, **shellcheck** (system package), **criterion** | tools, not linked | MIT/Apache-2.0 | SEC-13, TST | — |
+| Tests | **nextest**, **proptest**, **insta** | proptest 1.12.0 ✔, insta 1.49.0 ✔ | MIT/Apache-2.0 | `12-testing.md`; one shared PostgreSQL server with a disposable database per test | — |
+| Supply-chain tools | **cargo-deny** 0.20.2 ✔, **cargo-audit**, **cargo-llvm-cov**, **cargo-fuzz**, **cargo-mutants**, **cargo-sweep** 0.8.0, **wasm-bindgen-cli**, **typos**, **shellcheck** (system package), **criterion** | tools, not linked | MIT/Apache-2.0; cargo-sweep MIT | SEC-13, TST, build-cache maintenance (D-104) | — |
 
 Deliberately **not** adopted: an ORM, a DI framework, a job-queue crate (the DB queue is ~200 lines over `FOR UPDATE SKIP LOCKED`; Redis/SQS rejected by D-13), a validation-derive crate (newtypes with validating constructors suffice, CQ-06), a cron crate (tick + unique key, ARCH §7), `tower_governor`.
 

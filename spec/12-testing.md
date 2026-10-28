@@ -7,7 +7,7 @@ Depends on: all specs. Prefix: `TST`. Principles: tests prove requirements (CQ-1
 | Level | Scope | Tools | Database | Speed target |
 |---|---|---|---|---|
 | **Unit (domain)** | pure functions, state machines, value objects, `kinevo-scheduler`, `landscape` resolver, validation kinds | `cargo nextest`, `proptest`, `insta` (snapshots) | none | whole suite < 30 s |
-| **Component (module)** | use cases with real repositories | `nextest` + `testcontainers` PostgreSQL 17 (and 18 in the CI matrix) | real, per-test schema/database, connected **as `kinevo_app`** | < 3 min |
+| **Component (module)** | use cases with real repositories | `nextest` + one shared PostgreSQL 17 server from `scripts/dev-postgres.sh` (CI may use its PostgreSQL service, 17/18 matrix) | real, unique database per test, connected **as `kinevo_app`** | < 3 min |
 | **API / contract** | HTTP routes end-to-end in-process, OpenAPI conformance, auth, RLS, rate limits | `axum` test server + generated client; `schemathesis`-style property checks against the OpenAPI document (nightly) | real | < 5 min |
 | **Architecture** | dependency graph, forbidden imports, tables-per-module, route descriptors (CA-05) | custom Rust test + `cargo metadata` | none | < 20 s |
 | **Web unit/component** | components, hooks, forms, i18n, offline queue | Vitest, Testing Library, MSW (from OpenAPI), `fake-indexeddb` | none | < 2 min |
@@ -69,6 +69,6 @@ Depends on: all specs. Prefix: `TST`. Principles: tests prove requirements (CQ-1
 |---|---|
 | Fixtures | synthetic only; emails `…@example.test`; no real names, addresses or schedules; fixture content is marked with `[fixture]` where visible |
 | Names | Rust `fn <id_lower>_<behaviour>()` e.g. `scheduler_fr_01_permuting_inputs_does_not_change_output`; TS `describe('SCH-FR-01', …)` |
-| Builders | `kinevo-db::testing` offers `TestApp` (schema-per-test PG, injected clock, fake gateway/provider, seeded accounts) |
+| Builders | `kinevo-db::testing` offers `TestApp` (database-per-test on the shared PostgreSQL server, injected clock, fake gateway/provider, seeded accounts) |
 | Time | tests set the clock explicitly, including DST boundary dates for Europe/London, America/New_York, Asia/Jakarta, Australia/Lord_Howe (30-minute DST) |
-| Clean-up | each test owns its schema; parallel safe |
+| Clean-up | each test owns a uniquely named database that is dropped at the end; parallel safe; tests never start per-test containers |

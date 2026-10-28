@@ -15,6 +15,7 @@ use kinevo_http::route::RouteTable;
 use kinevo_ports::module::{
     AccountExporter, AccountProvisioner, ModuleDescriptor, ModuleKind, PermissionDef,
 };
+use kinevo_ports::platform::PolicyReader;
 
 static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
 
@@ -106,6 +107,29 @@ pub const MODULE: ModuleDescriptor = ModuleDescriptor {
 pub fn router(service: Arc<app::login::LoginService>) -> RouteTable {
     let (spec, route) = http::login::route(service);
     RouteTable::new().route(spec, route)
+}
+
+/// Builds the login, refresh and revocation routes for module composition.
+#[must_use]
+pub fn router_with_refresh(
+    login: Arc<app::login::LoginService>,
+    refresh: Arc<app::refresh::RefreshService>,
+    policies: Arc<dyn PolicyReader>,
+) -> RouteTable {
+    let (spec, route) = http::login::route(login);
+    let table = RouteTable::new().route(spec, route);
+    http::refresh::routes(refresh, policies)
+        .into_iter()
+        .fold(table, |table, (spec, route)| table.route(spec, route))
+}
+
+/// Builds only the refresh and revocation routes for focused HTTP adapters.
+#[must_use]
+pub fn refresh_router(
+    refresh: Arc<app::refresh::RefreshService>,
+    policies: Arc<dyn PolicyReader>,
+) -> RouteTable {
+    http::refresh::route_table(refresh, policies)
 }
 
 /// Returns the identity crate's embedded migrations.
