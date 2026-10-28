@@ -1,6 +1,9 @@
+pub mod key;
 pub mod net;
 pub mod text;
 pub mod tz;
+
+pub use key::IdemKey;
 
 use crate::errors::{AppError, Details, FieldCode, FieldError};
 

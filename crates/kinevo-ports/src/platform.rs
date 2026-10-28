@@ -234,6 +234,51 @@ pub trait AccountAccess: Send + Sync {
     async fn load(&self, id: AccountId) -> Result<Option<AccountAccessInfo>, AppError>;
 }
 
+/// Classification returned by the idempotency reservation port.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum IdemBegin {
+    /// This request owns a new reservation and may run its handler.
+    Fresh,
+    /// A prior successful or deterministic response is available for replay.
+    Replay {
+        status: u16,
+        content_type: Option<String>,
+        body: Vec<u8>,
+    },
+    /// An equivalent request is currently running.
+    InProgress,
+    /// The key is already bound to a different method, path, or body.
+    Mismatch,
+}
+
+/// Tenant-scoped reservation and response store for HTTP idempotency.
+#[async_trait]
+pub trait IdempotencyPort: Send + Sync {
+    /// Reserves a normalized key or returns its existing state.
+    async fn begin(
+        &self,
+        account: AccountId,
+        key: &str,
+        method: &str,
+        path: &str,
+        request_hash: [u8; 32],
+        ttl_seconds: i64,
+    ) -> Result<IdemBegin, AppError>;
+
+    /// Stores the response metadata for a deterministic response.
+    async fn finish(
+        &self,
+        account: AccountId,
+        key: &str,
+        status: u16,
+        content_type: Option<String>,
+        body: Option<Vec<u8>>,
+    ) -> Result<(), AppError>;
+
+    /// Releases a reservation so a later retry can run the handler.
+    async fn release(&self, account: AccountId, key: &str) -> Result<(), AppError>;
+}
+
 #[cfg(test)]
 mod tests {
     #![allow(

@@ -186,6 +186,7 @@ CREATE TABLE idempotency_keys (
   path          text NOT NULL,
   request_hash  bytea NOT NULL,
   status_code   smallint,                                        -- null while in flight
+  response_content_type text,
   response_body bytea,
   created_at    timestamptz NOT NULL,
   expires_at    timestamptz NOT NULL,

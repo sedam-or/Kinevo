@@ -264,6 +264,8 @@ mod support {
             access,
             rate: kinevo_http::route::RateClass::None,
             idempotency: IdemMode::Off,
+            store_response_body: true,
+            cookie_endpoint: false,
             summary: "gate test route",
             allow_disabled: false,
         }
@@ -520,6 +522,8 @@ mod rbac {
                 access: Access::Permission("demo.missing.read"),
                 rate: RateClass::None,
                 idempotency: IdemMode::Off,
+                store_response_body: true,
+                cookie_endpoint: false,
                 summary: "unknown permission",
                 allow_disabled: false,
             };

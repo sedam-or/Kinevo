@@ -5,7 +5,7 @@ milestone: M1
 kind: feature
 status: review
 depends_on: [T-012, T-005]
-requirements: [API-70, API-71, API-72, ADM-FR-08, D-34, D-80, D-81, TST-20]
+requirements: [API-70, API-71, API-72, ADM-FR-08, D-34, D-80, D-81, D-82, D-83, TST-20]
 branch: m1-t015-db-idempotency-store
 budget_lines: 280
 assignee: "Codex"
@@ -22,7 +22,7 @@ assignee: "Codex"
 > **API-70** (`07-api-conventions.md` §8, D-34): Clients send `Idempotency-Key: <uuid>` on every `POST` that creates or commands, and on `DELETE`. The server stores `(account, key)` with a hash of method+path+body and the response for `api.idempotency.ttl`.
 > **API-71**: Same key + same request → the stored response is replayed with header `Idempotency-Replayed: true` (also for error responses that are deterministic; **not** for 5xx or 429, which are never stored). Same key + different request → 422 `idempotency_key_reuse`. Same key while the first is in flight → 409 `idempotency_in_progress` (client retries after `Retry-After: 1`).
 > **API-72**: Keys are bound to the account.
-> **Schema** (`06` §3): `idempotency_keys(account_id, key text 8–128, method, path, request_hash bytea, status_code smallint null while in flight, response_body bytea, created_at, expires_at, pk(account_id, key))`; standard `tenant_isolation` RLS; `kinevo_app` has SELECT, INSERT, UPDATE and no DELETE (T-012). Expired rows are pruned by `platform_prune_idempotency` (ADM-FR-08).
+> **Schema** (`06` §3): `idempotency_keys(account_id, key text 8–128, method, path, request_hash bytea, status_code smallint null while in flight, response_content_type text, response_body bytea, created_at, expires_at, pk(account_id, key))`; standard `tenant_isolation` RLS; `kinevo_app` has SELECT, INSERT, UPDATE and no DELETE (T-012). Expired rows are pruned by `platform_prune_idempotency` (ADM-FR-08).
 > **Validation** (`validation.md` §3): `idempotency_key` is `key`-like, 8–128 chars `[A-Za-z0-9_-]`.
 > **Policy** `api.idempotency.ttl` (duration 1 h–7 d, default 86400), supplied by the caller.
 > **Hash** (`contracts.md` §3): when bytes are hashed, SHA-256; for request bodies the middleware hashes the **raw body bytes** after the size limit, not re-serialised JSON, so `request_hash = SHA-256(method \0 path_and_query_template \0 body)` (document this on `request_hash`).
@@ -31,11 +31,11 @@ assignee: "Codex"
 
 **In:**
 - `kinevo_db::idempotency`:
-  - `IdemKey` newtype (`parse`, per the validation rule above).
+  - `IdemKey` newtype re-exported from `kinevo-kernel::validate` (`parse`, per the validation rule above; D-83).
   - `begin(tx: &mut Tx, key: &IdemKey, method: &str, path: &str, request_hash: [u8;32], now: Instant, ttl_seconds: i64) -> Result<Begin, AppError>` where `Begin = Fresh | Replay(StoredResponse) | InProgress | Mismatch`. It runs `INSERT … ON CONFLICT (account_id, key) DO NOTHING`; when the row already exists and `expires_at > now` it classifies the existing row; an expired row is replaced (UPDATE to a fresh in-flight reservation).
   - `finish(tx: &mut Tx, key: &IdemKey, status: u16, body: &[u8]) -> Result<(), AppError>` storing the response (status < 500 and ≠ 429 only; otherwise the reservation is released with `release`).
   - `release(tx, key)` — deletes nothing (no DELETE grant): it sets `expires_at = created_at` so the key is immediately reusable; documented.
-  - `StoredResponse { status: u16, body: Vec<u8> }`. A response body larger than `MAX_STORED_BODY_BYTES` (262144, a technical constant) is not stored: `finish` releases the key instead, so a retry runs the request again.
+  - `StoredResponse { status: u16, content_type: Option<String>, body: Vec<u8> }`. `finish` keeps its status/body compatibility entry point; T-019 adds `finish_with_content_type` so replay can preserve the media type (D-82). A response body larger than `MAX_STORED_BODY_BYTES` (262144, a technical constant) is not stored: `finish` releases the key instead, so a retry runs the request again.
 
 **Out:**
 - The middleware and header handling: T-019.
@@ -75,7 +75,7 @@ pub async fn release(tx: &mut Tx, key: &IdemKey) -> Result<(), AppError>;
 ## Implementation notes
 
 - Compare `request_hash` with `ct_eq` (T-004) to avoid a timing side channel on stored hashes (low risk, cheap).
-- `method` is stored upper-case; `path` is the matched route template plus the concrete path parameters, but not the query string for creates (document the choice; T-019 fixes the exact string).
+- `method` is stored upper-case; `path` is the concrete URI path with parameter values, but not the query string for creates (D-81; `MatchedPath` identifies route metadata only).
 
 ## Acceptance
 
@@ -163,7 +163,9 @@ Line counts are recorded from the implementation diff; generated `tasks/index.md
 | ID | Choice | Alternative and reason | Files | Reversal |
 |---|---|---|---|---|
 | D-80 | Use `validation.md`'s key-like contract: trim, lowercase, and accept 8–128 ASCII letters, digits, `_` or `-`. | UUID-only parsing conflicts with the task's validator and field-specific rule; the generic `<uuid>` notation is treated as the wire example. Pending owner review. | `spec/decisions.md`, `spec/index.md`, this task, `tasks/index.md`, `idempotency.rs` | Supersede D-80 with an owner decision, then update the parser and tests. |
-| D-81 | Store `path` verbatim; T-019 supplies the matched route template and concrete path parameters without a query string for creates. | Rewriting paths in `kinevo-db` would duplicate HTTP routing; including query values here conflicts with the task implementation note. Pending owner review. | `spec/decisions.md`, `spec/index.md`, this task, `tasks/index.md`, `idempotency.rs` | Supersede D-81 with an owner decision and update T-019's path construction. |
+| D-81 | Store `path` verbatim; T-019 supplies the concrete URI path with parameter values and without query strings for creates. `MatchedPath` is used only for route metadata. | Rewriting paths in `kinevo-db` would duplicate HTTP routing; including query values here conflicts with the task implementation note. Pending owner review. | `spec/decisions.md`, `spec/index.md`, this task, `tasks/index.md`, `idempotency.rs` | Supersede D-81 with an owner decision and update T-019's path construction. |
+| D-82 | Persist and replay response content type with eligible response bodies; secret routes keep status only. | Inferring a media type or omitting it from replay would change the response contract. Pending owner review. | T-019 extends the store with a nullable response-content-type column and adapter contract. | Supersede D-82 with an owner decision, then update the migration and port. |
+| D-83 | Place the normalized `IdemKey` validator in the kernel and re-export it from the DB module so HTTP stays database-independent. | Duplicating normalization risks drift; adding an HTTP-to-DB dependency violates CA layering. Pending owner review. | `crates/kinevo-kernel/src/validate/key.rs`, `crates/kinevo-db/src/idempotency.rs` | Supersede D-83 with an owner decision and move the shared type accordingly. |
 
 ### Spec issues noticed
 

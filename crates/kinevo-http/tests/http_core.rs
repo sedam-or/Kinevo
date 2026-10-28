@@ -195,6 +195,8 @@ mod http_core {
             access,
             rate: RateClass::None,
             idempotency: IdemMode::Off,
+            store_response_body: true,
+            cookie_endpoint: false,
             summary: "test route",
             allow_disabled: false,
         }

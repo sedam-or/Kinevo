@@ -2,7 +2,7 @@
 
 use kinevo_kernel::{
     crypto::ct_eq,
-    errors::{AppError, ErrorCode, FieldCode},
+    errors::{AppError, ErrorCode},
     time::Instant,
 };
 use sqlx::Row;
@@ -12,35 +12,13 @@ use crate::Tx;
 /// Largest response body retained for replay. Larger responses release the key.
 pub const MAX_STORED_BODY_BYTES: usize = 262_144;
 
-/// A validated, normalized idempotency key.
-#[derive(Clone, Eq, PartialEq)]
-pub struct IdemKey(String);
-
-impl IdemKey {
-    /// Trims and lowercases a key, then validates the key-like API contract.
-    pub fn parse(raw: &str) -> Result<Self, FieldCode> {
-        let normalized = raw.trim().to_ascii_lowercase();
-        if !(8..=128).contains(&normalized.len())
-            || !normalized
-                .bytes()
-                .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
-        {
-            return Err(FieldCode::KeyInvalid);
-        }
-        Ok(Self(normalized))
-    }
-
-    /// Returns the normalized key for database binding.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
+pub use kinevo_kernel::validate::IdemKey;
 
 /// A response that can be replayed for a duplicate request.
 #[derive(Clone, Eq, PartialEq)]
 pub struct StoredResponse {
     pub status: u16,
+    pub content_type: Option<String>,
     pub body: Vec<u8>,
 }
 
@@ -82,8 +60,8 @@ pub async fn begin(
     loop {
         let inserted = sqlx::query(
             "INSERT INTO public.idempotency_keys \
-             (account_id, key, method, path, request_hash, status_code, response_body, created_at, expires_at) \
-             VALUES ($1, $2, $3, $4, $5, NULL, NULL, $6::timestamptz, $7::timestamptz) \
+             (account_id, key, method, path, request_hash, status_code, response_content_type, response_body, created_at, expires_at) \
+             VALUES ($1, $2, $3, $4, $5, NULL, NULL, NULL, $6::timestamptz, $7::timestamptz) \
              ON CONFLICT (account_id, key) DO NOTHING",
         )
         .bind(account_id)
@@ -101,7 +79,7 @@ pub async fn begin(
         }
 
         let row = sqlx::query(
-            "SELECT method, path, request_hash, status_code, response_body, \
+            "SELECT method, path, request_hash, status_code, response_content_type, response_body, \
                     expires_at > $3::timestamptz AS active \
              FROM public.idempotency_keys \
              WHERE account_id = $1 AND key = $2 \
@@ -124,7 +102,7 @@ pub async fn begin(
             sqlx::query(
                 "UPDATE public.idempotency_keys \
                  SET method = $3, path = $4, request_hash = $5, status_code = NULL, \
-                     response_body = NULL, created_at = $6::timestamptz, expires_at = $7::timestamptz \
+                     response_content_type = NULL, response_body = NULL, created_at = $6::timestamptz, expires_at = $7::timestamptz \
                  WHERE account_id = $1 AND key = $2",
             )
             .bind(account_id)
@@ -155,9 +133,13 @@ pub async fn begin(
             return Ok(Begin::InProgress);
         };
         let status = u16::try_from(status_code).map_err(|_| service_unavailable())?;
+        let content_type: Option<String> = row
+            .try_get("response_content_type")
+            .map_err(database_error)?;
         let body: Option<Vec<u8>> = row.try_get("response_body").map_err(database_error)?;
         return Ok(Begin::Replay(StoredResponse {
             status,
+            content_type,
             body: body.unwrap_or_default(),
         }));
     }
@@ -173,20 +155,35 @@ pub async fn finish(
     body: &[u8],
     store_body: bool,
 ) -> Result<(), AppError> {
+    finish_with_content_type(tx, key, status, None, body, store_body).await
+}
+
+/// Stores deterministic response status, content type and eligible body bytes.
+/// Content type is retained only with the body so secret routes remain status-only.
+pub async fn finish_with_content_type(
+    tx: &mut Tx,
+    key: &IdemKey,
+    status: u16,
+    content_type: Option<&str>,
+    body: &[u8],
+    store_body: bool,
+) -> Result<(), AppError> {
     if status >= 500 || status == 429 || (store_body && body.len() > MAX_STORED_BODY_BYTES) {
         return release(tx, key).await;
     }
 
     let status = i16::try_from(status).map_err(|_| service_unavailable())?;
+    let response_content_type = store_body.then_some(content_type).flatten();
     let response_body = store_body.then_some(body);
     let result = sqlx::query(
         "UPDATE public.idempotency_keys \
-         SET status_code = $3, response_body = $4 \
+         SET status_code = $3, response_content_type = $4, response_body = $5 \
          WHERE account_id = $1 AND key = $2 AND status_code IS NULL",
     )
     .bind(*tx.account_id().as_uuid())
     .bind(key.as_str())
     .bind(status)
+    .bind(response_content_type)
     .bind(response_body)
     .execute(tx.conn())
     .await
@@ -202,7 +199,7 @@ pub async fn finish(
 pub async fn release(tx: &mut Tx, key: &IdemKey) -> Result<(), AppError> {
     let result = sqlx::query(
         "UPDATE public.idempotency_keys \
-         SET status_code = NULL, response_body = NULL, expires_at = created_at \
+         SET status_code = NULL, response_content_type = NULL, response_body = NULL, expires_at = created_at \
          WHERE account_id = $1 AND key = $2",
     )
     .bind(*tx.account_id().as_uuid())

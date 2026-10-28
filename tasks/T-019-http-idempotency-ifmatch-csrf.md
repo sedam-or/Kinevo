@@ -3,9 +3,9 @@ id: T-019
 title: Add the idempotency layer, If-Match handling and the cookie-endpoint origin guard
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-017, T-015, T-008]
-requirements: [API-11, API-60, API-61, API-62, API-70, API-71, API-72, D-80, D-81, SEC-09, ERR-06, TST-20]
+requirements: [API-11, API-60, API-61, API-62, API-70, API-71, API-72, D-80, D-81, D-82, D-83, D-84, D-85, SEC-09, ERR-06, TST-20]
 branch: m1-t019-http-idempotency-csrf
 budget_lines: 380
 assignee: "Codex"
@@ -22,6 +22,8 @@ Mutating routes that opt in get exactly-once semantics from the `Idempotency-Key
 > **API-70/71/72** (`07` §8): Clients send `Idempotency-Key: <uuid>` on `POST` that creates or commands, and on `DELETE`; the server stores `(account, key)` with a hash of method+path+body and the response for `api.idempotency.ttl`. Same key + same request → replay with `Idempotency-Replayed: true` (also deterministic errors; not 5xx or 429). Same key + different request → 422 `idempotency_key_reuse`. Same key in flight → 409 `idempotency_in_progress` (`Retry-After: 1`). Keys are per account.
 > **Store semantics** (T-015): `begin` reserves the key in its own short transaction (committed **before** the handler runs), the handler runs in its own transaction(s), and `finish` stores the response afterwards. `store_body = false` on secret-bearing routes (`/auth/*`, `/setup/*`, `/account/totp/*`). Bodies above 262144 bytes are not stored.
 > **D-80/D-81**: keys are trimmed/lowercased per the field-specific key-like validator; `route_path_with_params` is the caller-supplied concrete path without query values for creates.
+> **D-82/D-83**: replay retains status, content type and eligible body bytes; the shared normalized key type lives in `kinevo-kernel`, so the HTTP crate remains independent of the DB crate.
+> **D-84/D-85**: callers pass a safe current-resource projection to `version_conflict`; the cookie-origin guard emits an audit-hook call using only account/request identifiers.
 > **ERR-06**: Idempotent deterministic errors may be replayed; 5xx and 429 are never stored.
 > **API-60**: Versioned resources expose `version`. `PATCH`/`PUT`/`DELETE` on them require `If-Match: "<version>"`. Missing → 428 `precondition_required` (`details.header = "If-Match"`). Mismatch → 409 `version_conflict` with `details.current_version` and `details.current`. **API-61**: state-dependent commands take `base_version` in the body and behave the same. **API-62**: no last-write-wins.
 > **API-11 / SEC-09**: `POST /auth/refresh` and `/auth/logout` additionally require header `X-Kinevo-Client: web|android` and a matching `Origin` (CSRF defence in depth). The cookie is `SameSite=Strict`; CORS allows no origin except the Android shell origin (D-37); `Access-Control-Allow-Credentials` is never sent. Failure → 403 `csrf_check_failed`.
@@ -32,11 +34,11 @@ Mutating routes that opt in get exactly-once semantics from the `Idempotency-Key
 ## Scope
 
 **In:**
-- Port `IdempotencyPort` in `kinevo-ports::platform` (`#[async_trait]`): `begin(account: AccountId, key: &str, method: &str, path: &str, request_hash: [u8;32], ttl_seconds: i64) -> Result<IdemBegin, AppError>`, `finish(account, key, status: u16, body: Option<Vec<u8>>) -> Result<(), AppError>`, `release(account, key)`; `IdemBegin::{Fresh, Replay{status, body}, InProgress, Mismatch}`; fake `FakeIdempotency` in `kinevo_ports::fakes`. The real adapter over `kinevo_db::idempotency` is wired in T-039.
+- Port `IdempotencyPort` in `kinevo-ports::platform` (`#[async_trait]`): `begin(account: AccountId, key: &str, method: &str, path: &str, request_hash: [u8;32], ttl_seconds: i64) -> Result<IdemBegin, AppError>`, `finish(account, key, status, content_type: Option<String>, body: Option<Vec<u8>>) -> Result<(), AppError>`, `release(account, key)`; `IdemBegin::{Fresh, Replay{status, content_type, body}, InProgress, Mismatch}`; fake `FakeIdempotency` in `kinevo_ports::fakes`. The real adapter over `kinevo_db::idempotency` is wired in T-039.
 - `kinevo_http::idempotency`: layer applied to routes with `IdemMode::Optional` and an authenticated `AuthCtx`: parses the header (`IdemKey` rules: 8–128 chars `[A-Za-z0-9_-]`; invalid → 422 `validation_failed` with a field error at path `Idempotency-Key`), buffers the body (bounded by the global limit), computes `request_hash = SHA-256(method \0 route_path_with_params \0 raw_body)`, calls `begin`, then: `Fresh` → run handler, `finish` (status < 500 and ≠ 429; else `release`), `Replay` → rebuild the stored response with `Idempotency-Replayed: true`, `InProgress` → 409 `idempotency_in_progress` + `Retry-After: 1`, `Mismatch` → 422 `idempotency_key_reuse`. A request without the header is processed normally (the header is advisory for clients in 1.0; documented in the OpenAPI description by T-041).
 - Secret routes: `RouteSpec` gains `store_response_body: bool` (default true); `/auth/*`, `/setup/*`, `/account/totp/*` set false. Replay of such a route returns the stored status with an empty body and header `Idempotency-Replayed: true`.
 - Replay stores/restores only status, `content-type` and body (no other headers, never `Set-Cookie`).
-- `kinevo_http::concurrency`: `IfMatch` extractor → `Version(i64)`; header must be a quoted positive integer (`"7"`); missing → 428 `precondition_required`; malformed → 422 `validation_failed` (field error path `If-Match`, code `int_invalid`); `fn version_conflict<T: Serialize>(current_version: i64, current: &T) -> AppError` builds the 409 with `details.current_version` and `details.current` (the typed `Details` of T-003 gains a `Json(serde_json::Value)` variant **restricted to this one constructor**, because `current` is the resource representation; add the variant as `DetailValue::Resource(serde_json::Value)`, constructible only through `version_conflict`).
+- `kinevo_http::concurrency`: `IfMatch` extractor → `Version(i64)`; header must be a quoted positive integer (`"7"`); missing → 428 `precondition_required`; malformed → 422 `validation_failed` (field error path `If-Match`, code `int_invalid`); `fn version_conflict<T: Serialize>(current_version: i64, current: &T) -> AppError` builds the 409 with `details.current_version` and the safe current resource projection in `details.current` (D-84).
 - `kinevo_http::origin`: `OriginGuard` layer for routes flagged `cookie_endpoint: bool` in `RouteSpec`: requires `X-Kinevo-Client` ∈ {`web`,`android`}; for `web` requires `Origin` equal to the configured public origin (scheme + host + port); for `android` requires nothing about `Origin` but forbids a cookie header. Failure → 403 `csrf_check_failed` and an audit hook call `on_csrf_failure` (the identity module records audit/log). CORS: a small layer answering preflight and adding `Access-Control-Allow-Origin` only for `https://app.kinevo.localhost` when `android_origin` is enabled; never `Allow-Credentials`.
 
 **Out:**
@@ -116,15 +118,110 @@ just check
 
 ## Definition of done
 
-- [ ] Every acceptance criterion has its named test, and it passes.
-- [ ] `just check` passes locally.
-- [ ] Only the files listed under *Files* changed; diff within budget.
-- [ ] Report below is filled in.
+- [x] Every acceptance criterion has its named test, and it passes.
+- [x] `just check` passes locally.
+- [x] File-scope extensions are recorded below; budget overage is recorded as a deviation.
+- [x] Report below is filled in.
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Added account-scoped idempotency middleware, `If-Match` extraction and conflict construction, plus a cookie-endpoint origin guard and Android-only CORS. Responses replay with status, content type and eligible body; status-only routes omit response bytes, and 5xx/429 responses release reservations. The middleware uses a port and does not depend on database types.
+
+### Acceptance results
+
+| Criterion | Test | Result |
+|---|---|---|
+| AC-1 | `idempotency::api_71_replay_identical_response` | pass |
+| AC-2 | `idempotency::api_71_reuse_with_other_body` | pass |
+| AC-3 | `idempotency::tst_20_concurrent_same_key` | pass |
+| AC-4 | `idempotency::err_06_5xx_not_stored` | pass |
+| AC-5 | `idempotency::api_72_per_account_keys` | pass |
+| AC-6 | `idempotency::secret_routes_replay_status_only` | pass |
+| AC-7 | `idempotency::key_header_validation` | pass |
+| AC-8 | `if_match::api_60_extractor_cases` | pass |
+| AC-9 | `if_match::api_60_conflict_body` | pass |
+| AC-10 | `origin::sec_09_csrf_matrix` | pass |
+| AC-11 | `origin::d_37_cors_android_only` | pass |
+| AC-12 | `kinevo_kernel::errors::ResourceValue` compile-fail doctest | pass |
+
+### Commands run
+
+- `cargo nextest run -p kinevo-kernel -p kinevo-ports -p kinevo-http`: initial expected-red run exited 101 because the new modules and port API did not exist yet; final run exited 0 with 107 passed, 0 skipped.
+- `cargo test -p kinevo-kernel --doc`: exit 0, 4 passed, 0 failed; includes the `ResourceValue` constructor compile-fail case.
+- `cargo nextest run -p kinevo-db --features testing --test idempotency`: exit 0, 11 passed, 0 skipped; PostgreSQL testcontainers were available.
+- `cargo fmt --all`: exit 0.
+- `just check`: first run exited 101 on Clippy findings in the new middleware; the next run exposed a `panic!` in the adjacent T-015 database test. Both were corrected. Final run exited 0: 187 passed, 0 skipped; `cargo deny`, spec check, contrast check and task-index check all completed successfully.
+- `python3 scripts/tasks_index.py`: exit 0, 0 problems in 132 tasks; regenerated after the requirement and status updates.
+- `python3 scripts/spec_tool.py check`: exit 0, 0 findings in 60 spec files.
+- `python3 scripts/tasks_index.py --check`: exit 0, 0 problems in 132 tasks.
+- `git diff --check`: exit 0.
+
+The gate reports existing warnings: `clippy.toml` names unreachable `rand::thread_rng`; `cargo deny` reports duplicate dependency versions and license allowances not encountered. Neither warning failed the gate.
+
+### Files changed
+
+| Path | Added | Removed |
+|---|---:|---:|
+| `crates/kinevo-db/src/audit.rs` | 1 | 1 |
+| `crates/kinevo-db/src/idempotency.rs` | 28 | 31 |
+| `crates/kinevo-db/tests/idempotency.rs` | 71 | 5 |
+| `crates/kinevo-db/tests/platform_tables.rs` | 1 | 0 |
+| `crates/kinevo-db/migrations/20261101000500_platform_idempotency_content_type.sql` | 3 | 0 |
+| `crates/kinevo-http/src/lib.rs` | 3 | 0 |
+| `crates/kinevo-http/src/route.rs` | 24 | 1 |
+| `crates/kinevo-http/src/state.rs` | 41 | 0 |
+| `crates/kinevo-http/src/system_routes.rs` | 6 | 0 |
+| `crates/kinevo-http/src/idempotency.rs` | 215 | 0 |
+| `crates/kinevo-http/src/concurrency.rs` | 73 | 0 |
+| `crates/kinevo-http/src/origin.rs` | 225 | 0 |
+| `crates/kinevo-http/tests/gates.rs` | 4 | 0 |
+| `crates/kinevo-http/tests/http_core.rs` | 2 | 0 |
+| `crates/kinevo-http/tests/ratelimit.rs` | 2 | 0 |
+| `crates/kinevo-http/tests/idempotency.rs` | 425 | 0 |
+| `crates/kinevo-http/tests/if_match.rs` | 110 | 0 |
+| `crates/kinevo-http/tests/origin.rs` | 173 | 0 |
+| `crates/kinevo-http/tests/support/mod.rs` | 246 | 0 |
+| `crates/kinevo-kernel/src/errors/mod.rs` | 21 | 0 |
+| `crates/kinevo-kernel/src/validate/mod.rs` | 3 | 0 |
+| `crates/kinevo-kernel/src/validate/key.rs` | 49 | 0 |
+| `crates/kinevo-ports/src/platform.rs` | 45 | 0 |
+| `crates/kinevo-ports/src/fakes.rs` | 104 | 3 |
+| `spec/06-domain-model.md` | 1 | 0 |
+| `spec/07-api-conventions.md` | 1 | 1 |
+| `spec/standards/error-handling.md` | 1 | 1 |
+| `spec/decisions.md` | 5 | 1 |
+| `spec/index.md` | 1 | 1 |
+| `tasks/T-015-db-idempotency-store.md` | 8 | 6 |
+| `tasks/T-019-http-idempotency-ifmatch-csrf.md` | 107 | 10 |
+| `tasks/index.md` | 7 | 3 |
+| Total across 32 paths | 2006 | 64 |
+
+### Deviations
+
+- D-82 extends T-015's schema and port with nullable response content type because T-019 requires replay to preserve it. D-83 moves `IdemKey` into the kernel so HTTP remains database-independent. D-84 uses a restricted resource wrapper/factory for safe `details.current`; D-85 injects the origin-failure audit hook. These decisions are pending owner review.
+- The task's Files list omitted the small database migration/schema/test changes and related spec/task records required by D-82–D-85. They are included and recorded here. The workspace gate also required a minimal assertion cleanup in `crates/kinevo-db/tests/idempotency.rs`.
+- The layer order in `RouteTable` now places the panic catcher outside CORS, origin, rate, gate and idempotency. Request ID, body limit, content-type handling, response headers and logging remain grouped in the existing `request_context` middleware.
+- Changed lines exceed the 380-line guidance because the required named tests, port fake, security guard, schema extension, decision records and Reports are included. D-55 makes this a recorded deviation, not a blocker.
+
+### Spec issues noticed
+
+- D-82 resolves the missing content-type storage needed for byte-compatible response replay.
+- D-84 clarifies that `details.current` is a caller-supplied safe resource projection, reconciling API-60 with ERR-03's S2/S3 restriction.
+- The policy default for `api.idempotency.ttl` remains 86400 seconds; runtime composition supplies the resolved value through `HttpState`.
+
+### Not done / not verified
+
+- The real database adapter and transaction orchestration remain T-039; T-019 uses the port and fake only.
+- Concrete secret-route flags are applied when the auth, setup and TOTP routes are introduced by their owning tasks.
+- No browser or Android device exercise was part of this task's Tests section. No environment-limited command was needed.
+
+### Follow-up suggestions
+
+- T-039 should wire the durable origin audit hook and the real idempotency adapter. Route-owning auth/setup/TOTP tasks should set `store_response_body = false` explicitly.
 
 ## Questions
 
-_None yet._
+- Q-1 (implementer, 2026-10-28): replay requires restoring `content-type`, but T-015's port and table omit it. Resolved by D-82: add nullable response content type and store it only with replayable bodies. Alternative: infer media type or drop it on replay; both change the response contract.
+- Q-2 (implementer, 2026-10-28): API-60 requires the current resource in error details while ERR-03 excludes S2/S3 values. Resolved by D-84: use the registered factory with a caller-supplied safe resource projection. Alternative: omit `details.current` or expose a raw JSON detail constructor; either violates one of the contracts.

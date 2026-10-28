@@ -263,6 +263,8 @@ fn router(
         access,
         rate,
         idempotency: IdemMode::Off,
+        store_response_body: true,
+        cookie_endpoint: false,
         summary: "rate limit test route",
         allow_disabled: false,
     };

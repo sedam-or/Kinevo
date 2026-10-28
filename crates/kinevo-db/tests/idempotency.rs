@@ -16,7 +16,7 @@ mod support;
 use futures::future::join_all;
 use kinevo_db::{
     Tx,
-    idempotency::{Begin, IdemKey, begin, finish},
+    idempotency::{Begin, IdemKey, begin, finish, finish_with_content_type},
     require_db,
     testing::TestApp,
 };
@@ -103,9 +103,9 @@ async fn stored_response_columns(
     app: &TestApp,
     account_id: AccountId,
     idempotency_key: &IdemKey,
-) -> (Option<i16>, Option<Vec<u8>>) {
+) -> (Option<i16>, Option<String>, Option<Vec<u8>>) {
     let row = sqlx::query(
-        "SELECT status_code, response_body FROM public.idempotency_keys \
+        "SELECT status_code, response_content_type, response_body FROM public.idempotency_keys \
          WHERE account_id = $1 AND key = $2",
     )
     .bind(*account_id.as_uuid())
@@ -113,7 +113,11 @@ async fn stored_response_columns(
     .fetch_one(app.admin_pool())
     .await
     .expect("stored response should be readable by the test administrator");
-    (row.get("status_code"), row.get("response_body"))
+    (
+        row.get("status_code"),
+        row.get("response_content_type"),
+        row.get("response_body"),
+    )
 }
 
 #[tokio::test]
@@ -275,6 +279,68 @@ async fn api_72_keys_are_per_account() {
         .await,
         Begin::InProgress
     ));
+}
+
+#[tokio::test]
+async fn t_019_api_71_replays_content_type() {
+    let app = test_app!();
+    let account_id = app.new_account();
+    seed_account(&app, account_id).await;
+    let idempotency_key = key("content-type-01");
+    let request_hash = [0x4a; 32];
+    let now = instant("2026-11-02T00:00:00Z");
+    assert!(matches!(
+        begin_committed(
+            &app,
+            account_id,
+            &idempotency_key,
+            "POST",
+            "/api/v1/tasks",
+            request_hash,
+            now,
+        )
+        .await,
+        Begin::Fresh
+    ));
+    let mut tx = Tx::begin(&app.db, account_id)
+        .await
+        .expect("response transaction should begin");
+    finish_with_content_type(
+        &mut tx,
+        &idempotency_key,
+        422,
+        Some("application/problem+json"),
+        br#"{"code":"validation_failed"}"#,
+        true,
+    )
+    .await
+    .expect("deterministic response should be stored");
+    tx.commit()
+        .await
+        .expect("response transaction should commit");
+
+    let replay = begin_committed(
+        &app,
+        account_id,
+        &idempotency_key,
+        "POST",
+        "/api/v1/tasks",
+        request_hash,
+        now,
+    )
+    .await;
+    assert!(
+        matches!(&replay, Begin::Replay(_)),
+        "stored response should replay"
+    );
+    let Begin::Replay(response) = replay else {
+        return;
+    };
+    assert_eq!(
+        response.content_type.as_deref(),
+        Some("application/problem+json")
+    );
+    assert_eq!(response.body, br#"{"code":"validation_failed"}"#);
 }
 
 #[tokio::test]
@@ -443,7 +509,7 @@ async fn secret_routes_store_status_only() {
 
     assert_eq!(
         stored_response_columns(&app, account_id, &idempotency_key).await,
-        (Some(200), None)
+        (Some(200), None, None)
     );
     let replay = begin_committed(
         &app,

@@ -78,7 +78,7 @@ All non-2xx responses are `application/problem+json`:
 
 | ID | Rule |
 |---|---|
-| API-60 | Versioned resources expose `version` (integer). `PATCH`/`PUT`/`DELETE` on them require `If-Match: "<version>"`. Missing → 428 `precondition_required`. Mismatch → **409** `version_conflict` with `details.current_version` and `details.current` (the current resource representation). |
+| API-60 | Versioned resources expose `version` (integer). `PATCH`/`PUT`/`DELETE` on them require `If-Match: "<version>"`. Missing → 428 `precondition_required`. Mismatch → **409** `version_conflict` with `details.current_version` and `details.current` (the current resource representation containing no S2/S3 fields; ERR-03). |
 | API-61 | `POST /…/commands` that depend on state (e.g. task status change) take `base_version` in the body and behave the same. |
 | API-62 | A conflict never silently overwrites (no last-write-wins). Clients resolve by reloading and re-applying the user's intent (web: conflict banner, `standards/ux-states.md`). |
 

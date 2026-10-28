@@ -27,6 +27,27 @@ pub enum DetailValue {
     Id(uuid::Uuid),
     StrList(Vec<String>),
     Bool(bool),
+    Resource(ResourceValue),
+}
+
+/// A JSON resource snapshot which can only be created by `version_conflict`.
+///
+/// ```compile_fail
+/// use kinevo_kernel::errors::{DetailValue, ResourceValue};
+/// let _ = DetailValue::Resource(ResourceValue(serde_json::json!({"private": "data"})));
+/// ```
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(transparent)]
+pub struct ResourceValue(serde_json::Value);
+
+/// Creates the registered optimistic-concurrency conflict with a safe resource snapshot.
+///
+/// Callers must pass a representation that omits S2 and S3 fields.
+pub fn version_conflict<T: Serialize>(current_version: i64, current: &T) -> AppError {
+    let value = serde_json::to_value(current).unwrap_or(serde_json::Value::Null);
+    AppError::new(ErrorCode::VersionConflict)
+        .with_detail("current_version", DetailValue::Int(current_version))
+        .with_detail("current", DetailValue::Resource(ResourceValue(value)))
 }
 
 /// A typed map of registry-approved detail values.

@@ -2,7 +2,9 @@
 
 use crate::{
     gate::{GateBuildError, GateRequestState, gate_request},
+    idempotency::{IdempotencyRequestState, idempotency_request},
     layers::request_context,
+    origin::{OriginRequestState, cors, origin_guard},
     problem::panic_response,
     ratelimit::{RateLimitRequestState, rate_limit_after_gate, rate_limit_public_before_gate},
     state::HttpState,
@@ -64,6 +66,10 @@ pub struct RouteSpec {
     pub rate: RateClass,
     /// Route idempotency behaviour.
     pub idempotency: IdemMode,
+    /// Whether a replay may retain the response body and content type.
+    pub store_response_body: bool,
+    /// Whether the endpoint accepts ambient refresh-cookie credentials.
+    pub cookie_endpoint: bool,
     /// Human-readable `OpenAPI` summary.
     pub summary: &'static str,
     /// Allows a disabled or deleting account through this route (only `GET /instance`).
@@ -111,11 +117,22 @@ impl RouteTable {
         };
         let rate_limit_state = RateLimitRequestState {
             limiter: state.rate_limiter.clone(),
+            specs: specs.clone(),
+        };
+        let origin_state = OriginRequestState {
+            state: state.clone(),
+            specs: specs.clone(),
+        };
+        let idempotency_state = IdempotencyRequestState {
+            state: state.clone(),
             specs,
         };
         Ok(self
             .router
-            .layer(CatchPanicLayer::custom(|_| panic_response()))
+            .layer(axum::middleware::from_fn_with_state(
+                idempotency_state,
+                idempotency_request,
+            ))
             .layer(axum::middleware::from_fn_with_state(
                 rate_limit_state.clone(),
                 rate_limit_after_gate,
@@ -128,6 +145,12 @@ impl RouteTable {
                 rate_limit_state,
                 rate_limit_public_before_gate,
             ))
+            .layer(axum::middleware::from_fn_with_state(
+                origin_state.clone(),
+                origin_guard,
+            ))
+            .layer(axum::middleware::from_fn_with_state(state.clone(), cors))
+            .layer(CatchPanicLayer::custom(|_| panic_response()))
             .layer(axum::middleware::from_fn_with_state(
                 state.clone(),
                 request_context,

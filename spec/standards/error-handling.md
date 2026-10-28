@@ -8,7 +8,7 @@ Response shape: `07-api-conventions.md` §3 (RFC 9457 `application/problem+json`
 |---|---|
 | ERR-01 | A code is added only in this registry (PR touches this file + the Rust enum + both catalogs); tests fail if any of the three diverge. |
 | ERR-02 | **Retry class** tells clients what to do: `never` (fix the request), `after_change` (re-read state / user action then retry), `backoff` (retry same request with exponential backoff and jitter, honouring `Retry-After`), `reauth` (obtain a new access token). |
-| ERR-03 | `details` is a JSON object whose keys are listed below; unlisted keys are not emitted. `details` never contains S2/S3 values (only ids, counts, enums, numbers). |
+| ERR-03 | `details` is a JSON object whose keys are listed below; unlisted keys are not emitted. `details` never contains S2/S3 values (only ids, counts, enums, numbers, and the safe current-resource projection required by API-60). |
 | ERR-04 | Logging: 4xx at `info` with `error_code` and `request_id` only (never request content); 5xx at `error` with the same plus the internal error chain **without** user data; security-relevant codes (`invalid_credentials`, `account_locked`, `refresh_reuse_detected`, `signature_invalid`, `csrf_check_failed`, `setup_token_invalid`) also write an audit entry. |
 | ERR-05 | Internal errors never leak: unmapped database errors become `internal_error` and log `unmapped_constraint` with the constraint name (VAL-11). |
 | ERR-06 | Idempotent deterministic errors may be replayed by the idempotency store; 5xx and 429 are never stored (API-71). |

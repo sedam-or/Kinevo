@@ -5,13 +5,14 @@
 use crate::{
     module::ModuleKey,
     platform::{
-        AccountAccess, AccountAccessInfo, InstanceInfo, InstanceState, ModuleSwitches,
-        PolicyReader, ResolvedPolicies, SecretMask, SecretName, SecretScope, SecretStore, last4,
-        validate_secret_scope,
+        AccountAccess, AccountAccessInfo, IdemBegin, IdempotencyPort, InstanceInfo, InstanceState,
+        ModuleSwitches, PolicyReader, ResolvedPolicies, SecretMask, SecretName, SecretScope,
+        SecretStore, last4, validate_secret_scope,
     },
 };
 use async_trait::async_trait;
 use kinevo_kernel::{
+    crypto::ct_eq,
     errors::{AppError, ErrorCode},
     id::AccountId,
     secret::Secret,
@@ -212,5 +213,105 @@ impl AccountAccess for FakeAccountAccess {
             .read()
             .map_err(|_| AppError::new(ErrorCode::InternalError))?;
         Ok(accounts.get(&id).copied())
+    }
+}
+
+#[derive(Clone)]
+struct FakeIdempotencyEntry {
+    method: String,
+    path: String,
+    request_hash: [u8; 32],
+    response: Option<FakeIdempotencyResponse>,
+}
+
+#[derive(Clone)]
+struct FakeIdempotencyResponse {
+    status: u16,
+    content_type: Option<String>,
+    body: Vec<u8>,
+}
+
+/// In-memory account-scoped idempotency store for HTTP acceptance tests.
+#[derive(Default)]
+pub struct FakeIdempotency(Mutex<BTreeMap<(AccountId, String), FakeIdempotencyEntry>>);
+
+#[async_trait]
+impl IdempotencyPort for FakeIdempotency {
+    async fn begin(
+        &self,
+        account: AccountId,
+        key: &str,
+        method: &str,
+        path: &str,
+        request_hash: [u8; 32],
+        _ttl_seconds: i64,
+    ) -> Result<IdemBegin, AppError> {
+        let mut entries = self
+            .0
+            .lock()
+            .map_err(|_| AppError::new(ErrorCode::InternalError))?;
+        let entry_key = (account, key.to_owned());
+        let Some(entry) = entries.get(&entry_key) else {
+            entries.insert(
+                entry_key,
+                FakeIdempotencyEntry {
+                    method: method.to_ascii_uppercase(),
+                    path: path.to_owned(),
+                    request_hash,
+                    response: None,
+                },
+            );
+            return Ok(IdemBegin::Fresh);
+        };
+        if entry.method != method.to_ascii_uppercase()
+            || entry.path != path
+            || !ct_eq(&entry.request_hash, &request_hash)
+        {
+            return Ok(IdemBegin::Mismatch);
+        }
+        Ok(match &entry.response {
+            Some(response) => IdemBegin::Replay {
+                status: response.status,
+                content_type: response.content_type.clone(),
+                body: response.body.clone(),
+            },
+            None => IdemBegin::InProgress,
+        })
+    }
+
+    async fn finish(
+        &self,
+        account: AccountId,
+        key: &str,
+        status: u16,
+        content_type: Option<String>,
+        body: Option<Vec<u8>>,
+    ) -> Result<(), AppError> {
+        let mut entries = self
+            .0
+            .lock()
+            .map_err(|_| AppError::new(ErrorCode::InternalError))?;
+        if status >= 500 || status == 429 {
+            entries.remove(&(account, key.to_owned()));
+            return Ok(());
+        }
+        let entry = entries
+            .get_mut(&(account, key.to_owned()))
+            .ok_or_else(|| AppError::new(ErrorCode::InternalError))?;
+        entry.response = Some(FakeIdempotencyResponse {
+            status,
+            content_type,
+            body: body.unwrap_or_default(),
+        });
+        Ok(())
+    }
+
+    async fn release(&self, account: AccountId, key: &str) -> Result<(), AppError> {
+        let mut entries = self
+            .0
+            .lock()
+            .map_err(|_| AppError::new(ErrorCode::InternalError))?;
+        entries.remove(&(account, key.to_owned()));
+        Ok(())
     }
 }

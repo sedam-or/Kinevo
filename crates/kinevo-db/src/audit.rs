@@ -161,7 +161,7 @@ fn serialise_details(details: &Details) -> Result<String, AppError> {
             DetailValue::Str(value) => serde_json::Value::from(*value),
             DetailValue::Id(value) => serde_json::Value::from(value.hyphenated().to_string()),
             DetailValue::Bool(value) => serde_json::Value::from(*value),
-            DetailValue::OwnedStr(_) | DetailValue::StrList(_) => {
+            DetailValue::OwnedStr(_) | DetailValue::StrList(_) | DetailValue::Resource(_) => {
                 return Err(AppError::new(ErrorCode::InternalError));
             }
         };

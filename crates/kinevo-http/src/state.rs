@@ -8,8 +8,11 @@ use kinevo_kernel::{
     time::Clock,
     validate::net::HttpsUrl,
 };
+use kinevo_ports::platform::IdempotencyPort;
 use kinevo_ports::platform::InstanceState;
 use std::{fmt, sync::Arc};
+
+use crate::origin::{OriginAuditHook, OriginConfig, TracingOriginAuditHook};
 
 /// Database readiness probe used by `/readyz`.
 #[async_trait]
@@ -55,6 +58,14 @@ pub struct HttpState {
     pub max_body_bytes: usize,
     /// Policy-backed in-process rate limiter installed by the route table.
     pub rate_limiter: Option<Arc<RateLimiter>>,
+    /// Optional idempotency store; composition supplies it with the resolved TTL.
+    pub idempotency: Option<Arc<dyn IdempotencyPort>>,
+    /// Policy-resolved idempotency retention in seconds.
+    pub idempotency_ttl_seconds: Option<i64>,
+    /// Cookie endpoint and Android CORS origin policy.
+    pub origin_config: OriginConfig,
+    /// Security audit hook for denied cookie endpoint requests.
+    pub origin_audit_hook: Arc<dyn OriginAuditHook>,
 }
 
 impl HttpState {
@@ -85,6 +96,10 @@ impl HttpState {
             cursor,
             max_body_bytes,
             rate_limiter: None,
+            idempotency: None,
+            idempotency_ttl_seconds: None,
+            origin_config: OriginConfig::default(),
+            origin_audit_hook: Arc::new(TracingOriginAuditHook),
         }
     }
 
@@ -92,6 +107,32 @@ impl HttpState {
     #[must_use]
     pub fn with_rate_limiter(mut self, rate_limiter: Arc<RateLimiter>) -> Self {
         self.rate_limiter = Some(rate_limiter);
+        self
+    }
+
+    /// Attaches the idempotency store and the already-resolved policy TTL.
+    #[must_use]
+    pub fn with_idempotency(
+        mut self,
+        idempotency: Arc<dyn IdempotencyPort>,
+        ttl_seconds: i64,
+    ) -> Self {
+        self.idempotency = Some(idempotency);
+        self.idempotency_ttl_seconds = Some(ttl_seconds);
+        self
+    }
+
+    /// Replaces the cookie endpoint and Android CORS origin policy.
+    #[must_use]
+    pub fn with_origin_config(mut self, origin_config: OriginConfig) -> Self {
+        self.origin_config = origin_config;
+        self
+    }
+
+    /// Installs the identity-owned audit sink for CSRF denials.
+    #[must_use]
+    pub fn with_origin_audit_hook(mut self, audit_hook: Arc<dyn OriginAuditHook>) -> Self {
+        self.origin_audit_hook = audit_hook;
         self
     }
 }

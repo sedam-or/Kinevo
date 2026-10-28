@@ -93,6 +93,7 @@ const EXPECTED_COLUMNS: &[TableSpec] = &[
             ("path", "text", false),
             ("request_hash", "bytea", false),
             ("status_code", "int2", true),
+            ("response_content_type", "text", true),
             ("response_body", "bytea", true),
             ("created_at", "timestamptz", false),
             ("expires_at", "timestamptz", false),
