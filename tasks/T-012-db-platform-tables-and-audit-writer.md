@@ -3,12 +3,12 @@ id: T-012
 title: Create the platform tables migration, retention functions and AuditWriter
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-011, T-020]
 requirements: [D-41, D-44, ADR-0011, DOM-26, DOM-09, SEC-10, SEC-04, ADM-FR-05, ADM-FR-07, SEC-AC-01, SEC-AC-02]
 branch: m1-t012-db-platform-tables
 budget_lines: 420
-assignee: ""
+assignee: codex
 ---
 
 # T-012: Create the platform tables migration, retention functions and AuditWriter
