@@ -3,9 +3,9 @@ id: T-015
 title: Add the idempotency store (begin, replay, conflict, finish)
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-012, T-005]
-requirements: [API-70, API-71, API-72, ADM-FR-08, D-34, TST-20]
+requirements: [API-70, API-71, API-72, ADM-FR-08, D-34, D-80, D-81, TST-20]
 branch: m1-t015-db-idempotency-store
 budget_lines: 280
 assignee: "Codex"
@@ -107,8 +107,81 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+`kinevo-db` now reserves account-scoped idempotency keys, classifies replays, in-flight requests and mismatched requests, and stores deterministic responses. It releases reservations for 5xx, 429 and oversized bodies, and supports status-only replay when the route must not retain a response body.
+
+### Acceptance results
+
+| Criterion | Test | Result |
+|---|---|---|
+| AC-1 | `idempotency::api_71_replay_same_request` | pass |
+| AC-2 | `idempotency::api_71_in_flight_duplicate` | pass |
+| AC-3 | `idempotency::api_71_reuse_with_different_request` | pass |
+| AC-4 | `idempotency::api_72_keys_are_per_account` | pass |
+| AC-5 | `idempotency::api_71_5xx_and_429_not_stored` | pass |
+| AC-6 | `idempotency::ttl_expiry_allows_reuse` | pass |
+| AC-7 | `idempotency::secret_routes_store_status_only` | pass |
+| AC-8 | `idempotency::tst_20_concurrent_begin_one_winner` | pass |
+| AC-9 | `idempotency::tests::key_validation` | pass |
+| Scope: oversized response release | `idempotency::response_body_limit_releases_key` | pass |
+
+### Commands run
+
+- `cargo nextest run -p kinevo-db --features testing --test idempotency`: initial expected red exit 101 (`kinevo_db::idempotency` did not yet exist); intermediate test-fixture compile errors E0515/E0507 were corrected; final exit 0, 10 passed, 0 skipped.
+- `cargo nextest run -p kinevo-db --features testing`: exit 0, 66 passed, 0 skipped (before adding the oversized-body test; the final workspace gate below includes it).
+- `NEXTEST_TEST_THREADS=4 just check`: first exit 101 from Clippy (`clippy::panic` and `clippy::assert_is_empty` in the new tests); corrected. Final exit 0: 173 passed, 0 skipped; fmt, Clippy and cargo-deny completed; spec check 0 findings/60 files, contrast 0 failures, task index 0 problems/132 tasks. Existing warnings remain for the `rand::thread_rng` Clippy configuration entry, duplicate `base64` versions and unused cargo-deny license allowances.
+- `cargo fmt --all`: exit 0. The initial `cargo fmt --all --check` exited 1 on formatting differences; corrected before the final gate.
+- `python3 scripts/tasks_index.py`: exit 0; regenerated the index after adding D-80 and D-81.
+- `python3 scripts/tasks_index.py --check`: exit 0, 0 problems in 132 tasks.
+- `python3 scripts/spec_tool.py check`: exit 0, 0 findings in 60 spec files.
+- `python3 scripts/contrast.py`: exit 0, 0 failures.
+- `git diff --check`: exit 0.
+
+### Files changed
+
+Line counts are recorded from the implementation diff; generated `tasks/index.md` is excluded from the task line budget under D-55.
+
+| Path | Change |
+|---|---|
+| `crates/kinevo-db/src/idempotency.rs` | new store implementation |
+| `crates/kinevo-db/src/lib.rs` | export `idempotency` module |
+| `crates/kinevo-db/tests/idempotency.rs` | 10 PostgreSQL acceptance/edge-case tests |
+| `spec/decisions.md` | add D-80 and D-81 |
+| `spec/index.md` | update decision range |
+| `tasks/T-015-db-idempotency-store.md` | record decisions, report, status and questions |
+| `tasks/index.md` | regenerated status/decision links |
+
+### Deviations
+
+- The `finish` signature includes `store_body: bool` because the task's Security section and AC-7 require it, although the earlier Scope/Interfaces signatures omit the parameter.
+- `release` clears `status_code` and `response_body` while setting `expires_at = created_at`, preventing response bytes from remaining on a released reservation.
+- The change is 833 non-generated changed lines against the task's 280-line budget because the nine named acceptance tests plus the oversized-body case require isolated PostgreSQL coverage, and the run requires decision records and a complete task Report. D-55 makes this a reportable deviation, not a blocker; generated `tasks/index.md` adds 6 changed lines and is excluded.
+
+### Decisions made by implementer
+
+| ID | Choice | Alternative and reason | Files | Reversal |
+|---|---|---|---|---|
+| D-80 | Use `validation.md`'s key-like contract: trim, lowercase, and accept 8–128 ASCII letters, digits, `_` or `-`. | UUID-only parsing conflicts with the task's validator and field-specific rule; the generic `<uuid>` notation is treated as the wire example. Pending owner review. | `spec/decisions.md`, `spec/index.md`, this task, `tasks/index.md`, `idempotency.rs` | Supersede D-80 with an owner decision, then update the parser and tests. |
+| D-81 | Store `path` verbatim; T-019 supplies the matched route template and concrete path parameters without a query string for creates. | Rewriting paths in `kinevo-db` would duplicate HTTP routing; including query values here conflicts with the task implementation note. Pending owner review. | `spec/decisions.md`, `spec/index.md`, this task, `tasks/index.md`, `idempotency.rs` | Supersede D-81 with an owner decision and update T-019's path construction. |
+
+### Spec issues noticed
+
+- API-70's `<uuid>` notation and `validation.md`'s `idempotency_key` rule do not state the same accepted format; D-80 records the chosen interpretation pending owner review.
+- The Context hash notation says `path_and_query_template`, while the Implementation notes exclude the query string for creates; D-81 records the storage contract pending owner review.
+- The Scope/Interfaces signature omits `store_body`, while Security and AC-7 require it; implemented the more specific security behavior.
+
+### Not done / not verified
+
+- HTTP header parsing and middleware orchestration are T-019; platform pruning is T-038. This task only implements the storage API.
+- No environment-limited checks; Docker-backed PostgreSQL tests ran successfully.
+
+### Follow-up suggestions
+
+- T-019 should set `store_body = false` for the secret-bearing route families listed in this task and finalize the caller's canonical path string.
 
 ## Questions
 
-_None yet._
+- Q-1 (implementer, 2026-10-28): API-70 uses `<uuid>`, while the field-specific validation rule and task contract use key-like values. Resolved by implementer as D-80; pending owner review.
+- Q-2 (implementer, 2026-10-28): the hash notation mentions `path_and_query_template`, but the implementation note excludes query strings for creates. Resolved by implementer as D-81; pending owner review.
+- Q-3 (implementer, 2026-10-28): Scope/Interfaces omit `store_body`, while Security/AC-7 require it. Resolved by implementer by following Security and AC-7; pending architect review.
