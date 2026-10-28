@@ -1,6 +1,7 @@
 //! Pure identity domain value types.
 
 pub mod password;
+pub mod session;
 
 use serde::{Deserialize, Serialize};
 

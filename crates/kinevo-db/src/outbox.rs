@@ -254,7 +254,8 @@ pub async fn dispatch_once(
 
     let mut claim = SystemTx::begin(db).await?;
     let rows = sqlx::query(
-        "SELECT e.seq, e.id, e.account_id, e.kind, e.v, e.payload, e.created_at::text AS created_at, \
+        "SELECT e.seq, e.id, e.account_id, e.kind, e.v, e.payload, \
+                to_char(e.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') AS created_at, \
                 d.subscriber, d.attempts, d.next_attempt_at::text AS next_attempt_at \
          FROM public.outbox_deliveries AS d \
          JOIN public.outbox_events AS e ON e.id = d.event_id \

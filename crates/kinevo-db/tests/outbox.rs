@@ -65,7 +65,7 @@ fn envelope(app: &TestApp, account_id: Option<AccountId>, kind: EventKind) -> Ev
         kind,
         v: 1,
         account_id,
-        occurred_at: instant("2026-11-02T00:00:00Z"),
+        occurred_at: instant("2026-11-02T00:00:00.123Z"),
         payload: EventPayload::new()
             .with_id(
                 "account_id",
@@ -111,6 +111,7 @@ struct RecordingSubscriber {
     name: SubscriberName,
     seen: Arc<Mutex<Vec<EventId>>>,
     payloads: Arc<Mutex<Vec<EventPayload>>>,
+    occurred_at: Arc<Mutex<Vec<Instant>>>,
     failures_left: AtomicUsize,
     always_fail: bool,
 }
@@ -121,6 +122,7 @@ impl RecordingSubscriber {
             name: SubscriberName::new(name),
             seen: Arc::new(Mutex::new(Vec::new())),
             payloads: Arc::new(Mutex::new(Vec::new())),
+            occurred_at: Arc::new(Mutex::new(Vec::new())),
             failures_left: AtomicUsize::new(0),
             always_fail: false,
         }
@@ -131,6 +133,7 @@ impl RecordingSubscriber {
             name: SubscriberName::new(name),
             seen: Arc::new(Mutex::new(Vec::new())),
             payloads: Arc::new(Mutex::new(Vec::new())),
+            occurred_at: Arc::new(Mutex::new(Vec::new())),
             failures_left: AtomicUsize::new(failures),
             always_fail,
         }
@@ -178,6 +181,10 @@ impl Subscriber for RecordingSubscriber {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .push(env.payload.clone());
+        self.occurred_at
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .push(env.occurred_at);
         if self.should_fail() {
             return Err(AppError::new(ErrorCode::ServiceUnavailable));
         }
@@ -374,6 +381,14 @@ async fn dispatch_preserves_per_account_order() {
     assert_eq!(subscriber.calls(), ids);
     assert_eq!(
         subscriber
+            .occurred_at
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .first(),
+        Some(&instant("2026-11-02T00:00:00.123Z"))
+    );
+    assert_eq!(
+        subscriber
             .payloads
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -404,28 +419,30 @@ async fn failing_delivery_blocks_only_its_stream_and_retries() {
     let a1 = emit_event(&app, account_a, EventKind::AccountRegistered, &registry, t0).await;
     let a2 = emit_event(&app, account_a, EventKind::AccountRegistered, &registry, t0).await;
     let b1 = emit_event(&app, account_b, EventKind::AccountRegistered, &registry, t0).await;
-    let retrying = Arc::new(RecordingSubscriber::failing("progress.retrying", 2, false));
+    let retrying = Arc::new(RecordingSubscriber::failing("progress.retrying", 4, false));
     let other = Arc::new(RecordingSubscriber::new("progress.other"));
     let subscribers = set(vec![retrying.clone(), other.clone()]);
 
     let first = dispatch(&app, &subscribers, t0, 3).await;
-    assert_eq!((first.delivered, first.retried), (1, 1));
+    assert_eq!((first.delivered, first.retried), (2, 2));
     let first_state = delivery(&app, a1, retrying.name).await;
     assert_eq!(first_state.0, "pending");
     assert_eq!(first_state.1, 1);
     assert_eq!(first_state.2, "2026-11-02 00:00:05+00");
+    let first_b_state = delivery(&app, b1, retrying.name).await;
+    assert_eq!((first_b_state.0.as_str(), first_b_state.1), ("pending", 1));
 
     let not_due = dispatch(&app, &subscribers, t0, 3).await;
-    assert_eq!((not_due.delivered, not_due.retried), (0, 0));
-    assert_eq!(other.calls(), vec![b1]);
+    assert_eq!((not_due.delivered, not_due.retried), (1, 0));
+    assert_eq!(other.calls(), vec![a1, b1, a2]);
 
     let second = dispatch(&app, &subscribers, t5, 3).await;
-    assert_eq!(second.retried, 1);
+    assert_eq!(second.retried, 2);
     let third = dispatch(&app, &subscribers, t15, 3).await;
-    assert_eq!(third.delivered, 1);
+    assert_eq!(third.delivered, 2);
     let fourth = dispatch(&app, &subscribers, t15, 3).await;
     assert_eq!(fourth.delivered, 1);
-    assert_eq!(retrying.calls(), vec![a1, a1, a1, a2]);
+    assert_eq!(retrying.calls(), vec![a1, b1, a1, b1, a1, b1, a2]);
 }
 
 #[tokio::test]

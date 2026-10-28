@@ -66,6 +66,7 @@ const REGISTRY_DETAIL_KEYS: &[&str] = &[
     "dependents",
     "entity_id",
     "export_id",
+    "family_id",
     "from",
     "header",
     "index",

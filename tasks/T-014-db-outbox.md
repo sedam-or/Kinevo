@@ -54,7 +54,7 @@ A use case writes domain events in the same transaction as its state change. A d
 | `crates/kinevo-db/src/outbox.rs` | create | everything above |
 | `crates/kinevo-db/src/lib.rs` | modify | `pub mod outbox;` |
 | `crates/kinevo-db/tests/outbox.rs` | create | component and concurrency tests |
-| `crates/kinevo-db/migrations/20261101000400_outbox_event_version.sql` | create | persist the version required for `(kind, v)` routing |
+| `crates/kinevo-db/migrations/20261101000400_platform_outbox_event_version.sql` | create | persist the version required for `(kind, v)` routing; keep the `platform_` migration-module prefix |
 | `crates/kinevo-db/tests/platform_tables.rs` | modify | assert the additive outbox version column |
 | `spec/06-domain-model.md`, `spec/decisions.md`, `spec/index.md` | modify | document the persisted event version and payload representation |
 
@@ -158,7 +158,7 @@ Counts are task-delta additions/removals against the T-014 claim commit `c175b86
 
 | Path | Added | Removed |
 |---|---:|---:|
-| `crates/kinevo-db/migrations/20261101000400_outbox_event_version.sql` | 7 | 0 |
+| `crates/kinevo-db/migrations/20261101000400_platform_outbox_event_version.sql` | 7 | 0 |
 | `crates/kinevo-db/src/lib.rs` | 1 | 0 |
 | `crates/kinevo-db/src/outbox.rs` | 458 | 0 |
 | `crates/kinevo-db/tests/outbox.rs` | 669 | 0 |
@@ -178,13 +178,20 @@ Non-generated files total 1,395 additions and 25 removals (1,420 changed lines);
 - D-79 resolves AC-2's `TaskCompleted` example against T-008's closed M1 event set: the routing test uses the existing `AccountRegistered` kind. It still verifies routing by `(kind, v)` to two subscribers.
 - Added the version migration and the platform schema assertion, and updated the domain schema, decision log, spec index, task report, and generated task index. `event.rs` already existed from T-008, so it was extended rather than recreated; `kinevo-kernel/src/lib.rs` and `kinevo-ports/src/events.rs` already contained the required module and re-export and did not need changes. `async-trait` was already present from T-013, so no dependency or lockfile change was needed.
 - The approximate `budget_lines: 400` guidance is exceeded by the implementation and acceptance tests; D-55 makes this a recorded deviation rather than a blocker.
+- Follow-up in T-022 (D-88): the migration filename was corrected to include the required `platform_` module prefix after the combined migration validator rejected the original task path. Its SQL body and migration version are unchanged.
+- Follow-up in T-022 (D-90): the migration integration test now derives its expected applied count from the declared migration sources rather than a fixed count that became stale as migrations were added.
+- Follow-up in T-022 (D-91): the dispatcher now formats `created_at` as UTC RFC3339 at the SQL boundary, matching the kernel instant parser.
+- Follow-up in T-022 (D-92): the retry integration test now expects independent progress per `(account, subscriber)` stream, as required by the task's ordering rules.
+- Follow-up in T-022 (D-93): the retention test fixture now supplies the required `outbox_events.v` value introduced by D-78.
+- Follow-up in T-022 (D-94): the platform schema acceptance test compares column names, types and nullability independent of physical order, as additive migrations append columns.
+- Follow-up in T-022 (D-95): the schema constraint inventory now includes the positive `outbox_events.v` check from D-78.
 - Dead-letter auditing is exposed as an optional `DeadLetterHook` on `SubscriberSet`; `AuditDeadLetterHook` records `outbox.dead` atomically with the dead transition. Runtime wiring belongs to the worker/composition-root task.
 
 ### Decisions made by implementer
 
 | ID | Choice and alternatives rejected | Reason | Files touched | Reversal |
 |---|---|---|---|---|
-| D-78 | Add `outbox_events.v`; persist explicit `id`/`enum`/`int` tags; validate enum literals; use `created_at = occurred_at`; keep `env.id`. Rejected encoding the version into `kind`, guessing ID versus enum from untagged strings, dropping `v`, using dispatch time as event occurrence, or replacing `env.id`. | The task routes by `(kind, v)` and subscribers require the same typed event and id for idempotency, but the existing schema had no version or occurrence column and the payload JSON was untagged. | `crates/kinevo-db/migrations/20261101000400_outbox_event_version.sql`, `crates/kinevo-db/src/outbox.rs`, `crates/kinevo-kernel/src/event.rs`, `crates/kinevo-db/tests/platform_tables.rs`, `crates/kinevo-db/tests/outbox.rs`, `spec/06-domain-model.md`, `spec/decisions.md`, `spec/index.md`, `tasks/T-014-db-outbox.md` | Supersede D-78 and update the migration/schema, payload format, emission contract, and round-trip tests together. |
+| D-78 | Add `outbox_events.v`; persist explicit `id`/`enum`/`int` tags; validate enum literals; use `created_at = occurred_at`; keep `env.id`. Rejected encoding the version into `kind`, guessing ID versus enum from untagged strings, dropping `v`, using dispatch time as event occurrence, or replacing `env.id`. | The task routes by `(kind, v)` and subscribers require the same typed event and id for idempotency, but the existing schema had no version or occurrence column and the payload JSON was untagged. | `crates/kinevo-db/migrations/20261101000400_platform_outbox_event_version.sql`, `crates/kinevo-db/src/outbox.rs`, `crates/kinevo-kernel/src/event.rs`, `crates/kinevo-db/tests/platform_tables.rs`, `crates/kinevo-db/tests/outbox.rs`, `spec/06-domain-model.md`, `spec/decisions.md`, `spec/index.md`, `tasks/T-014-db-outbox.md` | Supersede D-78 and update the migration/schema, payload format, emission contract, and round-trip tests together. |
 | D-79 | Use `AccountRegistered` in AC-2 instead of adding `TaskCompleted` to M1 `EventKind`. | T-008 defines the closed M1 set; an M2 event kind should not be introduced early to exercise generic routing. | `crates/kinevo-db/tests/outbox.rs`, `spec/decisions.md`, `spec/index.md`, `tasks/T-014-db-outbox.md` | Supersede D-79 and update the event registry plus acceptance coverage when the later event kind is introduced. |
 
 ### Spec issues noticed

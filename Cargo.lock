@@ -1669,9 +1669,11 @@ dependencies = [
  "kinevo-http",
  "kinevo-kernel",
  "kinevo-ports",
+ "moka",
  "serde",
  "sqlx",
  "tokio",
+ "tracing",
  "unicode-normalization",
  "zeroize",
 ]

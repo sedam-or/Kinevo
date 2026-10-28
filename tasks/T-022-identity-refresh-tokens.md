@@ -3,7 +3,7 @@ id: T-022
 title: Implement refresh-token families, rotation, reuse detection and the grace cache
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-020, T-004, T-012]
 requirements: [ID-FR-05, ID-FR-06, ID-FR-07, AUTH-01, SEC-AC-04, SM-22]
 branch: m1-t022-identity-refresh-tokens
@@ -105,7 +105,7 @@ Failure mapping: unknown token, revoked family and expired → `unauthenticated`
 - Use `SELECT … FOR UPDATE` on the token row, then on the family row, in that order always, to avoid deadlocks.
 - The Android refresh body flow is handled in T-024; this service takes the presented token as a `Secret<String>` regardless of transport.
 - `GraceCache` must count hits/misses for the later metric (`cache_hits_total{cache="refresh_grace"}`); expose counters through a plain struct, no metrics crate yet.
-- All time comes from the injected `Clock`; the cache uses explicit expiry timestamps compared to that clock (not wall-clock TTL), so tests with `FixedClock` are exact.
+- Refresh decisions use expiry timestamps compared to the injected `Clock`, so tests with `FixedClock` are exact. The cache also applies a per-entry Moka TTL equal to the grace policy to remove sensitive token pairs from an idle process.
 
 ## Acceptance
 
@@ -138,8 +138,72 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Commands run and results
+
+| Command | Exit | Result |
+|---|---:|---|
+| `NEXTEST_TEST_THREADS=1 cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing -j 1` (using `KINEVO_TEST_DATABASE_URL` from `scripts/dev-postgres.sh env`) | 0 | 29 passed; 1 skipped. All ten named acceptance tests are present and pass. |
+| `cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing --test refresh -j 1` | 0 | 9/9 refresh integration tests passed. |
+| `cargo nextest run -p kinevo-db --features testing --test outbox -E 'test(dispatch_preserves_per_account_order)' -j 1` | 0 | 1/1 timestamp/order regression test passed. |
+| `cargo clippy -p kinevo-mod-identity --all-targets -- -D warnings` | 0 | Passed. |
+| `NEXTEST_TEST_THREADS=1 just check` | 0 | Format and Clippy passed; workspace nextest ran 207 tests: 207 passed, 1 skipped; `cargo deny` reported advisories/bans/licenses/sources OK; spec reported 0 findings in 60 files; contrast reported 0 failures; task index reported 0 problems in 132 tasks. |
+| `python3 scripts/spec_tool.py check` | 0 | 0 findings in 60 spec files. |
+| `python3 scripts/contrast.py` | 0 | 0 failures. |
+| `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks. |
+| `cargo fmt --all -- --check` | 0 | Passed through `just check`. |
+| `git diff --check` | 0 | Passed. |
+
+The first database test attempt without the PostgreSQL fallback failed at test-database startup with `disposable PostgreSQL test database should start: Unavailable` (testcontainers cluster startup). The requested fallback, `eval "$(scripts/dev-postgres.sh env)"`, provided the disposable PostgreSQL service; rerunning the task tests and serialized workspace gate passed. `NEXTEST_TEST_THREADS=1` avoids stressing the shared local database with concurrent test binaries. One exploratory fixture initially used six fractional digits and was rejected with `InstantError`; `Instant` has millisecond precision, so the fixture was corrected to three digits and the affected refresh and outbox tests passed. The first format check after that fixture edit identified a rustfmt line-wrap difference; `cargo fmt --all` corrected it, and the final workspace format gate passed.
+
+The workspace Clippy run also prints the existing warning `warning: `rand::thread_rng` does not refer to a reachable function` from `clippy.toml:8:5`; it is non-fatal and outside this task's files.
+
+### Acceptance
+
+| Acceptance | Named test | Result |
+|---|---|---|
+| AC-1 | `session::tests::auth_01_decision_table` | Pass |
+| AC-2 | `refresh::auth_01_normal_rotation` | Pass |
+| AC-3 | `refresh::id_fr_05_grace_returns_same_pair` | Pass |
+| AC-4 | `refresh::sec_ac_04_reuse_revokes_family` | Pass |
+| AC-5 | `refresh::tst_20_concurrent_double_submit` | Pass |
+| AC-6 | `refresh::auth_01_idle_and_absolute_expiry` | Pass |
+| AC-7 | `refresh::id_fr_07_revoke_others` | Pass |
+| AC-8 | `refresh::no_oracle_between_failure_causes` | Pass |
+| AC-9 | `refresh::sec_ac_45_no_plaintext_tokens` | Pass |
+| AC-10 | `refresh::tests::cac_1_grace_cache_bounded` | Pass |
+
+### Deviations
+
+- The implementation exceeds `budget_lines: 420` (the identity acceptance suite and repository are over 1,500 added lines before generated lockfile changes). D-55 makes this guidance non-blocking; `Cargo.lock` is generated and excluded from the budget.
+- The implementation adds `Db: Clone` in `crates/kinevo-db/src/pool.rs` and permits the already registry-approved UUID audit detail in `crates/kinevo-kernel/src/errors/mod.rs` so the service can own its database handle and record the required family-only audit detail.
+- The passing workspace gate exposed stale T-014 migration/outbox fixtures and assertions. They were corrected in their owning files and recorded under D-88 and D-90..D-95 below and in `tasks/T-014-db-outbox.md`; no product behavior outside the written outbox ordering and schema contracts was added.
+- The existing T-014 outbox timestamp was formatted as explicit UTC RFC3339 at the SQL boundary to satisfy the kernel instant parser. The retry test now asserts progress per `(account, subscriber)` stream. These are owning-task corrections, not new features.
+- `moka` was already approved in `spec/standards/open-source-stack.md`; it was added as the bounded grace-cache implementation. The existing `tracing` dependency is used only by the log-capture acceptance test.
+
+### Decisions made by implementer
+
+| ID | Choice and alternatives rejected | Reason | Files touched | Reversal |
+|---|---|---|---|---|
+| D-86 | Follow `standards/auth.md` §3 and keep SM-22 as the one-time-token machine; do not redefine SM-22 for refresh. | T-022's SM-22 cross-reference conflicts with the normative refresh algorithm and the state-machine registry. | `spec/decisions.md`, `spec/index.md`, this task, refresh implementation/tests. | Supersede D-86 and update the state-machine registry and refresh contract together. |
+| D-87 | `prune_expired` marks expired families revoked and preserves rows; deleting them or granting DELETE to `kinevo_system` was rejected. | ADR-0011 grants the system role SELECT/INSERT/UPDATE, not DELETE; preserving rows retains session/replay history. | `spec/decisions.md`, `spec/index.md`, `crates/kinevo-mod-identity/src/infra/sessions.rs`. | Supersede D-87 only with a revised role/grant and retention contract, then update the repository behavior. |
+| D-88 | Keep the `platform_` migration filename prefix; weakening the validator was rejected. | The migration validator checks filename module prefixes. | `spec/decisions.md`, `spec/index.md`, T-014 migration and task report. | Supersede D-88 with a documented validator exception and migrate the file path consistently. |
+| D-89 | Use injected-clock logical grace expiry plus Moka per-entry TTL equal to the supplied grace. | Logical expiry makes decisions deterministic; physical TTL clears sensitive cache entries while idle. | `spec/decisions.md`, `spec/index.md`, this task, `crates/kinevo-mod-identity/src/app/refresh.rs`. | Supersede D-89 with an equally deterministic expiry and memory-clearing contract, then update cache/tests. |
+| D-90 | Derive expected migration count from migration sources instead of fixing it at three. | Additive migrations made the old assertion stale. | `spec/decisions.md`, `spec/index.md`, `crates/kinevo-db/tests/migrate.rs`, T-014 report. | Restore a fixed expected count only alongside an explicit versioned migration-count contract. |
+| D-91 | Format outbox `created_at` as UTC RFC3339 in SQL; relying on session-timezone-dependent `timestamptz::text` was rejected. | The kernel parser requires RFC3339 instants. | `spec/decisions.md`, `spec/index.md`, `crates/kinevo-db/src/outbox.rs`, T-014 report. | Supersede D-91 by changing the timestamp contract and parser together. |
+| D-92 | Test ordering/progress independently per `(account, subscriber)` stream; serializing unrelated streams was rejected. | This matches the T-014 stream-ordering rule. | `spec/decisions.md`, `spec/index.md`, `crates/kinevo-db/tests/outbox.rs`, T-014 report. | Supersede D-92 with a revised ordering contract and corresponding dispatcher/tests. |
+| D-93 | Supply version `1` in the outbox retention fixture; weakening the non-null event-version schema was rejected. | D-78 requires positive event versions. | `spec/decisions.md`, `spec/index.md`, `crates/kinevo-db/tests/platform_tables.rs`, T-014 report. | Supersede D-93 only with a revised event-version schema and fixture contract. |
+| D-94 | Compare schema columns by name, type and nullability rather than physical order. | Additive migrations append columns; consumers address them by name. | `spec/decisions.md`, `spec/index.md`, `crates/kinevo-db/tests/platform_tables.rs`, T-014 report. | Supersede D-94 with a schema-order requirement and migration/table rebuild strategy. |
+| D-95 | Assert the existing positive `outbox_events.v` constraint in the schema test; dropping it was rejected. | The test inventory must cover the D-78 schema invariant. | `spec/decisions.md`, `spec/index.md`, `crates/kinevo-db/tests/platform_tables.rs`, T-014 report. | Supersede D-95 only alongside a revised event-version invariant and schema. |
+
+All ten decisions are pending architect/owner review and do not block this run.
+
+### Not done / environment-limited
+
+- Environment-limited: testcontainers could not start its disposable PostgreSQL cluster with `cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing -j 1`; exact test error: `disposable PostgreSQL test database should start: Unavailable`. The PostgreSQL fallback command above was available and the required tests passed, so no database acceptance check remains unrun.
+- HTTP transport, cookies, CSRF and Android refresh flow are out of scope and remain for T-024. Password-change revocation call sites remain for T-026. No hosted runtime path was exercised by this component task.
 
 ## Questions
 
-_None yet._
+- Resolved by implementer, pending architect review (D-86): the `SM-22` reference does not match the refresh algorithm in `standards/auth.md` §3; the implementation follows §3 and leaves SM-22 unchanged. See Report for alternatives and reversal.
+- Resolved by implementer, pending architect review (D-87): `prune_expired` preserves expired session rows by revoking families because ADR-0011 does not grant DELETE to the system role. See Report.
+- Resolved by implementer, pending architect review (D-88..D-95): migration validation, migration-count, outbox timestamp/stream semantics, fixture/schema assertions were aligned with the existing higher-priority contracts. See the corresponding decision entries and `tasks/T-014-db-outbox.md` Report.

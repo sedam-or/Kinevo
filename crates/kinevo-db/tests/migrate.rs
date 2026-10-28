@@ -27,12 +27,16 @@ fn custom_source(sql: &'static str) -> migrate::MigrationSource {
 #[tokio::test]
 async fn platform_extensions_apply_once() {
     let source = migrations::migration_sources();
+    let expected_migrations = source
+        .iter()
+        .map(|source| source.migrator.iter().count())
+        .sum::<usize>();
     require_db!(test_db = TestDb::create(&source).await);
 
     let status = migrate::status(test_db.admin_pool(), &source)
         .await
         .expect("migration status should read the migrated database");
-    assert_eq!(status.applied, 3);
+    assert_eq!(status.applied, expected_migrations);
     assert_eq!(status.pending, 0);
     assert!(status.up_to_date);
 

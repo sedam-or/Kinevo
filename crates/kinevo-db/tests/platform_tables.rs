@@ -152,20 +152,18 @@ async fn dom_schema_matches_spec_ddl() {
         let actual = sqlx::query_as::<_, (String, String, bool)>(
             "SELECT column_name::text, udt_name::text, is_nullable = 'YES' \
              FROM information_schema.columns \
-             WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position",
+             WHERE table_schema = 'public' AND table_name = $1 ORDER BY column_name",
         )
         .bind(table)
         .fetch_all(app.admin_pool())
         .await
         .expect("platform table columns should be queryable");
-        assert_eq!(
-            actual,
-            expected
-                .iter()
-                .map(|(name, ty, nullable)| { ((*name).to_owned(), (*ty).to_owned(), *nullable) })
-                .collect::<Vec<_>>(),
-            "unexpected columns for {table}"
-        );
+        let mut expected = expected
+            .iter()
+            .map(|(name, ty, nullable)| ((*name).to_owned(), (*ty).to_owned(), *nullable))
+            .collect::<Vec<_>>();
+        expected.sort_unstable_by(|left, right| left.0.cmp(&right.0));
+        assert_eq!(actual, expected, "unexpected columns for {table}");
     }
 
     let indexes = sqlx::query_scalar::<_, String>(
@@ -348,6 +346,11 @@ async fn dom_schema_matches_spec_ddl() {
                 "outbox_events".to_owned(),
                 "outbox_events_pkey".to_owned(),
                 "PRIMARY KEY".to_owned()
+            ),
+            (
+                "outbox_events".to_owned(),
+                "outbox_events_v_ck".to_owned(),
+                "CHECK".to_owned()
             ),
         ]
     );
@@ -703,8 +706,8 @@ async fn adm_fr_07_retention_functions() {
         (recent_event, new),
     ] {
         sqlx::query(
-            "INSERT INTO public.outbox_events (id, kind, payload, created_at) \
-             VALUES ($1, 'TestEvent', '{}'::jsonb, $2::timestamptz)",
+            "INSERT INTO public.outbox_events (id, kind, v, payload, created_at) \
+             VALUES ($1, 'TestEvent', 1, '{}'::jsonb, $2::timestamptz)",
         )
         .bind(id)
         .bind(created_at.to_rfc3339())

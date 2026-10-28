@@ -36,6 +36,7 @@ pub enum ConnectError {
 }
 
 /// The application and restricted system connection pools.
+#[derive(Clone)]
 pub struct Db {
     app: PgPool,
     system: PgPool,
