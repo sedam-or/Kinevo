@@ -3,7 +3,7 @@ id: T-022
 title: Implement refresh-token families, rotation, reuse detection and the grace cache
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-020, T-004, T-012]
 requirements: [ID-FR-05, ID-FR-06, ID-FR-07, AUTH-01, SEC-AC-04, SM-22]
 branch: m1-t022-identity-refresh-tokens
