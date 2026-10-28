@@ -3,7 +3,7 @@ id: T-021
 title: Add password hashing, policy checks and the common-password list
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-020, T-005, T-006]
 requirements: [ID-FR-01, ID-FR-02, ID-FR-03, AUTH-03, AUTH-05, SEC-03, SEC-AC-03]
 branch: m1-t021-identity-passwords
