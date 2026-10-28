@@ -134,8 +134,15 @@ async fn sec_ac_01_probe_table_clean() {
         table: "t_probe",
         insert: insert_probe,
         touch_sql: "SET id = id",
+        update_allowed: true,
+        delete_allowed: true,
     }];
     run_isolation(&app, &fixtures).await.assert_clean();
+    let remaining_rows: i64 = sqlx::query_scalar("SELECT count(*) FROM public.t_probe")
+        .fetch_one(app.admin_pool())
+        .await
+        .expect("probe rows should remain after rollback-safe delete checks");
+    assert_eq!(remaining_rows, 2);
 }
 
 #[tokio::test]
@@ -159,6 +166,8 @@ async fn sec_ac_02_unforced_rls_is_a_finding() {
         table: "t_unforced",
         insert: insert_unforced,
         touch_sql: "SET id = id",
+        update_allowed: true,
+        delete_allowed: true,
     }];
     let report = run_isolation(&app, &fixtures).await;
     assert!(

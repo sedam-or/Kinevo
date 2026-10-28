@@ -5,6 +5,9 @@ use kinevo_db::{migrate, require_db, testing::TestDb};
 use sqlx::migrate::{Migration, MigrationType, Migrator};
 use sqlx::{Row, SqlSafeStr};
 
+#[path = "support/migrations.rs"]
+mod migrations;
+
 fn custom_source(sql: &'static str) -> migrate::MigrationSource {
     let migration = Migration::new(
         20_261_101_000_000_i64,
@@ -23,13 +26,13 @@ fn custom_source(sql: &'static str) -> migrate::MigrationSource {
 
 #[tokio::test]
 async fn platform_extensions_apply_once() {
-    let source = [kinevo_db::migrations_source()];
+    let source = migrations::migration_sources();
     require_db!(test_db = TestDb::create(&source).await);
 
     let status = migrate::status(test_db.admin_pool(), &source)
         .await
         .expect("migration status should read the migrated database");
-    assert_eq!(status.applied, 1);
+    assert_eq!(status.applied, 3);
     assert_eq!(status.pending, 0);
     assert!(status.up_to_date);
 
@@ -89,4 +92,12 @@ async fn arch_21_roles_are_unprivileged_and_idempotent() {
             .expect("createrole flag should exist");
         assert!(!superuser && !bypass_rls && !createdb && !createrole);
     }
+
+    let migrator_can_create_in_current_database: bool = sqlx::query_scalar(
+        "SELECT has_database_privilege('kinevo_migrator', current_database(), 'CREATE')",
+    )
+    .fetch_one(test_db.admin_pool())
+    .await
+    .expect("migrator database privilege should be queryable");
+    assert!(migrator_can_create_in_current_database);
 }

@@ -9,15 +9,18 @@ use crate::{
     testing::{TestApp, TestIds},
 };
 
-const EXCLUDED_TABLES: &[&str] = &[
-    "instance_settings",
-    "instance_modules",
-    "policy_versions",
-    "invites",
-    "billing_webhook_events",
-    "jobs",
-    "outbox_events",
-    "_sqlx_migrations",
+const EXCLUDED_TABLES: &[(&str, &str)] = &[
+    (
+        "instance_settings",
+        "single-instance settings have no tenant rows",
+    ),
+    ("instance_modules", "module switches are instance-scoped"),
+    (
+        "policy_versions",
+        "mixed instance/account rows use dedicated policy checks",
+    ),
+    ("invites", "invite tokens are instance-scoped"),
+    ("_sqlx_migrations", "SQLx owns its migration metadata table"),
 ];
 
 /// Insert callback used by the generated tenant-isolation checks.
@@ -30,6 +33,10 @@ pub struct IsolationFixture {
     pub insert: InsertFn,
     /// SQL fragment beginning with `SET`, supplied by the table's fixture.
     pub touch_sql: &'static str,
+    /// Whether the app role is expected to update a row in this table.
+    pub update_allowed: bool,
+    /// Whether the app role is expected to delete a row in this table.
+    pub delete_allowed: bool,
 }
 
 /// Findings collected while checking every tenant table in the database.
@@ -54,6 +61,10 @@ impl IsolationReport {
 }
 
 /// Runs the registered fixtures against every tenant table in `public`.
+#[allow(
+    clippy::too_many_lines,
+    reason = "the verifier keeps discovery, fixture execution, and findings in one ordered pass"
+)]
 pub async fn run_isolation(app: &TestApp, fixtures: &[IsolationFixture]) -> IsolationReport {
     let mut report = IsolationReport::default();
     let discovered = sqlx::query_scalar::<_, String>(
@@ -69,7 +80,12 @@ pub async fn run_isolation(app: &TestApp, fixtures: &[IsolationFixture]) -> Isol
 
     let tenant_tables: Vec<String> = discovered
         .into_iter()
-        .filter(|table| !EXCLUDED_TABLES.contains(&table.as_str()))
+        .filter(|table| {
+            !EXCLUDED_TABLES
+                .iter()
+                .any(|(excluded, _)| *excluded == table)
+                && crate::isolation::no_rls_allowlist_reason(table).is_none()
+        })
         .collect();
     let tenant_names: HashSet<&str> = tenant_tables.iter().map(String::as_str).collect();
     let mut fixtures_by_table: BTreeMap<&str, Vec<&IsolationFixture>> = BTreeMap::new();
@@ -144,9 +160,13 @@ pub async fn run_isolation(app: &TestApp, fixtures: &[IsolationFixture]) -> Isol
         }
 
         check_visible_rows(app, fixture, account_a, &mut report.findings).await;
-        check_update(app, fixture, account_a, &mut report.findings).await;
+        if fixture.update_allowed {
+            check_update(app, fixture, account_a, &mut report.findings).await;
+        }
         check_other_account_row(app, table, account_b, &mut report.findings).await;
-        check_delete(app, fixture, account_a, &mut report.findings).await;
+        if fixture.delete_allowed {
+            check_delete(app, fixture, account_a, &mut report.findings).await;
+        }
         check_other_account_row(app, table, account_b, &mut report.findings).await;
         check_foreign_insert(app, fixture, account_a, account_b, &mut report.findings).await;
     }
@@ -293,9 +313,9 @@ async fn check_delete(
         )),
         Err(_) => findings.push(format!("{}: unfiltered DELETE failed", fixture.table)),
     }
-    if tx.commit().await.is_err() {
+    if tx.rollback().await.is_err() {
         findings.push(format!(
-            "{}: account transaction commit failed",
+            "{}: account delete probe rollback failed",
             fixture.table
         ));
     }

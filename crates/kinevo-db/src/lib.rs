@@ -2,11 +2,13 @@
 
 #![forbid(unsafe_code)]
 
+pub mod audit;
 pub mod bootstrap;
 pub mod errors;
 pub mod isolation;
 pub mod migrate;
 pub mod pool;
+pub mod retention;
 pub mod tx;
 
 #[cfg(feature = "testing")]

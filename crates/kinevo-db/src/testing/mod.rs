@@ -219,6 +219,10 @@ pub struct TestDb {
 
 impl TestDb {
     /// Creates a disposable database, grants the three roles, and applies migrations.
+    #[allow(
+        clippy::too_many_lines,
+        reason = "database setup is intentionally sequential so each privilege grant precedes connection"
+    )]
     pub async fn create(sources: &[MigrationSource]) -> Result<Self, Unavailable> {
         let cluster = PgCluster::get().await?;
         let sequence = NEXT_DATABASE.fetch_add(1, Ordering::Relaxed) + 1;
@@ -250,6 +254,17 @@ impl TestDb {
         .await
             .map_err(|_| Unavailable)?;
         sqlx::query(AssertSqlSafe(grant_sql))
+            .execute(&cluster.0.admin_pool)
+            .await
+            .map_err(|_| Unavailable)?;
+        let grant_migrator_create: String = sqlx::query_scalar(
+            "SELECT format('GRANT CREATE ON DATABASE %I TO kinevo_migrator', $1)",
+        )
+        .bind(&database_name)
+        .fetch_one(&cluster.0.admin_pool)
+        .await
+        .map_err(|_| Unavailable)?;
+        sqlx::query(AssertSqlSafe(grant_migrator_create))
             .execute(&cluster.0.admin_pool)
             .await
             .map_err(|_| Unavailable)?;

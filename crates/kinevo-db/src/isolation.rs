@@ -17,6 +17,7 @@ pub enum FindingCheck {
     OwnsTable,
     RowSecurityDisabled,
     RowSecurityNotForced,
+    NoRlsTableHasRls,
     MissingPolicy,
     UnexpectedPolicy,
     PolicyExpression,
@@ -41,6 +42,31 @@ struct Policy {
     check: String,
 }
 
+const NO_RLS_ALLOWLIST: &[(&str, &str)] = &[
+    (
+        "jobs",
+        "system job queue; payloads contain ids and enums only (DOM-09)",
+    ),
+    (
+        "outbox_events",
+        "system outbox; payloads contain ids and enums only (DOM-09)",
+    ),
+    (
+        "outbox_deliveries",
+        "system delivery state for outbox events (DOM-09)",
+    ),
+    (
+        "billing_webhook_events",
+        "instance-level provider event deduplication (DOM-09)",
+    ),
+];
+
+pub(crate) fn no_rls_allowlist_reason(table: &str) -> Option<&'static str> {
+    NO_RLS_ALLOWLIST
+        .iter()
+        .find_map(|(name, reason)| (*name == table).then_some(*reason))
+}
+
 /// Verifies role restrictions, tenant RLS, exact policy names, and system grants.
 pub async fn verify_isolation(pool: &PgPool) -> Result<(), IsolationError> {
     let mut findings = role_findings(pool).await?;
@@ -48,6 +74,16 @@ pub async fn verify_isolation(pool: &PgPool) -> Result<(), IsolationError> {
     let mut policies = load_policies(pool).await?;
 
     for (table, rls_enabled, rls_forced) in tables {
+        if no_rls_allowlist_reason(&table).is_some() {
+            if rls_enabled || rls_forced {
+                findings.push(Finding {
+                    relation: table,
+                    policy: None,
+                    check: FindingCheck::NoRlsTableHasRls,
+                });
+            }
+            continue;
+        }
         findings.extend(table_findings(
             &table,
             rls_enabled,
@@ -270,10 +306,16 @@ fn known_policy_scope(table: &str, name: &str, policy: &Policy) -> bool {
                 && same_sql_expression(&policy.check, "true")
         }
         "retention" => {
-            matches!(table, "audit_log" | "idempotency_keys")
-                && policy.roles == "kinevo_migrator"
+            let expected_using = match table {
+                "audit_log" => "true",
+                "idempotency_keys" => {
+                    "expires_at < NULLIF(current_setting('app.retention_cutoff', true), '')::timestamptz"
+                }
+                _ => return false,
+            };
+            policy.roles == "kinevo_migrator"
                 && policy.command == "d"
-                && same_sql_expression(&policy.using, "true")
+                && same_sql_expression(&policy.using, expected_using)
                 && policy.check.is_empty()
         }
         "instance_secrets_read" => {
@@ -297,9 +339,18 @@ fn known_policy_scope(table: &str, name: &str, policy: &Policy) -> bool {
                 )
         }
         "admin_context" => {
-            matches!(table, "policy_versions" | "audit_log")
-                && policy.roles.is_empty()
-                && policy.command == "*"
+            if table == "policy_versions" {
+                policy.roles.is_empty() && policy.command == "*"
+            } else {
+                table == "audit_log"
+                    && policy.roles.is_empty()
+                    && policy.command == "r"
+                    && same_sql_expression(
+                        &policy.using,
+                        "current_setting('app.instance_admin', true) = 'on'",
+                    )
+                    && policy.check.is_empty()
+            }
         }
         _ => false,
     }
@@ -314,8 +365,13 @@ fn policy_finding_check(table: &str, name: &str, policy: &Policy) -> Option<Find
         };
         let expression =
             format!("{column} = NULLIF(current_setting('app.account_id', true), '')::uuid");
+        let check_expression = if table == "audit_log" {
+            "account_id IS NULL OR account_id = NULLIF(current_setting('app.account_id', true), '')::uuid"
+        } else {
+            expression.as_str()
+        };
         if !same_sql_expression(&policy.using, &expression)
-            || !same_sql_expression(&policy.check, &expression)
+            || !same_sql_expression(&policy.check, check_expression)
         {
             return Some(FindingCheck::PolicyExpression);
         }
@@ -356,4 +412,5 @@ fn normalize_sql_expression(expression: &str) -> String {
         .filter(|character| !character.is_ascii_whitespace() && !matches!(character, '(' | ')'))
         .collect::<String>()
         .replace("::text", "")
+        .replace("::timestampwithtimezone", "::timestamptz")
 }

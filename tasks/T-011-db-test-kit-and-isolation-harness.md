@@ -38,7 +38,7 @@ Any crate's tests can get a real, empty, migrated PostgreSQL database in a few l
 - Isolation harness `kinevo_db::testing::isolation`:
   - `IsolationFixture { table: &'static str, insert: for<'a> fn(&'a mut Tx, &'a TestIds) -> BoxFuture<'a, Result<()>> }` where `TestIds` supplies deterministic ids.
   - `register(fixtures: &'static [IsolationFixture])` (a plain slice passed to the runner; no global state).
-  - `run_isolation(app: &TestApp, fixtures) -> IsolationReport` that (1) lists tenant tables from the catalog (tables with an `account_id` column, plus `accounts` and the §2.1-excluded exceptions via an explicit allow-list), (2) fails if any tenant table has no fixture and if any fixture names a non-tenant table, (3) creates accounts A and B (rows inserted through the fixture of `accounts` run first), (4) for each table inserts one row for A and one for B, (5) as A runs unfiltered `SELECT count(*)`, `UPDATE … SET <touch column>`, `DELETE` and asserts B's rows are untouched and A's affected count equals 1, (6) asserts `relrowsecurity` and `relforcerowsecurity`, (7) asserts that an `INSERT` for B in A's context is rejected. The "touch column" is provided by the fixture (`touch_sql`) to avoid guessing column names.
+  - `run_isolation(app: &TestApp, fixtures) -> IsolationReport` that (1) lists tenant tables from the catalog (tables with an `account_id` column, plus `accounts` and the §2.1-excluded exceptions via a reasoned allow-list), (2) fails if any tenant table has no fixture and if any fixture names a non-tenant table, (3) creates accounts A and B (rows inserted through the fixture of `accounts` run first), (4) for each table inserts one row for A and one for B, (5) as A runs unfiltered `SELECT count(*)`, and runs `UPDATE … SET <touch column>` and `DELETE` only when the fixture declares those app-role mutations allowed; it asserts B's rows remain untouched and each allowed mutation affects one row, (6) asserts `relrowsecurity` and `relforcerowsecurity`, (7) asserts that an `INSERT` for B in A's context is rejected. The "touch column" is provided by the fixture (`touch_sql`) to avoid guessing column names.
 - A self-test using the probe table from T-010 so the harness is verified before any module table exists, plus a negative self-test: a probe table without `FORCE` makes the report contain a finding.
 
 **Out:**
@@ -65,7 +65,13 @@ Any crate's tests can get a real, empty, migrated PostgreSQL database in a few l
 pub struct TestApp { pub db: Db, pub clock: Arc<FixedClock>, pub ids: Arc<SeqIdGen>, pub tokens: Arc<SeqTokenGen>, /* cluster handle */ }
 impl TestApp { pub fn builder() -> TestAppBuilder; pub async fn new_account(&self) -> AccountId; /* allocates an id only; schema tasks add real creation */ }
 pub struct TestAppBuilder; impl TestAppBuilder { pub fn migrations(self, s: &'static [MigrationSource]) -> Self; pub fn clock_at(self, t: Instant) -> Self; pub async fn build(self) -> Result<TestApp, Unavailable>; }
-pub struct IsolationFixture { pub table: &'static str, pub insert: InsertFn, pub touch_sql: &'static str }
+pub struct IsolationFixture {
+    pub table: &'static str,
+    pub insert: InsertFn,
+    pub touch_sql: &'static str,
+    pub update_allowed: bool,
+    pub delete_allowed: bool,
+}
 pub async fn run_isolation(app: &TestApp, fixtures: &[IsolationFixture]) -> IsolationReport; // report.findings: Vec<String>; report.assert_clean()
 #[macro_export] macro_rules! require_db { ($app:ident = $builder:expr) => { … } }
 ```

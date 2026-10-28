@@ -9,7 +9,10 @@ use kinevo_db::{
     Tx,
     testing::{TestApp, TestIds, isolation::IsolationFixture},
 };
-use kinevo_kernel::id::{AccountId, IdGen};
+use kinevo_kernel::{
+    id::{AccountId, IdGen},
+    time::Instant,
+};
 use sqlx::types::Uuid;
 
 pub const ISOLATION_FIXTURES: &[IsolationFixture] = &[
@@ -17,31 +20,57 @@ pub const ISOLATION_FIXTURES: &[IsolationFixture] = &[
         table: "accounts",
         insert: insert_account_fixture,
         touch_sql: "SET display_name = display_name",
+        update_allowed: true,
+        delete_allowed: true,
     },
     IsolationFixture {
         table: "refresh_token_families",
         insert: insert_family_fixture,
         touch_sql: "SET id = id",
+        update_allowed: true,
+        delete_allowed: true,
     },
     IsolationFixture {
         table: "refresh_tokens",
         insert: insert_refresh_token_fixture,
         touch_sql: "SET id = id",
+        update_allowed: true,
+        delete_allowed: true,
     },
     IsolationFixture {
         table: "recovery_codes",
         insert: insert_recovery_code_fixture,
         touch_sql: "SET id = id",
+        update_allowed: true,
+        delete_allowed: true,
     },
     IsolationFixture {
         table: "password_resets",
         insert: insert_password_reset_fixture,
         touch_sql: "SET id = id",
+        update_allowed: true,
+        delete_allowed: true,
     },
     IsolationFixture {
         table: "account_exports",
         insert: insert_account_export_fixture,
         touch_sql: "SET state = state",
+        update_allowed: true,
+        delete_allowed: true,
+    },
+    IsolationFixture {
+        table: "audit_log",
+        insert: insert_audit_fixture,
+        touch_sql: "SET action = action",
+        update_allowed: false,
+        delete_allowed: false,
+    },
+    IsolationFixture {
+        table: "idempotency_keys",
+        insert: insert_idempotency_fixture,
+        touch_sql: "SET method = method",
+        update_allowed: true,
+        delete_allowed: false,
     },
 ];
 
@@ -223,6 +252,48 @@ fn insert_account_export_fixture<'a>(
         )
         .bind(ids.row_id)
         .bind(*ids.account_id.as_uuid())
+        .execute(tx.conn())
+        .await?;
+        Ok(())
+    })
+}
+
+fn insert_audit_fixture<'a>(
+    tx: &'a mut Tx,
+    ids: &'a TestIds,
+) -> BoxFuture<'a, Result<(), sqlx::Error>> {
+    Box::pin(async move {
+        let occurred_at = Instant::parse_rfc3339("2026-11-02T00:00:00Z")
+            .expect("fixed fixture instant")
+            .to_rfc3339();
+        sqlx::query(
+            "INSERT INTO public.audit_log (id, account_id, action, details, occurred_at) \
+             VALUES ($1, $2, 'auth.login', '{}'::jsonb, $3::timestamptz)",
+        )
+        .bind(ids.row_id)
+        .bind(*ids.account_id.as_uuid())
+        .bind(occurred_at)
+        .execute(tx.conn())
+        .await?;
+        Ok(())
+    })
+}
+
+fn insert_idempotency_fixture<'a>(
+    tx: &'a mut Tx,
+    ids: &'a TestIds,
+) -> BoxFuture<'a, Result<(), sqlx::Error>> {
+    Box::pin(async move {
+        let key = format!("fixture-{}", ids.row_id);
+        sqlx::query(
+            "INSERT INTO public.idempotency_keys \
+             (account_id, key, method, path, request_hash, created_at, expires_at) \
+             VALUES ($1, $2, 'POST', '/api/v1/account', $3, \
+                     '2026-11-02T00:00:00Z'::timestamptz, '2026-11-03T00:00:00Z'::timestamptz)",
+        )
+        .bind(*ids.account_id.as_uuid())
+        .bind(key)
+        .bind(synthetic_hash(ids.row_id, 4).as_slice())
         .execute(tx.conn())
         .await?;
         Ok(())
