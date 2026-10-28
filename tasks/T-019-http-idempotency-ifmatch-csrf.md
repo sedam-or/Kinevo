@@ -3,12 +3,12 @@ id: T-019
 title: Add the idempotency layer, If-Match handling and the cookie-endpoint origin guard
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-017, T-015, T-008]
-requirements: [API-11, API-60, API-61, API-62, API-70, API-71, API-72, SEC-09, ERR-06, TST-20]
+requirements: [API-11, API-60, API-61, API-62, API-70, API-71, API-72, D-80, D-81, SEC-09, ERR-06, TST-20]
 branch: m1-t019-http-idempotency-csrf
 budget_lines: 380
-assignee: ""
+assignee: "Codex"
 ---
 
 # T-019: Add the idempotency layer, If-Match handling and the cookie-endpoint origin guard
@@ -21,6 +21,7 @@ Mutating routes that opt in get exactly-once semantics from the `Idempotency-Key
 
 > **API-70/71/72** (`07` §8): Clients send `Idempotency-Key: <uuid>` on `POST` that creates or commands, and on `DELETE`; the server stores `(account, key)` with a hash of method+path+body and the response for `api.idempotency.ttl`. Same key + same request → replay with `Idempotency-Replayed: true` (also deterministic errors; not 5xx or 429). Same key + different request → 422 `idempotency_key_reuse`. Same key in flight → 409 `idempotency_in_progress` (`Retry-After: 1`). Keys are per account.
 > **Store semantics** (T-015): `begin` reserves the key in its own short transaction (committed **before** the handler runs), the handler runs in its own transaction(s), and `finish` stores the response afterwards. `store_body = false` on secret-bearing routes (`/auth/*`, `/setup/*`, `/account/totp/*`). Bodies above 262144 bytes are not stored.
+> **D-80/D-81**: keys are trimmed/lowercased per the field-specific key-like validator; `route_path_with_params` is the caller-supplied concrete path without query values for creates.
 > **ERR-06**: Idempotent deterministic errors may be replayed; 5xx and 429 are never stored.
 > **API-60**: Versioned resources expose `version`. `PATCH`/`PUT`/`DELETE` on them require `If-Match: "<version>"`. Missing → 428 `precondition_required` (`details.header = "If-Match"`). Mismatch → 409 `version_conflict` with `details.current_version` and `details.current`. **API-61**: state-dependent commands take `base_version` in the body and behave the same. **API-62**: no last-write-wins.
 > **API-11 / SEC-09**: `POST /auth/refresh` and `/auth/logout` additionally require header `X-Kinevo-Client: web|android` and a matching `Origin` (CSRF defence in depth). The cookie is `SameSite=Strict`; CORS allows no origin except the Android shell origin (D-37); `Access-Control-Allow-Credentials` is never sent. Failure → 403 `csrf_check_failed`.
