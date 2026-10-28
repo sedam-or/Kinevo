@@ -3,12 +3,12 @@ id: T-027
 title: Implement optional TOTP enrolment, verification, recovery codes and the replay cache
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-026, T-023, T-008]
 requirements: [ID-FR-08, SEC-AC-07, D-40, AUTH-05, ID-FR-04]
 branch: m1-t027-identity-totp
 budget_lines: 420
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-027: Implement optional TOTP enrolment, verification, recovery codes and the replay cache
