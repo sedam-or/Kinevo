@@ -83,6 +83,7 @@ const REGISTRY_DETAIL_KEYS: &[&str] = &[
     "op_type",
     "path",
     "reasons",
+    "reason",
     "retry_after_seconds",
     "session_id",
     "status",

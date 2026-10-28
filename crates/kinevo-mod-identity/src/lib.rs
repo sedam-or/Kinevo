@@ -101,10 +101,11 @@ pub const MODULE: ModuleDescriptor = ModuleDescriptor {
     subscriptions: &[],
 };
 
-/// Returns an empty route table until identity endpoints are added.
+/// Builds the identity public authentication routes.
 #[must_use]
-pub fn router() -> RouteTable {
-    RouteTable::new()
+pub fn router(service: Arc<app::login::LoginService>) -> RouteTable {
+    let (spec, route) = http::login::route(service);
+    RouteTable::new().route(spec, route)
 }
 
 /// Returns the identity crate's embedded migrations.

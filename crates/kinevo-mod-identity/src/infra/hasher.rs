@@ -193,6 +193,27 @@ impl Hasher {
         }
     }
 
+    /// Verifies a stored PHC string without exposing it outside the hasher adapter.
+    pub async fn verify_encoded(&self, candidate: &Secret<String>, encoded: &str) -> VerifyOutcome {
+        self.verify(candidate, &PasswordHash(encoded.to_owned()))
+            .await
+    }
+
+    /// Rehashes an already accepted login candidate using the current Argon2id profile.
+    pub async fn rehash_candidate(
+        &self,
+        candidate: &Secret<String>,
+    ) -> Result<PasswordHash, AppError> {
+        let normalized = Zeroizing::new(candidate.expose().nfkc().collect::<String>());
+        let salt = Zeroizing::new(self.tokens.token_128());
+        let params = self.params.clone();
+        let phc = self
+            .run_blocking(move |backend| backend.hash(&normalized, &salt[..], &params))
+            .await
+            .map_err(|_| internal_error())?;
+        Ok(PasswordHash(phc))
+    }
+
     /// Performs a current-profile verification for an account that was not found.
     pub async fn verify_dummy(&self, candidate: &Secret<String>) {
         let dummy = self

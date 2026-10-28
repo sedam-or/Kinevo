@@ -1,5 +1,7 @@
 //! Pure identity domain value types.
 
+pub mod device;
+pub mod lockout;
 pub mod password;
 pub mod session;
 

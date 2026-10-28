@@ -3,12 +3,12 @@ id: T-023
 title: Implement POST /auth/login with lockout, constant-work verification and MFA hook
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-022, T-021, T-014, T-017, T-018, T-019]
 requirements: [ID-FR-03, ID-FR-04, ID-FR-07, SEC-AC-03, SEC-07, API-14, AUTH-05]
 branch: m1-t023-identity-login
 budget_lines: 420
-assignee: ""
+assignee: Codex
 ---
 
 # T-023: Implement POST /auth/login with lockout, constant-work verification and MFA hook
@@ -123,7 +123,102 @@ just test-slow   # includes SEC-AC-03 timing test if present
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+`POST /auth/login` now verifies credentials with constant work, applies account and unknown-email throttling, handles lockout and MFA branches, and creates the first session atomically. Web and Android receive the refresh token through their specified channels; the endpoint records only safe audit details.
+
+### Acceptance results
+
+| Criterion | Test name | Result |
+|---|---|---|
+| AC-1 | `login::id_login_success_flow` | pass |
+| AC-2 | `login::id_fr_03_unknown_vs_wrong_password_identical` | pass |
+| AC-3 | `login::id_fr_03_unknown_email_does_dummy_work` | pass |
+| AC-4 | `login::id_fr_04_lockout_lifecycle` | pass |
+| AC-5 | `login::id_fr_04_window_resets_counter` | pass |
+| AC-6 | `login::mfa_branches` | pass |
+| AC-7 | `login::account_disabled_after_correct_credentials` | pass |
+| AC-8 | `lockout::tests::id_fr_04_state_machine_table` | pass |
+| AC-9 | `login::password_rehash_on_login` | pass |
+| AC-10 | `login::sec_ac_03_rate_limit_before_work` | pass |
+| AC-11 | `login::sec_ac_45_no_credentials_in_logs_or_audit` | pass |
+| AC-12 | `login::d_37_android_receives_token_in_body` | pass |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| `eval "$(scripts/dev-postgres.sh env)" && cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing` (test-first, before implementation) | 101 | Expected red compile: the login, MFA and lockout modules had not yet been implemented. |
+| `eval "$(scripts/dev-postgres.sh env)" && cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing` (after implementation) | 0 | 41 tests passed; 1 skipped. |
+| `NEXTEST_TEST_THREADS=1 just test-slow` | 0 | `sec_ac_03_timing_oracle`: 1 passed; 219 skipped. |
+| `NEXTEST_TEST_THREADS=1 just check` (default online `cargo deny`) | 101 | RustSec advisory database fetch failed: `fatal: unable to access 'https://github.com/RustSec/advisory-db/': Could not resolve host: github.com`. |
+| `cargo-deny --offline check` | 0 | `advisories ok, bans ok, licenses ok, sources ok`; cached database used. Existing duplicate-version and unused-license warnings remain. |
+| `shimdir=/tmp/kinevo-deny-shim.AcfkfT; eval "$(scripts/dev-postgres.sh env)"; PATH="$shimdir:/home/kepolu/.cargo/bin:$PATH" NEXTEST_TEST_THREADS=1 just check` | 0 | Full `just check` passed with the unchanged recipe and a temporary wrapper that strips Cargo's `deny` dispatch argument and adds `--offline`: format, Clippy, 219 tests passed/1 skipped, cargo-deny, spec, contrast, and task-index checks. |
+| `python3 scripts/spec_tool.py check` | 0 | `0 finding(s) in 60 spec files`. |
+| `python3 scripts/tasks_index.py` | 0 | Regenerated `tasks/index.md`; `0 problem(s) in 132 task(s)`. |
+| `python3 scripts/tasks_index.py --check` | 0 | `0 problem(s) in 132 task(s)`. |
+| `git diff --check` | 0 | Clean. |
+| `cargo info axum-extra@0.10.3` | 101 | Could not resolve `index.crates.io` after three retries; no dependency was added. |
+
+### Files changed
+
+Counts are relative to `origin/dev` and include new files; `Cargo.lock` is excluded from the task budget per D-55.
+
+| Path | Added | Removed |
+|---|---:|---:|
+| `Cargo.lock` | 28 | 0 |
+| `crates/kinevo-http/src/problem.rs` | 6 | 4 |
+| `crates/kinevo-kernel/src/errors/mod.rs` | 1 | 0 |
+| `crates/kinevo-mod-identity/Cargo.toml` | 6 | 0 |
+| `crates/kinevo-mod-identity/src/app/mod.rs` | 2 | 0 |
+| `crates/kinevo-mod-identity/src/app/login.rs` | 656 | 0 |
+| `crates/kinevo-mod-identity/src/app/mfa.rs` | 21 | 0 |
+| `crates/kinevo-mod-identity/src/domain/mod.rs` | 2 | 0 |
+| `crates/kinevo-mod-identity/src/domain/device.rs` | 50 | 0 |
+| `crates/kinevo-mod-identity/src/domain/lockout.rs` | 168 | 0 |
+| `crates/kinevo-mod-identity/src/http/mod.rs` | 4 | 0 |
+| `crates/kinevo-mod-identity/src/http/dto.rs` | 97 | 0 |
+| `crates/kinevo-mod-identity/src/http/login.rs` | 86 | 0 |
+| `crates/kinevo-mod-identity/src/http/session_response.rs` | 27 | 0 |
+| `crates/kinevo-mod-identity/src/infra/mod.rs` | 1 | 0 |
+| `crates/kinevo-mod-identity/src/infra/accounts.rs` | 176 | 0 |
+| `crates/kinevo-mod-identity/src/infra/hasher.rs` | 21 | 0 |
+| `crates/kinevo-mod-identity/src/lib.rs` | 4 | 3 |
+| `crates/kinevo-mod-identity/tests/login.rs` | 961 | 0 |
+| `spec/decisions.md` | 4 | 0 |
+| `spec/index.md` | 1 | 1 |
+| `tasks/T-023-identity-login.md` | 98 | 3 |
+| `tasks/index.md` | 2 | 2 |
+
+### Deviations
+
+- The task describes `CookieJar`; the response helper writes a validated `Set-Cookie` header using Axum's existing header types. The `axum-extra` crate was not in the approved stack, and its registry lookup failed due DNS; adding an unverified dependency was avoided (D-96, pending owner review).
+- The task's file list omits small wiring and required helpers: identity module exports, `infra/hasher.rs`, `domain/device.rs`, dependency declarations/lockfile, the shared error response mapping, and the `reason` audit-detail registry entry. They are needed for the specified endpoint and test coverage.
+- The diff totals 2,422 additions and 13 removals against `origin/dev`; excluding 28 generated `Cargo.lock` additions, that is 2,394 additions and 13 removals versus the approximate 420-line budget. D-55 makes this guidance rather than a blocker; the production flow, component/HTTP acceptance coverage, and four traceable decisions account for the additional lines.
+- Network access prevented the default cargo-deny advisory fetch and the `axum-extra` registry lookup. The cached advisory database passed offline; exact commands and errors are above.
+
+### Decisions made by implementer
+
+| ID | Choice; alternatives rejected; reason | Files touched | Reversal |
+|---|---|---|---|
+| D-96 (pending owner review) | Use validated standard `Set-Cookie`; reject adding an unverified `axum-extra` dependency or delaying the endpoint because the registry was unreachable. | `spec/decisions.md`, `spec/index.md`, `tasks/T-023-identity-login.md`, `crates/kinevo-mod-identity/src/http/session_response.rs` | Adopt an approved cookie dependency and replace the helper/tests. |
+| D-97 (pending owner review) | Use the 32-symbol unambiguous recovery alphabet `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`, uppercase ASCII before comparison; reject arbitrary alphanumerics or a larger set. | `spec/decisions.md`, `spec/index.md`, `tasks/T-023-identity-login.md`, login implementation/tests | Change the shared recovery-code validator and revise tests to the owner's chosen alphabet. |
+| D-98 (pending owner review) | Key the bounded in-memory unknown-email tracker with SHA-256 of normalized email; reject storing the email or adding a keyed-hash dependency. | `spec/decisions.md`, `spec/index.md`, `tasks/T-023-identity-login.md`, login implementation/tests | Replace the key derivation and tests if the security standard selects another digest. |
+| D-99 (pending owner review) | Inject a narrow `PasswordWork` port so tests count dummy/real verification while production delegates to the existing bounded Argon2 hasher; reject weakening the constant-work test. | `spec/decisions.md`, `spec/index.md`, `tasks/T-023-identity-login.md`, login implementation/tests | Replace the port with an equivalent test seam that preserves the same constant-work evidence. |
+
+### Spec issues noticed
+
+The authentication standard requires a 32-symbol recovery alphabet but does not name its symbols; D-97 records the implementer's choice. The task requests `CookieJar` without listing or approving the required crate; D-96 records the standard-header implementation pending owner review.
+
+### Not done / not verified
+
+- The default online cargo-deny fetch could not reach GitHub. The unchanged `just check` recipe passed with the local advisory database in offline mode; the database freshness could not be checked.
+- `axum-extra` availability could not be verified because crates.io DNS failed; no dependency was introduced.
+- Cookie attribute-specific assertions remain assigned to T-024, as specified by this task.
+
+### Follow-up suggestions
+
+Review D-96 through D-99 when reviewing this task; T-024 should cover cookie attributes.
 
 ## Questions
 

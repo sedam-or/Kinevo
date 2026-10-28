@@ -109,10 +109,12 @@ impl IntoResponse for ApiError {
 fn retry_after(error: &AppError) -> Option<String> {
     match error.code {
         ErrorCode::IdempotencyInProgress => Some("1".to_owned()),
-        ErrorCode::RateLimited => match error.details.as_map().get("retry_after_seconds") {
-            Some(DetailValue::Int(seconds)) if *seconds > 0 => Some(seconds.to_string()),
-            _ => None,
-        },
+        ErrorCode::RateLimited | ErrorCode::AccountLocked => {
+            match error.details.as_map().get("retry_after_seconds") {
+                Some(DetailValue::Int(seconds)) if *seconds > 0 => Some(seconds.to_string()),
+                _ => None,
+            }
+        }
         _ => None,
     }
 }
