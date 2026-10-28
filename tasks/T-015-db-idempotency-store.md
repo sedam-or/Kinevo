@@ -3,12 +3,12 @@ id: T-015
 title: Add the idempotency store (begin, replay, conflict, finish)
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-012, T-005]
 requirements: [API-70, API-71, API-72, ADM-FR-08, D-34, TST-20]
 branch: m1-t015-db-idempotency-store
 budget_lines: 280
-assignee: ""
+assignee: "Codex"
 ---
 
 # T-015: Add the idempotency store (begin, replay, conflict, finish)
