@@ -74,7 +74,7 @@ Event: `MilestoneStatusChanged`; when the last open milestone becomes `done`, al
 |---|---|---|---|---|
 | `queued` | claim | `run_at ≤ now`, module enabled | `running` (`locked_until = now + lease`) | claim race ⇒ one winner (`SKIP LOCKED`) |
 | `running` | success | — | `succeeded` | — |
-| `running` | error, attempts < max | — | `queued` (`run_at = now + backoff(attempts)`) | backoff = `base × 2^attempts`, capped |
+| `running` | error, attempts < max | — | `queued` (`run_at = now + backoff(attempts−1)`) | first claimed attempt is 1; backoff = `base × 2^(attempts−1)`, capped (D-76) |
 | `running` | error, attempts ≥ max | — | `dead` | audit `job.dead`; visible in summary; admin can requeue by CLI |
 | `running` | lease expired (worker crash) | sweeper | `queued` (attempts + 1) | handler idempotent |
 

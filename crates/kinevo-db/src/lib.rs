@@ -6,6 +6,7 @@ pub mod audit;
 pub mod bootstrap;
 pub mod errors;
 pub mod isolation;
+pub mod jobs;
 pub mod migrate;
 pub mod pool;
 pub mod retention;

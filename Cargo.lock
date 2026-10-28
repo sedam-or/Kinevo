@@ -1567,6 +1567,7 @@ dependencies = [
 name = "kinevo-db"
 version = "0.0.0"
 dependencies = [
+ "async-trait",
  "futures",
  "kinevo-kernel",
  "serde_json",
