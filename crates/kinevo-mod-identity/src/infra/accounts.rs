@@ -8,7 +8,7 @@ use kinevo_kernel::{
 use kinevo_ports::platform::{AccountProfile, AccountStatus, NewAccount};
 use sqlx::Row;
 
-use crate::domain::lockout::LockoutState;
+use crate::domain::{lockout::LockoutState, profile::Profile};
 
 /// System-context account fields needed by authentication.
 pub struct AccountRow {
@@ -64,6 +64,85 @@ pub async fn create(
             .map_err(service_unavailable)?,
         version: row.try_get("version").map_err(service_unavailable)?,
     })
+}
+
+/// Loads only the safe profile fields visible to the account owner.
+pub async fn get_profile(tx: &mut Tx, id: AccountId) -> Result<Profile, AppError> {
+    let row = sqlx::query(
+        "SELECT id, email::text AS email, display_name, locale, timezone, week_start, \
+                totp_enabled, is_instance_admin, version \
+         FROM public.accounts WHERE id = $1",
+    )
+    .bind(*id.as_uuid())
+    .fetch_optional(tx.conn())
+    .await
+    .map_err(service_unavailable)?
+    .ok_or_else(|| AppError::new(ErrorCode::NotFound))?;
+    parse_profile(&row)
+}
+
+/// Applies one optimistic profile update and returns `None` when the version changed.
+pub async fn update_profile(
+    tx: &mut Tx,
+    id: AccountId,
+    expected_version: i64,
+    profile: &Profile,
+    now: Instant,
+) -> Result<Option<Profile>, AppError> {
+    let week_start = i16::from(profile.week_start);
+    let row = sqlx::query(
+        "UPDATE public.accounts \
+         SET display_name = $3, locale = $4, timezone = $5, week_start = $6, \
+             version = version + 1, updated_at = $7::timestamptz \
+         WHERE id = $1 AND version = $2 \
+         RETURNING id, email::text AS email, display_name, locale, timezone, week_start, \
+                   totp_enabled, is_instance_admin, version",
+    )
+    .bind(*id.as_uuid())
+    .bind(expected_version)
+    .bind(&profile.display_name)
+    .bind(profile.locale.as_str())
+    .bind(profile.timezone.as_str())
+    .bind(week_start)
+    .bind(now.to_rfc3339())
+    .fetch_optional(tx.conn())
+    .await
+    .map_err(service_unavailable)?;
+    row.as_ref().map(parse_profile).transpose()
+}
+
+/// Reads the current password hash inside the account transaction.
+pub async fn password_hash(tx: &mut Tx, id: AccountId) -> Result<String, AppError> {
+    sqlx::query_scalar("SELECT password_hash FROM public.accounts WHERE id = $1 FOR UPDATE")
+        .bind(*id.as_uuid())
+        .fetch_optional(tx.conn())
+        .await
+        .map_err(service_unavailable)?
+        .ok_or_else(|| AppError::new(ErrorCode::NotFound))
+}
+
+/// Updates the credential and profile version in the caller's transaction.
+pub async fn update_password(
+    tx: &mut Tx,
+    id: AccountId,
+    password_hash: &str,
+    now: Instant,
+) -> Result<(), AppError> {
+    let changed = sqlx::query(
+        "UPDATE public.accounts SET password_hash = $2, version = version + 1, \
+             updated_at = $3::timestamptz WHERE id = $1",
+    )
+    .bind(*id.as_uuid())
+    .bind(password_hash)
+    .bind(now.to_rfc3339())
+    .execute(tx.conn())
+    .await
+    .map_err(service_unavailable)?
+    .rows_affected();
+    if changed != 1 {
+        return Err(AppError::new(ErrorCode::NotFound));
+    }
+    Ok(())
 }
 
 /// Finds an account by its normalized email address in the restricted system context.
@@ -203,6 +282,34 @@ fn parse_account(row: &sqlx::postgres::PgRow) -> Result<AccountRow, AppError> {
             window_start,
             locked_until,
         },
+        version: row.try_get("version").map_err(service_unavailable)?,
+    })
+}
+
+fn parse_profile(row: &sqlx::postgres::PgRow) -> Result<Profile, AppError> {
+    let locale = row
+        .try_get::<String, _>("locale")
+        .map_err(service_unavailable)?;
+    let timezone = row
+        .try_get::<String, _>("timezone")
+        .map_err(service_unavailable)?;
+    let week_start = row
+        .try_get::<i16, _>("week_start")
+        .map_err(service_unavailable)?;
+    Ok(Profile {
+        id: AccountId::from_uuid(row.try_get("id").map_err(service_unavailable)?),
+        email: row.try_get("email").map_err(service_unavailable)?,
+        display_name: row.try_get("display_name").map_err(service_unavailable)?,
+        locale: kinevo_kernel::validate::tz::Locale::parse(&locale)
+            .map_err(|_| AppError::new(ErrorCode::InternalError))?,
+        timezone: kinevo_kernel::validate::tz::IanaTz::parse(&timezone)
+            .map_err(|_| AppError::new(ErrorCode::InternalError))?,
+        week_start: u8::try_from(week_start)
+            .map_err(|_| AppError::new(ErrorCode::InternalError))?,
+        totp_enabled: row.try_get("totp_enabled").map_err(service_unavailable)?,
+        is_instance_admin: row
+            .try_get("is_instance_admin")
+            .map_err(service_unavailable)?,
         version: row.try_get("version").map_err(service_unavailable)?,
     })
 }

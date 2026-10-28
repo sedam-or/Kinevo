@@ -1,5 +1,6 @@
 //! Identity HTTP routes and request adapters.
 
+pub mod account;
 pub mod cookie;
 pub mod dto;
 pub mod login;

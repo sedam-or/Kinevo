@@ -10,7 +10,7 @@ pub mod ports;
 
 use std::sync::Arc;
 
-use kinevo_db::{Tx, migrate::MigrationSource};
+use kinevo_db::{Tx, jobs::JobHandler, migrate::MigrationSource};
 use kinevo_http::route::RouteTable;
 use kinevo_ports::module::{
     AccountExporter, AccountProvisioner, ModuleDescriptor, ModuleKind, PermissionDef,
@@ -139,6 +139,16 @@ pub fn refresh_router(
     http::refresh::route_table(refresh, policies)
 }
 
+/// Builds the authenticated profile, password and session management routes.
+#[must_use]
+pub fn account_router(
+    profiles: Arc<app::profile::ProfileService>,
+    passwords: Arc<app::password::PasswordService>,
+    sessions: Arc<app::sessions::SessionService>,
+) -> RouteTable {
+    http::account::routes(profiles, passwords, sessions)
+}
+
 /// Returns the identity crate's embedded migrations.
 #[must_use]
 pub fn migrations() -> MigrationSource {
@@ -151,8 +161,8 @@ pub fn migrations() -> MigrationSource {
 
 /// Returns the module's job handlers; handlers are added with their owning use cases.
 #[must_use]
-pub fn jobs() -> Vec<()> {
-    Vec::new()
+pub fn jobs() -> Vec<Arc<dyn JobHandler>> {
+    app::jobs::handlers()
 }
 
 /// Returns the module's outbox subscribers; subscribers are added with their owning use cases.

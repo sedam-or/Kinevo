@@ -20,6 +20,14 @@ const MAX_PAYLOAD_STRING_CHARS: usize = 128;
 pub struct JobKind(&'static str);
 
 impl JobKind {
+    /// Creates a job kind from a module-owned static literal.
+    ///
+    /// The caller must use a literal that satisfies the same grammar as [`Self::new`].
+    #[must_use]
+    pub const fn from_valid_static(value: &'static str) -> Self {
+        Self(value)
+    }
+
     pub fn new(value: &'static str) -> Result<Self, AppError> {
         let bytes = value.as_bytes();
         let valid = (2..=64).contains(&bytes.len())

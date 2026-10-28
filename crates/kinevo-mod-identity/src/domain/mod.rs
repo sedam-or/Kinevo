@@ -3,6 +3,7 @@
 pub mod device;
 pub mod lockout;
 pub mod password;
+pub mod profile;
 pub mod session;
 
 use serde::{Deserialize, Serialize};
