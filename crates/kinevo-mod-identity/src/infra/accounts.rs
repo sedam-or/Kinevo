@@ -1,11 +1,11 @@
-use kinevo_db::SystemTx;
+use kinevo_db::{SystemTx, Tx};
 use kinevo_kernel::{
     errors::{AppError, ErrorCode},
     id::AccountId,
     time::Instant,
     validate::net::Email,
 };
-use kinevo_ports::platform::AccountStatus;
+use kinevo_ports::platform::{AccountProfile, AccountStatus, NewAccount};
 use sqlx::Row;
 
 use crate::domain::lockout::LockoutState;
@@ -24,6 +24,46 @@ pub struct AccountRow {
     pub password_hash: String,
     pub lockout: LockoutState,
     pub version: i64,
+}
+
+/// Inserts an account row in its newly generated tenant context.
+pub async fn create(
+    tx: &mut Tx,
+    input: &NewAccount,
+    now: Instant,
+) -> Result<AccountProfile, AppError> {
+    let row = sqlx::query(
+        "INSERT INTO public.accounts \
+         (id, email, display_name, password_hash, locale, timezone, is_instance_admin, created_at, updated_at) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz, $8::timestamptz) \
+         RETURNING id::text AS id, email::text AS email, display_name, locale, timezone, \
+                   week_start, totp_enabled, is_instance_admin, version",
+    )
+    .bind(*input.id.as_uuid())
+    .bind(input.email.as_str())
+    .bind(&input.display_name)
+    .bind(&input.password_hash)
+    .bind(input.locale.as_str())
+    .bind(input.timezone.as_str())
+    .bind(input.is_instance_admin)
+    .bind(now.to_rfc3339())
+    .fetch_one(tx.conn())
+    .await
+    .map_err(map_create_error)?;
+
+    Ok(AccountProfile {
+        id: row.try_get("id").map_err(service_unavailable)?,
+        email: row.try_get("email").map_err(service_unavailable)?,
+        display_name: row.try_get("display_name").map_err(service_unavailable)?,
+        locale: row.try_get("locale").map_err(service_unavailable)?,
+        timezone: row.try_get("timezone").map_err(service_unavailable)?,
+        week_start: row.try_get("week_start").map_err(service_unavailable)?,
+        totp_enabled: row.try_get("totp_enabled").map_err(service_unavailable)?,
+        is_instance_admin: row
+            .try_get("is_instance_admin")
+            .map_err(service_unavailable)?,
+        version: row.try_get("version").map_err(service_unavailable)?,
+    })
 }
 
 /// Finds an account by its normalized email address in the restricted system context.
@@ -173,4 +213,16 @@ fn parse_instant(value: &str) -> Result<Instant, AppError> {
 
 fn service_unavailable(_: sqlx::Error) -> AppError {
     AppError::new(ErrorCode::ServiceUnavailable)
+}
+
+fn map_create_error(error: sqlx::Error) -> AppError {
+    if error
+        .as_database_error()
+        .and_then(|database| database.constraint())
+        == Some("accounts_email_key")
+    {
+        AppError::new(ErrorCode::EmailTaken)
+    } else {
+        service_unavailable(error)
+    }
 }

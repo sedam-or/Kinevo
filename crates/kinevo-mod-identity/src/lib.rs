@@ -109,6 +109,13 @@ pub fn router(service: Arc<app::login::LoginService>) -> RouteTable {
     RouteTable::new().route(spec, route)
 }
 
+/// Builds the public registration route for module composition.
+#[must_use]
+pub fn register_router(service: Arc<app::register::RegisterService>) -> RouteTable {
+    let (spec, route) = http::register::route(service);
+    RouteTable::new().route(spec, route)
+}
+
 /// Builds the login, refresh and revocation routes for module composition.
 #[must_use]
 pub fn router_with_refresh(

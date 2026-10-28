@@ -5,19 +5,76 @@
 use crate::{
     module::ModuleKey,
     platform::{
-        AccountAccess, AccountAccessInfo, IdemBegin, IdempotencyPort, InstanceInfo, InstanceState,
-        ModuleSwitches, PolicyReader, ResolvedPolicies, SecretMask, SecretName, SecretScope,
-        SecretStore, last4, validate_secret_scope,
+        AccessClaims, AccountAccess, AccountAccessInfo, AccountCreation, AccountProfile,
+        CreatedAccount, IdemBegin, IdempotencyPort, InstanceInfo, InstanceState, ModuleSwitches,
+        PolicyReader, ResolvedPolicies, SecretMask, SecretName, SecretScope, SecretStore, last4,
+        validate_secret_scope,
     },
 };
 use async_trait::async_trait;
 use kinevo_kernel::{
     crypto::ct_eq,
     errors::{AppError, ErrorCode},
-    id::AccountId,
+    id::{AccountId, FamilyId},
     secret::Secret,
     time::Instant,
 };
+
+/// Deterministic account-creation port fake for application tests.
+#[derive(Default)]
+pub struct FakeAccountCreation {
+    calls: std::sync::atomic::AtomicUsize,
+}
+
+impl FakeAccountCreation {
+    /// Number of account-creation calls received by this fake.
+    #[must_use]
+    pub fn calls(&self) -> usize {
+        self.calls.load(std::sync::atomic::Ordering::Relaxed)
+    }
+}
+
+#[async_trait]
+impl<T: Send> AccountCreation<T> for FakeAccountCreation {
+    async fn create(
+        &self,
+        _tx: &mut T,
+        input: super::platform::NewAccount,
+    ) -> Result<CreatedAccount, AppError> {
+        use std::sync::atomic::Ordering;
+
+        self.calls.fetch_add(1, Ordering::Relaxed);
+        let family_id = FamilyId::from_uuid(*input.id.as_uuid());
+        let expires_at = input
+            .session
+            .now
+            .checked_add_seconds(i64::from(input.session.access_ttl))
+            .ok_or_else(|| AppError::new(ErrorCode::InternalError))?;
+        Ok(CreatedAccount {
+            profile: AccountProfile {
+                id: input.id.to_string(),
+                email: input.email.as_str().to_owned(),
+                display_name: input.display_name,
+                locale: input.locale.as_str().to_owned(),
+                timezone: input.timezone.as_str().to_owned(),
+                week_start: 1,
+                totp_enabled: false,
+                is_instance_admin: input.is_instance_admin,
+                version: 1,
+            },
+            refresh_token: Secret::new("synthetic-refresh-token".to_owned()),
+            access_claims: AccessClaims {
+                account_id: input.id,
+                family_id,
+                issued_at: input.session.now,
+                expires_at,
+                mfa: false,
+            },
+            expires_in: input.session.access_ttl,
+            refresh_cookie_max_age: input.session.absolute_ttl,
+        })
+    }
+}
 use std::{
     collections::{BTreeMap, BTreeSet},
     sync::{Mutex, RwLock},

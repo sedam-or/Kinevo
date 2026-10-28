@@ -3,7 +3,7 @@ id: T-025
 title: Implement POST /auth/register, the account-creation port and provisioner execution
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-024, T-021, T-008, T-014]
 requirements: [ID-FR-09, ID-FR-14, MOD-10, ADR-0011, SM-22, SEC-AC-06, FLW-02]
 branch: m1-t025-identity-register
@@ -124,7 +124,86 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Implemented open, invite-only, and closed registration, including the public `POST /auth/register` route, transactional account creation, ordered provisioners, first refresh family/token, audit entry, and `AccountRegistered` outbox event. Registration validates and hashes the password before opening the new-account transaction; the named acceptance tests cover rollback, invite races, duplicate email, validation, and tenant context.
+
+### Acceptance results
+
+| AC | Named test | Result |
+|---|---|---|
+| AC-1 | `register::id_fr_09_open_mode_success` | pass |
+| AC-2 | `register::sec_ac_06_closed_registration` | pass |
+| AC-3 | `register::id_fr_09_invite_mode_table` | pass |
+| AC-4 | `register::mod_10_failing_provisioner_rolls_back` | pass |
+| AC-5 | `register::email_taken_case_insensitive` | pass |
+| AC-6 | `register::val_01_all_errors_returned` | pass |
+| AC-7 | `register::tst_20_concurrent_same_email` | pass |
+| AC-8 | `register::sm_22_invite_single_use_under_race` | pass |
+| AC-9 | `register::adr_0011_provisioning_in_new_account_context` | pass |
+
+### Commands run
+
+- `df -h /` before each build/test run: 84 GB available; no prune or resource removal was needed.
+- Test-first `cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing register::`: exit 101 before implementation because the registration modules and router did not exist yet; the compiler reported unresolved registration imports. The initial named-test run then exposed the invalid-timezone fixture using the valid `UTC` name; it was corrected to `UTC+7`.
+- `cargo fmt --all`: exit 0.
+- `cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing --test register`: final focused run passed all 9 acceptance tests.
+- `cargo nextest run -p kinevo-ports -p kinevo-mod-identity --features kinevo-db/testing` with the default test parallelism: exit 100; 46 tests ran (42 passed, 4 failed, 1 skipped) and four DB test fixtures reported `disposable PostgreSQL test database should start: Unavailable` while starting in parallel.
+- `export PATH="$HOME/.cargo/bin:$PATH" NEXTEST_TEST_THREADS=4; eval "$(scripts/dev-postgres.sh env)" && cargo nextest run -p kinevo-ports -p kinevo-mod-identity --features kinevo-db/testing`: exit 0; 67 tests passed, 1 skipped. The shared PostgreSQL server reported `max_connections = 100`; limiting Nextest to four concurrent tests avoided the DB-startup failures without reducing concurrency inside the acceptance cases.
+- Final `just check`, with `PATH` set, `NEXTEST_TEST_THREADS=4`, and `KINEVO_TEST_DATABASE_URL` from `scripts/dev-postgres.sh env`: exit 0. Output: 237 tests passed, 1 skipped; `cargo deny check` ended `advisories ok, bans ok, licenses ok, sources ok`; `scripts/spec_tool.py check` reported `0 finding(s) in 60 spec files`; contrast reported `failures: 0`; `scripts/tasks_index.py --check` reported `0 problem(s) in 132 task(s)`.
+- Intermediate `just check` attempts caught, then fixed, a formatting diff, `clippy::needless_pass_by_value` in `RegistrationPolicy::from_snapshot`, and two `clippy::panic` findings in race-test error handling. The final gate above is after those fixes.
+
+### Files changed
+
+The implementation source/test/spec diff is 1,554 changed lines. This table excludes generated `Cargo.lock` and workflow bookkeeping (`tasks/T-025-identity-register-and-account-creation.md`, `tasks/index.md`). The 420-line task budget is exceeded; D-55 makes it guidance and this is recorded under Deviations.
+
+| Path | Lines added / removed |
+|---|---:|
+| `crates/kinevo-mod-identity/src/app/accounts.rs` | +148 / -0 |
+| `crates/kinevo-mod-identity/src/app/login.rs` | +1 / -14 |
+| `crates/kinevo-mod-identity/src/app/mod.rs` | +2 / -0 |
+| `crates/kinevo-mod-identity/src/app/refresh.rs` | +2 / -7 |
+| `crates/kinevo-mod-identity/src/app/register.rs` | +280 / -0 |
+| `crates/kinevo-mod-identity/src/http/mod.rs` | +1 / -0 |
+| `crates/kinevo-mod-identity/src/http/register.rs` | +120 / -0 |
+| `crates/kinevo-mod-identity/src/infra/accounts.rs` | +54 / -2 |
+| `crates/kinevo-mod-identity/src/infra/invites.rs` | +32 / -0 |
+| `crates/kinevo-mod-identity/src/infra/mod.rs` | +1 / -0 |
+| `crates/kinevo-mod-identity/src/lib.rs` | +7 / -0 |
+| `crates/kinevo-mod-identity/tests/register.rs` | +700 / -0 |
+| `crates/kinevo-ports/Cargo.toml` | +1 / -0 |
+| `crates/kinevo-ports/src/fakes.rs` | +61 / -4 |
+| `crates/kinevo-ports/src/platform.rs` | +112 / -2 |
+| `spec/decisions.md` | +1 / -0 |
+| `spec/index.md` | +1 / -1 |
+
+The task file contains this report and its `status: review` transition; `tasks/index.md` was regenerated by `scripts/tasks_index.py`. `Cargo.lock` has one generated line added for the approved port dependency.
+
+### Deviations
+
+- The 1,554 changed-line implementation diff exceeds `budget_lines: 420`. The nine acceptance tests need a PostgreSQL-backed HTTP/use-case fixture and race scenarios; no acceptance test was weakened or removed. `Cargo.lock` is generated and excluded from the budget under D-55.
+- Added small module/router wiring and moved shared account/client DTOs into `kinevo-ports::platform`, with compatibility re-exports from the existing identity app paths. D-106 records this choice. The `utoipa` dependency was already approved by `spec/standards/open-source-stack.md`.
+- The D-102 shared-PostgreSQL rule supersedes T-011's earlier testcontainers instruction. Every DB test uses the shared server and its own disposable database. The first unbounded package run hit four database-startup failures; the final package suite and full gate used `NEXTEST_TEST_THREADS=4`. The server remained the existing `kinevo-dev-pg`; no image was built or pulled, and no containers/images/volumes were pruned or deleted.
+- Run-wide disk and cache rules D-103 through D-105 are documented in the earlier run-wide commit; no `cargo clean` or cache sweep was run in this task. The sweep is reserved for the M1 milestone boundary under D-104.
+
+### Spec issues noticed
+
+None affecting T-025.
+
+### Not done / not verified
+
+- No browser, Android emulator, or external-provider E2E was run; T-025's endpoint contract was exercised through the in-process Axum router and the task does not require those environments.
+- No production database or deployment was used. All database acceptance tests used disposable per-test databases on the shared local PostgreSQL server.
+
+### Follow-up suggestions
+
+None.
+
+### Decisions made by implementer
+
+| ID | Choice and alternatives | Files and reversal |
+|---|---|---|
+| D-106 | Keep `AccountProfile` and the first-session `Client` transport class in `kinevo-ports::platform`, with re-exports from the existing identity app modules. This lets the account-creation port remain independent of identity application types while preserving current call sites. Duplicating the DTOs or making `kinevo-ports` depend on the identity crate were rejected. Pending owner review. | `crates/kinevo-ports/src/platform.rs`, `crates/kinevo-ports/src/fakes.rs`, `crates/kinevo-mod-identity/src/app/login.rs`, `crates/kinevo-mod-identity/src/app/refresh.rs`, `spec/decisions.md`, `spec/index.md`. Reverse by moving the shared types to another approved layer, updating port users, and superseding D-106. |
 
 ## Questions
 

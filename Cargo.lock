@@ -1313,6 +1313,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+ "utoipa",
 ]
 
 [[package]]

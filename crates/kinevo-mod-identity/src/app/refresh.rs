@@ -23,14 +23,9 @@ use crate::{
     infra::sessions,
 };
 
-const GRACE_CACHE_CAPACITY: u64 = 10_000;
+pub use kinevo_ports::platform::Client;
 
-/// Transport class retained for the HTTP adapter that arrives in T-024.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Client {
-    Web,
-    Android,
-}
+const GRACE_CACHE_CAPACITY: u64 = 10_000;
 
 /// Tokens returned after a successful rotation.
 pub struct Refreshed {

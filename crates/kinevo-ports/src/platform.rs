@@ -5,11 +5,14 @@
 use async_trait::async_trait;
 use kinevo_kernel::{
     errors::{AppError, DetailValue, ErrorCode},
-    id::AccountId,
+    id::{AccountId, FamilyId},
     policy::{PolicyKey, PolicyValueType, Resolved},
     secret::Secret,
     time::Instant,
-    validate::{net::HttpsUrl, tz::Locale},
+    validate::{
+        net::{Email, HttpsUrl},
+        tz::{IanaTz, Locale},
+    },
 };
 use std::collections::BTreeMap;
 
@@ -79,6 +82,113 @@ pub struct InstanceInfo {
 pub trait InstanceState: Send + Sync {
     /// Returns the current instance setup status and public defaults.
     async fn get(&self) -> Result<InstanceInfo, AppError>;
+}
+
+/// Transport class used when a newly created account receives its first session.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Client {
+    /// Browser client that stores the refresh token in an HTTP-only cookie.
+    Web,
+    /// Android client that receives the refresh token in the response body.
+    Android,
+}
+
+/// Safe account fields returned by authentication and account creation.
+#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, utoipa::ToSchema)]
+pub struct AccountProfile {
+    /// Canonical account identifier.
+    pub id: String,
+    /// Normalized account email.
+    pub email: String,
+    /// Display name shown in the client.
+    pub display_name: String,
+    /// Supported locale key.
+    pub locale: String,
+    /// Canonical IANA time zone.
+    pub timezone: String,
+    /// First day of the account's week.
+    pub week_start: i16,
+    /// Whether the account has enabled TOTP.
+    pub totp_enabled: bool,
+    /// Whether the account has instance administrator permissions.
+    pub is_instance_admin: bool,
+    /// Optimistic-concurrency version.
+    pub version: i64,
+}
+
+/// Session policy snapshot passed into transactional account creation.
+#[derive(Clone, Copy)]
+pub struct AccountSessionSettings {
+    /// Injected instant for the family and token rows.
+    pub now: Instant,
+    /// Access-token lifetime in seconds.
+    pub access_ttl: u32,
+    /// Refresh-token idle lifetime in seconds.
+    pub idle_ttl: u32,
+    /// Refresh-family absolute lifetime in seconds.
+    pub absolute_ttl: u32,
+    /// Refresh-token rotation grace in seconds.
+    pub grace: u32,
+}
+
+/// Claims input for the first account access token.
+#[derive(Clone, Copy)]
+pub struct AccessClaims {
+    /// New account subject.
+    pub account_id: AccountId,
+    /// Session family identifier.
+    pub family_id: FamilyId,
+    /// Injected issue instant.
+    pub issued_at: Instant,
+    /// Policy-derived expiry instant.
+    pub expires_at: Instant,
+    /// Whether the session satisfied MFA.
+    pub mfa: bool,
+}
+
+/// Validated account fields and session settings supplied to the creation port.
+pub struct NewAccount {
+    /// Application-generated account identifier.
+    pub id: AccountId,
+    /// Normalized email value.
+    pub email: Email,
+    /// PHC password hash computed before opening the transaction.
+    pub password_hash: String,
+    /// Normalized display name.
+    pub display_name: String,
+    /// Validated canonical IANA time zone.
+    pub timezone: IanaTz,
+    /// Supported locale.
+    pub locale: Locale,
+    /// Whether the account is the first instance administrator.
+    pub is_instance_admin: bool,
+    /// Client class for the first session.
+    pub client: Client,
+    /// Safe device label, if supplied.
+    pub device_label: Option<String>,
+    /// Resolved time and session lifetimes.
+    pub session: AccountSessionSettings,
+}
+
+/// Account creation result including the first refresh token and access claims.
+pub struct CreatedAccount {
+    /// Safe account profile.
+    pub profile: AccountProfile,
+    /// Plain refresh token returned once to the caller.
+    pub refresh_token: Secret<String>,
+    /// Values used to sign the first access token.
+    pub access_claims: AccessClaims,
+    /// Access-token lifetime in seconds.
+    pub expires_in: u32,
+    /// Refresh-cookie lifetime in seconds.
+    pub refresh_cookie_max_age: u32,
+}
+
+/// Creates a new account and its first session inside the caller's transaction.
+#[async_trait]
+pub trait AccountCreation<T: Send>: Send + Sync {
+    /// Inserts account-owned data, runs provisioners, and returns the first session material.
+    async fn create(&self, tx: &mut T, input: NewAccount) -> Result<CreatedAccount, AppError>;
 }
 
 /// Scope of one registered secret name.

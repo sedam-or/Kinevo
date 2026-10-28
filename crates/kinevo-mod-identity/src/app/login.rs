@@ -17,6 +17,7 @@ use kinevo_kernel::{
     time::{Clock, Instant},
     validate::net::Email,
 };
+pub use kinevo_ports::platform::AccountProfile;
 use kinevo_ports::platform::PolicyReader;
 use moka::{Expiry, future::Cache};
 use tokio::sync::Mutex;
@@ -101,20 +102,6 @@ pub struct LoginRequest {
     pub password: Secret<String>,
     pub totp_code: Option<String>,
     pub recovery_code: Option<Secret<String>>,
-}
-
-/// The safe account fields returned by login and `GET /account`.
-#[derive(Clone, Debug, Eq, PartialEq, serde::Serialize, utoipa::ToSchema)]
-pub struct AccountProfile {
-    pub id: String,
-    pub email: String,
-    pub display_name: String,
-    pub locale: String,
-    pub timezone: String,
-    pub week_start: i16,
-    pub totp_enabled: bool,
-    pub is_instance_admin: bool,
-    pub version: i64,
 }
 
 /// Tokens and account profile created by a successful login.
