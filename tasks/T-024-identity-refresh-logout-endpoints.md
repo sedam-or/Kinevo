@@ -3,12 +3,12 @@ id: T-024
 title: Implement POST /auth/refresh, /auth/logout, /auth/logout-all and the refresh cookie
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-023]
 requirements: [API-11, ID-FR-05, ID-FR-06, SEC-09, SEC-AC-04, SEC-AC-05, D-37]
 branch: m1-t024-identity-refresh-logout
 budget_lines: 330
-assignee: ""
+assignee: Codex
 ---
 
 # T-024: Implement POST /auth/refresh, /auth/logout, /auth/logout-all and the refresh cookie
