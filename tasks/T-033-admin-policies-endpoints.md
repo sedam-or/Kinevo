@@ -3,12 +3,12 @@ id: T-033
 title: Implement the policies service, PolicyReader and the policies endpoints
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-031, T-006, T-008, T-012, T-014, T-017, T-019]
 requirements: [POL-01, POL-02, POL-03, POL-04, POL-05, POL-08, ADM-FR-04, ADM-FR-05, D-39]
 branch: m1-t033-admin-policies-endpoints
 budget_lines: 400
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-033: Implement the policies service, PolicyReader and the policies endpoints
