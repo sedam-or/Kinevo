@@ -3,12 +3,12 @@ id: T-032
 title: Implement the SecretStore port and the secrets endpoints
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-031, T-004, T-008, T-017, T-019]
 requirements: [ADM-FR-05, ADM-FR-06, D-19, D-40, D-46, D-47, SEC-03, SEC-AC-11]
 branch: m1-t032-admin-secret-store
 budget_lines: 390
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-032: Implement the SecretStore port and the secrets endpoints
