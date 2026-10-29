@@ -3,12 +3,12 @@ id: T-036
 title: Implement the setup token, InstanceState, the setup gate and the wizard session endpoints
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-034, T-035, T-017, T-016, T-012]
 requirements: [ADM-FR-01, ADM-FR-02, SET-02, SET-04, SET-05, SEC-AC-08, SEC-14, D-42]
 branch: m1-t036-admin-setup-gate-and-session
 budget_lines: 400
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-036: Implement the setup token, InstanceState, the setup gate and the wizard session endpoints
