@@ -64,6 +64,7 @@ Thresholds are the architect's **assumptions** to make decisions explicit; the o
 | RM-R10 | AI provider cost/abuse in cloud | medium / medium | per-account limits, allowance policy (OWNER-02), BYOK |
 | RM-R11 | Android WebView UX ceiling | medium / low | PWA first; measured limits before any native screen work |
 | RM-R12 | Dependency churn (TypeScript 7, Vite 8, Tailwind 4, sqlx 0.9 …) | medium / medium | pin versions per `open-source-stack.md`; upgrade tasks are explicit and small |
+| RM-R13 | Long implementation runs exhaust local build storage | medium / high | D-125: check disk before builds/tests/container starts, default dev debug info off, sweep stale artifacts at milestone boundaries, and preserve non-Kinevo resources |
 
 ## 5. Optional / deferred (each needs an RFC and evidence)
 

@@ -11,7 +11,7 @@ Each file depends only on files above it (its header says `Depends on:`).
 | # | File | Prefix | What it fixes |
 |---|---|---|---|
 | — | [`00-verdict.md`](00-verdict.md) | — | Phase 0 analysis of the legacy repo; measured baseline; keep/rewrite/drop |
-| — | [`decisions.md`](decisions.md) | `D` | Decision log D-01…D-124 and owner-only open items OWNER-01…07 |
+| — | [`decisions.md`](decisions.md) | `D` | Decision log D-01…D-125 and owner-only open items OWNER-01…07 |
 | — | [`adr/`](adr/) | `ADR` | Architecture decision records (see §4) |
 | 01 | [`01-product.md`](01-product.md) | `PRD` | Problem, personas, principles, scope, non-goals (PROVISIONAL until V1) |
 | 02 | [`02-architecture.md`](02-architecture.md) | `ARCH` | Modular monolith, crates, ports, events, tenancy, runtime |
@@ -94,6 +94,12 @@ A new ADR is numbered next in sequence, starts as `Proposed`, and becomes `Accep
 
 - Requirement ids are `PREFIX-NN` (e.g. `SCH-FR-07`, `CA-09`, `SEC-AC-12`). Module files may add a kind segment (`-FR-` functional, `-NFR-` non-functional). Ids are **stable forever**: never renumbered or reused; a removed requirement keeps its id with `(withdrawn, D-nn)`.
 - Decisions `D-nn` (`decisions.md`), owner questions `OWNER-nn`, maintainer actions `M-<NAME>` (e.g. `M-LEGAL`, `M-RIGHTS`).
+- D-102 uses one shared PostgreSQL server with a unique disposable database per test and no Testcontainers fallback.
+- D-103 sets development debug info to zero with a local environment override.
+- D-104 installs `cargo-sweep` once and sweeps stale artifacts at milestone boundaries.
+- D-105 prohibits image builds/pulls and sets the disk-check, cleanup and hard-stop limits.
+- D-106 shares identity account/client DTOs through `kinevo-ports::platform`.
+- D-107 defines the 32-symbol TOTP recovery-code alphabet and supersedes D-97 for it.
 - D-108 records the reset lookup injection used to prove equal lookup and dummy-hash counts for known and unknown reset requests.
 - D-109 requires exact start/end disk measurements and a cleanup record in the run report.
 - D-110 aligns T-031's isolation verifier and fixtures with the combined D-39 policy for `policy_versions`.
@@ -104,6 +110,14 @@ A new ADR is numbered next in sequence, starts as `Proposed`, and becomes `Accep
 - D-115 preserves the logical secret update timestamp when only ciphertext is rotated.
 - D-116 uses the approved OS CSPRNG for rotation nonces while preserving the task's public function signature.
 - D-117 treats CLI rotation as process-authorized, with no account actor in its admin transaction.
+- D-118 stores template term overrides as message keys.
+- D-119 validates templates against caller-provided registries in `ValidationCtx`.
+- D-120 normalizes omitted toggleable template modules to disabled.
+- D-121 writes template policy presets to every scope permitted by the policy spec.
+- D-122 injects the configured public origin and selects a stable setup-token/session encoding.
+- D-123 persists setup tokens through a scoped app transaction without creating an account.
+- D-124 caps setup-token attempt-source counters at 4,096 keys.
+- D-125 clarifies ownership-safe cleanup and run-wide disk handling without changing D-102–D-105 or D-109.
 - Tasks are `T-nnn` (`tasks/`); commit subjects reference them as `[T-nnn]`.
 - Error codes are `snake_case` strings in the `ERR` registry; permission keys are `<module>.<resource>.<action>` in the `RBAC` registry; policy keys are dotted (`auth.refresh.grace`) in `04-policies.md`.
 - Consistency is checked by `scripts/spec_tool.py` (`codes`, `perms`, `check`).

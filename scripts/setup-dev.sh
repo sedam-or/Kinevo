@@ -36,6 +36,7 @@ cargo_tool cargo-audit cargo-audit
 cargo_tool cargo-llvm-cov cargo-llvm-cov
 cargo_tool cargo-mutants cargo-mutants
 cargo_tool cargo-fuzz cargo-fuzz
+cargo_tool cargo-sweep cargo-sweep
 cargo_tool wasm-pack wasm-pack
 cargo_tool wasm-bindgen wasm-bindgen-cli
 cargo_tool typos typos-cli
