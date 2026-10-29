@@ -1334,14 +1334,22 @@ dependencies = [
 name = "kinevo-mod-admin"
 version = "0.0.0"
 dependencies = [
+ "async-trait",
+ "axum",
  "futures",
+ "getrandom 0.4.3",
  "kinevo-db",
  "kinevo-http",
  "kinevo-kernel",
  "kinevo-mod-identity",
  "kinevo-ports",
+ "serde",
+ "serde_json",
  "sqlx",
  "tokio",
+ "tower",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

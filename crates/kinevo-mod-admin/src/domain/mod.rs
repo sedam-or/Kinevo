@@ -11,3 +11,6 @@ pub enum PolicyScope {
 
 /// Registered secret names supported by the shared platform port.
 pub use crate::ports::SecretName as SecretNameRegistered;
+
+/// Secret registry names and their permitted scopes.
+pub mod secrets;

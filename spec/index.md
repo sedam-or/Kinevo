@@ -11,7 +11,7 @@ Each file depends only on files above it (its header says `Depends on:`).
 | # | File | Prefix | What it fixes |
 |---|---|---|---|
 | — | [`00-verdict.md`](00-verdict.md) | — | Phase 0 analysis of the legacy repo; measured baseline; keep/rewrite/drop |
-| — | [`decisions.md`](decisions.md) | `D` | Decision log D-01…D-107 and owner-only open items OWNER-01…07 |
+| — | [`decisions.md`](decisions.md) | `D` | Decision log D-01…D-116 and owner-only open items OWNER-01…07 |
 | — | [`adr/`](adr/) | `ADR` | Architecture decision records (see §4) |
 | 01 | [`01-product.md`](01-product.md) | `PRD` | Problem, personas, principles, scope, non-goals (PROVISIONAL until V1) |
 | 02 | [`02-architecture.md`](02-architecture.md) | `ARCH` | Modular monolith, crates, ports, events, tenancy, runtime |
@@ -98,6 +98,12 @@ A new ADR is numbered next in sequence, starts as `Proposed`, and becomes `Accep
 - D-109 requires exact start/end disk measurements and a cleanup record in the run report.
 - D-110 aligns T-031's isolation verifier and fixtures with the combined D-39 policy for `policy_versions`.
 - D-111 keeps the identity descriptor dependency used by T-031's AC-9 graph test dev-only.
+- D-112 defines the code-like outbox enum used to identify a registered secret name.
+- D-113 keeps active and fallback secret keys available by stored key id during D-47 rotation.
+- D-114 defines audit attribution and RLS context for SecretStore writes that lack an actor argument.
+- D-115 preserves the logical secret update timestamp when only ciphertext is rotated.
+- D-116 uses the approved OS CSPRNG for rotation nonces while preserving the task's public function signature.
+- D-117 treats CLI rotation as process-authorized, with no account actor in its admin transaction.
 - Tasks are `T-nnn` (`tasks/`); commit subjects reference them as `[T-nnn]`.
 - Error codes are `snake_case` strings in the `ERR` registry; permission keys are `<module>.<resource>.<action>` in the `RBAC` registry; policy keys are dotted (`auth.refresh.grace`) in `04-policies.md`.
 - Consistency is checked by `scripts/spec_tool.py` (`codes`, `perms`, `check`).

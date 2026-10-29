@@ -42,6 +42,8 @@ Implements the platform ports `PolicyReader`, `ModuleSwitches`, `InstanceState` 
 
 **Secret name registry** (D-40). Instance secrets (`account_id` null, managed by these endpoints): `smtp.password`, `ai.api_key`, `billing.gateway_key`, `billing.webhook_secret`. Account secrets (managed by their owning module through the `SecretStore` port in `kinevo-ports`, which this module implements): `identity.totp_seed` (identity), `ai.api_key` (ai, BYOK). Any other name → `secret_name_unknown`. `SecretStore` offers `put`, `get` (returns a redacting `Secret<String>`), `delete` and `mask` (`is_set`, `last4`) and encrypts as in ADM-FR-06.
 
+`SecretStore` writes audit the registered name and emit `SecretChanged` in the same transaction. The event's `name` enum uses the registry name with dots replaced by underscores (D-112). Port writes attribute account-scoped changes to that account; instance-scoped port writes require an active instance administrator, while HTTP writes use the authenticated administrator (D-114).
+
 ## 3. Functional requirements
 
 | ID | Requirement | Acceptance |
@@ -92,7 +94,7 @@ There is no transition back; resetting an instance is a documented operation out
 
 ## 7. Events / jobs
 
-Emits: `InstanceSetupCompleted`, `ModuleSwitched`, `PolicyChanged`, `SecretChanged` (name only). Jobs: `admin.audit.prune` (daily), `admin.idempotency.prune` (hourly), `jobs.prune` (daily, deletes finished jobs older than 7 days), `outbox.prune` (daily, delivered events older than 7 days), `outbox.dispatch` (continuous loop in worker).
+Emits: `InstanceSetupCompleted`, `ModuleSwitched`, `PolicyChanged`, `SecretChanged` (registered name only; dots become underscores in its enum token per D-112). Jobs: `admin.audit.prune` (daily), `admin.idempotency.prune` (hourly), `jobs.prune` (daily, deletes finished jobs older than 7 days), `outbox.prune` (daily, delivered events older than 7 days), `outbox.dispatch` (continuous loop in worker).
 
 ## 8. Abuse cases
 

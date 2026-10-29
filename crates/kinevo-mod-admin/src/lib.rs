@@ -10,6 +10,7 @@ pub mod ports;
 
 use std::sync::Arc;
 
+use app::secrets::SecretsService;
 use kinevo_db::{Tx, jobs::JobHandler, migrate::MigrationSource};
 use kinevo_http::route::RouteTable;
 use kinevo_ports::module::{
@@ -105,10 +106,10 @@ pub const MODULE: ModuleDescriptor = ModuleDescriptor {
     subscriptions: &[],
 };
 
-/// Returns an empty route table until admin endpoints are implemented.
+/// Returns the admin secret routes assembled for the application.
 #[must_use]
-pub fn router() -> RouteTable {
-    RouteTable::new()
+pub fn router(secrets: Arc<SecretsService>) -> RouteTable {
+    http::secrets::routes(secrets)
 }
 
 /// Returns admin job handlers once their use cases are implemented.
