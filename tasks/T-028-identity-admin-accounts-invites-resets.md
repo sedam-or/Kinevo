@@ -3,12 +3,12 @@ id: T-028
 title: Implement admin account management, invites and the password-reset flows
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-027, T-012, T-014]
 requirements: [ID-FR-07, ID-FR-10, ID-FR-13, D-27, D-45, SM-22, SEC-AC-10, API-23]
 branch: m1-t028-identity-admin-resets
 budget_lines: 430
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-028: Implement admin account management, invites and the password-reset flows
