@@ -3,12 +3,12 @@ id: T-037
 title: Implement Finish setup as one provisioning transaction
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-036, T-025, T-019, T-014, T-033, T-034]
 requirements: [ADM-FR-02, SET-01, SET-02, SET-03, SET-06, MOD-10, D-39, D-42]
 branch: m1-t037-admin-setup-finish
 budget_lines: 390
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-037: Implement Finish setup as one provisioning transaction
