@@ -3,12 +3,12 @@ id: T-029
 title: Implement account deletion (purge job) and data export (ZIP builder)
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-028, T-013, T-014, T-008]
 requirements: [ID-FR-10, ID-FR-11, ID-FR-12, MOD-11, SM-21, DOM-04, SEC-10, D-41]
 branch: m1-t029-identity-deletion-export
 budget_lines: 430
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-029: Implement account deletion (purge job) and data export (ZIP builder)
