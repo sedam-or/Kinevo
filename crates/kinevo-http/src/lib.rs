@@ -4,6 +4,7 @@
 
 pub mod auth;
 pub mod concurrency;
+pub mod cookie;
 pub mod extract;
 pub mod gate;
 pub mod i18n;

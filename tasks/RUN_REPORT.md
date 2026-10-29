@@ -23,3 +23,23 @@ Filesystem                    Size  Used Avail Use% Mounted on
 ```
 
 Cleanup: none. Reused the existing `kinevo-dev-pg` PostgreSQL 17 container. No image was built or pulled; no containers, images, volumes, or `target/` files were removed.
+
+### T-037 continuation start
+
+Captured before the first T-037 test/build on 2026-10-29:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  409G   57G  88% /
+```
+
+### T-037 continuation final
+
+Captured after the final `just check` on 2026-10-30:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  412G   54G  89% /
+```
+
+Cleanup: none. Reused the already-running `kinevo-dev-pg` PostgreSQL 17 container. No image was built or pulled; no containers, images, volumes, or `target/` files were removed.

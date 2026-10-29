@@ -12,5 +12,8 @@ pub mod modules;
 /// Embedded setup-template registry and application planning.
 pub mod templates;
 
+/// Atomic first-account provisioning and setup completion.
+pub mod finish_setup;
+
 /// Setup token lifecycle and the process-local wizard session.
 pub mod setup;
