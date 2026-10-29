@@ -3,12 +3,12 @@ id: T-035
 title: Add the embedded setup templates and the template schema validator
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-033, T-034]
 requirements: [TPL-01, TPL-02, TPL-03, TPL-04, MOD-03, POL-03, D-10]
 branch: m1-t035-admin-templates
 budget_lines: 330
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-035: Add the embedded setup templates and the template schema validator
