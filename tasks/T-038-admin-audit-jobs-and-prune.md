@@ -3,12 +3,12 @@ id: T-038
 title: Add audit reading, the jobs summary, outbox retry and the platform prune jobs
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-034, T-033, T-013, T-014, T-015, T-012]
 requirements: [ADM-FR-05, ADM-FR-07, ADM-FR-08, SEC-AC-10, API-14, D-41]
 branch: m1-t038-admin-audit-jobs-and-prune
 budget_lines: 380
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-038: Add audit reading, the jobs summary, outbox retry and the platform prune jobs
