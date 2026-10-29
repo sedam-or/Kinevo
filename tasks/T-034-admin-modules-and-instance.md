@@ -3,12 +3,12 @@ id: T-034
 title: Implement ModuleSwitches, GET /modules, GET /instance and PUT /admin/modules/{key}
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-031, T-008, T-012, T-014, T-017, T-019]
 requirements: [MOD-01, MOD-02, MOD-03, MOD-04, MOD-06, MOD-09, ADM-FR-01, ADM-FR-03, ADM-FR-05, D-41]
 branch: m1-t034-admin-modules-and-instance
 budget_lines: 380
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-034: Implement ModuleSwitches, GET /modules, GET /instance and PUT /admin/modules/{key}
