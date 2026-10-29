@@ -1,4 +1,6 @@
 {
+  "email.password_reset.subject": "Reset your Nivaras password",
+  "email.password_reset.body": "Use this one-time link to reset your password: {link}\nThis link is valid for {minutes} minutes.",
   "error.unauthenticated.title": "Sign in required",
   "error.unauthenticated.detail": "Review the request and try again.",
   "error.forbidden.title": "Not allowed",

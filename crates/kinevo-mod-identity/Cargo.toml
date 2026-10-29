@@ -17,12 +17,15 @@ argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "pa
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 sqlx = { version = "0.9.0", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls-ring-native-roots", "migrate", "macros", "uuid"] }
-tokio = { version = "1.54.1", features = ["rt", "sync"] }
+tokio = { version = "1.54.1", features = ["rt", "sync", "time"] }
 totp-rs = { version = "6.0.0", default-features = false, features = ["std", "otpauth", "zeroize"] }
 utoipa = "6.0.0"
 unicode-normalization = "0.1.26"
 zeroize = "1.9.1"
 zip = { version = "9.1.3", default-features = false, features = ["deflate"] }
+lettre = { version = "0.11.23", default-features = false, features = ["builder", "smtp-transport", "tokio1-rustls", "rustls-native-certs", "ring"] }
+url = "2.5.8"
+tracing = "0.1.44"
 
 [dev-dependencies]
 futures = "0.3.34"
@@ -30,7 +33,7 @@ kinevo-db = { workspace = true, features = ["testing"] }
 kinevo-ports = { workspace = true, features = ["testing"] }
 tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }
 tower = { version = "0.5.3", features = ["util"] }
-tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["fmt"] }
 
 [lints]
 workspace = true

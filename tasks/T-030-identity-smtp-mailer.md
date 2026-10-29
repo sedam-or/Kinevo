@@ -3,7 +3,7 @@ id: T-030
 title: Add the optional SMTP mailer adapter and the password-reset email
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-028, T-016]
 requirements: [D-27, ID-FR-13, CA-12, ARCH-03, SEC-08]
 branch: m1-t030-identity-smtp
@@ -110,8 +110,72 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Added the optional SMTP adapter, pure password-reset rendering from the English and Indonesian catalogues, secure Rustls transport construction, and reset-flow failure swallowing. SMTP settings/password loading remain at the T-039 composition root; the adapter accepts an already-resolved `Option<Secret<String>>`.
+
+### Acceptance results
+
+| AC | Test | Result |
+|---|---|---|
+| AC-1 | `mail::tests::d_27_url_parsing` | PASS |
+| AC-2 | `mail::tests::id_fr_13_body_has_only_the_link` | PASS |
+| AC-3 | `mail::no_tls_downgrade` | PASS |
+| AC-4 | `mail::message_headers` | PASS |
+| AC-5 | `mail::header_injection_rejected` | PASS |
+| AC-6 | `mail::sec_ac_45_mail_logs_are_clean` | PASS |
+| AC-7 | `mail::request_endpoint_swallows_send_errors` | PASS; reset request remains 202 when SMTP fails |
+| AC-8 | `mail::tests::catalog_has_email_keys` | PASS |
+
+### Commands run
+
+| Command | Result |
+|---|---|
+| `cargo nextest run -p kinevo-mod-identity` | Exit 0; 111 passed, 1 skipped. |
+| `cargo nextest run -p kinevo-mod-identity --lib tls_transport_builder_keeps_verified_modes` | Exit 0; 1 passed, confirming both secure transport builder paths construct successfully. |
+| `cargo check -p kinevo-mod-identity` | Exit 0 with the final Rustls provider and platform-root features. |
+| `cargo deny check licenses --hide-inclusion-graph` | Exit 0; `licenses ok`. Existing unused-license-allowance warnings remain. |
+| `just check` | Final run exit 0; 290 passed, 1 skipped. Includes formatting, Clippy, workspace tests, `cargo deny`, spec checks, contrast, and task-index validation. Existing `rand::thread_rng` Clippy configuration and duplicate-lock-entry warnings remain. |
+| `python3 scripts/spec_tool.py check` | Exit 0; 0 finding(s) in 60 spec files. |
+| `python3 scripts/tasks_index.py --check` | Exit 0; 0 problem(s) in 132 task(s). |
+| `scripts/dev-postgres.sh env` | Used the shared disposable PostgreSQL server; DB acceptance tests used isolated per-test databases. |
+
+Earlier gate attempts exposed formatting and Clippy issues, a catalogue test that assumed every JSON key used the `error.` namespace, a transient PostgreSQL cleanup failure, and the rejected `webpki-roots` license. These were fixed or rerun; the final `just check` completed successfully. One DB test that failed cleanup on the earlier run passed both in isolation and in the final workspace run.
+
+### Files changed
+
+- `crates/kinevo-mod-identity/src/infra/mail.rs` and `tests/mail.rs`: SMTP URL parsing, TLS-verified transport, rendering, message construction, logging redaction, and fake SMTP tests.
+- `crates/kinevo-mod-identity/src/lib.rs`, `src/infra/mod.rs`, `src/app/reset.rs`, and `tests/reset.rs`: adapter export/module wiring, injected sent time and ID, TTL minutes, and AC-7.
+- `crates/kinevo-mod-identity/Cargo.toml` and generated `Cargo.lock`: lettre plus existing-stack `url` dependency and resolved TLS feature set.
+- `crates/kinevo-ports/src/platform.rs`: injected `sent_at` and `message_id` fields on `MailMessage`.
+- `crates/kinevo-http/src/i18n.rs`: catalogue lookup with Indonesian-to-English fallback; `crates/kinevo-http/tests/http_core.rs` keeps the error-key count while allowing the task-required `email.*` entries.
+- `web/src/i18n/en.json`, `web/src/i18n/id.json`, and `spec/standards/open-source-stack.md`: reset email text and the selected lettre features.
+
+### Deviations
+
+- The implementation exceeds the 280-line guidance; generated `Cargo.lock` is excluded. D-55 makes the line budget advisory. No acceptance test was weakened.
+- The task's `tokio1-rustls` feature alone did not compile without a provider/root store. `tokio1-rustls-tls` compiled but introduced `webpki-roots` (`CDLA-Permissive-2.0`), rejected by `deny.toml`. The final configuration uses lettre's `ring` provider and `rustls-native-certs` platform trust roots, with certificate verification enabled.
+- Added minimal wiring outside the task's Files table: `infra/mod.rs`, `kinevo-ports/src/platform.rs`, reset application/test files, `kinevo-http/src/i18n.rs`, and its existing catalogue test. These changes pass the injected clock/ID through the mail port, expose the module, reuse catalogue strings, and keep the error-catalogue test valid with the required email keys.
+- The task's Scope asks for password resolution but its Interface accepts a resolved `Option<Secret<String>>`, while Out assigns wiring/config loading to T-039. This adapter follows the Interface; SecretStore/file precedence is deferred to T-039.
+- Indonesian wording for the subject and body is included for maintainer review: “Atur ulang kata sandi Nivaras” / “Gunakan tautan sekali pakai ini untuk mengatur ulang kata sandi Anda: {link}\nTautan ini berlaku selama {minutes} menit.”
+
+### Environment-limited
+
+None.
+
+### Not done / not verified
+
+- No external SMTP relay or real certificate handshake was run. The suite verifies both secure builder paths and required STARTTLS behavior against a STARTTLS-less fake server; the plain transport is compiled only under `cfg(test)`.
+- Password source precedence and empty-URL `NoMailer` default are handled by T-039 composition/config wiring, not this adapter task.
+
+### Follow-up
+
+- T-039 should resolve `smtp.password` from SecretStore first, then `KINEVO_SMTP_PASSWORD_FILE`, and use `NoMailer` when `KINEVO_SMTP_URL` is empty.
 
 ## Questions
 
-_None yet._
+### Resolved by implementer, pending architect review
+
+- For pinned lettre 0.11.23, use the `ring` Rustls provider with `rustls-native-certs` rather than `webpki-roots`; this preserves certificate verification and passes the repository license gate.
+- T-030's password-resolution Scope conflicts with its Interface and Out section. The adapter takes the resolved secret; T-039 owns loading and default-mailer wiring.
+- The existing error-catalogue test counted all JSON entries as errors. It now checks the exact error-key count separately and permits the task-required `email.*` catalogue keys.

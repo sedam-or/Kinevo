@@ -107,6 +107,8 @@ pub struct MailMessage {
     pub template: MailTemplate,
     pub locale: Locale,
     pub vars: Vec<(&'static str, String)>,
+    pub sent_at: Instant,
+    pub message_id: String,
 }
 
 /// Boundary for sending identity email without coupling use cases to SMTP.

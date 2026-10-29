@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 const EN_CATALOG: &str = include_str!("../../../web/src/i18n/en.json");
 const ID_CATALOG: &str = include_str!("../../../web/src/i18n/id.json");
 
-/// Embedded, flat message catalogues used by problem responses.
+/// Embedded, flat message catalogues used by problem responses and module adapters.
 #[derive(Clone, Debug, Default)]
 pub struct Catalog {
     english: BTreeMap<String, String>,
@@ -35,13 +35,19 @@ impl Catalog {
         self.message(code, "detail", locale)
     }
 
-    fn message(&self, code: &str, part: &str, locale: Locale) -> Option<&str> {
-        let key = format!("error.{code}.{part}");
+    /// Finds a message by its registered key, falling back to English for Indonesian.
+    #[must_use]
+    pub fn text(&self, key: &str, locale: Locale) -> Option<&str> {
         match locale {
-            Locale::En => self.english.get(&key),
-            Locale::Id => self.indonesian.get(&key).or_else(|| self.english.get(&key)),
+            Locale::En => self.english.get(key),
+            Locale::Id => self.indonesian.get(key).or_else(|| self.english.get(key)),
         }
         .map(String::as_str)
+    }
+
+    fn message(&self, code: &str, part: &str, locale: Locale) -> Option<&str> {
+        let key = format!("error.{code}.{part}");
+        self.text(&key, locale)
     }
 }
 

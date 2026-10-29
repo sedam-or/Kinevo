@@ -9,7 +9,7 @@
 mod reset {
     use std::{
         collections::BTreeMap,
-        net::{IpAddr, Ipv4Addr, SocketAddr},
+        net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener},
         sync::{
             Arc,
             atomic::{AtomicUsize, Ordering},
@@ -45,6 +45,7 @@ mod reset {
             tz::Locale,
         },
     };
+    use kinevo_mod_identity::infra::mail::SmtpConfig;
     use kinevo_mod_identity::{
         MODULE,
         app::{
@@ -586,8 +587,9 @@ mod reset {
         let messages = mailer.messages();
         assert_eq!(messages.len(), 1);
         assert_eq!(messages[0].to.as_str(), "known@example.test");
-        assert_eq!(messages[0].vars.len(), 1);
+        assert_eq!(messages[0].vars.len(), 2);
         assert_eq!(messages[0].vars[0].0, "reset_url");
+        assert_eq!(messages[0].vars[1], ("minutes", "60".to_owned()));
         assert!(!messages[0].vars[0].1.contains("known@example.test"));
 
         let failing_mailer = Arc::new(FakeMailer::failing());
@@ -681,5 +683,43 @@ mod reset {
                 .expect("audit details are queryable");
         assert!(!stored.contains(&token));
         assert!(audit.iter().all(|details| !details.contains(&token)));
+    }
+
+    mod mail {
+        use super::*;
+
+        #[tokio::test]
+        async fn request_endpoint_swallows_send_errors() {
+            let app = app().await;
+            let account = app.new_account();
+            insert_account(&app, account, "known@example.test", "active").await;
+            let lookup = Arc::new(CountingLookup::new([(
+                "known@example.test".to_owned(),
+                ResetAccount {
+                    id: account,
+                    locale: Locale::En,
+                    active: true,
+                },
+            )]));
+            let listener =
+                TcpListener::bind("127.0.0.1:0").expect("synthetic SMTP port should be allocated");
+            let port = listener
+                .local_addr()
+                .expect("synthetic SMTP listener should have an address")
+                .port();
+            drop(listener);
+            let config = SmtpConfig::parse(
+                &format!("smtp://127.0.0.1:{port}/?from=sender@example.test"),
+                None,
+            )
+            .expect("synthetic SMTP configuration should parse");
+            let mailer = kinevo_mod_identity::smtp_mailer(config, None, Arc::new(Catalog::load()));
+            let reset_service = service(&app, mailer, lookup);
+            let router = http_router(&app, Arc::new(reset_service), policies());
+            assert_eq!(
+                request_reset(&router, "known@example.test").await,
+                (StatusCode::ACCEPTED, Vec::new())
+            );
+        }
     }
 }

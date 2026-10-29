@@ -1,4 +1,6 @@
 {
+  "email.password_reset.subject": "Atur ulang kata sandi Nivaras",
+  "email.password_reset.body": "Gunakan tautan sekali pakai ini untuk mengatur ulang kata sandi Anda: {link}\nTautan ini berlaku selama {minutes} menit.",
   "error.unauthenticated.title": "Anda harus masuk",
   "error.unauthenticated.detail": "Periksa permintaan lalu coba lagi.",
   "error.forbidden.title": "Akses tidak diizinkan",

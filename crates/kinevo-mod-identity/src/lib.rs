@@ -17,6 +17,8 @@ use kinevo_ports::module::{
 };
 use kinevo_ports::platform::PolicyReader;
 
+pub use infra::mail::smtp_mailer;
+
 static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
 
 const PERMISSIONS: &[PermissionDef] = &[

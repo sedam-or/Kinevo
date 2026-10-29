@@ -208,7 +208,12 @@ impl ResetService {
             to: email,
             template: MailTemplate::PasswordReset,
             locale,
-            vars: vec![("reset_url", url.expose().clone())],
+            vars: vec![
+                ("reset_url", url.expose().clone()),
+                ("minutes", ttl.div_euclid(60).to_string()),
+            ],
+            sent_at: now,
+            message_id: self.ids.new_uuid_v7().to_string(),
         };
         let _ = self.mailer.send(message).await;
         Ok(IssuedLink { url })
@@ -255,7 +260,12 @@ impl ResetService {
             to: email,
             template: MailTemplate::PasswordReset,
             locale: account.locale,
-            vars: vec![("reset_url", url.expose().clone())],
+            vars: vec![
+                ("reset_url", url.expose().clone()),
+                ("minutes", ttl.div_euclid(60).to_string()),
+            ],
+            sent_at: now,
+            message_id: self.ids.new_uuid_v7().to_string(),
         };
         match self.mailer.send(message).await {
             Ok(Delivery::Sent) => tx.commit().await,

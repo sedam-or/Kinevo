@@ -36,7 +36,7 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 | CLI | **clap** (derive) | 4.6.7 ✔ | MIT/Apache-2.0 | `kinevo` subcommands | — |
 | Outbound HTTP | **reqwest** (rustls, no default features, no redirects for AI) | 0.13.5 ✔ | MIT/Apache-2.0 | AI/gateway/SMTP-adjacent calls | SSRF controls are ours (SEC-15) |
 | TLS | **rustls** (via sqlx/reqwest; optional built-in listener) | resolve in M1 | MIT/Apache-2.0 | no OpenSSL dependency (static musl) | — |
-| Email | **lettre** (SMTP, rustls) — optional | 0.11.23 ✔ | MIT | D-27 | — |
+| Email | **lettre** (SMTP, rustls) — optional | 0.11.23 ✔ | MIT | D-27; defaults off, features `builder`, `smtp-transport`, `tokio1-rustls`, `rustls-native-certs`, `ring` | Rustls verifies against platform roots; avoids native TLS/OpenSSL and webpki-roots' CDLA-Permissive license |
 | JSON Schema | **jsonschema** | 0.60.1 ✔ | MIT | validate AI/imports/docs against `contracts/*.schema.json` | schema-draft support — pin draft 2020-12 |
 | ICS | **icalendar** for building/parsing basics; recurrence expansion is **own code** per LAND-R3/R4 (the `rrule` crate 0.14.0 ✔ was evaluated and not adopted: determinism and DST rules must match this spec exactly) | icalendar 0.17.15 ✔ | MIT/Apache-2.0 | adopt for the format, not for semantics | parser leniency ⇒ our bounds and fuzzing |
 | ZIP archives | **zip** (`default-features = false`, `deflate` only) | 9.1.3 | MIT | Build account exports with deflate; no archive extraction paths | deterministic metadata and archive safety are enforced by identity tests |
