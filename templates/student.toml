@@ -1,0 +1,17 @@
+id = "student"
+name_key = "templates.student.name"
+description_key = "templates.student.description"
+sample = "student"
+
+[modules]
+sync = true
+knowledge = true
+canvas = true
+
+[policies]
+"auth.registration.mode" = "closed"
+"scheduler.day_start" = "07:00"
+"scheduler.day_end" = "22:00"
+
+[terms]
+"term.hard_landscape" = "templates.student.terms.hard_landscape"

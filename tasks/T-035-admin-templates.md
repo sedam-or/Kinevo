@@ -3,7 +3,7 @@ id: T-035
 title: Add the embedded setup templates and the template schema validator
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-033, T-034]
 requirements: [TPL-01, TPL-02, TPL-03, TPL-04, MOD-03, POL-03, D-10]
 branch: m1-t035-admin-templates
@@ -95,15 +95,105 @@ just check
 
 ## Definition of done
 
-- [ ] Every acceptance criterion has its named test, and it passes (or is marked environment-limited with the exact command not run).
-- [ ] `just check` passes locally.
-- [ ] Only the files listed under *Files* changed; diff within budget.
-- [ ] Report below is filled in.
+- [x] Every acceptance criterion has its named test, and it passes (or is marked environment-limited with the exact command not run).
+- [ ] `just check` passes locally (database-dependent checks are environment-limited; details below).
+- [ ] Only the files listed under *Files* changed; diff within budget (extra wiring/spec documentation and line-budget deviation recorded below).
+- [x] Report below is filled in.
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Added four embedded, data-only TOML setup templates with strict schema, module graph and policy-registry validation, safe `template_invalid` field paths, and deterministic idempotent application plans. The caller supplies the live registries so template validation does not maintain a duplicate module or policy catalogue.
+
+### Acceptance results
+
+| Criterion | Test | Result |
+|---|---|---|
+| AC-1 | `templates::tpl_shipped_templates_valid` | pass |
+| AC-2 | `templates::tpl_01_unknown_key_has_path` | pass |
+| AC-3 | `templates::tpl_01_dependency_unmet_has_path` | pass |
+| AC-4 | `templates::tpl_02_no_code_urls_secrets` | pass |
+| AC-5 | `templates::tpl_03_terms_registry_only` | pass |
+| AC-6 | `templates::tpl_04_apply_is_idempotent` | pass |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| `cargo nextest run -p kinevo-mod-admin --features kinevo-db/testing -E 'test(tpl_shipped_templates_valid) | test(tpl_01_unknown_key_has_path) | test(tpl_01_dependency_unmet_has_path) | test(tpl_02_no_code_urls_secrets) | test(tpl_03_terms_registry_only) | test(tpl_04_apply_is_idempotent)'` before implementation | 101 | Expected red step: compile failed because `app::templates` and `domain::template` had not been implemented yet. |
+| `cargo nextest run -p kinevo-mod-admin --features kinevo-db/testing -E 'test(tpl_shipped_templates_valid) | test(tpl_01_unknown_key_has_path) | test(tpl_01_dependency_unmet_has_path) | test(tpl_02_no_code_urls_secrets) | test(tpl_03_terms_registry_only) | test(tpl_04_apply_is_idempotent)'` | 0 | 6 passed, 34 filtered out. |
+| `NEXTEST_TEST_THREADS=4 cargo nextest run -p kinevo-mod-admin --features kinevo-db/testing` | 100 | 10 passed; 3 database tests failed to start with `disposable PostgreSQL test database should start: Unavailable`; nextest cancelled the remaining 27. Environment-limited; see database setup result below. |
+| `NEXTEST_TEST_THREADS=4 just check` | 100 | Formatting and Clippy passed. Nextest reported 330 tests; 180 passed, 2 failed while creating a disposable PostgreSQL database, and 148 were not run after cancellation; it also reported 1 skipped test. `cargo deny check` and `just spec` were run separately and passed. |
+| `cargo deny check` | 0 | `advisories ok, bans ok, licenses ok, sources ok`; existing duplicate-crate and unmatched-license warnings remain. |
+| `just spec` | 0 | `spec_tool.py check`: 0 findings in 60 files; contrast: 0 failures; `tasks_index.py --check`: 0 problems in 132 tasks. |
+| `cargo fmt --all -- --check` and `git diff --check` | 0 | Both clean. |
+| `eval "$(scripts/dev-postgres.sh env)"` | 3 | `environment-limited: container kinevo-dev-pg already exists without a script state file; refusing to replace it`. No PostgreSQL server was started or replaced. |
+| `pg_isready` | 2 | `/run/postgresql:5432 - no response`; at the script's recorded port, `127.0.0.1:45949 - no response`. No local `initdb` or `pg_ctl` was found. |
+| `df -h /` before builds/tests | 0 | `Filesystem /dev/mapper/nvme0n1p3crypted 468G 405G 61G 88% /`; no cleanup performed. |
+| `df -h /` at end of T-035 verification | 0 | `Filesystem /dev/mapper/nvme0n1p3crypted 468G 408G 58G 88% /`; no cleanup performed. |
+
+The first acceptance-test run failed at compile time because the template modules did not exist yet; this was the expected red step. Later intermediate Clippy findings were fixed. The final `just check` did not complete because the database fixture could not start; it is reported as environment-limited, not as a pass.
+
+### Files changed
+
+| Path | Added | Removed |
+|---|---:|---:|
+| `Cargo.lock` | 136 | 0 |
+| `crates/kinevo-mod-admin/Cargo.toml` | 3 | 0 |
+| `crates/kinevo-mod-admin/src/app/mod.rs` | 3 | 0 |
+| `crates/kinevo-mod-admin/src/app/templates.rs` | 127 | 0 |
+| `crates/kinevo-mod-admin/src/domain/mod.rs` | 3 | 0 |
+| `crates/kinevo-mod-admin/src/domain/template.rs` | 276 | 0 |
+| `crates/kinevo-mod-admin/tests/fixtures/templates/bad_dependency.toml` | 7 | 0 |
+| `crates/kinevo-mod-admin/tests/fixtures/templates/bad_script.toml` | 4 | 0 |
+| `crates/kinevo-mod-admin/tests/fixtures/templates/bad_secret.toml` | 4 | 0 |
+| `crates/kinevo-mod-admin/tests/fixtures/templates/bad_unknown_policy.toml` | 5 | 0 |
+| `crates/kinevo-mod-admin/tests/fixtures/templates/bad_url.toml` | 4 | 0 |
+| `crates/kinevo-mod-admin/tests/templates.rs` | 219 | 0 |
+| `spec/05-templates-and-setup.md` | 2 | 2 |
+| `spec/decisions.md` | 4 | 0 |
+| `spec/standards/open-source-stack.md` | 2 | 0 |
+| `tasks/T-035-admin-templates.md` | 97 | 7 |
+| `tasks/index.md` | 2 | 2 |
+| `templates/cloud.toml` | 13 | 0 |
+| `templates/personal.toml` | 10 | 0 |
+| `templates/professional.toml` | 16 | 0 |
+| `templates/student.toml` | 17 | 0 |
+
+The generated lockfile is excluded from the budget under D-55.
+
+### Deviations
+
+- Added the explicitly required `toml` stack-map entry and direct `toml`, `rust-embed`, and `serde_path_to_error` dependencies; `Cargo.lock` changed as generated output.
+- Added module exports and clarified template omission/scope behavior in the cited spec. Added D-118 through D-121 in the same commit. These are adjacent wiring/spec files beyond the task's Files list and are recorded for traceability.
+- The non-lockfile change is 818 additions and 11 removals (829 changed lines), above `budget_lines: 330`; D-55 says this is not a blocker. The generated `Cargo.lock` adds 136 lines and is excluded.
+- PostgreSQL-dependent package/workspace checks are environment-limited by the existing container-without-state condition. The named T-035 acceptance tests pass.
+
+### Decisions made by implementer
+
+| Decision | Choice, alternatives and reason | Files | Rollback |
+|---|---|---|---|
+| D-118 (pending owner review) | Store term overrides as `templates.<template-id>.terms.<term-key>` message keys. This follows the spec's `term key → message key` rule; embedding the English examples as literal values was rejected. T-047 must add the corresponding `en` and `id` catalogue entries. | `spec/decisions.md`, `templates/student.toml`, `templates/professional.toml` | Replace the override keys with the approved catalogue keys and remove the matching D-118 entry. |
+| D-119 (pending owner review) | Inject module, policy and terminology registries through `ValidationCtx`; copying current/future registries into admin was rejected to avoid drift, and postponing validation would violate TPL-01. | `spec/decisions.md`, `crates/kinevo-mod-admin/src/domain/template.rs`, `crates/kinevo-mod-admin/src/app/templates.rs` | Switch call sites to the approved registry interface and remove D-119. |
+| D-120 (pending owner review) | Normalize omitted toggleable modules to `false`; core modules remain implicit. Preserving omitted module state was rejected because a template should converge to its selected module set. | `spec/decisions.md`, `spec/05-templates-and-setup.md`, admin template files | Restore the previous omission semantics and remove the D-120 clarification. |
+| D-121 (pending owner review) | Write a policy preset at every scope allowed by its `PolicySpec`; selecting only one scope would omit a declared instance or first-account default, and the template schema has no scope selector. | `spec/decisions.md`, `spec/05-templates-and-setup.md`, admin template files | Adopt the architect's scope rule, update `apply_plan`, and remove the D-121 clarification. |
+
+### Spec issues noticed
+
+- T-047 must add both-language catalogue entries for the D-118 term message keys.
+- T-037 must construct the validation context from the complete compiled module and policy registries, including modules and policies introduced after M1.
+
+### Not done / not verified
+
+- Database-backed tests could not run because `scripts/dev-postgres.sh env` refused to replace the pre-existing `kinevo-dev-pg` container without its state file; local `pg_isready` checks found no responding server. The exact command and errors are recorded above.
+- The final `just check` therefore exited 101 and did not reach its embedded `cargo deny check` or `just spec` stages; both were run separately and returned 0.
+- No template-import HTTP path, sample-data creation, locale catalogue existence check, or setup route was implemented; those are outside T-035 or assigned to later tasks.
+
+### Follow-up suggestions
+
+- Keep the context assembled in one application composition point so the embedded templates and runtime setup flow use the same registries.
 
 ## Questions
 
-_None yet._
+No open blocking questions. D-118 through D-121 are implementer decisions pending owner review.

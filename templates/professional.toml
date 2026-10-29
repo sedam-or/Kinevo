@@ -1,0 +1,16 @@
+id = "professional"
+name_key = "templates.professional.name"
+description_key = "templates.professional.description"
+sample = "professional"
+
+[modules]
+sync = true
+knowledge = true
+ai = false
+
+[policies]
+"auth.registration.mode" = "closed"
+"scheduler.anchor.earliest_time" = "08:00"
+
+[terms]
+"term.goal" = "templates.professional.terms.goal"

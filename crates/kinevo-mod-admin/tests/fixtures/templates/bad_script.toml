@@ -1,0 +1,4 @@
+id = "bad-script"
+name_key = "templates.bad_script.name"
+description_key = "templates.bad_script.description"
+script = "run arbitrary code"

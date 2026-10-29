@@ -12,8 +12,8 @@ content. Templates ship in the binary (`templates/*.toml`, embedded) and an admi
 |---|---|
 | `id` | `[a-z][a-z0-9-]{1,31}`, unique |
 | `name_key`, `description_key` | message keys (en + id required) |
-| `modules` | map `module key → bool`; must satisfy dependency graph (MOD-03); core modules must be absent or `true` |
-| `policies` | map `policy key → value`; each validated against the registry (POL-03); only `instance`-scope keys at instance setup, `account`-scope keys become the first account's defaults |
+| `modules` | map `module key → bool`; must satisfy dependency graph (MOD-03); core modules must be absent or `true`; an omitted toggleable module is disabled |
+| `policies` | map `policy key → value`; each validated against the registry (POL-03); instance-scope keys apply at setup, account-scope keys become the first account's defaults; a policy permitting both scopes receives the preset at both scopes |
 | `terms` | map `term key → message key`; only keys in the **terminology registry** (below) |
 | `sample` | optional: id of a sample dataset (`student`, `professional`, `empty`) created for the **first account** only if the user ticks "add sample data" |
 

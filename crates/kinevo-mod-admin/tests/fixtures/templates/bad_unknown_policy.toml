@@ -1,0 +1,5 @@
+id = "bad-policy"
+name_key = "templates.bad_policy.name"
+description_key = "templates.bad_policy.description"
+[policies]
+"scheduler.unknown" = "value"

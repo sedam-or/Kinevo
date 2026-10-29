@@ -1,0 +1,7 @@
+id = "bad-dependency"
+name_key = "templates.bad_dependency.name"
+description_key = "templates.bad_dependency.description"
+[modules]
+ai = true
+goals = false
+tasks = true

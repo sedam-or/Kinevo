@@ -1,0 +1,4 @@
+id = "bad-url"
+name_key = "templates.bad_url.name"
+description_key = "templates.bad_url.description"
+fetch_url = "https://example.test/template.toml"

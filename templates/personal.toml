@@ -1,0 +1,10 @@
+id = "personal"
+name_key = "templates.personal.name"
+description_key = "templates.personal.description"
+
+[modules]
+sync = true
+knowledge = true
+
+[policies]
+"auth.registration.mode" = "closed"

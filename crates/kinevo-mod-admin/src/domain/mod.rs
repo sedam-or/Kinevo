@@ -14,3 +14,6 @@ pub use crate::ports::SecretName as SecretNameRegistered;
 
 /// Secret registry names and their permitted scopes.
 pub mod secrets;
+
+/// Strict setup-template schema and validation.
+pub mod template;

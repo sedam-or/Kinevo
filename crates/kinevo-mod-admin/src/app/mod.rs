@@ -8,3 +8,6 @@ pub mod policies;
 
 /// Module switches and instance summary use cases.
 pub mod modules;
+
+/// Embedded setup-template registry and application planning.
+pub mod templates;

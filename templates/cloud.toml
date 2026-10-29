@@ -1,0 +1,13 @@
+id = "cloud"
+name_key = "templates.cloud.name"
+description_key = "templates.cloud.description"
+
+[modules]
+sync = true
+knowledge = true
+canvas = true
+ai = false
+billing = false
+
+[policies]
+"auth.registration.mode" = "open"

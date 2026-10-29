@@ -16,6 +16,8 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 | Time & zones | **jiff** (+ embedded tzdb) | 0.2.38 ✔ | Unlicense/MIT | correct DST semantics, IANA zones, pure Rust (no OS tz dependency in Alpine); chrono/time rejected: weaker tz story | 0.x API |
 | Serialisation | **serde**, **serde_json** | 1.0.229 ✔ / 1.0.154 ✔ | MIT/Apache-2.0 | standard | — |
 | JSON path errors | **serde_path_to_error** | 0.1.20 | MIT/Apache-2.0 | preserve the nested field path when serde rejects a request body | — |
+| TOML parsing | **toml** | 1.1.8+spec-1.1.0 | MIT/Apache-2.0 | embedded setup templates, deserialized through Serde | parse and serde features only |
+| TOML parsing | **toml** | 1.1.8+spec-1.1.0 | MIT/Apache-2.0 | embedded setup templates, deserialized through Serde | parse and serde features only |
 | Canonical JSON (JCS) | **serde_jcs** (or small audited implementation if unmaintained) | resolve in M1 | MIT | RFC 8785 for hashes/goldens | maintenance — fallback to an in-repo ≤ 150-line implementation covered by RFC test vectors |
 | Errors | **thiserror** (libraries), **anyhow** (binary glue only) | 2.0.21 ✔ | MIT/Apache-2.0 | CQ-09 | — |
 | Logging/tracing | **tracing**, **tracing-subscriber** (json) | 0.1.44 ✔ / 0.3.23 ✔ | MIT | structured logs, span context (request id) | — |
