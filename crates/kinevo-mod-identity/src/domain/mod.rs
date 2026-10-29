@@ -1,9 +1,11 @@
 //! Pure identity domain value types.
 
+pub mod accounts;
 pub mod device;
 pub mod lockout;
 pub mod password;
 pub mod profile;
+pub mod reset;
 pub mod session;
 pub mod totp;
 

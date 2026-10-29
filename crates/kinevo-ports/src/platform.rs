@@ -84,6 +84,48 @@ pub trait InstanceState: Send + Sync {
     async fn get(&self) -> Result<InstanceInfo, AppError>;
 }
 
+/// Result of attempting to deliver an email through the configured mail transport.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Delivery {
+    /// The message was accepted by the configured transport.
+    Sent,
+    /// No mail transport is configured for this instance.
+    NotConfigured,
+}
+
+/// A registered email template name.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MailTemplate {
+    /// One-time password reset link.
+    PasswordReset,
+}
+
+/// Email message containing only a validated recipient and template variables.
+#[derive(Clone, Eq, PartialEq)]
+pub struct MailMessage {
+    pub to: Email,
+    pub template: MailTemplate,
+    pub locale: Locale,
+    pub vars: Vec<(&'static str, String)>,
+}
+
+/// Boundary for sending identity email without coupling use cases to SMTP.
+#[async_trait]
+pub trait Mailer: Send + Sync {
+    /// Delivers one template message or reports that no transport is configured.
+    async fn send(&self, message: MailMessage) -> Result<Delivery, AppError>;
+}
+
+/// No-op email adapter used when SMTP is not configured.
+pub struct NoMailer;
+
+#[async_trait]
+impl Mailer for NoMailer {
+    async fn send(&self, _message: MailMessage) -> Result<Delivery, AppError> {
+        Ok(Delivery::NotConfigured)
+    }
+}
+
 /// Transport class used when a newly created account receives its first session.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Client {
@@ -313,7 +355,10 @@ pub trait SecretStore: Send + Sync {
 }
 
 /// Account state used by request authorization.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(
+    Clone, Copy, Debug, Eq, PartialEq, serde::Serialize, serde::Deserialize, utoipa::ToSchema,
+)]
+#[serde(rename_all = "snake_case")]
 pub enum AccountStatus {
     /// Account can authenticate.
     Active,
@@ -321,6 +366,18 @@ pub enum AccountStatus {
     Disabled,
     /// Account deletion is in progress.
     Deleting,
+}
+
+impl AccountStatus {
+    /// Returns the stable status value used by the identity API and database.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Active => "active",
+            Self::Disabled => "disabled",
+            Self::Deleting => "deleting",
+        }
+    }
 }
 
 /// Minimal account row data needed by the HTTP authorization layer.

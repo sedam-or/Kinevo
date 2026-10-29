@@ -155,6 +155,32 @@ pub fn totp_router(service: Arc<app::totp::TotpService>) -> RouteTable {
     http::totp::routes(service)
 }
 
+/// Builds the administrator account list and status-change routes.
+#[must_use]
+pub fn admin_accounts_router(
+    service: Arc<app::admin_accounts::AdminAccountsService>,
+) -> RouteTable {
+    http::admin::accounts(service)
+}
+
+/// Builds the administrator invite-creation route.
+#[must_use]
+pub fn admin_invites_router(service: Arc<app::invites::InviteService>) -> RouteTable {
+    http::admin::invites(service)
+}
+
+/// Builds the administrator-issued password-reset route.
+#[must_use]
+pub fn admin_reset_router(service: Arc<app::reset::ResetService>) -> RouteTable {
+    http::admin::issue_reset(service)
+}
+
+/// Builds the public forgot-password request and confirmation routes.
+#[must_use]
+pub fn reset_router(service: Arc<app::reset::ResetService>) -> RouteTable {
+    http::reset::routes(service)
+}
+
 /// Returns the identity crate's embedded migrations.
 #[must_use]
 pub fn migrations() -> MigrationSource {

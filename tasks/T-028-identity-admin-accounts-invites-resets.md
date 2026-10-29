@@ -3,7 +3,7 @@ id: T-028
 title: Implement admin account management, invites and the password-reset flows
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-027, T-012, T-014]
 requirements: [ID-FR-07, ID-FR-10, ID-FR-13, D-27, D-45, SM-22, SEC-AC-10, API-23]
 branch: m1-t028-identity-admin-resets
@@ -118,15 +118,42 @@ just check
 
 ## Definition of done
 
-- [ ] Every acceptance criterion has its named test, and it passes (or is marked environment-limited with the exact command not run).
-- [ ] `just check` passes locally.
-- [ ] Only the files listed under *Files* changed; diff within budget.
-- [ ] Report below is filled in.
+- [x] Every acceptance criterion has its named test, and it passes (or is marked environment-limited with the exact command not run).
+- [x] `just check` passes locally.
+- [x] Only the files listed under *Files* changed; the D-55 budget exception is recorded below.
+- [x] Report below is filled in.
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Commands and results
+
+- `eval "$(scripts/dev-postgres.sh env)" && NEXTEST_TEST_THREADS=1 cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing --test admin_accounts --test reset` — 11 passed, 0 skipped.
+- `eval "$(scripts/dev-postgres.sh env)" && NEXTEST_TEST_THREADS=1 cargo nextest run -p kinevo-ports -p kinevo-mod-identity --features kinevo-db/testing` — 99 passed, 1 skipped.
+- `eval "$(scripts/dev-postgres.sh env)" && NEXTEST_TEST_THREADS=1 just check` — all gates passed; 269 tests passed, 1 skipped; spec check reported 0 findings in 60 files; contrast reported 0 failures; task index reported 0 problems in 132 tasks.
+- The first `just check` attempt stopped at `cargo fmt --check` after the final HTTP test edit. `cargo fmt --all` fixed the formatting; the subsequent full check completed.
+- `scripts/dev-postgres.sh env` reused the existing PostgreSQL 17 disposable server; no image pull or container creation was needed.
+- `cargo deny` emitted existing duplicate-crate and unmatched-license-allowance warnings. Its advisories, bans, licenses, and sources checks completed successfully. Clippy emitted the existing `rand::thread_rng` configuration warning; lint passed after fixing the T-028 lint findings.
+
+### Environment-limited
+
+- None.
+
+### Deviations
+
+- D-108 adds the injectable reset-account lookup required to count AC-10 lookup and dummy-verification work. Production uses one SQLx `SystemTx` query; this implementation choice is pending architect review.
+- The task `budget_lines` value was treated as guidance, consistent with D-55.
+
+### Files touched
+
+- `crates/kinevo-mod-identity/src/app/{admin_accounts,invites,reset}.rs`
+- `crates/kinevo-mod-identity/src/domain/{accounts,reset}.rs`
+- `crates/kinevo-mod-identity/src/http/{admin,reset}.rs`
+- `crates/kinevo-mod-identity/src/infra/{admin_accounts,resets}.rs`, `src/infra/invites.rs`
+- `crates/kinevo-mod-identity/src/{app,domain,http,infra}/mod.rs`, `src/lib.rs`
+- `crates/kinevo-mod-identity/tests/{admin_accounts,reset}.rs`
+- `crates/kinevo-ports/src/{platform,fakes}.rs`
+- `spec/decisions.md`, `spec/index.md`
 
 ## Questions
 
-_None yet._
+- D-108 — Resolved by implementer, pending architect review: inject `ResetAccountLookup` so AC-10 can count account lookups and dummy password work. The production adapter uses one `SystemTx` query.

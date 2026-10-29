@@ -6,9 +6,9 @@ use crate::{
     module::ModuleKey,
     platform::{
         AccessClaims, AccountAccess, AccountAccessInfo, AccountCreation, AccountProfile,
-        CreatedAccount, IdemBegin, IdempotencyPort, InstanceInfo, InstanceState, ModuleSwitches,
-        PolicyReader, ResolvedPolicies, SecretMask, SecretName, SecretScope, SecretStore, last4,
-        validate_secret_scope,
+        CreatedAccount, Delivery, IdemBegin, IdempotencyPort, InstanceInfo, InstanceState,
+        MailMessage, Mailer, ModuleSwitches, PolicyReader, ResolvedPolicies, SecretMask,
+        SecretName, SecretScope, SecretStore, last4, validate_secret_scope,
     },
 };
 use async_trait::async_trait;
@@ -73,6 +73,66 @@ impl<T: Send> AccountCreation<T> for FakeAccountCreation {
             expires_in: input.session.access_ttl,
             refresh_cookie_max_age: input.session.absolute_ttl,
         })
+    }
+}
+
+/// In-memory mail adapter that records messages without exposing secrets in logs.
+pub struct FakeMailer {
+    delivery: Delivery,
+    failing: bool,
+    messages: Mutex<Vec<MailMessage>>,
+}
+
+impl Default for FakeMailer {
+    fn default() -> Self {
+        Self::with_delivery(Delivery::NotConfigured)
+    }
+}
+
+impl FakeMailer {
+    /// Creates a fake with the requested delivery result.
+    #[must_use]
+    pub fn with_delivery(delivery: Delivery) -> Self {
+        Self {
+            delivery,
+            failing: false,
+            messages: Mutex::new(Vec::new()),
+        }
+    }
+
+    /// Creates a fake that returns a transport error.
+    #[must_use]
+    pub fn failing() -> Self {
+        Self {
+            delivery: Delivery::NotConfigured,
+            failing: true,
+            messages: Mutex::new(Vec::new()),
+        }
+    }
+
+    /// Returns captured synthetic messages.
+    #[must_use]
+    pub fn messages(&self) -> Vec<MailMessage> {
+        self.messages
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone()
+    }
+}
+
+#[async_trait]
+impl Mailer for FakeMailer {
+    async fn send(&self, message: MailMessage) -> Result<Delivery, AppError> {
+        if self.failing {
+            return Err(AppError::new(ErrorCode::ServiceUnavailable));
+        }
+        if self.delivery == Delivery::Sent {
+            self.messages
+                .lock()
+                .map_err(|_| AppError::new(ErrorCode::InternalError))?
+                .push(message);
+        }
+        Ok(self.delivery)
     }
 }
 use std::{
