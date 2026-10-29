@@ -10,6 +10,13 @@ kinevo-kernel.workspace = true
 kinevo-ports.workspace = true
 kinevo-db.workspace = true
 kinevo-http.workspace = true
+sqlx = { version = "0.9.0", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls-ring-native-roots", "migrate", "macros", "uuid"] }
+
+[dev-dependencies]
+futures = "0.3.34"
+kinevo-db = { workspace = true, features = ["testing"] }
+kinevo-mod-identity = { path = "../kinevo-mod-identity" }
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread"] }
 
 [lints]
 workspace = true

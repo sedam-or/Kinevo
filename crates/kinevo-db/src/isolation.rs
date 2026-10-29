@@ -44,6 +44,14 @@ struct Policy {
 
 const NO_RLS_ALLOWLIST: &[(&str, &str)] = &[
     (
+        "instance_settings",
+        "single-instance settings use repositories requiring admin context (ARCH-23)",
+    ),
+    (
+        "instance_modules",
+        "instance module switches use repositories requiring admin context (ARCH-23)",
+    ),
+    (
         "jobs",
         "system job queue; payloads contain ids and enums only (DOM-09)",
     ),
@@ -269,10 +277,6 @@ fn allowed_policies(table: &str) -> BTreeSet<&'static str> {
         "accounts" | "refresh_token_families" | "refresh_tokens" | "password_resets" => {
             policies.insert("system_auth");
         }
-        "policy_versions" => {
-            // SEC-06 permits an admin-context policy; its name is not fixed in the spec.
-            policies.insert("admin_context");
-        }
         "audit_log" => {
             policies.extend(["admin_context", "system_insert", "retention"]);
         }
@@ -358,6 +362,19 @@ fn known_policy_scope(table: &str, name: &str, policy: &Policy) -> bool {
 
 fn policy_finding_check(table: &str, name: &str, policy: &Policy) -> Option<FindingCheck> {
     if name == "tenant_isolation" {
+        if table == "policy_versions" {
+            let expected_using = "account_id IS NULL OR account_id = NULLIF(current_setting('app.account_id', true), '')::uuid";
+            let expected_check = "account_id = NULLIF(current_setting('app.account_id', true), '')::uuid OR (account_id IS NULL AND current_setting('app.instance_admin', true) = 'on')";
+            if !same_sql_expression(&policy.using, expected_using)
+                || !same_sql_expression(&policy.check, expected_check)
+            {
+                return Some(FindingCheck::PolicyExpression);
+            }
+            if !policy.roles.is_empty() || policy.command != "*" {
+                return Some(FindingCheck::PolicyScope);
+            }
+            return None;
+        }
         let column = if table == "accounts" {
             "id"
         } else {

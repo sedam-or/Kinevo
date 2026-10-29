@@ -15,10 +15,6 @@ const EXCLUDED_TABLES: &[(&str, &str)] = &[
         "single-instance settings have no tenant rows",
     ),
     ("instance_modules", "module switches are instance-scoped"),
-    (
-        "policy_versions",
-        "mixed instance/account rows use dedicated policy checks",
-    ),
     ("invites", "invite tokens are instance-scoped"),
     ("_sqlx_migrations", "SQLx owns its migration metadata table"),
 ];

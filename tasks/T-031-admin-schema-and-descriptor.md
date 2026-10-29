@@ -3,7 +3,7 @@ id: T-031
 title: Create the admin schema migration, module skeleton and descriptor
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-012, T-020]
 requirements: [D-39, D-40, D-41, D-44, D-46, DOM-10, DOM-26, ARCH-23, CA-02, CA-04, SEC-AC-01, SEC-AC-02, MOD-08]
 branch: m1-t031-admin-schema
@@ -108,8 +108,81 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Added the admin module descriptor, layered skeleton and migration for the four instance/admin tables. The migration and tests cover grants, RLS, append-only policy history, secret visibility, the singleton setting row and descriptor validation.
+
+### Acceptance results
+
+| Criterion | Test | Result |
+|---|---|---|
+| AC-1 | `admin_isolation::dom_schema_matches_spec_ddl` | pass |
+| AC-2 | `admin_isolation::sec_ac_01_admin_tables_isolated` | pass |
+| AC-3 | `admin_isolation::adr_0011_instance_policy_needs_admin_flag` | pass |
+| AC-4 | `admin_isolation::pol_scope_visibility` | pass |
+| AC-5 | `admin_isolation::dom_26_policy_versions_append_only` | pass |
+| AC-6 | `admin_isolation::d_46_secrets_policies` | pass |
+| AC-7 | `admin_isolation::instance_settings_singleton` | pass |
+| AC-8 | `admin_isolation::sec_06_verify_isolation_accepts_admin` | pass |
+| AC-9 | `descriptor::mod_08_admin_descriptor_valid` | pass |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| `cargo nextest run -p kinevo-mod-admin --features kinevo-db/testing` | 0 | 9 tests passed, 0 skipped |
+| `just check` | 0 | 299 tests passed, 1 ignored; fmt, clippy and workspace gates completed successfully. `cargo deny` exited 0 with existing duplicate-lock-entry and unused-license-allowance warnings. |
+| `python3 scripts/spec_tool.py check` | 0 | 0 findings (60 files) |
+| `python3 scripts/tasks_index.py --check` | 0 | 0 problems (132 tasks) |
+
+### Files changed
+
+Counts are from the staged diff against the task-start commit: 1,256 additions and 18 removals total; excluding generated `Cargo.lock`, 1,252 additions and 18 removals.
+
+| Path | Added | Removed |
+|---|---:|---:|
+| `Cargo.lock` (generated) | 4 | 0 |
+| `WORKFLOW.md` | 2 | 2 |
+| `crates/kinevo-db/src/isolation.rs` | 21 | 4 |
+| `crates/kinevo-db/src/testing/isolation.rs` | 0 | 4 |
+| `crates/kinevo-mod-admin/Cargo.toml` | 7 | 0 |
+| `crates/kinevo-mod-admin/migrations/20261101000300_admin_instance.sql` | 81 | 0 |
+| `crates/kinevo-mod-admin/src/app/mod.rs` | 1 | 0 |
+| `crates/kinevo-mod-admin/src/domain/mod.rs` | 13 | 0 |
+| `crates/kinevo-mod-admin/src/http/mod.rs` | 1 | 0 |
+| `crates/kinevo-mod-admin/src/infra/mod.rs` | 9 | 0 |
+| `crates/kinevo-mod-admin/src/lib.rs` | 144 | 1 |
+| `crates/kinevo-mod-admin/src/ports.rs` | 5 | 0 |
+| `crates/kinevo-mod-admin/tests/admin_isolation.rs` | 545 | 0 |
+| `crates/kinevo-mod-admin/tests/descriptor.rs` | 44 | 0 |
+| `crates/kinevo-mod-admin/tests/support/fixtures.rs` | 293 | 0 |
+| `spec/12-testing.md` | 2 | 2 |
+| `spec/decisions.md` | 3 | 0 |
+| `spec/index.md` | 3 | 0 |
+| `tasks/T-031-admin-schema-and-descriptor.md` | 76 | 3 |
+| `tasks/index.md` | 2 | 2 |
+
+### Deviations
+
+- Added minimal wiring in `crates/kinevo-db/src/isolation.rs` and `crates/kinevo-db/src/testing/isolation.rs` because the task requires the full M1 isolation verifier and fixtures to recognize the new admin policies and no-RLS tables.
+- Added `sqlx` migration support plus the existing identity crate as an admin test-only dependency for migration discovery and AC-9 descriptor composition.
+- The change exceeds the 360-line guidance because it includes four-table DDL, named schema and security acceptance tests, and the required harness wiring. Per D-55 this is recorded as a deviation, not a blocker.
+- D-109 records the run-wide disk report requirement. D-110 and D-111 record the T-031 verifier and dev-dependency choices; both await owner review.
+
+### Spec issues noticed
+
+- The generic isolation verifier's prior `policy_versions` allowlist did not match the combined D-39 `tenant_isolation` predicate required by this task; aligned under D-110.
+
+### Not done / not verified
+
+- No admin repository, service or endpoint behavior was added; these are explicitly out of scope for T-031.
+- No environment-limited checks for this task.
+
+### Follow-up suggestions
+
+- Owner review D-110 and D-111 alongside this task.
 
 ## Questions
 
-_None yet._
+- Q-1 (implementer, 2026-10-29): The isolation verifier previously expected a separate `admin_context` policy and excluded `policy_versions` from the account fixture, while T-031 and D-39 require the combined `tenant_isolation` predicate. Resolved by implementer, pending owner review (D-110); the verifier now checks the exact combined predicate and the fixture covers account rows.
+- Q-2 (implementer, 2026-10-29): AC-9 requires `validate_graph([identity, admin])` using the real identity descriptor. Resolved by implementer, pending owner review (D-111); `kinevo-mod-identity` is a dev-dependency for the test only, with no production dependency edge.

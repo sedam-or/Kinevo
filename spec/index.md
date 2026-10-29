@@ -95,6 +95,9 @@ A new ADR is numbered next in sequence, starts as `Proposed`, and becomes `Accep
 - Requirement ids are `PREFIX-NN` (e.g. `SCH-FR-07`, `CA-09`, `SEC-AC-12`). Module files may add a kind segment (`-FR-` functional, `-NFR-` non-functional). Ids are **stable forever**: never renumbered or reused; a removed requirement keeps its id with `(withdrawn, D-nn)`.
 - Decisions `D-nn` (`decisions.md`), owner questions `OWNER-nn`, maintainer actions `M-<NAME>` (e.g. `M-LEGAL`, `M-RIGHTS`).
 - D-108 records the reset lookup injection used to prove equal lookup and dummy-hash counts for known and unknown reset requests.
+- D-109 requires exact start/end disk measurements and a cleanup record in the run report.
+- D-110 aligns T-031's isolation verifier and fixtures with the combined D-39 policy for `policy_versions`.
+- D-111 keeps the identity descriptor dependency used by T-031's AC-9 graph test dev-only.
 - Tasks are `T-nnn` (`tasks/`); commit subjects reference them as `[T-nnn]`.
 - Error codes are `snake_case` strings in the `ERR` registry; permission keys are `<module>.<resource>.<action>` in the `RBAC` registry; policy keys are dotted (`auth.refresh.grace`) in `04-policies.md`.
 - Consistency is checked by `scripts/spec_tool.py` (`codes`, `perms`, `check`).

@@ -1334,10 +1334,14 @@ dependencies = [
 name = "kinevo-mod-admin"
 version = "0.0.0"
 dependencies = [
+ "futures",
  "kinevo-db",
  "kinevo-http",
  "kinevo-kernel",
+ "kinevo-mod-identity",
  "kinevo-ports",
+ "sqlx",
+ "tokio",
 ]
 
 [[package]]
