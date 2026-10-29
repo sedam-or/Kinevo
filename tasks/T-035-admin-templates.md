@@ -187,7 +187,7 @@ The generated lockfile is excluded from the budget under D-55.
 ### Not done / not verified
 
 - Database-backed tests could not run because `scripts/dev-postgres.sh env` refused to replace the pre-existing `kinevo-dev-pg` container without its state file; local `pg_isready` checks found no responding server. The exact command and errors are recorded above.
-- The final `just check` therefore exited 101 and did not reach its embedded `cargo deny check` or `just spec` stages; both were run separately and returned 0.
+- The final `just check` therefore exited 100 and did not reach its embedded `cargo deny check` or `just spec` stages; both were run separately and returned 0. An earlier iteration exited 101 while Clippy findings were still being fixed.
 - No template-import HTTP path, sample-data creation, locale catalogue existence check, or setup route was implemented; those are outside T-035 or assigned to later tasks.
 
 ### Follow-up suggestions
