@@ -3,12 +3,12 @@ id: T-039
 title: Wire configuration, `serve`, the worker, health endpoints and graceful shutdown
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-030, T-038, T-037, T-036, T-034, T-033, T-032]
 requirements: [ARCH-01, ARCH-02, ARCH-22, CA-13, OPS-01, OPS-02, OPS-09, SET-06, D-42, D-43]
 branch: m1-t039-app-config-serve-and-worker
 budget_lines: 400
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-039: Wire configuration, `serve`, the worker, health endpoints and graceful shutdown
