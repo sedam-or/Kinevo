@@ -3,7 +3,7 @@ id: T-031
 title: Create the admin schema migration, module skeleton and descriptor
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-012, T-020]
 requirements: [D-39, D-40, D-41, D-44, D-46, DOM-10, DOM-26, ARCH-23, CA-02, CA-04, SEC-AC-01, SEC-AC-02, MOD-08]
 branch: m1-t031-admin-schema
