@@ -16,3 +16,9 @@ pub mod policy_repo;
 
 /// Cached policy snapshots and outbox invalidation.
 pub mod policy_reader;
+
+/// PostgreSQL module state and instance settings repository.
+pub mod module_repo;
+
+/// Cached module switch state and outbox invalidation.
+pub mod module_switches;

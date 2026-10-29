@@ -5,3 +5,6 @@ pub mod secrets;
 
 /// Policy listing, validation, and version writes.
 pub mod policies;
+
+/// Module switches and instance summary use cases.
+pub mod modules;
