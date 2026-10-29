@@ -407,6 +407,16 @@ pub async fn retry_dead(
     subscriber: SubscriberName,
     now: Instant,
 ) -> Result<(), AppError> {
+    retry_dead_named(tx, event_id, subscriber.as_str(), now).await
+}
+
+/// Resets one dead delivery for a path-provided registered subscriber name.
+pub async fn retry_dead_named(
+    tx: &mut SystemTx,
+    event_id: EventId,
+    subscriber: &str,
+    now: Instant,
+) -> Result<(), AppError> {
     let changed = sqlx::query(
         "UPDATE public.outbox_deliveries \
          SET state = 'pending', attempts = 0, next_attempt_at = $3::timestamptz, \
@@ -414,7 +424,7 @@ pub async fn retry_dead(
          WHERE event_id = $1 AND subscriber = $2 AND state = 'dead'",
     )
     .bind(*event_id.as_uuid())
-    .bind(subscriber.as_str())
+    .bind(subscriber)
     .bind(now.to_rfc3339())
     .execute(tx.conn())
     .await
@@ -427,7 +437,7 @@ pub async fn retry_dead(
         "SELECT EXISTS (SELECT 1 FROM public.outbox_deliveries WHERE event_id = $1 AND subscriber = $2)",
     )
     .bind(*event_id.as_uuid())
-    .bind(subscriber.as_str())
+    .bind(subscriber)
     .fetch_one(tx.conn())
     .await
     .map_err(database_error)?;
@@ -436,6 +446,22 @@ pub async fn retry_dead(
     } else {
         ErrorCode::NotFound
     }))
+}
+
+/// Returns the current state for one delivery without reading its event payload.
+pub async fn delivery_state(
+    conn: &mut impl TxConn,
+    event_id: EventId,
+    subscriber: &str,
+) -> Result<Option<String>, AppError> {
+    sqlx::query_scalar(
+        "SELECT state FROM public.outbox_deliveries WHERE event_id = $1 AND subscriber = $2",
+    )
+    .bind(*event_id.as_uuid())
+    .bind(subscriber)
+    .fetch_optional(conn.conn())
+    .await
+    .map_err(database_error)
 }
 
 /// Returns pending and dead delivery totals without exposing payloads.

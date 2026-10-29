@@ -1,5 +1,8 @@
 //! Admin use cases are added by the follow-up admin tasks.
 
+/// RLS-scoped audit list use cases.
+pub mod audit;
+
 /// Secret management use cases.
 pub mod secrets;
 
@@ -17,3 +20,6 @@ pub mod finish_setup;
 
 /// Setup token lifecycle and the process-local wizard session.
 pub mod setup;
+
+/// Admin jobs summary and retry use cases.
+pub mod jobs_admin;

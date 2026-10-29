@@ -5,7 +5,8 @@ use kinevo_kernel::{
     id::{AccountId, IdGen, RequestId},
     time::Instant,
 };
-use sqlx::{PgConnection, types::Uuid};
+use serde_json::Value;
+use sqlx::{PgConnection, Row, types::Uuid};
 
 use crate::{SystemTx, Tx};
 
@@ -84,6 +85,82 @@ pub struct AuditEntry {
     pub details: Details,
     pub request_id: Option<RequestId>,
     pub occurred_at: Instant,
+}
+
+/// Keyset position for the admin audit stream, ordered by `(occurred_at, id)` descending.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct AuditCursor {
+    pub at: Instant,
+    pub id: Uuid,
+}
+
+/// Filters accepted by the platform audit read API.
+#[derive(Clone, Debug, Default)]
+pub struct AuditListFilter {
+    pub action: Option<String>,
+    pub from: Option<Instant>,
+    pub to: Option<Instant>,
+    pub account_id: Option<AccountId>,
+    pub before: Option<AuditCursor>,
+    /// Caller supplies the requested page size plus one to detect another page.
+    pub limit: u16,
+}
+
+/// Safe audit fields exposed to admin and account audit views.
+#[derive(Clone, Debug)]
+pub struct AuditRecord {
+    pub id: Uuid,
+    pub at: Instant,
+    pub actor_id: Option<Uuid>,
+    pub account_id: Option<Uuid>,
+    pub action: String,
+    pub details: Value,
+}
+
+/// Reads audit rows inside an app transaction; row-level security supplies its scope.
+pub async fn list(tx: &mut Tx, filter: AuditListFilter) -> Result<Vec<AuditRecord>, AppError> {
+    let from = filter.from.map(|instant| instant.to_rfc3339());
+    let to = filter.to.map(|instant| instant.to_rfc3339());
+    let before_at = filter.before.map(|cursor| cursor.at.to_rfc3339());
+    let before_id = filter.before.map(|cursor| cursor.id);
+    let rows = sqlx::query(
+        "SELECT id, actor_id, account_id, action, details, \
+                floor(extract(epoch FROM occurred_at) * 1000)::bigint AS occurred_millis \
+         FROM public.audit_log \
+         WHERE ($1::text IS NULL OR action = $1) \
+           AND ($2::timestamptz IS NULL OR occurred_at >= $2::timestamptz) \
+           AND ($3::timestamptz IS NULL OR occurred_at < $3::timestamptz) \
+           AND ($4::uuid IS NULL OR account_id = $4::uuid) \
+           AND ($5::timestamptz IS NULL OR occurred_at < $5::timestamptz \
+                OR (occurred_at = $5::timestamptz AND id < $6::uuid)) \
+         ORDER BY occurred_at DESC, id DESC LIMIT $7",
+    )
+    .bind(filter.action)
+    .bind(from)
+    .bind(to)
+    .bind(filter.account_id.map(|account| *account.as_uuid()))
+    .bind(before_at)
+    .bind(before_id)
+    .bind(i64::from(filter.limit))
+    .fetch_all(tx.conn())
+    .await
+    .map_err(database_error)?;
+
+    rows.into_iter()
+        .map(|row| {
+            let millis: i64 = row.try_get("occurred_millis").map_err(database_error)?;
+            let at = Instant::from_unix_millis(millis)
+                .map_err(|_| AppError::new(ErrorCode::ServiceUnavailable))?;
+            Ok(AuditRecord {
+                id: row.try_get("id").map_err(database_error)?,
+                at,
+                actor_id: row.try_get("actor_id").map_err(database_error)?,
+                account_id: row.try_get("account_id").map_err(database_error)?,
+                action: row.try_get("action").map_err(database_error)?,
+                details: row.try_get("details").map_err(database_error)?,
+            })
+        })
+        .collect()
 }
 
 mod private {
@@ -169,6 +246,10 @@ fn serialise_details(details: &Details) -> Result<String, AppError> {
     }
     serde_json::to_string(&serde_json::Value::Object(values))
         .map_err(|_| AppError::new(ErrorCode::InternalError))
+}
+
+fn database_error(_: sqlx::Error) -> AppError {
+    AppError::new(ErrorCode::ServiceUnavailable)
 }
 
 #[cfg(test)]

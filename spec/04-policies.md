@@ -131,6 +131,8 @@ default, safe and **ratifiable by the owner** (a change is a one-line edit here 
 | `jobs.retry.max_attempts` | int 1–20 | 8 | inst | A | |
 | `jobs.retry.base_seconds` | duration 1–600 | 5 | inst | A | Exponential backoff base, doubled per attempt, capped at `jobs.retry.cap_seconds` |
 | `jobs.retry.cap_seconds` | duration 60–86400 | 3600 | inst | A | Upper bound of a single backoff delay. |
+| `jobs.schedule.daily_seconds` | duration 3600–2592000 | 86400 | inst | A | `[ASSUMED]` Daily module schedules use 86400 seconds; bounded from one hour to 30 days for operator adjustment. |
+| `jobs.schedule.hourly_seconds` | duration 900–86400 | 3600 | inst | A | `[ASSUMED]` Hourly module schedules use 3600 seconds; bounded from 15 minutes to one day for operator adjustment. |
 | `db.connect.retries` | int 0–30 | 10 | bootstrap only (config/env) | A | Not a stored policy; listed for completeness. |
 | `export.max_age_days` | int 1–30 | 7 | inst | A | Generated export archives are deleted after this. |
 | `billing.currency` | text ISO-4217 | **OWNER** | inst | OWNER | Billing cannot be enabled until set (D-18). |

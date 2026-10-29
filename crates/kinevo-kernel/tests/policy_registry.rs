@@ -27,6 +27,8 @@ const M1_KEYS: &[&str] = &[
     "jobs.retry.max_attempts",
     "jobs.retry.base_seconds",
     "jobs.retry.cap_seconds",
+    "jobs.schedule.daily_seconds",
+    "jobs.schedule.hourly_seconds",
     "export.max_age_days",
 ];
 

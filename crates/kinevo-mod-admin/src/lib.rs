@@ -6,6 +6,7 @@ pub mod app;
 pub mod domain;
 pub mod http;
 pub mod infra;
+pub mod jobs;
 pub mod ports;
 
 use std::sync::Arc;
@@ -16,8 +17,9 @@ use app::{
 use kinevo_db::{Tx, jobs::JobHandler, migrate::MigrationSource, outbox::Subscriber};
 use kinevo_http::route::RouteTable;
 use kinevo_ports::module::{
-    AccountExporter, AccountProvisioner, ModuleDescriptor, ModuleKind, PermissionDef,
+    AccountExporter, AccountProvisioner, JobSchedule, ModuleDescriptor, ModuleKind, PermissionDef,
 };
+use kinevo_ports::platform::PolicyReader;
 
 static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
 
@@ -76,6 +78,8 @@ const POLICY_KEYS: &[&str] = &[
     "jobs.retry.max_attempts",
     "jobs.retry.base_seconds",
     "jobs.retry.cap_seconds",
+    "jobs.schedule.daily_seconds",
+    "jobs.schedule.hourly_seconds",
     "ratelimit.auth_per_minute",
     "ratelimit.api_per_minute",
     "ratelimit.ai_per_minute",
@@ -93,6 +97,25 @@ const JOBS: &[&str] = &[
     "outbox.retry",
 ];
 
+const JOB_SCHEDULES: &[JobSchedule] = &[
+    JobSchedule {
+        kind: "admin.audit.prune",
+        cadence_policy_key: "jobs.schedule.daily_seconds",
+    },
+    JobSchedule {
+        kind: "admin.idempotency.prune",
+        cadence_policy_key: "jobs.schedule.hourly_seconds",
+    },
+    JobSchedule {
+        kind: "jobs.prune",
+        cadence_policy_key: "jobs.schedule.daily_seconds",
+    },
+    JobSchedule {
+        kind: "outbox.prune",
+        cadence_policy_key: "jobs.schedule.daily_seconds",
+    },
+];
+
 /// Static metadata for the instance administration module.
 pub const MODULE: ModuleDescriptor = ModuleDescriptor {
     key: "admin",
@@ -104,7 +127,7 @@ pub const MODULE: ModuleDescriptor = ModuleDescriptor {
     settings_panels: &[],
     message_namespaces: &[],
     jobs: JOBS,
-    job_schedules: &[],
+    job_schedules: JOB_SCHEDULES,
     subscriptions: &["ModuleSwitched", "PolicyChanged"],
 };
 
@@ -146,10 +169,25 @@ pub fn router_with_setup(
     router_with_modules(secrets, policies, modules).merge(http::setup::routes(setup))
 }
 
+/// Returns all current admin routes, including audit and job operations.
+#[must_use]
+pub fn router_with_audit_jobs(
+    secrets: Arc<SecretsService>,
+    policies: Arc<PolicyService>,
+    modules: Arc<ModuleService>,
+    setup: Arc<SetupService>,
+    audit: Arc<app::audit::AuditService>,
+    jobs: Arc<app::jobs_admin::JobsAdminService>,
+) -> RouteTable {
+    router_with_setup(secrets, policies, modules, setup)
+        .merge(http::audit::routes(audit))
+        .merge(http::jobs::routes(jobs))
+}
+
 /// Returns admin job handlers once their use cases are implemented.
 #[must_use]
-pub fn jobs() -> Vec<Arc<dyn JobHandler>> {
-    Vec::new()
+pub fn jobs(policies: Arc<dyn PolicyReader>) -> Vec<Arc<dyn JobHandler>> {
+    crate::jobs::handlers(policies)
 }
 
 /// Returns admin outbox subscribers bound to their process-local services.

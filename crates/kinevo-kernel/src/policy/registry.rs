@@ -269,6 +269,28 @@ pub mod platform {
         PolicyValue::Seconds(3_600),
     );
 
+    pub const JOB_SCHEDULE_DAILY_SECONDS: PolicyKey<PolicyDuration> =
+        PolicyKey::new("jobs.schedule.daily_seconds");
+    pub const JOB_SCHEDULE_DAILY_SECONDS_SPEC: PolicySpec = registered(
+        JOB_SCHEDULE_DAILY_SECONDS.name,
+        PolicyType::DurationSeconds {
+            min: 3_600,
+            max: 2_592_000,
+        },
+        PolicyValue::Seconds(86_400),
+    );
+
+    pub const JOB_SCHEDULE_HOURLY_SECONDS: PolicyKey<PolicyDuration> =
+        PolicyKey::new("jobs.schedule.hourly_seconds");
+    pub const JOB_SCHEDULE_HOURLY_SECONDS_SPEC: PolicySpec = registered(
+        JOB_SCHEDULE_HOURLY_SECONDS.name,
+        PolicyType::DurationSeconds {
+            min: 900,
+            max: 86_400,
+        },
+        PolicyValue::Seconds(3_600),
+    );
+
     pub const EXPORT_MAX_AGE_DAYS: PolicyKey<i64> = PolicyKey::new("export.max_age_days");
     pub const EXPORT_MAX_AGE_DAYS_SPEC: PolicySpec = registered(
         EXPORT_MAX_AGE_DAYS.name,
@@ -304,6 +326,8 @@ static ALL_SPECS: &[&PolicySpec] = &[
     &platform::JOB_RETRY_MAX_ATTEMPTS_SPEC,
     &platform::JOB_RETRY_BASE_SECONDS_SPEC,
     &platform::JOB_RETRY_CAP_SECONDS_SPEC,
+    &platform::JOB_SCHEDULE_DAILY_SECONDS_SPEC,
+    &platform::JOB_SCHEDULE_HOURLY_SECONDS_SPEC,
     &platform::EXPORT_MAX_AGE_DAYS_SPEC,
 ];
 

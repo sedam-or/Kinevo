@@ -3,7 +3,7 @@ id: T-038
 title: Add audit reading, the jobs summary, outbox retry and the platform prune jobs
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-034, T-033, T-013, T-014, T-015, T-012]
 requirements: [ADM-FR-05, ADM-FR-07, ADM-FR-08, SEC-AC-10, API-14, D-41]
 branch: m1-t038-admin-audit-jobs-and-prune
@@ -107,8 +107,50 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Acceptance results
+
+| Criterion | Test | Result |
+|---|---|---|
+| AC-1 | `audit_jobs::adm_audit_admin_filters_and_pages` | pass |
+| AC-2 | `audit_jobs::adm_audit_owner_sees_only_own` | pass |
+| AC-3 | `audit_jobs::outbox_retry_enqueues_and_resets` | pass |
+| AC-4 | `audit_jobs::outbox_retry_not_dead` | pass (also verifies unknown delivery is 404) |
+| AC-5 | `audit_jobs::adm_fr_07_prune_audit_by_policy` | pass; deletes 1 row at policy cutoff |
+| AC-6 | `audit_jobs::adm_fr_07_app_role_cannot_modify_audit` | pass; UPDATE and DELETE return SQLSTATE 42501 |
+| AC-7 | `audit_jobs::adm_fr_08_prune_idempotency` | pass; second run deletes 0 rows |
+| AC-8 | `audit_jobs::sec_ac_10_summary_has_no_content` | pass |
+
+Additional coverage: `audit_jobs::admin_prunes_finished_jobs_and_delivered_outbox_idempotently` passes and verifies both fixed seven-day pruning handlers return deleted counts through their `run_count` methods.
+
+### Commands run
+
+| Command | Result |
+|---|---|
+| `cargo nextest run -p kinevo-mod-admin --features kinevo-db/testing` | exit 0; 68 passed, 0 skipped |
+| `cargo nextest run -p kinevo-mod-admin --features kinevo-db/testing --test audit_jobs` | exit 0; 9 passed, 0 skipped |
+| `just check` | exit 0; fmt and Clippy passed; 358 tests passed, 1 skipped; `cargo deny check` exited 0 with existing duplicate-crate and unmatched-license-allowance warnings; spec, contrast and task-index checks passed |
+| `python3 scripts/spec_tool.py check` | exit 0; 0 findings in 60 spec files (also run by `just check`) |
+| `python3 scripts/contrast.py` | exit 0; 0 failures (also run by `just check`) |
+| `python3 scripts/tasks_index.py` | exit 0; regenerated the index for 132 tasks |
+| `python3 scripts/tasks_index.py --check` | exit 0; 0 problems in 132 tasks |
+| `git diff --check` | exit 0 |
+
+The first focused test attempt had no `KINEVO_TEST_DATABASE_URL` and each fixture reported `PostgreSQL test database is unavailable`. The successful reruns derived the URL in process from the already-running `kinevo-dev-pg` container; the password was not printed or saved. No image was started, pulled or built, and no database check remained environment-limited. Clippy emitted the existing `rand::thread_rng` configuration warning.
+
+### Deviations
+
+- Added `kinevo-db::audit::list` and minimal outbox delivery lookup/name-based retry functions in `kinevo-db`. D-41 routes platform table access through that crate, and the listed admin files alone had no audit read API or dynamic path-subscriber retry API.
+- The task describes `JobHandlerSpec`, while this workspace provides `JobHandler`. Registered the five handlers through the existing trait and injected `PolicyReader` into `jobs()` so retention values use the effective policy snapshot.
+- `JobSchedule` requires cadence policy keys, but none existed. Added `jobs.schedule.daily_seconds` (default 86400) and `jobs.schedule.hourly_seconds` (default 3600), with bounded adjustable ranges marked `[ASSUMED]` and explained in `spec/04-policies.md` per D-57.
+- The existing `JobHandler::run` contract returns only `Result<(), AppError>` and the jobs table has no result column. Prune handlers expose the deleted count through `run_count`; the current trait adapter consumes that count. This is recorded below for architect review.
+- Additional adjacent files were necessary for the database APIs, policy registry, its registry test, the cadence policy documentation, task index and run-wide disk report.
+- The diff is 1,752 additions and 12 removals (1,764 changed lines; 1,760 excluding generated `tasks/index.md`). It exceeds `budget_lines: 380`; D-55 makes the line budget guidance. It covers both HTTP routes, RLS-safe database APIs, five handlers, nine PostgreSQL acceptance tests and the two cadence policies.
+
+### Disk and cleanup
+
+Start before the first T-038 build/test: `468G 412G 54G 89%`. Final after `just check`: `468G 412G 53G 89%`. Cleanup: none. Reused the existing PostgreSQL 17 test container; no images, containers, volumes or `target/` files were removed.
 
 ## Questions
 
-_None yet._
+- Q-1 (implementer, 2026-10-30): the task requires prune counts in a job result, but this workspace's `JobHandler::run` returns `Result<(), AppError>` and `jobs` has no result column. Options: (a) add a result contract and persistence to the generic job queue; (b) keep the existing contract and expose the deleted count from each prune handler's `run_count`. Recommendation: (b) for this task; resolved by implementer, pending architect review. The current adapter does not persist or return the count through `JobHandler::run`.
+- Q-2 (implementer, 2026-10-30): the module descriptor requires cadence policy keys, but the policy registry had none for daily/hourly schedules. Added `[ASSUMED]` defaults 86400 and 3600 seconds with adjustable bounds in the policy registry and `spec/04-policies.md`; these are pending architect review.
