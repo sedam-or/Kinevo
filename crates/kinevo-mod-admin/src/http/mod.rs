@@ -11,3 +11,6 @@ pub mod modules;
 
 /// Instance summary endpoint.
 pub mod instance;
+
+/// Public setup status and wizard-session endpoints.
+pub mod setup;

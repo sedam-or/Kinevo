@@ -11,7 +11,7 @@ Each file depends only on files above it (its header says `Depends on:`).
 | # | File | Prefix | What it fixes |
 |---|---|---|---|
 | — | [`00-verdict.md`](00-verdict.md) | — | Phase 0 analysis of the legacy repo; measured baseline; keep/rewrite/drop |
-| — | [`decisions.md`](decisions.md) | `D` | Decision log D-01…D-116 and owner-only open items OWNER-01…07 |
+| — | [`decisions.md`](decisions.md) | `D` | Decision log D-01…D-124 and owner-only open items OWNER-01…07 |
 | — | [`adr/`](adr/) | `ADR` | Architecture decision records (see §4) |
 | 01 | [`01-product.md`](01-product.md) | `PRD` | Problem, personas, principles, scope, non-goals (PROVISIONAL until V1) |
 | 02 | [`02-architecture.md`](02-architecture.md) | `ARCH` | Modular monolith, crates, ports, events, tenancy, runtime |

@@ -22,3 +22,9 @@ pub mod module_repo;
 
 /// Cached module switch state and outbox invalidation.
 pub mod module_switches;
+
+/// Cached setup completion state for the shared HTTP gate.
+pub mod instance_state;
+
+/// Bounded wizard sessions and per-source setup-token attempts.
+pub mod wizard_store;

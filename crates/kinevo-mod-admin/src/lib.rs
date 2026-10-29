@@ -10,7 +10,9 @@ pub mod ports;
 
 use std::sync::Arc;
 
-use app::{modules::ModuleService, policies::PolicyService, secrets::SecretsService};
+use app::{
+    modules::ModuleService, policies::PolicyService, secrets::SecretsService, setup::SetupService,
+};
 use kinevo_db::{Tx, jobs::JobHandler, migrate::MigrationSource, outbox::Subscriber};
 use kinevo_http::route::RouteTable;
 use kinevo_ports::module::{
@@ -131,6 +133,17 @@ pub fn router_with_modules(
     router_with_policies(secrets, policies)
         .merge(http::modules::routes(Arc::clone(&modules)))
         .merge(http::instance::routes(modules))
+}
+
+/// Returns current admin routes together with public first-run setup routes.
+#[must_use]
+pub fn router_with_setup(
+    secrets: Arc<SecretsService>,
+    policies: Arc<PolicyService>,
+    modules: Arc<ModuleService>,
+    setup: Arc<SetupService>,
+) -> RouteTable {
+    router_with_modules(secrets, policies, modules).merge(http::setup::routes(setup))
 }
 
 /// Returns admin job handlers once their use cases are implemented.

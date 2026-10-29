@@ -3,7 +3,7 @@ id: T-036
 title: Implement the setup token, InstanceState, the setup gate and the wizard session endpoints
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-034, T-035, T-017, T-016, T-012]
 requirements: [ADM-FR-01, ADM-FR-02, SET-02, SET-04, SET-05, SEC-AC-08, SEC-14, D-42]
 branch: m1-t036-admin-setup-gate-and-session
@@ -111,7 +111,81 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Fresh instances now create one 128-bit setup token, persist only its hash, and log its setup URL once. The public setup routes expose status and bounded, expiring wizard sessions; invalid-token attempts are audited and locked out, while wizard updates validate templates, modules, policies, locale and base URL without applying account data.
+
+### Acceptance results
+
+| Criterion | Test name | Result |
+|---|---|---|
+| AC-1 | `setup_session::set_04_token_printed_once_hash_stored` | pass |
+| AC-2 | `setup_session::adm_fr_01_gate_before_setup` | pass |
+| AC-3 | `setup_session::open_session_ok` | pass |
+| AC-4 | `setup_session::sec_ac_08_three_tries_then_429` | pass |
+| AC-5 | `setup_session::set_05_restart_resets_wizard_keeps_token` | pass |
+| AC-6 | `setup_session::set_05_session_expires` | pass |
+| AC-7 | `setup_session::put_validates_modules_and_url` | pass |
+| AC-8 | `setup_session::adm_fr_01_setup_routes_closed_after` | pass |
+
+### Commands run
+
+- `cargo fmt --all` — exit 0.
+- `cargo nextest run -p kinevo-mod-admin --features kinevo-db/testing --test setup_session --no-fail-fast` — final run exit 0, 8 passed, 0 skipped. Earlier test-first runs exited 100 while fixing the synthetic module graph, the token-hash assertion, and the tracing subscriber scope; all three test defects were corrected before the final run.
+- `cargo nextest run -p kinevo-mod-admin --features kinevo-db/testing` — exit 0, 51 passed, 0 skipped. The final `just check` below reran the suite after the endpoint-level test improvements.
+- `just check` — first run exit 1 at `cargo fmt --all -- --check` because the new assertion needed formatting; after formatting, final run exit 0: workspace nextest 341 passed, 1 skipped (`kinevo-mod-identity::infra::hasher::tests::id_fr_01_phc_and_verify` is ignored for the documented 200-sample timing comparison); `cargo deny check` passed; `python3 scripts/spec_tool.py check` reported 0 findings in 60 files; `python3 scripts/contrast.py` reported 0 failures; `python3 scripts/tasks_index.py --check` reported 0 problems in 132 tasks. Clippy emitted the existing unreachable `rand::thread_rng` entry warning from `clippy.toml`; cargo-deny emitted duplicate dependency and unmatched license-allowance warnings.
+- `python3 scripts/tasks_index.py` and `python3 scripts/tasks_index.py --check` — both exit 0; each reported 0 problems in 132 tasks after setting this task to `review`.
+- PostgreSQL test configuration — reused the existing local `kinevo-dev-pg` PostgreSQL 17 container. `KINEVO_TEST_DATABASE_URL` was derived in-process from the container configuration and was not printed or saved.
+- `git diff --cached --check` — exit 0; no whitespace errors.
+
+### Files changed
+
+| Path | Added | Removed |
+|---|---:|---:|
+| `crates/kinevo-mod-admin/src/app/mod.rs` | 3 | 0 |
+| `crates/kinevo-mod-admin/src/app/setup.rs` | 465 | 0 |
+| `crates/kinevo-mod-admin/src/http/mod.rs` | 3 | 0 |
+| `crates/kinevo-mod-admin/src/http/setup.rs` | 152 | 0 |
+| `crates/kinevo-mod-admin/src/infra/instance_state.rs` | 110 | 0 |
+| `crates/kinevo-mod-admin/src/infra/mod.rs` | 6 | 0 |
+| `crates/kinevo-mod-admin/src/infra/wizard_store.rs` | 297 | 0 |
+| `crates/kinevo-mod-admin/src/lib.rs` | 14 | 1 |
+| `crates/kinevo-mod-admin/tests/setup_session.rs` | 660 | 0 |
+| `spec/decisions.md` | 3 | 0 |
+| `spec/index.md` | 1 | 1 |
+| `tasks/RUN_REPORT.md` | 25 | 0 |
+| `tasks/T-036-admin-setup-gate-and-session.md` | 76 | 2 |
+| `tasks/index.md` (generated after setting `review`) | 2 | 2 |
+| **Total** | **1,817** | **6** |
+
+The 1,823 changed lines exceed the 400-line guidance; the task's bounded store, four routes and eight acceptance tests account for the scope.
+
+### Deviations
+
+- Minimal wiring in `app/mod.rs`, `http/mod.rs`, `infra/mod.rs` and `lib.rs` was needed to expose the task's new modules and routes; these files are not in the task's Files table.
+- The acceptance test's synthetic module graph omits the unrelated `progress` descriptor because its fixture made a core module depend on toggleable `goals`, which invalidated the graph before the requested AI/goals dependency case could run.
+- The implementation is above the 400-line guidance because the task requires the bounded store, cached instance adapter, four HTTP routes, database behavior and eight acceptance cases. D-55 makes the line budget guidance, not a blocker.
+- `tasks/RUN_REPORT.md` was absent when inspected; created it to record the available T-036 disk checkpoints required by WORKFLOW.md §2. Earlier run-wide initial disk output was not present in this checkout, so it is not reconstructed here.
+
+### Spec issues noticed
+
+- AC-7 in this task says `422 module_dependency_unmet`, while `spec/standards/error-handling.md` and `spec/03-module-system.md` define `module_dependency_unmet` as HTTP 409. Per spec precedence, the HTTP test and handler use 409. Invalid `base_url` remains a 422 field error.
+
+### Not done / not verified
+
+- No environment-limited checks for this task. The end-to-end setup finish transaction and startup invocation of `ensure_token` are owned by T-037 and T-039 respectively and were not verified here.
+- No browser test was run; this is a backend endpoint and in-memory store task, and its acceptance cases run against the HTTP router and PostgreSQL.
+- The exact name/reason of the one pre-existing skipped workspace test was not captured by `just check` output.
+
+### Follow-up suggestions
+
+- T-037 should verify that its committed finish transaction invalidates `CachedInstanceState` and closes every `/setup/*` route.
+
+### Decisions made by implementer — pending architect review
+
+- **D-122:** Inject the configured public origin into `SetupService` and use lowercase 32-character hex for 128-bit setup/session values. Deriving a host from an untrusted request or adding another ID-encoding dependency were rejected. Files: `crates/kinevo-mod-admin/src/app/setup.rs`, `crates/kinevo-mod-admin/src/http/setup.rs`. Rollback: replace the encoding/origin source with the architect's chosen contract; no schema migration is needed.
+- **D-123:** Persist the singleton setup-token hash through the app-role `Tx`, supplying a fresh non-persisted `AccountId` only for its required transaction context; no account row or tenant data is created or accessed. Granting the system role update permission or adding an unscoped app transaction were rejected to preserve existing role boundaries. Files: `crates/kinevo-mod-admin/src/app/setup.rs`. Rollback: replace this access path with an approved pre-account transaction API and adjust the adapter tests.
+- **D-124:** Cap cached setup-attempt source keys at 4,096 so IP churn cannot grow the process-local counter map without bound; the wizard store remains limited to eight sessions. An unbounded attempt map was rejected. File: `crates/kinevo-mod-admin/src/infra/wizard_store.rs`. Rollback: change the capacity under an architect-approved replacement decision.
 
 ## Questions
 

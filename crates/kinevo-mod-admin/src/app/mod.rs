@@ -11,3 +11,6 @@ pub mod modules;
 
 /// Embedded setup-template registry and application planning.
 pub mod templates;
+
+/// Setup token lifecycle and the process-local wizard session.
+pub mod setup;
