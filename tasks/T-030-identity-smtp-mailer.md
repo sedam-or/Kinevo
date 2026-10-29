@@ -3,12 +3,12 @@ id: T-030
 title: Add the optional SMTP mailer adapter and the password-reset email
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-028, T-016]
 requirements: [D-27, ID-FR-13, CA-12, ARCH-03, SEC-08]
 branch: m1-t030-identity-smtp
 budget_lines: 280
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-030: Add the optional SMTP mailer adapter and the password-reset email
