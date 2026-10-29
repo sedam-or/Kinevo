@@ -101,6 +101,14 @@ impl RouteTable {
         self
     }
 
+    /// Combines independent module route tables before validating the shared route gates.
+    #[must_use]
+    pub fn merge(mut self, other: Self) -> Self {
+        self.router = self.router.merge(other.router);
+        self.specs.extend(other.specs);
+        self
+    }
+
     /// Returns all registered descriptors in registration order.
     #[must_use]
     pub fn specs(&self) -> &[RouteSpec] {

@@ -10,8 +10,8 @@ pub mod ports;
 
 use std::sync::Arc;
 
-use app::secrets::SecretsService;
-use kinevo_db::{Tx, jobs::JobHandler, migrate::MigrationSource};
+use app::{policies::PolicyService, secrets::SecretsService};
+use kinevo_db::{Tx, jobs::JobHandler, migrate::MigrationSource, outbox::Subscriber};
 use kinevo_http::route::RouteTable;
 use kinevo_ports::module::{
     AccountExporter, AccountProvisioner, ModuleDescriptor, ModuleKind, PermissionDef,
@@ -103,7 +103,7 @@ pub const MODULE: ModuleDescriptor = ModuleDescriptor {
     message_namespaces: &[],
     jobs: JOBS,
     job_schedules: &[],
-    subscriptions: &[],
+    subscriptions: &["PolicyChanged"],
 };
 
 /// Returns the admin secret routes assembled for the application.
@@ -112,16 +112,25 @@ pub fn router(secrets: Arc<SecretsService>) -> RouteTable {
     http::secrets::routes(secrets)
 }
 
+/// Returns all current admin routes for application assembly.
+#[must_use]
+pub fn router_with_policies(
+    secrets: Arc<SecretsService>,
+    policies: Arc<PolicyService>,
+) -> RouteTable {
+    http::secrets::routes(secrets).merge(http::policies::routes(policies))
+}
+
 /// Returns admin job handlers once their use cases are implemented.
 #[must_use]
 pub fn jobs() -> Vec<Arc<dyn JobHandler>> {
     Vec::new()
 }
 
-/// Returns subscribers once admin events are consumed.
+/// Returns admin outbox subscribers bound to their process-local services.
 #[must_use]
-pub fn subscribers() -> Vec<()> {
-    Vec::new()
+pub fn subscribers(policies: &PolicyService) -> Vec<Arc<dyn Subscriber>> {
+    vec![policies.cache_subscriber()]
 }
 
 /// Returns account provisioners once admin account provisioning is implemented.

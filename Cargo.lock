@@ -1343,6 +1343,7 @@ dependencies = [
  "kinevo-kernel",
  "kinevo-mod-identity",
  "kinevo-ports",
+ "moka",
  "serde",
  "serde_json",
  "sqlx",

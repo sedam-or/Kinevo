@@ -10,3 +10,9 @@ pub mod constraints {
 
 /// PostgreSQL-backed AEAD storage for registered secrets.
 pub mod secret_store;
+
+/// PostgreSQL policy version queries.
+pub mod policy_repo;
+
+/// Cached policy snapshots and outbox invalidation.
+pub mod policy_reader;

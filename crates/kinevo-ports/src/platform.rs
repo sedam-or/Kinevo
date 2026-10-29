@@ -42,6 +42,14 @@ impl ResolvedPolicies {
             .get(key.name)
             .and_then(|resolved| key.get(resolved))
     }
+
+    /// Returns registry-resolved metadata for transport listing and diagnostics.
+    ///
+    /// Business consumers should use [`Self::get`] with a typed `PolicyKey`.
+    #[must_use]
+    pub fn resolved(&self, key: &str) -> Option<&Resolved> {
+        self.values.get(key)
+    }
 }
 
 #[async_trait]

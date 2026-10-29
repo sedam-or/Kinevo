@@ -2,3 +2,6 @@
 
 /// Secret management use cases.
 pub mod secrets;
+
+/// Policy listing, validation, and version writes.
+pub mod policies;
