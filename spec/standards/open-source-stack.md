@@ -39,6 +39,7 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 | Email | **lettre** (SMTP, rustls) — optional | 0.11.23 ✔ | MIT | D-27 | — |
 | JSON Schema | **jsonschema** | 0.60.1 ✔ | MIT | validate AI/imports/docs against `contracts/*.schema.json` | schema-draft support — pin draft 2020-12 |
 | ICS | **icalendar** for building/parsing basics; recurrence expansion is **own code** per LAND-R3/R4 (the `rrule` crate 0.14.0 ✔ was evaluated and not adopted: determinism and DST rules must match this spec exactly) | icalendar 0.17.15 ✔ | MIT/Apache-2.0 | adopt for the format, not for semantics | parser leniency ⇒ our bounds and fuzzing |
+| ZIP archives | **zip** (`default-features = false`, `deflate` only) | 9.1.3 | MIT | Build account exports with deflate; no archive extraction paths | deterministic metadata and archive safety are enforced by identity tests |
 | Unicode | **unicode-normalization** (NFC/NFKC) | 0.1.26 ✔ | MIT/Apache-2.0 | VAL-02 | — |
 | Regex | **regex** (linear time) | 1.13.1 ✔ | MIT/Apache-2.0 | VAL-10 | — |
 | URL parsing | **url** | 2.5.8 ✔ | MIT/Apache-2.0 | Standards-compliant parsing and canonicalization for `https_url` validation; hand-written parsing rejected | Keep host and credential edge cases covered by fixtures |

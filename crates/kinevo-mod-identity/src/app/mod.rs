@@ -2,6 +2,8 @@
 
 pub mod accounts;
 pub mod admin_accounts;
+pub mod deletion;
+pub mod export;
 pub mod invites;
 pub mod jobs;
 pub mod login;

@@ -2,6 +2,7 @@
 
 pub mod accounts;
 pub mod device;
+pub mod export;
 pub mod lockout;
 pub mod password;
 pub mod profile;

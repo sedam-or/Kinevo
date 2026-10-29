@@ -3,7 +3,7 @@ id: T-029
 title: Implement account deletion (purge job) and data export (ZIP builder)
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-028, T-013, T-014, T-008]
 requirements: [ID-FR-10, ID-FR-11, ID-FR-12, MOD-11, SM-21, DOM-04, SEC-10, D-41]
 branch: m1-t029-identity-deletion-export
@@ -128,7 +128,85 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Implemented password-confirmed account deletion, its delayed purge job, and account data export as a deterministic ZIP assembled from registered `AccountExporter`s. Export persistence is isolated in the identity infrastructure repository; archive contents contain only `README.txt` and `data.json` for the M1 identity module.
+
+### Acceptance results
+
+| Criterion | Named test | Result |
+|---|---|---|
+| AC-1 | `deletion::id_fr_11_request_flow` | pass |
+| AC-2 | `deletion::id_fr_10_failures_change_nothing` | pass |
+| AC-3 | `deletion::deleting_account_is_locked_out` | pass |
+| AC-4 | `deletion::id_fr_11_purge_cascades_and_keeps_audit` | pass |
+| AC-5 | `deletion::purge_is_idempotent` | pass |
+| AC-6 | `export::sm_21_state_machine_table` | pass |
+| AC-7 | `export::id_fr_12_single_active_export` | pass |
+| AC-8 | `export::mod_11_sections_from_all_exporters` | pass |
+| AC-9 | `export::id_fr_12_no_secrets_in_export` | pass |
+| AC-10 | `export::download_states` | pass |
+| AC-11 | `export::deterministic_archive` | pass |
+| AC-12 | `export::sec_07_foreign_export_is_404` | pass |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| `cargo fmt --all` | 0 | Formatted all workspace Rust files. |
+| `df -h / && eval "$(scripts/dev-postgres.sh env)" && NEXTEST_TEST_THREADS=1 CARGO_NET_OFFLINE=true cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing --test deletion --test export --no-fail-fast` | 0 | 12 passed, 0 skipped after the repository refactor; shared PostgreSQL was already running. Disk check showed 79 GB available. |
+| `export PATH="$HOME/.cargo/bin:$PATH" CARGO_NET_OFFLINE=true NEXTEST_TEST_THREADS=1; df -h /; eval "$(scripts/dev-postgres.sh env)"; just check` | 0 | 281 passed, 1 intentionally ignored timing-oracle benchmark; `cargo deny` advisories, bans, licenses and sources passed; spec check 0 findings/60 files; contrast 0 failures; task index 0 problems/132 tasks. Disk check showed 79 GB available. Existing duplicate-lock and unmatched-license-allowance warnings remain. |
+| `git diff --check` | 0 | No whitespace errors. |
+| `python3 scripts/spec_tool.py check` | 0 | 0 findings in 60 spec files (also run by `just check`). |
+| `python3 scripts/contrast.py` | 0 | 0 contrast failures (also run by `just check`). |
+| `python3 scripts/tasks_index.py --check` | 0 | 0 problems in 132 tasks (also run by `just check`; rerun after regenerating the status index). |
+
+An earlier HTTP acceptance attempt returned 500 instead of 202 because its in-process request lacked the synthetic `ConnectInfo` required by the rate-limit middleware. The fixture now adds that connection metadata, and the named test passes. Initial `just check` attempts exited 101 on Clippy findings in the new implementation and tests; those findings were corrected before the successful full gate.
+
+### Files changed
+
+| Path | Lines added | Lines removed |
+|---|---:|---:|
+| `Cargo.lock` (generated) | 86 | 0 |
+| `crates/kinevo-mod-identity/Cargo.toml` | 1 | 0 |
+| `crates/kinevo-mod-identity/src/app/deletion.rs` | 232 | 0 |
+| `crates/kinevo-mod-identity/src/app/export.rs` | 468 | 0 |
+| `crates/kinevo-mod-identity/src/app/jobs.rs` | 165 | 4 |
+| `crates/kinevo-mod-identity/src/app/mod.rs` | 2 | 0 |
+| `crates/kinevo-mod-identity/src/domain/export.rs` | 132 | 0 |
+| `crates/kinevo-mod-identity/src/domain/mod.rs` | 1 | 0 |
+| `crates/kinevo-mod-identity/src/http/deletion.rs` | 70 | 0 |
+| `crates/kinevo-mod-identity/src/http/export.rs` | 146 | 0 |
+| `crates/kinevo-mod-identity/src/http/mod.rs` | 2 | 0 |
+| `crates/kinevo-mod-identity/src/infra/exports.rs` | 202 | 0 |
+| `crates/kinevo-mod-identity/src/infra/mod.rs` | 1 | 0 |
+| `crates/kinevo-mod-identity/src/lib.rs` | 19 | 1 |
+| `crates/kinevo-mod-identity/tests/deletion.rs` | 546 | 0 |
+| `crates/kinevo-mod-identity/tests/export.rs` | 462 | 0 |
+| `spec/standards/open-source-stack.md` | 1 | 0 |
+| `tasks/T-029-identity-deletion-and-export.md` | 80 | 2 |
+| `tasks/index.md` | 2 | 2 |
+
+### Deviations
+
+- The test command comment above says DB checks may be environment-limited without Docker/PostgreSQL. Run-wide D-102 supersedes that note: tests used the one shared PostgreSQL server from `scripts/dev-postgres.sh env`, with a unique disposable database per test and no Testcontainers fallback.
+- Added the minimal `infra/mod.rs` module export required to wire the task-listed `infra/exports.rs` repository.
+- The implementation changes 2,541 lines excluding `Cargo.lock`, above the 430-line guidance. D-55 makes that guidance advisory. No acceptance test was weakened.
+- Run-wide decisions D-102, D-103 and D-104 are recorded in the T-024 implementer decision table; D-105 is recorded in `spec/decisions.md` and the T-025 disk-guard report. `cargo-sweep` is installed; its sweep remains scheduled for the M1 integration boundary.
+
+### Spec issues noticed
+
+The task's test-command comment still describes the superseded per-test Testcontainers setup; D-102 is the governing decision and is recorded above.
+
+### Not done / not verified
+
+- Browser or deployed-service E2E was not part of T-029's acceptance commands and was not run.
+- M1 exports include only identity-provided `README.txt` and `data.json`; `landscape.ics` and canvas files are deferred to their owning modules as specified in the task context.
+- No environment-limited acceptance checks remain for T-029.
+
+### Follow-up suggestions
+
+- None.
 
 ## Questions
 

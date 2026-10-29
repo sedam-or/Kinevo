@@ -181,6 +181,18 @@ pub fn reset_router(service: Arc<app::reset::ResetService>) -> RouteTable {
     http::reset::routes(service)
 }
 
+/// Builds the authenticated self-service account-deletion route.
+#[must_use]
+pub fn deletion_router(service: Arc<app::deletion::DeletionService>) -> RouteTable {
+    http::deletion::route(service)
+}
+
+/// Builds the authenticated account-export request, status and download routes.
+#[must_use]
+pub fn export_router(service: Arc<app::export::ExportService>) -> RouteTable {
+    http::export::routes(service)
+}
+
 /// Returns the identity crate's embedded migrations.
 #[must_use]
 pub fn migrations() -> MigrationSource {
@@ -195,6 +207,12 @@ pub fn migrations() -> MigrationSource {
 #[must_use]
 pub fn jobs() -> Vec<Arc<dyn JobHandler>> {
     app::jobs::handlers()
+}
+
+/// Returns identity jobs with an export builder configured for compiled exporters.
+#[must_use]
+pub fn jobs_with_exports(service: Arc<app::export::ExportService>) -> Vec<Arc<dyn JobHandler>> {
+    app::jobs::handlers_with_exports(service)
 }
 
 /// Returns the module's outbox subscribers; subscribers are added with their owning use cases.
@@ -212,5 +230,5 @@ pub fn provisioners() -> Vec<Arc<dyn AccountProvisioner<Tx>>> {
 /// Returns the account exporters implemented by this module.
 #[must_use]
 pub fn exporters() -> Vec<Arc<dyn AccountExporter<Tx>>> {
-    Vec::new()
+    vec![Arc::new(app::export::IdentityExporter)]
 }
