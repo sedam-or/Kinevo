@@ -6,7 +6,10 @@ use kinevo_kernel::{
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::app::login::{AccountProfile, LoginOutcome, LoginRequest};
+use crate::{
+    app::login::{AccountProfile, LoginOutcome, LoginRequest},
+    domain::totp::RecoveryCode,
+};
 
 /// JSON request body for `POST /auth/login`.
 #[derive(Deserialize, ToSchema)]
@@ -38,16 +41,9 @@ impl LoginDto {
         let recovery_code = self
             .recovery_code
             .map(|code| {
-                let normalized = code.to_ascii_uppercase();
-                let valid = normalized.len() == 10
-                    && normalized
-                        .bytes()
-                        .all(|byte| b"23456789ABCDEFGHJKLMNPQRSTUVWXYZ".contains(&byte));
-                if valid {
-                    Ok(Secret::new(normalized))
-                } else {
-                    Err(field_error("recovery_code", FieldCode::DigitsInvalid))
-                }
+                RecoveryCode::parse(&code)
+                    .map(|normalized| Secret::new(normalized.as_str().to_owned()))
+                    .ok_or_else(|| field_error("recovery_code", FieldCode::DigitsInvalid))
             })
             .transpose()?;
         Ok(LoginRequest {

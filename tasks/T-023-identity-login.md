@@ -202,13 +202,13 @@ Counts are relative to `origin/dev` and include new files; `Cargo.lock` is exclu
 | ID | Choice; alternatives rejected; reason | Files touched | Reversal |
 |---|---|---|---|
 | D-96 (pending owner review) | Use validated standard `Set-Cookie`; reject adding an unverified `axum-extra` dependency or delaying the endpoint because the registry was unreachable. | `spec/decisions.md`, `spec/index.md`, `tasks/T-023-identity-login.md`, `crates/kinevo-mod-identity/src/http/session_response.rs` | Adopt an approved cookie dependency and replace the helper/tests. |
-| D-97 (pending owner review) | Use the 32-symbol unambiguous recovery alphabet `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`, uppercase ASCII before comparison; reject arbitrary alphanumerics or a larger set. | `spec/decisions.md`, `spec/index.md`, `tasks/T-023-identity-login.md`, login implementation/tests | Change the shared recovery-code validator and revise tests to the owner's chosen alphabet. |
+| D-97 (superseded by D-107) | The initial implementation selected `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`; T-027 AC-10 requires excluding `L` and `U`, so D-107 now governs generated and accepted recovery codes. | `spec/decisions.md`, `spec/index.md`, `spec/standards/auth.md`, `tasks/T-023-identity-login.md`, `crates/kinevo-mod-identity/src/http/dto.rs` | Supersede D-107 with a later decision and update both enrolment and login validation together. |
 | D-98 (pending owner review) | Key the bounded in-memory unknown-email tracker with SHA-256 of normalized email; reject storing the email or adding a keyed-hash dependency. | `spec/decisions.md`, `spec/index.md`, `tasks/T-023-identity-login.md`, login implementation/tests | Replace the key derivation and tests if the security standard selects another digest. |
 | D-99 (pending owner review) | Inject a narrow `PasswordWork` port so tests count dummy/real verification while production delegates to the existing bounded Argon2 hasher; reject weakening the constant-work test. | `spec/decisions.md`, `spec/index.md`, `tasks/T-023-identity-login.md`, login implementation/tests | Replace the port with an equivalent test seam that preserves the same constant-work evidence. |
 
 ### Spec issues noticed
 
-The authentication standard requires a 32-symbol recovery alphabet but does not name its symbols; D-97 records the implementer's choice. The task requests `CookieJar` without listing or approving the required crate; D-96 records the standard-header implementation pending owner review.
+The TOTP recovery alphabet is now fixed by D-107 after applying T-027 AC-10 to the earlier pending choice D-97. The task requests `CookieJar` without listing or approving the required crate; D-96 records the standard-header implementation pending owner review.
 
 ### Not done / not verified
 

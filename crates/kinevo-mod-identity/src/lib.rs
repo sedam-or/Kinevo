@@ -149,6 +149,12 @@ pub fn account_router(
     http::account::routes(profiles, passwords, sessions)
 }
 
+/// Builds the authenticated TOTP enrolment, confirmation and disable routes.
+#[must_use]
+pub fn totp_router(service: Arc<app::totp::TotpService>) -> RouteTable {
+    http::totp::routes(service)
+}
+
 /// Returns the identity crate's embedded migrations.
 #[must_use]
 pub fn migrations() -> MigrationSource {

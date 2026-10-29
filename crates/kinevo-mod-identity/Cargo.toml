@@ -12,12 +12,13 @@ kinevo-db.workspace = true
 kinevo-http.workspace = true
 async-trait = "0.1.92"
 axum = "0.8.9"
-moka = { version = "0.12.16", features = ["future"] }
+moka = { version = "0.12.16", features = ["future", "sync"] }
 argon2 = { version = "0.6.0", default-features = false, features = ["alloc", "password-hash", "zeroize"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.154"
 sqlx = { version = "0.9.0", default-features = false, features = ["postgres", "runtime-tokio", "tls-rustls-ring-native-roots", "migrate", "macros", "uuid"] }
 tokio = { version = "1.54.1", features = ["rt", "sync"] }
+totp-rs = { version = "6.0.0", default-features = false, features = ["std", "otpauth", "zeroize"] }
 utoipa = "6.0.0"
 unicode-normalization = "0.1.26"
 zeroize = "1.9.1"

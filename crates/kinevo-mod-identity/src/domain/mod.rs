@@ -5,6 +5,7 @@ pub mod lockout;
 pub mod password;
 pub mod profile;
 pub mod session;
+pub mod totp;
 
 use serde::{Deserialize, Serialize};
 

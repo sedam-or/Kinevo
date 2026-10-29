@@ -10,7 +10,7 @@ This file fixes **mechanics and parameters**; values that operators may change a
 | Password hash | argon2id (RFC 9106) via the `argon2` crate | memory 64 MiB, iterations 3, parallelism 1, 16-byte random salt, 32-byte output; stored as PHC string. Parameters are *technical constants* recorded in `open-source-stack.md`; a rehash-on-login upgrades old parameters. Hashing runs on a blocking thread pool with a concurrency cap of `min(4, cores)` to bound memory (DoS control). |
 | Common-password check | embedded list of the 10 000 most common passwords (public-domain lists), case-insensitive compare after NFKC | rejects `password_too_common` |
 | TOTP | RFC 6238 SHA-1, 6 digits, 30 s, ±1 step, 160-bit secret | seed stored as AEAD secret; replay cache `(account, step)` in memory for 90 s |
-| Recovery codes | 10 codes, 10 chars from a 32-symbol unambiguous alphabet (≈ 50 bits each), stored as SHA-256 of the normalised code | single use |
+| Recovery codes | 10 codes, 10 chars from the 32-symbol alphabet `ABCDEFGHJKMNPQRSTVWXYZ23456789*~` (D-107; ≈ 50 bits each), stored as SHA-256 of the normalised code | single use |
 | One-time tokens (invite, reset, setup) | 256-bit random, base64url (43 chars) | stored as SHA-256; shown once |
 
 ## 2. Tokens

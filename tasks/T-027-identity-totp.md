@@ -3,7 +3,7 @@ id: T-027
 title: Implement optional TOTP enrolment, verification, recovery codes and the replay cache
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-026, T-023, T-008]
 requirements: [ID-FR-08, SEC-AC-07, D-40, AUTH-05, ID-FR-04]
 branch: m1-t027-identity-totp
@@ -122,7 +122,89 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Implemented TOTP enrolment, confirmation, disablement, login verification and single-use recovery codes. TOTP seeds are stored through SecretStore, replay checks use a bounded process-local cache, and recovery-code consumption is tenant-scoped. The shared recovery alphabet follows D-107, including the matching login validator.
+
+### Acceptance results
+
+| Criterion | Test name | Result |
+|---|---|---|
+| AC-1 | totp::tests::id_fr_08_rfc6238_vectors_and_window | pass |
+| AC-2 | totp::id_fr_08_enroll_shape | pass |
+| AC-3 | totp::id_fr_08_confirm_flow | pass |
+| AC-4 | totp::sec_ac_07_replay_in_same_step_rejected | pass |
+| AC-5 | totp::id_fr_08_recovery_code_single_use | pass |
+| AC-6 | totp::totp_already_enabled | pass |
+| AC-7 | totp::disable_requires_password_and_code | pass |
+| AC-8 | totp::totp_required_by_policy | pass |
+| AC-9 | totp::sec_ac_45_no_totp_material_in_logs | pass |
+| AC-10 | totp::tests::recovery_alphabet_is_unambiguous | pass |
+
+### Commands run
+
+| Command | Exit | Result |
+|---|---:|---|
+| NEXTEST_TEST_THREADS=4 cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing --test totp --no-fail-fast | 0 | 10 passed, 0 skipped |
+| NEXTEST_TEST_THREADS=4 cargo nextest run -p kinevo-mod-identity --features kinevo-db/testing | 0 | 80 passed, 1 pre-existing ignored test |
+| just check | 100 | Initial parallel workspace run: 241/258 executed, 237 passed, 4 failed while the shared PostgreSQL container was stopped; failures reported PostgreSQL test database Unavailable |
+| NEXTEST_TEST_THREADS=1 just check | 0 | 258/258 executed, 258 passed, 1 skipped; cargo deny and spec gates completed |
+| python3 scripts/spec_tool.py check | 0 | 0 findings in 60 spec files |
+| python3 scripts/tasks_index.py --check | 0 | 0 problems in 132 tasks |
+| git diff --check | 0 | No whitespace errors |
+| df -h / | 0 | 468G total, 384G used, 81G available (83%) before builds/tests/container start |
+| docker start kinevo-dev-pg | 0 | Restarted the existing postgres:17-alpine test container; created no container or image |
+| eval "$(scripts/dev-postgres.sh env)" | 0 | Reused the existing shared test server |
+
+### Files changed
+
+Line counts are relative to origin/dev.
+
+| Path | Added | Removed |
+|---|---:|---:|
+| Cargo.lock (generated; excluded from budget) | 31 | 0 |
+| crates/kinevo-mod-identity/Cargo.toml | 2 | 1 |
+| crates/kinevo-mod-identity/src/app/mod.rs | 1 | 0 |
+| crates/kinevo-mod-identity/src/app/totp.rs | 399 | 0 |
+| crates/kinevo-mod-identity/src/domain/mod.rs | 1 | 0 |
+| crates/kinevo-mod-identity/src/domain/totp.rs | 187 | 0 |
+| crates/kinevo-mod-identity/src/http/dto.rs | 7 | 11 |
+| crates/kinevo-mod-identity/src/http/mod.rs | 1 | 0 |
+| crates/kinevo-mod-identity/src/http/totp.rs | 182 | 0 |
+| crates/kinevo-mod-identity/src/infra/mod.rs | 1 | 0 |
+| crates/kinevo-mod-identity/src/infra/recovery.rs | 74 | 0 |
+| crates/kinevo-mod-identity/src/lib.rs | 6 | 0 |
+| crates/kinevo-mod-identity/tests/totp.rs | 900 | 0 |
+| spec/decisions.md | 1 | 0 |
+| spec/index.md | 1 | 1 |
+| spec/standards/auth.md | 1 | 1 |
+| tasks/T-023-identity-login.md | 2 | 2 |
+| tasks/T-027-identity-totp.md | 84 | 2 |
+| tasks/index.md | 2 | 2 |
+
+### Deviations
+
+- Initial parallel just check failed four database setup tests when the existing Kinevo PostgreSQL container was stopped. Restarted that same container and reran the full gate with NEXTEST_TEST_THREADS=1; all checks passed. No new image or container was created.
+- The change exceeds the approximate 420-line task budget; the budget is guidance under D-55. The implementation includes HTTP, service, persistence, tests and the required recovery-alphabet decision update. The measured size excluding Cargo.lock is 1,872 changed lines (1,852 additions and 20 removals); Cargo.lock adds 31 generated lines.
+- D-107 updates the shared login validator, auth standard, decision index and T-023 report so enrolment and login accept the same recovery alphabet.
+
+### Decisions made by implementer
+
+| ID | Task | Decision; alternatives rejected; reason | Files touched | Reversal |
+|---|---|---|---|---|
+| D-107 (pending owner review) | T-027 | Use ABCDEFGHJKMNPQRSTVWXYZ23456789*~ for generated and accepted recovery codes. D-97's earlier alphabet includes L and U, which T-027 AC-10 excludes; the 30 explicitly listed symbols alone do not meet the 32-symbol requirement. The two additional symbols avoid all listed lookalikes. | spec/decisions.md, spec/index.md, spec/standards/auth.md, tasks/T-023-identity-login.md, crates/kinevo-mod-identity/src/http/dto.rs, crates/kinevo-mod-identity/src/domain/totp.rs | A later decision can select a new 32-symbol alphabet and update generation, normalization, login validation and tests together. |
+
+### Spec issues noticed
+
+The shared recovery-code alphabet was unspecified by the auth standard and conflicted with T-027 AC-10's exclusion list; D-107 resolves it pending owner review. No additional spec conflict was found.
+
+### Not done / not verified
+
+No browser or Android enrolment flow was run; UI and QR display are out of scope for T-027. All task acceptance tests and repository gates were run.
+
+### Follow-up suggestions
+
+Review D-107 with the other pending owner decisions.
 
 ## Questions
 

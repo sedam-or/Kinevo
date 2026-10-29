@@ -9,3 +9,4 @@ pub mod profile;
 pub mod refresh;
 pub mod register;
 pub mod sessions;
+pub mod totp;
