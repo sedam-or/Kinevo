@@ -3,12 +3,12 @@ id: T-047
 title: Add the i18n runtime, the UX state catalogue (en, id) and the check-i18n gate
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-046]
 requirements: [FE-05, FE-06, UXS-01, UXS-05, DS-A11Y-10]
 branch: m1-t047-web-i18n-and-state-catalogue
 budget_lines: 400
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-047: Add the i18n runtime, the UX state catalogue (en, id) and the check-i18n gate
