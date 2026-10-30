@@ -76,8 +76,8 @@ Deliberately **not** adopted: an ORM, a DI framework, a job-queue crate (the DB 
 | Routing | **@tanstack/react-router** | 1.170.46 ✔ | MIT | typed routes + search params as state | pre-2.0 API churn |
 | Server state | **@tanstack/react-query** (+ persist) | 5.105.0 ✔ | MIT | caching, retries, offline persistence | — |
 | Accessible primitives | **react-aria-components** | 1.22.1 ✔ | Apache-2.0 | WCAG-focused behaviours, i18n, date/time pickers; Radix/Headless UI considered | bundle size ⇒ code split |
-| Styling | **Tailwind CSS 4** + CSS variables (tokens) | 4.3.3 ✔ | MIT | design-token driven utilities | — |
-| Forms / validation | **react-hook-form** + **zod** | zod 4.6.7 ✔ | MIT | VAL-C1 | zod major changes |
+| Styling | **Tailwind CSS 4** + **@tailwindcss/vite** + CSS variables (tokens) | 4.3.3 ✔ (both packages) | MIT | design-token driven utilities via Vite | — |
+| Forms / validation | **react-hook-form** + **zod** | react-hook-form 7.91.0 ✔ / zod 4.6.7 ✔ | MIT | VAL-C1 | zod major changes |
 | i18n | **i18next**, **react-i18next** (ICU via `i18next-icu`) | 26.5.10 ✔ / 17.1.8 ✔ | MIT | FE-05 | — |
 | Offline storage | **idb** (IndexedDB wrapper) | 8.0.4 ✔ | ISC | queue + cache persister | — |
 | PWA | **vite-plugin-pwa** (Workbox) | 2.0.0 ✔ | MIT | manifest + service worker | SW caching bugs ⇒ tests |
@@ -92,7 +92,7 @@ Deliberately **not** adopted: an ORM, a DI framework, a job-queue crate (the DB 
 | React transform | **@vitejs/plugin-react** | 6.1.2 ✔ | MIT | official Vite React transform and refresh integration | Vite compatibility |
 | React types | **@types/react**, **@types/react-dom** | 19.3.0 ✔ | MIT | TypeScript types for React and the DOM renderer | — |
 | DOM test environment | **jsdom** | 30.1.3 ✔ | MIT | browser DOM implementation for Vitest | keep test environment isolated |
-| E2E / a11y | **Playwright**, **@axe-core/playwright** | 1.64.1 ✔ / 4.14.0 ✔ | Apache-2.0 / MPL-2.0 (dev-only) | 3 engines, axe tags | browsers need install in CI |
+| E2E / a11y | **@playwright/test**, **@axe-core/playwright** | 1.64.1 ✔ / 4.14.0 ✔ | Apache-2.0 / MPL-2.0 (dev-only) | 3 engines, axe tags | browsers need install in CI |
 | Fonts | **Fraunces**, **Inter**, **JetBrains Mono** (self-hosted subsets) | — | SIL OFL-1.1 | DS §4 | provenance ledger entries |
 
 ## 3. Android (`android/`)

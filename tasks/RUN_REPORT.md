@@ -212,3 +212,149 @@ Filesystem                    Size  Used Avail Use% Mounted on
 ```
 
 Cleanup: none. Reused the existing `kinevo-dev-pg` PostgreSQL 17 container; no image was built or pulled, and no container, image, volume, `target/`, or shared cache was removed. All recorded T-044 pre-operation checks showed 120 GB available, above the D-128 cleanup and stop thresholds.
+
+### T-045 continuation checkpoint before typecheck and tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No cleanup was performed. This checkpoint was captured before TypeScript checks and the component test suite. The existing PostgreSQL server and Docker resources were left unchanged.
+
+### T-045 checkpoint before component suite retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No cleanup was performed. Existing disposable PostgreSQL and Docker resources were preserved.
+
+### T-045 checkpoint before final Vitest retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No cleanup was performed. No container or image operation was started.
+
+### T-045 checkpoint before lint, browser and full gate (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No cleanup was performed. No container start, image build, or registry pull was performed for this checkpoint.
+
+### T-045 checkpoint before formatting/lint and focused test pass (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No cleanup was performed. Existing PostgreSQL and Docker resources remain untouched.
+
+### T-045 checkpoint before Playwright browser tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No cleanup was performed. Browser availability will be reported from the exact Playwright result; no browser download or license prompt is initiated.
+
+### T-045 checkpoint before Playwright retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No cleanup or browser installation was performed. The first Playwright attempt exposed a `webServer` argument separator issue and ended with `Error: Process from config.webServer exited early.` The config command was corrected before this retry.
+
+### T-045 checkpoint before Chromium-only browser verification (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No browser binaries were installed and no system packages were changed. Chromium was available; Firefox/WebKit availability was checked by the exact task command.
+
+### T-045 checkpoint before `just check` (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+The existing `/tmp/kinevo-dev-pg/mode` identifies the reused `docker` PostgreSQL mode. The shared `postgres:17-alpine` server is reused; the script is configured with image pulls disabled. No cleanup was performed.
+
+### T-045 checkpoint before full gate retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+The first `just check` stopped in Biome because Playwright had generated `web/test-results/.last-run.json`; that generated file was removed, and Playwright output was redirected to `/tmp/kinevo-playwright-results`. No cache, Cargo target, image, container, or volume was removed.
+
+### T-045 checkpoint before URL normalization regression test (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-045 checkpoint before green URL regression verification (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No cleanup was performed. Regression test initially failed as expected because non-root path slashes were incorrectly removed; normalization was corrected to trim only the origin root slash.
+
+### T-045 checkpoint before updated Chromium accessibility tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No cleanup or browser installation was performed. Chromium is an existing Playwright browser installation.
+
+### T-045 checkpoint before final `just check` (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+The existing disposable PostgreSQL 17 container is reused with the script's image-pull-disabled configuration. No cleanup was performed.
+
+### T-045 final checkpoint after full verification (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  344G  119G  75% /
+```
+
+No cleanup was performed; the shared PostgreSQL 17 container and all Docker resources were preserved.
+
+### T-045 verification and environment limits
+
+- TDD red was observed for the missing component modules, then the six named acceptance tests were added and passed. A URL-root normalization regression test also failed first (`https://example.test/path/` became `https://example.test/path`) and passed after the fix.
+- `pnpm --dir web typecheck`: passed.
+- `pnpm --dir web lint`: passed; four existing `!important` reduced-motion warnings remain.
+- `pnpm --dir web test`: 22 tests passed across 15 files.
+- `just check`: exit 0. Rust nextest: 385 passed, 1 skipped. Web Vitest: 22 passed. Cargo fmt, Clippy, typecheck, lint, production web build, cargo-deny, spec validation, contrast, task-index validation and OpenAPI drift checks completed. `spec_tool.py check`: 0 findings / 60 files; `tasks_index.py --check`: 0 problems / 132 tasks; contrast failures: 0; OpenAPI drift: clean. Cargo-deny reported pre-existing duplicate-crate and unmatched-license-allowance warnings; all deny categories ended `ok`.
+- `pnpm --dir web exec playwright test tests/e2e/components.a11y.spec.ts --project=chromium`: 2 passed, including axe serious/critical scan and target-size check.
+- Exact all-project command `pnpm --dir web exec playwright test tests/e2e/components.a11y.spec.ts`: 2 Chromium tests passed; Firefox and WebKit could not launch due to environment dependencies. Firefox error: `Executable doesn't exist at /home/kepolu/.cache/ms-playwright/firefox-1555/firefox/firefox` (Playwright suggested `pnpm exec playwright install`; not run). WebKit error: `Host system is missing dependencies to run browsers`; suggested dependencies were `libicu74` and `libflite1` (the tool also suggested sudo commands; none were run).
+- `budget_lines: 400` was exceeded: the measured change was approximately 1,469 added/removed lines excluding `web/pnpm-lock.yaml` (includes the run log and stack allowance update). Per D-55, this is guidance and not a blocker.

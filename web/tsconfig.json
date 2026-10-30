@@ -18,5 +18,12 @@
     "noImplicitOverride": true,
     "types": ["vite/client", "vitest/globals"]
   },
-  "include": ["src", "scripts", "vite.config.ts", "vitest.config.ts"]
+  "include": [
+    "src",
+    "scripts",
+    "tests",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts"
+  ]
 }
