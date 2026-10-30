@@ -3,12 +3,12 @@ id: T-044
 title: Generate design tokens, self-hosted fonts and the contrast gate input
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-043]
 requirements: [DS-A11Y-01, DS-A11Y-02, DS-A11Y-09, TST-10, FE-13]
 branch: m1-t044-web-tokens-and-fonts
 budget_lines: 360
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-044: Generate design tokens, self-hosted fonts and the contrast gate input
