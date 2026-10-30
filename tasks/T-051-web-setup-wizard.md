@@ -3,12 +3,12 @@ id: T-051
 title: Build the setup wizard UI (token gate, template, modules, rules and first account)
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-050, T-037, T-035]
 requirements: [SET-01, SET-02, SET-03, SET-05, SEC-AC-08, DS-A11Y-06, FE-04, UXS-02]
 branch: m1-t051-web-setup-wizard
 budget_lines: 400
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-051: Build the setup wizard UI (token gate, template, modules, rules and first account)
