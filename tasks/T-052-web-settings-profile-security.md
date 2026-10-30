@@ -3,12 +3,12 @@ id: T-052
 title: Build the profile and security settings (password, two-step verification, sessions)
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-050, T-027, T-026, T-045]
 requirements: [ID-FR-02, ID-FR-07, ID-FR-08, ID-FR-14, SEC-AC-01, DS-A11Y-05, UXS-04, UXS-02]
 branch: m1-t052-web-settings-profile-security
 budget_lines: 390
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-052: Build the profile and security settings (password, two-step verification, sessions)
