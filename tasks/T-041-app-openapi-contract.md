@@ -3,12 +3,12 @@ id: T-041
 title: Generate the OpenAPI document and add the drift check
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-040, T-016, T-038]
 requirements: [TST-04, API-01, API-03, ARCH-20, CA-14]
 branch: m1-t041-app-openapi-contract
 budget_lines: 330
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-041: Generate the OpenAPI document and add the drift check
