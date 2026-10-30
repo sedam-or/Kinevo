@@ -3,12 +3,12 @@ id: T-048
 title: Add the error-code message catalogue (en, id) and the error mapper
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-047, T-041]
 requirements: [ERR-01, ERR-02, FE-03, UXS-01, UXS-05]
 branch: m1-t048-web-error-catalogue
 budget_lines: 390
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-048: Add the error-code message catalogue (en, id) and the error mapper
