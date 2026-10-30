@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useId } from "react";
+import { forwardRef, type ReactNode, useCallback, useId } from "react";
 import { Button as AriaButton, type ButtonProps as AriaButtonProps } from "react-aria-components";
 
 export type ButtonVariant = "primary" | "secondary" | "quiet" | "danger";
@@ -19,26 +19,31 @@ const variants: Record<ButtonVariant, string> = {
   danger: "bg-danger text-paper shadow-rest hover:brightness-95",
 };
 
-export function Button({
-  children,
-  variant = "primary",
-  isLoading = false,
-  isSelected = false,
-  isDisabled = false,
-  error,
-  className,
-  "aria-describedby": describedBy,
-  ...props
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    children,
+    variant = "primary",
+    isLoading = false,
+    isSelected = false,
+    isDisabled = false,
+    error,
+    className,
+    "aria-describedby": describedBy,
+    ...props
+  },
+  forwardedRef,
+) {
   const errorId = useId();
   const describedByIds = [describedBy, error ? errorId : undefined].filter(Boolean).join(" ");
   const buttonRef = useCallback(
     (element: HTMLButtonElement | null) => {
+      if (typeof forwardedRef === "function") forwardedRef(element);
+      else if (forwardedRef) forwardedRef.current = element;
       if (!element) return;
       if (isLoading) element.setAttribute("aria-busy", "true");
       else element.removeAttribute("aria-busy");
     },
-    [isLoading],
+    [forwardedRef, isLoading],
   );
 
   return (
@@ -67,4 +72,4 @@ export function Button({
       )}
     </AriaButton>
   );
-}
+});

@@ -367,3 +367,247 @@ Filesystem                    Size  Used Avail Use% Mounted on
 ```
 
 No cleanup or container operation was performed.
+
+### T-046 checkpoint before red tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before typecheck (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before typecheck retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before typecheck retry 2 (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before typecheck retry 3 (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before unit-test retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before focused component tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before focused component tests retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before typecheck after Button ref wiring (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before focused component tests after Button ref wiring (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before dialog focus test retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before overlay E2E (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before Chromium E2E retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before web lint (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before final typecheck (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before final web lint (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before final web tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before just check (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before PostgreSQL reuse/start (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup was performed.
+
+### T-046 checkpoint before just check database retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+The existing PostgreSQL 17 image is reused with pulls disabled; no cleanup was performed.
+
+### T-046 checkpoint before final all-browser E2E command (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or browser install was performed.
+
+### T-046 final checkpoint after verification (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+Cleanup: none. PostgreSQL 17 was reused with pulls disabled. No Docker image was built or pulled, and no cache, target, container, image, or volume was removed.
+
+### T-046 verification and environment limits
+
+- Acceptance unit tests passed: 34 tests across 22 files, including Dialog focus trap/restore and save dismissal, toast queue/persistence/pause, local ErrorBoundary recovery, delayed hidden skeleton, and all catalogue primitives.
+- `pnpm --dir web typecheck`: passed. `pnpm --dir web lint`: exit 0; four existing `!important` reduced-motion warnings.
+- `just check`: first invocation ended at the database suite because the shared PostgreSQL URL had not been loaded (`Unavailable`, 4 DB-dependent CLI tests failed). Retried after `eval "$(scripts/dev-postgres.sh env)"`; nextest completed 385 passed / 1 skipped, web tests 34 passed, lint/typecheck/build completed, task index check reported 0 problems / 132 tasks, contrast reported 0 failures, and the OpenAPI generated-file drift check reached its final clean diff command.
+- `pnpm --dir web exec playwright test tests/e2e/overlays.a11y.spec.ts`: Chromium 2/2 passed, including axe serious/critical scan and reduced-motion behavior. Firefox is environment-limited: executable missing at `/home/kepolu/.cache/ms-playwright/firefox-1555/firefox/firefox`. WebKit is environment-limited: host dependencies `libicu74` and `libflite1` are missing. Browser installs and system package changes were not attempted.
+- Issue #69 is the ledger-linked canonical issue; duplicate open issue #89 already existed. No extra issue was created.
+
+### T-046 checkpoint before ErrorBoundary recovery regression test (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before ErrorBoundary reload callback test retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 checkpoint before final just check retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-046 post-gate final checkpoint (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+Final `just check` completed with exit 0: nextest 385 passed / 1 skipped, Vitest 34 passed, production web build and the consistency/drift gates passed. The shared PostgreSQL 17 service was reused. Cleanup: none.
+
+The strengthened ErrorBoundary recovery test first failed because a one-shot throwing child recovered during React's concurrent fallback. It now models the owning section's `onReload` callback; the final web suite passes 34/34 and verifies the section recovers without losing the sibling shell.

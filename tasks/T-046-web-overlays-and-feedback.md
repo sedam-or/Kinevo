@@ -3,7 +3,7 @@ id: T-046
 title: Build Dialog, Sheet, Toast, Banner, Card, EmptyState, Skeleton and Tabs
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-045]
 requirements: [CA-15, DS-A11Y-02, DS-A11Y-09, DS-A11Y-12, FE-12, FE-16]
 branch: m1-t046-web-overlays-and-feedback
@@ -101,8 +101,91 @@ pnpm --dir web exec playwright test tests/e2e/overlays.a11y.spec.ts
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
+
+Added the overlay, feedback, loading, status and navigation primitives with React Aria behavior and accessible names. Toasts enforce a three-item cap, persist errors and pause timed dismissal while hovered or focused; section errors stay local, omit untrusted server detail and call the section's reload handler.
+
+### Acceptance results
+
+| Criterion | Test name | Result |
+|---|---|---|
+| AC-1 | `overlays::dialog_focus_trap_and_restore` | pass |
+| AC-2 | `overlays::dialog_not_dismissible_while_saving` | pass |
+| AC-3 | `overlays::toast_queue_and_persistence` | pass |
+| AC-4 | `overlays::toast_pauses_on_hover_focus` | pass |
+| AC-5 | `overlays::fe_12_error_boundary_is_local` | pass |
+| AC-6 | `overlays::reduced_motion_respected` | pass in Chromium; Firefox/WebKit environment-limited |
+| AC-7 | `overlays.a11y::tst_11_overlays_axe_and_live_regions` | pass in Chromium (0 serious/critical axe violations); Firefox/WebKit environment-limited |
+
+### Commands run
+
+| Command | Result |
+|---|---|
+| `pnpm --dir web test -- src/components/Dialog.test.tsx src/components/Toast.test.tsx src/components/ErrorCard.test.tsx src/components/ErrorBoundary.test.tsx src/components/Skeleton.test.tsx src/components/Tabs.test.tsx src/components/Feedback.test.tsx` (initial TDD run) | exit 1 as expected: the seven new suites could not resolve their not-yet-created component modules; the existing 22 tests passed. |
+| `pnpm --dir web test` (intermediate ErrorBoundary recovery test) | exit 1: React concurrent recovery retried a one-shot throwing child before the user action; the test now uses the explicit `onReload` section callback and verifies the child recovers. |
+| `pnpm --dir web typecheck` | final exit 0. Earlier attempts exited 2 for component return/ref and React Aria key typing; those type errors were corrected. |
+| `pnpm --dir web lint` | final exit 0; four existing reduced-motion `!important` warnings. Initial run exited 1 on formatting and accessibility lint in new files; fixes are included. |
+| `pnpm --dir web test` | exit 0; 34 passed across 22 files. |
+| `just check` without the shared DB environment | exit 100; four DB-dependent CLI tests reported `Unavailable` because `KINEVO_TEST_DATABASE_URL` had not been loaded. |
+| `eval "$(scripts/dev-postgres.sh env)"` followed by `just check` | final exit 0 after reusing the shared PostgreSQL 17 service: nextest 385 passed / 1 skipped; web tests 34 passed; web build/typecheck/lint, task-index, contrast and OpenAPI drift gates completed. |
+| `pnpm --dir web exec playwright test tests/e2e/overlays.a11y.spec.ts` | Chromium 2/2 passed. Firefox and WebKit could not launch; exact errors are recorded below and in `tasks/RUN_REPORT.md`. The first E2E attempt also exposed a strict locator matching the persistent Banner and toast; the locator was scoped to the Notifications region and the final Chromium run passed. |
+| `python3 scripts/tasks_index.py` followed by `python3 scripts/tasks_index.py --check` | exit 0; 0 problems across 132 tasks. |
+| `python3 scripts/spec_tool.py check` | exit 0; 0 findings across 60 spec files. |
+
+### Files changed
+
+| Path | Added / removed |
+|---|---:|
+| `web/src/app/components-demo.tsx` | +118 / -35 |
+| `web/src/components/Badge.tsx` | +30 / -0 |
+| `web/src/components/Banner.tsx` | +47 / -0 |
+| `web/src/components/Button.tsx` | +19 / -14 |
+| `web/src/components/Card.tsx` | +35 / -0 |
+| `web/src/components/ConflictCard.tsx` | +41 / -0 |
+| `web/src/components/Dialog.test.tsx` | +61 / -0 |
+| `web/src/components/Dialog.tsx` | +61 / -0 |
+| `web/src/components/EmptyState.tsx` | +19 / -0 |
+| `web/src/components/ErrorBoundary.test.tsx` | +41 / -0 |
+| `web/src/components/ErrorBoundary.tsx` | +45 / -0 |
+| `web/src/components/ErrorCard.test.tsx` | +30 / -0 |
+| `web/src/components/ErrorCard.tsx` | +44 / -0 |
+| `web/src/components/Feedback.test.tsx` | +69 / -0 |
+| `web/src/components/ProgressBar.tsx` | +27 / -0 |
+| `web/src/components/Sheet.tsx` | +12 / -0 |
+| `web/src/components/Skeleton.test.tsx` | +31 / -0 |
+| `web/src/components/Skeleton.tsx` | +14 / -0 |
+| `web/src/components/Tabs.test.tsx` | +24 / -0 |
+| `web/src/components/Tabs.tsx` | +43 / -0 |
+| `web/src/components/Toast.test.tsx` | +85 / -0 |
+| `web/src/components/Toast.tsx` | +173 / -0 |
+| `web/src/hooks/useDelayedLoading.ts` | +17 / -0 |
+| `web/src/main.tsx` | +8 / -5 |
+| `web/tests/e2e/overlays.a11y.spec.ts` | +33 / -0 |
+
+Implementation and test diff: 1,181 changed lines excluding task/run reports and the generated index; `budget_lines: 390` was exceeded by 791 lines. Lockfiles and generated files were unchanged.
+
+### Deviations
+
+- `web/src/main.tsx` wraps both the app and the development component route in one `ToastProvider`, as required for one root live-region host; this minimal wiring was not listed in Files.
+- `web/src/components/Button.tsx` now forwards its DOM ref so React Aria can restore focus to Dialog/Sheet triggers; this minimal integration fix was not listed in Files.
+- The 390-line budget was exceeded because this task adds thirteen primitives, named behavior tests and an accessibility E2E suite. D-55 makes the budget guidance, not a blocker.
+- Two pre-existing open issues reference T-046 (#69 and #89). The ledger-linked #69 remains canonical; no third issue was created.
+- No dependencies or lockfile entries were added.
+
+### Spec issues noticed
+
+None identified.
+
+### Not done / not verified
+
+- Firefox E2E: `pnpm --dir web exec playwright test tests/e2e/overlays.a11y.spec.ts` could not launch because `/home/kepolu/.cache/ms-playwright/firefox-1555/firefox/firefox` does not exist. The suggested browser download was not run.
+- WebKit E2E: the same command could not launch because host libraries `libicu74` and `libflite1` are missing. No sudo or system dependency installation was run.
+- Manual NVDA/Firefox, VoiceOver/Safari and TalkBack review was not available in this environment.
+
+### Follow-up suggestions
+
+None.
 
 ## Questions
 
-_None yet._
+_None._
