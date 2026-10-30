@@ -833,3 +833,134 @@ Filesystem                    Size  Used Avail Use% Mounted on
 ```
 
 Cleanup: none. The existing shared PostgreSQL 17 service was reused; no image was built or pulled, and no container, image, volume, or `target/` content was removed.
+
+### T-048 checkpoint before red acceptance tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before registry table generation (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before post-implementation acceptance tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before acceptance test after catalog and mapper implementation (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before generator and catalogue gates (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before web typecheck (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before web lint (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before web lint retry after Biome formatting (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before regenerated registry table (Biome-stable output) (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before web lint after generator formatting fix (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before full web test suite (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before final just check and PostgreSQL reuse (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before focused Rust catalogue test retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-048 checkpoint before final just check retry after registry-count fix (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+## T-048 — Add the error-code message catalogue and mapper
+
+- Status: review; issue #72; implementation commit pending at report write time.
+- Acceptance: six named mapper/registry/catalogue tests pass; `pnpm --dir web typecheck`, `lint`, `test` (47 passed), and final `just check` pass. Full Rust gate: 385 passed / 1 skipped. The initial full check found the old HTTP catalogue test counted field/network `error.*` keys as registry codes; corrected the assertion and reran the focused test and full gate successfully.
+- Supporting gates: `check:error-codes` passed; `check:i18n` passed with 469 messages and no findings.
+- Files: 682 additions and 6 removals across the task implementation files; generated task index and reports excluded. This is 298 lines over the 390-line guidance; D-55 says budget is not a blocker. `package.json` lint/generator wiring and the Rust catalogue-count assertion are recorded deviations.
+- Resolved by implementer, pending architect review: accept a rejected fetch via `Promise<Response>` in addition to `Response` for AC-5; accept nested numeric `details.bounds` for AC-6 although the interface describes scalar details.
+- Environment-limited: none. Not run: browser E2E journey (not listed in this task's Tests). Existing reduced-motion `!important` lint warnings remain, without failing checks.
+
+
+### T-048 ending disk checkpoint (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+Cleanup: none.

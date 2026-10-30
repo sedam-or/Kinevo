@@ -838,7 +838,17 @@ mod http_core {
         }
         for map in [en.as_object(), id.as_object()] {
             let map = map.ok_or_else(|| io::Error::other("catalog must be an object"))?;
-            let error_count = map.keys().filter(|key| key.starts_with("error.")).count();
+            let error_count = ErrorCode::ALL
+                .iter()
+                .map(|code| {
+                    ["title", "detail"]
+                        .iter()
+                        .filter(|suffix| {
+                            map.contains_key(&format!("error.{}.{}", code.as_str(), suffix))
+                        })
+                        .count()
+                })
+                .sum::<usize>();
             assert_eq!(error_count, ErrorCode::ALL.len() * 2);
         }
         Ok(())

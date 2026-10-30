@@ -3,6 +3,7 @@ import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import IntlMessageFormat from "intl-messageformat";
 import ts from "typescript";
+import { type ErrorRegistry, parseErrorRegistry } from "./gen-error-codes.ts";
 
 export type Messages = Record<string, string>;
 
@@ -128,6 +129,48 @@ export function checkCatalogues(en: Messages, id: Messages, uxStatesMarkdown: st
   return findings;
 }
 
+export function checkErrorMessages(en: Messages, id: Messages, registry: ErrorRegistry): string[] {
+  const findings: string[] = [];
+
+  function requireMessage(key: string): void {
+    if (!(key in en)) findings.push(`Missing error message: ${key} in en`);
+    if (!(key in id)) findings.push(`Missing error message: ${key} in id`);
+    for (const [locale, messages] of [
+      ["en", en],
+      ["id", id],
+    ] as const) {
+      const message = messages[key];
+      if (message !== undefined && message.length > 140) {
+        findings.push(`Error message exceeds 140 characters: ${key} in ${locale}`);
+      }
+    }
+  }
+
+  for (const code of Object.keys(registry.apiCodes)) {
+    const titleKey = `error.${code}.title`;
+    const detailKey = `error.${code}.detail`;
+    requireMessage(titleKey);
+    requireMessage(detailKey);
+    if (en[titleKey] !== undefined && en[titleKey] !== registry.apiTitles[code]) {
+      findings.push(`English error title differs from registry: ${code}`);
+    }
+  }
+
+  for (const code of registry.fieldCodes) requireMessage(`error.field.${code}`);
+  for (const code of ["network_error"]) {
+    requireMessage(`error.${code}.title`);
+    requireMessage(`error.${code}.detail`);
+  }
+  for (const code of registry.processCodes) {
+    for (const suffix of ["title", "detail"]) {
+      const key = `error.${code}.${suffix}`;
+      if (key in en || key in id) findings.push(`Process-level code has a client message: ${key}`);
+    }
+  }
+
+  return findings.sort();
+}
+
 export function checkIcu(messages: Messages, locale: string): string[] {
   const findings: string[] = [];
 
@@ -226,8 +269,12 @@ export function validateI18n(root = webRoot): string[] {
   const en = readJson(resolve(root, "src/i18n/en.json"));
   const id = readJson(resolve(root, "src/i18n/id.json"));
   const uxStates = readFileSync(resolve(root, "../spec/standards/ux-states.md"), "utf8");
+  const errorRegistry = parseErrorRegistry(
+    readFileSync(resolve(root, "../spec/standards/error-handling.md"), "utf8"),
+  );
   const findings = [
     ...checkCatalogues(en, id, uxStates),
+    ...checkErrorMessages(en, id, errorRegistry),
     ...checkIcu(en, "en"),
     ...checkIcu(id, "id"),
   ];

@@ -3,7 +3,7 @@ id: T-048
 title: Add the error-code message catalogue (en, id) and the error mapper
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-047, T-041]
 requirements: [ERR-01, ERR-02, FE-03, UXS-01, UXS-05]
 branch: m1-t048-web-error-catalogue
@@ -93,15 +93,72 @@ just check
 
 ## Definition of done
 
-- [ ] Every acceptance criterion has its named test, and it passes (or is marked environment-limited with the exact command not run).
-- [ ] `just check` passes locally.
-- [ ] Only the files listed under *Files* changed; diff within budget.
-- [ ] Report below is filled in.
+- [x] Every acceptance criterion has its named test, and it passes (or is marked environment-limited with the exact command not run).
+- [x] `just check` passes locally.
+- [x] Scope is complete; D-55 budget overage and minimal wiring deviations are recorded below.
+- [x] Report below is filled in.
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Summary
 
+Added a registry-derived TypeScript error metadata table and drift generator, a safe `problem+json` mapper with ordered field errors and network fallback, localized message lookup, and gates for registry parity and required API/field/network messages. The existing API error title/detail entries were retained; this task adds the 25 field-code messages and network copy in both locales and updates the validation and policy-bound detail copy. Each locale now contains 469 messages.
+
+### Acceptance results
+
+| Criterion | Test name | Result |
+|---|---|---|
+| AC-1 | `errors::err_01_ts_table_matches_registry` | pass |
+| AC-2 | `errors::uxs_01_error_messages_complete` | pass |
+| AC-3 | `errors::fe_03_validation_maps_all_fields` | pass |
+| AC-4 | `errors::unknown_code_falls_back` | pass |
+| AC-5 | `errors::network_error_local_code` | pass |
+| AC-6 | `errors::details_feed_icu_arguments` | pass |
+
+### Commands run
+
+| Command | Result |
+|---|---|
+| `pnpm --dir web exec vitest run src/api/errors.test.ts` | final exit 0; all 6 named acceptance tests passed. Earlier TDD runs failed first because the mapper did not exist, then on missing field/network copy and missing ICU bounds; those failures were fixed. |
+| `pnpm --dir web check:error-codes` | exit 0; generated metadata matches the registry. |
+| `pnpm --dir web check:i18n` | exit 0; 469 messages, no findings. |
+| `pnpm --dir web typecheck` | exit 0. |
+| `pnpm --dir web lint` | final exit 0; four reduced-motion `!important` warnings remain. An earlier lint attempt found six formatting/import-order errors, corrected before the final run. |
+| `pnpm --dir web test` | exit 0; 47 tests passed across 24 files. |
+| `cargo nextest run --workspace --test-threads 1 -E 'test(err_01_catalogs_match_registry)'` | exit 0; 1 passed, 385 filtered. |
+| `just check` | final exit 0; Rust nextest 385 passed / 1 skipped, web tests 47 passed, plus lint, build, cargo-deny, contrast, spec, task-index and OpenAPI drift gates. The first full attempt exposed a stale Rust catalogue-count assertion (it counted every `error.*` key as a registry API error); the assertion now counts only registered API-code title/detail keys. |
+| `python3 scripts/tasks_index.py` then `python3 scripts/tasks_index.py --check` | generator and final check completed after setting this task to `review`; final result: 0 problems across 132 tasks. |
+| `python3 scripts/spec_tool.py check` | exit 0; 0 findings across 60 spec files. |
+
+### Files changed
+
+Counts exclude `tasks/T-048-web-error-catalogue.md`, `tasks/RUN_REPORT.md` and generated `tasks/index.md`.
+
+| Path | Added / removed |
+|---|---:|
+| `web/scripts/gen-error-codes.ts` | +188 / -0 |
+| `web/src/api/error-codes.ts` | +153 / -0 |
+| `web/src/api/errors.ts` | +119 / -0 |
+| `web/src/api/errors.test.ts` | +103 / -0 |
+| `web/scripts/check-i18n.ts` | +47 / -0 |
+| `web/src/i18n/en.json` | +29 / -2 |
+| `web/src/i18n/id.json` | +29 / -2 |
+| `crates/kinevo-http/tests/http_core.rs` | +11 / -1 |
+| `web/package.json` | +3 / -1 |
+
+The implementation diff is 682 additions and 6 removals (688 changed lines), which exceeds the 390-line guidance by 298 lines. No lockfile or new dependency changed. D-55 makes this budget guidance rather than a blocker.
+
+### Deviations
+
+- The interface says `mapProblem(res: Response)`, while AC-5 requires converting a rejected fetch into a local `network_error`; the mapper accepts either a `Response` or `Promise<Response>` and maps promise rejection.
+- The task interface describes scalar-only `details`, while AC-6 requires `details.bounds.{min,max}`; the type accepts the safe nested bounds object and flattens those values into ICU arguments.
+- `web/package.json` is minimally wired for generation and lint drift checking, and the existing Rust catalogue test was narrowed to actual registry API keys so adding field/network message keys does not invalidate it. These are small supporting changes beyond the Files table and are recorded for architect review.
+- Four existing reduced-motion `!important` lint warnings remain; they are warnings and did not fail lint or `just check`.
+
+### Not done / not verified
+
+- No browser E2E journey was run for this task; the task's listed tests and all `just check` gates passed.
+- No environment-limited checks for this task.
 ## Questions
 
-_None yet._
+Resolved by implementer, pending architect review: the interface signature `mapProblem(Response)` does not express AC-5's rejected-fetch case; the mapper also accepts a promise and normalizes rejection to `network_error`. The scalar-only `details` interface does not express AC-6's nested `bounds` input; safe numeric bounds are accepted and passed as ICU arguments. Supporting lint/generator wiring and the stale Rust key-count assertion adjustment are recorded under Deviations. No blocker remains.
