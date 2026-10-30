@@ -100,15 +100,15 @@ pub fn routes(service: Arc<TotpService>) -> RouteTable {
         )
 }
 
-#[derive(Serialize)]
-struct EnrolmentResponse {
+#[derive(Serialize, utoipa::ToSchema)]
+pub(crate) struct EnrolmentResponse {
     otpauth_uri: String,
     recovery_codes: Vec<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct CodeBody {
+pub(crate) struct CodeBody {
     code: String,
 }
 
@@ -125,9 +125,9 @@ impl Validate for CodeBody {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct DisableBody {
+pub(crate) struct DisableBody {
     password: String,
     code: String,
 }

@@ -1,8 +1,19 @@
-use clap::{Parser, Subcommand};
-use std::{net::SocketAddr, path::Path};
+use clap::{Args, Parser, Subcommand};
+use std::{
+    net::SocketAddr,
+    path::{Path, PathBuf},
+};
 
 pub mod admin;
 pub mod migrate;
+
+/// Arguments for printing or checking the committed `OpenAPI` contract.
+#[derive(Args)]
+pub struct OpenApiArgs {
+    /// Compare fresh generation with this committed contract file.
+    #[arg(long, value_name = "PATH")]
+    pub check: Option<PathBuf>,
+}
 
 #[derive(Parser)]
 #[command(name = "kinevo", disable_help_subcommand = true)]
@@ -23,6 +34,8 @@ pub enum Command {
     Migrate(migrate::MigrateArgs),
     /// Run an audited operator action.
     Admin(admin::AdminArgs),
+    /// Print or verify the generated `OpenAPI` contract.
+    Openapi(OpenApiArgs),
 }
 
 /// Return the stable version command output.

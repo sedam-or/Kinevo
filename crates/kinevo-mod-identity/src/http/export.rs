@@ -113,8 +113,9 @@ pub fn routes(service: Arc<ExportService>) -> RouteTable {
         )
 }
 
-#[derive(Serialize)]
-struct ExportRequestResponse {
+#[derive(Serialize, utoipa::ToSchema)]
+pub(crate) struct ExportRequestResponse {
+    #[schema(value_type = String)]
     export_id: Uuid,
 }
 

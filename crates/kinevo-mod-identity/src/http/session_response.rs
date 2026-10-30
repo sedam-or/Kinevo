@@ -35,8 +35,8 @@ pub fn session_response(
     Ok(response)
 }
 
-#[derive(Serialize)]
-struct RefreshResponse {
+#[derive(Serialize, utoipa::ToSchema)]
+pub(crate) struct RefreshResponse {
     access_token: String,
     expires_in: u32,
     #[serde(skip_serializing_if = "Option::is_none")]

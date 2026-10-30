@@ -106,13 +106,14 @@ fn spec(
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct PutBody {
+pub(crate) struct PutBody {
+    #[schema(value_type = String)]
     value: SecretInput,
 }
 
-struct SecretInput(kinevo_kernel::secret::Secret<String>);
+pub(crate) struct SecretInput(kinevo_kernel::secret::Secret<String>);
 
 impl<'de> Deserialize<'de> for SecretInput {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>

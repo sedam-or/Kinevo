@@ -29,9 +29,9 @@ use crate::{
     http::session_response::session_response,
 };
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct RegisterBody {
+pub(crate) struct RegisterBody {
     email: String,
     password: String,
     display_name: String,

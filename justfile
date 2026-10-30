@@ -35,6 +35,7 @@ spec:
     python3 scripts/spec_tool.py check
     python3 scripts/contrast.py
     python3 scripts/tasks_index.py --check
+    cargo run -q -p kinevo-app -- openapi --check contracts/openapi.json
 
 check: lint test
     cargo deny check

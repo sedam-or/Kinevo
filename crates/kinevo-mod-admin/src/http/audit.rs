@@ -99,11 +99,13 @@ pub fn routes(service: Arc<AuditService>) -> RouteTable {
         )
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct AuditQuery {
+pub(crate) struct AuditQuery {
     action: Option<String>,
+    #[schema(value_type = Option<String>, format = DateTime)]
     from: Option<kinevo_kernel::time::Instant>,
+    #[schema(value_type = Option<String>, format = DateTime)]
     to: Option<kinevo_kernel::time::Instant>,
     account_id: Option<String>,
     cursor: Option<String>,

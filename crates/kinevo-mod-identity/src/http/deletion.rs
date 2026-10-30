@@ -56,9 +56,9 @@ pub fn route(service: Arc<DeletionService>) -> RouteTable {
     )
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct DeletionBody {
+pub(crate) struct DeletionBody {
     password: String,
     confirm: String,
 }

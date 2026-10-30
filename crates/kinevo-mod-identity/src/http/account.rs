@@ -39,9 +39,9 @@ use crate::{
 
 const SESSIONS_PATH: &str = "/account/sessions";
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct PasswordChangeBody {
+pub(crate) struct PasswordChangeBody {
     current_password: String,
     new_password: String,
 }
@@ -52,16 +52,17 @@ impl Validate for PasswordChangeBody {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct SessionsQuery {
+pub(crate) struct SessionsQuery {
     limit: Option<String>,
     cursor: Option<String>,
     sort: Option<String>,
 }
 
-#[derive(Serialize)]
-struct SessionsPage {
+#[derive(Serialize, utoipa::ToSchema)]
+pub(crate) struct SessionsPage {
+    #[schema(value_type = Vec<serde_json::Value>)]
     items: Vec<SessionView>,
     next_cursor: Option<String>,
 }

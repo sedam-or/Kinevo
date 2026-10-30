@@ -32,9 +32,10 @@ use crate::{
 };
 
 /// Android refresh body. The wire string is immediately wrapped in `Secret`.
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(from = "RefreshBodyWire")]
 pub struct RefreshBody {
+    #[schema(value_type = Option<String>)]
     pub refresh_token: Option<Secret<String>>,
 }
 

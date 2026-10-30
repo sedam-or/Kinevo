@@ -216,6 +216,8 @@ impl Error for StartupError {}
 pub struct PreparedApp {
     /// HTTP routes ready to serve.
     pub router: Router,
+    /// Route descriptors for the validated application router and public health routes.
+    pub route_specs: Vec<kinevo_http::route::RouteSpec>,
     /// Whether every compiled migration is applied.
     pub migrations_current: bool,
     db: Db,
@@ -231,6 +233,7 @@ impl fmt::Debug for PreparedApp {
         formatter
             .debug_struct("PreparedApp")
             .field("migrations_current", &self.migrations_current)
+            .field("route_count", &self.route_specs.len())
             .finish_non_exhaustive()
     }
 }
@@ -315,6 +318,7 @@ pub async fn prepare(cfg: Config, clock: Arc<dyn Clock>) -> Result<PreparedApp, 
     ModuleKinds::from_descriptors(&descriptors).map_err(|_| StartupError::new("config_invalid"))?;
 
     let codec = token_codec(&secret_key)?;
+    let mut route_specs;
     let router = if migrations_current {
         let setup = configure_setup(
             &db,
@@ -326,7 +330,7 @@ pub async fn prepare(cfg: Config, clock: Arc<dyn Clock>) -> Result<PreparedApp, 
             Arc::clone(&tokens),
         )
         .await?;
-        module_router(
+        let (module_router, module_specs) = module_router(
             &db,
             &clock,
             public_url,
@@ -340,14 +344,16 @@ pub async fn prepare(cfg: Config, clock: Arc<dyn Clock>) -> Result<PreparedApp, 
             max_body_bytes,
             smtp,
             isolation_verified,
-        )?
-        .merge(health::router(
+        )?;
+        route_specs = module_specs;
+        module_router.merge(health::router(
             db.app_pool_for_health().clone(),
             clock,
             migrations_current,
             isolation_verified,
         ))
     } else {
+        route_specs = Vec::new();
         health::router(
             db.app_pool_for_health().clone(),
             clock,
@@ -355,8 +361,10 @@ pub async fn prepare(cfg: Config, clock: Arc<dyn Clock>) -> Result<PreparedApp, 
             isolation_verified,
         )
     };
+    route_specs.extend(crate::openapi::active_health_route_specs());
     Ok(PreparedApp {
         router,
+        route_specs,
         migrations_current,
         db,
     })
@@ -495,7 +503,7 @@ fn module_router(
     max_body_bytes: usize,
     smtp: Option<crate::config::SmtpConfig>,
     isolation_verified: bool,
-) -> Result<Router, StartupError> {
+) -> Result<(Router, Vec<kinevo_http::route::RouteSpec>), StartupError> {
     let descriptors = [&IDENTITY, &ADMIN];
     let catalog = Arc::new(Catalog::load());
     let policies = Arc::new(PolicyService::new(
@@ -755,9 +763,11 @@ fn module_router(
         idempotency_ttl,
     )
     .with_origin_config(origin);
-    routes
+    let specs = routes.specs().to_vec();
+    let app_router = routes
         .into_router(state)
-        .map_err(|_| StartupError::new("config_invalid"))
+        .map_err(|_| StartupError::new("config_invalid"))?;
+    Ok((app_router, specs))
 }
 
 fn token_codec(

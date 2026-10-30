@@ -71,9 +71,9 @@ pub fn routes(service: Arc<ResetService>) -> RouteTable {
         )
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct RequestBody {
+pub(crate) struct RequestBody {
     email: String,
 }
 
@@ -83,9 +83,9 @@ impl Validate for RequestBody {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct ConfirmBody {
+pub(crate) struct ConfirmBody {
     token: String,
     new_password: String,
 }

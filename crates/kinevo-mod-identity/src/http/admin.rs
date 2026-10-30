@@ -190,16 +190,16 @@ pub fn issue_reset(service: Arc<ResetService>) -> RouteTable {
     )
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct AccountQuery {
+pub(crate) struct AccountQuery {
     limit: Option<i64>,
     cursor: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct StatusBody {
+pub(crate) struct StatusBody {
     status: String,
 }
 
@@ -209,9 +209,9 @@ impl Validate for StatusBody {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct InviteBody {
+pub(crate) struct InviteBody {
     email: Option<String>,
 }
 
@@ -221,13 +221,13 @@ impl Validate for InviteBody {
     }
 }
 
-#[derive(Serialize)]
-struct InviteResponse {
+#[derive(Serialize, utoipa::ToSchema)]
+pub(crate) struct InviteResponse {
     invite_url: String,
 }
 
-#[derive(Serialize)]
-struct ResetResponse {
+#[derive(Serialize, utoipa::ToSchema)]
+pub(crate) struct ResetResponse {
     reset_url: String,
 }
 

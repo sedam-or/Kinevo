@@ -94,14 +94,15 @@ fn spec(
     }
 }
 
-#[derive(Serialize)]
-struct ModuleList {
+#[derive(Serialize, utoipa::ToSchema)]
+pub(crate) struct ModuleList {
+    #[schema(value_type = Vec<serde_json::Value>)]
     items: Vec<ModuleView>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct SwitchBody {
+pub(crate) struct SwitchBody {
     enabled: bool,
     version: i64,
 }

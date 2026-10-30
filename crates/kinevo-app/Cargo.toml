@@ -32,6 +32,7 @@ tokio = { version = "1.54.1", features = ["io-util", "macros", "net", "rt-multi-
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["fmt", "json"] }
 tower = { version = "0.5.3", features = ["util"] }
+utoipa = "6.0.0"
 uuid = { version = "1.29.0", features = ["v7"] }
 
 [dev-dependencies]

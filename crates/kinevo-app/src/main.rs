@@ -27,6 +27,20 @@ async fn main() -> ExitCode {
                 ExitCode::FAILURE
             }
         },
+        cli::Command::Openapi(args) => {
+            if let Some(path) = args.check {
+                match kinevo_app::openapi::check(&path) {
+                    Ok(()) => ExitCode::SUCCESS,
+                    Err(message) => {
+                        eprintln!("{message}");
+                        ExitCode::FAILURE
+                    }
+                }
+            } else {
+                print!("{}", kinevo_app::openapi::render());
+                ExitCode::SUCCESS
+            }
+        }
         cli::Command::Health => match cli::health_from_process().await {
             Ok(()) => ExitCode::SUCCESS,
             Err(message) => {

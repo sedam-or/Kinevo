@@ -100,22 +100,24 @@ fn spec(
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct ListQuery {
+pub(crate) struct ListQuery {
     scope: String,
 }
 
-#[derive(serde::Serialize)]
-struct ListResponse {
+#[derive(serde::Serialize, utoipa::ToSchema)]
+pub(crate) struct ListResponse {
+    #[schema(value_type = Vec<serde_json::Value>)]
     items: Vec<PolicyView>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct PutBody {
+pub(crate) struct PutBody {
     scope: String,
     value: Value,
+    #[schema(value_type = Option<String>, format = DateTime)]
     effective_from: Option<kinevo_kernel::time::Instant>,
 }
 

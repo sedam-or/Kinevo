@@ -27,29 +27,29 @@ use crate::app::{
     setup::{OpenedSession, SessionId, SetupService, WizardPatch},
 };
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct TokenInput {
+pub(crate) struct TokenInput {
     token: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct FinishRequest {
+pub(crate) struct FinishRequest {
     account: FinishAccountRequest,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(deny_unknown_fields)]
-struct FinishAccountRequest {
+pub(crate) struct FinishAccountRequest {
     email: String,
     password: String,
     display_name: Option<String>,
     timezone: Option<String>,
 }
 
-#[derive(Serialize)]
-struct FinishResponse {
+#[derive(Serialize, utoipa::ToSchema)]
+pub(crate) struct FinishResponse {
     account: kinevo_ports::platform::AccountProfile,
     access_token: String,
     expires_in: u32,
