@@ -28,11 +28,13 @@ The status lives in the task file's front matter (`status:`). `tasks/index.md` i
 
 ## 2. The steps
 
-### Run-wide resource and disk guard (D-102–D-105, D-109, D-125)
+### Run-wide resource and disk guard (D-102–D-105, D-109, D-125, D-128)
 
 Immediately before each build, test, or container start, run `df -h /` and record the exact output. If free space is below 20 GB, inspect stopped containers and dangling images and verify ownership before pruning. Run `docker container prune -f` and `docker image prune -f` only if every candidate they would remove belongs to Kinevo; otherwise use ownership filters or remove only individually verified Kinevo resources. Preserve volumes, named images, active containers, and every other project's resources. Recheck `df -h /`; if free space is still below 15 GB, hard-stop before the build, test, or container start and report the measured value. Never run `docker build` or pull an image. Start the one shared database server once with `eval "$(scripts/dev-postgres.sh env)"`; each database test creates and drops its own uniquely named database. Testcontainers is not a database-test fallback. The server may use only the existing `postgres:17-alpine` image with `--pull=never`; otherwise use local PostgreSQL or mark database checks `environment-limited`.
 
 The root `[profile.dev]` keeps `debug = 0`; set `CARGO_PROFILE_DEV_DEBUG=2` for a local override. Install `cargo-sweep` once with `cargo install --locked cargo-sweep`, then at each milestone boundary run `CARGO_TARGET_DIR=/home/kepolu/project/open-source/nivaras/Kinevo/target cargo sweep --time 7`. Do not run `cargo clean` or manually delete `target/`. Record the exact run-start and run-end `df -h /` outputs and every removal (or `none`) in `tasks/RUN_REPORT.md` (D-109).
+
+An ad-hoc cleanup request does not broaden this scope: retain the shared Cargo registry cache and sources, use the repository-scoped sweep only at a milestone boundary, and do not prune Docker resources above the disk threshold. Docker cleanup is limited to individually verified Kinevo-owned stopped containers and dangling images; preserve volumes, named images, active containers and other projects' resources (D-128).
 
 **Step 0: pick and claim.** Take the next task in topological order with `status: todo` whose dependencies are all `done`; in the D-57 run, dependencies with `status: review` count when their commits are on `dev`. Set `status: in_progress` and `assignee:`. Commit (`docs(tasks): start T-nnn [T-nnn]`) on `dev` in the D-57 run, or on the task branch otherwise, and push it, so nobody else takes the task.
 

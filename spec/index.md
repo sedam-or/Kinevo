@@ -120,6 +120,7 @@ A new ADR is numbered next in sequence, starts as `Proposed`, and becomes `Accep
 - D-125 clarifies ownership-safe cleanup and run-wide disk handling without changing D-102–D-105 or D-109.
 - D-126 keeps setup tokens out of logs and uses the explicit admin command for one-time display.
 - D-127 fixes the E2E clock override name and input format under the D-42 `e2e` feature.
+- D-128 clarifies that ad-hoc cleanup requests do not broaden the run-wide resource-cleanup scope.
 - Tasks are `T-nnn` (`tasks/`); commit subjects reference them as `[T-nnn]`.
 - Error codes are `snake_case` strings in the `ERR` registry; permission keys are `<module>.<resource>.<action>` in the `RBAC` registry; policy keys are dotted (`auth.refresh.grace`) in `04-policies.md`.
 - Consistency is checked by `scripts/spec_tool.py` (`codes`, `perms`, `check`).

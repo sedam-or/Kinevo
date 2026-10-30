@@ -73,10 +73,12 @@ Depends on: all specs. Prefix: `TST`. Principles: tests prove requirements (CQ-1
 | Time | tests set the clock explicitly, including DST boundary dates for Europe/London, America/New_York, Asia/Jakarta, Australia/Lord_Howe (30-minute DST) |
 | Clean-up | each test owns a uniquely named database that is dropped at the end; parallel safe; tests never start per-test containers |
 
-## 5. Local implementation-run resource limits (D-102–D-105, D-109, D-125)
+## 5. Local implementation-run resource limits (D-102–D-105, D-109, D-125, D-128)
 
 Start the one shared PostgreSQL server once with `eval "$(scripts/dev-postgres.sh env)"`. Every test creates a uniquely named database on that server and drops it at the end. Testcontainers is not used for database tests. If neither the existing `postgres:17-alpine` image (`--pull=never`) nor local PostgreSQL is available, report the exact database command as `environment-limited`.
 
 Immediately before each build, test, or container start, record `df -h /`. Below 20 GB free, inspect stopped containers and dangling images and verify ownership. Run `docker container prune -f` and `docker image prune -f` only when all affected resources are Kinevo-owned; otherwise use ownership filters or targeted removal of verified Kinevo resources so other projects are preserved. Record removals, preserve volumes, named images and active containers, then recheck disk space. Stop before the operation if free space remains below 15 GB. Do not build or pull Docker images. Record exact run-start and run-end `df -h /` output and all removals, or `none`, in `tasks/RUN_REPORT.md` (D-109).
 
 Development builds use `[profile.dev] debug = 0`, overridable with `CARGO_PROFILE_DEV_DEBUG=2`. Install `cargo-sweep` once with `cargo install --locked cargo-sweep` and at each milestone boundary run `CARGO_TARGET_DIR=/home/kepolu/project/open-source/nivaras/Kinevo/target cargo sweep --time 7`. Do not use `cargo clean` or manually delete `target/`.
+
+An ad-hoc cleanup request does not expand these limits: keep the shared Cargo registry cache and sources, run the repository-scoped sweep only at a milestone boundary, and do not prune Docker resources above the disk threshold. Docker cleanup remains limited to individually verified Kinevo-owned stopped containers and dangling images; volumes, named images, active containers and other projects' resources stay intact.

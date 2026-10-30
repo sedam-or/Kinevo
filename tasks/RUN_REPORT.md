@@ -132,3 +132,21 @@ Filesystem                    Size  Used Avail Use% Mounted on
 ```
 
 Cleanup: none. Reused the already-running `kinevo-dev-pg` PostgreSQL 17 container. No image was built or pulled; no containers, images, volumes, or `target/` files were removed.
+
+### Ad-hoc cleanup request review (2026-10-30 10:48 WIB)
+
+Disk before the review and documentation checks:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  330G  133G  72% /
+```
+
+The Cargo registry cache was 247 MB, registry sources 1.7 GB, and this repository's `target/` was 21 GB. No Cargo build process was active. Docker reported 0 B build cache; all eight listed containers were running, every listed image had a name, and no stopped container or dangling image was listed. Seven volumes were present; `infrastructure_lifesync_pgdata` had no links but belongs to another project. No Cargo or Docker resources were removed: the shared registry was retained, the repo-scoped `cargo sweep` remains scheduled for the M1 milestone boundary, and Docker pruning is not allowed above 20 GB free. Volumes, named images, active containers and other projects' resources were preserved. No build, test, image operation or container start was performed for this review.
+
+Disk after the review and documentation checks:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  330G  133G  72% /
+```
