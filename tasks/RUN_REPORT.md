@@ -964,3 +964,154 @@ Filesystem                    Size  Used Avail Use% Mounted on
 ```
 
 Cleanup: none.
+
+## T-049 — Build the AuthManager, the API client auth wiring and the login, register and reset pages
+
+- Status: review; issue #75; implementation commit recorded in `~/kinevo-run-ledger.json`.
+- Acceptance: all eight named tests are present and pass. Focused auth suite: 6 files, 11 passed. Chromium ran `auth.e2e::sec_ac_01b_no_token_in_storage` successfully. Firefox and WebKit are environment-limited: Firefox executable missing at `/home/kepolu/.cache/ms-playwright/firefox-1555/firefox/firefox`; WebKit host dependencies `libicu74` and `libflite1` are missing.
+- Checks: typecheck and lint pass (Node 26.12.1 via `/usr/bin`, pnpm 9.15.9 with project pin disabled); full web suite 30 files / 58 passed; final `just check` exit 0 with Rust 385 passed / 1 skipped, web 58 passed, spec check 0 findings / 60 files, contrast 0 failures, task index 0 problems / 132 tasks, and generated OpenAPI types unchanged. The first final-gate attempt found a stale task index; it passed after regeneration. `cargo deny` completed with duplicate-crate warnings.
+- D-129, pending architect review: schema-typed synthetic MSW fixtures because OpenAPI has no examples; registration handles either the token-bearing module response or the generated-contract AccountProfile by refreshing with the HttpOnly cookie.
+- Deviations: 1,746 implementation diff lines against 400-line guidance (D-55 makes this non-blocking); minimal router/provider/API/MSW wiring; `spec/decisions.md` and `spec/index.md` update for D-129. Initial Node 22 lint and Corepack Playwright launches failed due runtime/pinned-pnpm mismatch; reruns with Node 26.12.1 and `COREPACK_ENABLE_PROJECT_SPEC=0` passed where browser availability allowed.
+- Files: `web/src/auth/*`, `web/src/features/identity/*`, `web/src/test/handlers/auth.ts`, `web/tests/e2e/auth.spec.ts`, auth API/router/provider wiring, en/id message catalogues, `spec/decisions.md`, `spec/index.md`, T-049 report, task index.
+
+### T-049 ending disk checkpoint (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+Cleanup: none. The existing shared PostgreSQL service was reused; no image was built or pulled, and no container, image, volume, shared cache, or `target/` content was removed.
+
+### T-049 checkpoint before red acceptance tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before typecheck (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before typecheck retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before typecheck second retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before focused acceptance tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before Playwright auth E2E (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before router fix E2E retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before Playwright retry with Corepack project pin disabled (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before logout-state regression test (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before request-header assertion diagnosis (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before focused auth acceptance rerun (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before web typecheck (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before web lint (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before lint retry with Node 26 on PATH (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before lint retry after Biome corrections (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before full web test suite (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before shared PostgreSQL reuse and final `just check` (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  349G  114G  76% /
+```
+
+### T-049 checkpoint before `just check` retry after regenerating task index (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  352G  111G  77% /
+```
+
+### T-049 checkpoint before full configured-browser auth E2E (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
