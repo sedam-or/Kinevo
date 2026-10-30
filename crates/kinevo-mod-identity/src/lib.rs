@@ -13,7 +13,8 @@ use std::sync::Arc;
 use kinevo_db::{Tx, jobs::JobHandler, migrate::MigrationSource};
 use kinevo_http::route::RouteTable;
 use kinevo_ports::module::{
-    AccountExporter, AccountProvisioner, ModuleDescriptor, ModuleKind, PermissionDef,
+    AccountExporter, AccountProvisioner, ModuleDescriptor, ModuleKind, NavItem, PermissionDef,
+    SettingsPanel,
 };
 use kinevo_ports::platform::PolicyReader;
 
@@ -89,6 +90,32 @@ const JOBS: &[&str] = &[
     "identity.exports.prune",
 ];
 
+const NAV: &[NavItem] = &[NavItem {
+    key: "accounts",
+    label_key: "nav.admin.accounts",
+    route: "/admin/accounts",
+    order: 1,
+    required_permission: "identity.admin.accounts.read",
+}];
+
+const SETTINGS_PANELS: &[SettingsPanel] = &[
+    SettingsPanel {
+        key: "profile",
+        label_key: "settings.profile",
+        required_permission: "identity.account.read",
+    },
+    SettingsPanel {
+        key: "security",
+        label_key: "settings.security",
+        required_permission: "identity.session.manage",
+    },
+    SettingsPanel {
+        key: "data",
+        label_key: "settings.data",
+        required_permission: "identity.account.export",
+    },
+];
+
 /// Static metadata for the identity module.
 pub const MODULE: ModuleDescriptor = ModuleDescriptor {
     key: "identity",
@@ -96,8 +123,8 @@ pub const MODULE: ModuleDescriptor = ModuleDescriptor {
     requires: &[],
     permissions: PERMISSIONS,
     policy_keys: POLICY_KEYS,
-    nav: &[],
-    settings_panels: &[],
+    nav: NAV,
+    settings_panels: SETTINGS_PANELS,
     message_namespaces: &["identity"],
     jobs: JOBS,
     job_schedules: &[],

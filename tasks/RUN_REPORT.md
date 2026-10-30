@@ -1115,3 +1115,356 @@ Filesystem                    Size  Used Avail Use% Mounted on
 Filesystem                    Size  Used Avail Use% Mounted on
 /dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
 ```
+
+### T-050 red test: Shell.test.tsx
+
+```text
+Command: pnpm --dir web exec vitest run src/app/Shell.test.tsx
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 Shell.test.tsx red-test exit code: 1
+
+### T-050 red test: descriptor nav acceptance
+
+```text
+Command: cargo nextest run -p kinevo-mod-identity -p kinevo-mod-admin --test descriptor
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 descriptor red-test exit code: 100
+
+### T-050 web typecheck attempt 1
+
+```text
+Command: pnpm --dir web typecheck (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 web typecheck attempt 1 exit code: 2
+
+### T-050 web typecheck attempt 2
+
+```text
+Command: pnpm --dir web typecheck (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 web typecheck attempt 2 exit code: 2
+
+### T-050 web typecheck attempt 3
+
+```text
+Command: pnpm --dir web typecheck (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 web typecheck attempt 3 exit code: 0
+
+### T-050 focused shell tests
+
+```text
+Command: pnpm --dir web exec vitest run src/app/Shell.test.tsx
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 focused shell test exit code: 0
+
+### T-050 descriptor tests after descriptor implementation
+
+```text
+Command: cargo nextest run -p kinevo-mod-identity -p kinevo-mod-admin --test descriptor
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 descriptor test exit code: 0
+
+### T-050 web lint attempt 1
+
+```text
+Command: pnpm --dir web lint (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 web lint attempt 1 exit code: 1
+
+### T-050 web typecheck attempt 4
+
+```text
+Command: pnpm --dir web typecheck (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 web typecheck attempt 4 exit code: 0
+
+### T-050 focused shell tests after account menu wiring
+
+```text
+Command: pnpm --dir web exec vitest run src/app/Shell.test.tsx
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 focused shell test attempt 2 exit code: 0
+
+### T-050 web lint attempt 2
+
+```text
+Command: pnpm --dir web lint (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 web lint attempt 2 exit code: 0
+
+### T-050 Chromium shell E2E
+
+```text
+Command: pnpm --dir web exec playwright test tests/e2e/shell.a11y.spec.ts --project=chromium (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 Chromium shell E2E exit code: 0
+
+### T-050 full web unit suite
+
+```text
+Command: pnpm --dir web test (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 full web test exit code: 0
+
+### T-050 Chromium auth and shell E2E after final shell wiring
+
+```text
+Command: pnpm --dir web exec playwright test tests/e2e/auth.spec.ts tests/e2e/shell.a11y.spec.ts --project=chromium (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 Chromium auth and shell E2E exit code: 0
+
+### T-050 Chromium auth and shell E2E retry with modules fixture
+
+```text
+Command: pnpm --dir web exec playwright test tests/e2e/auth.spec.ts tests/e2e/shell.a11y.spec.ts --project=chromium (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 Chromium auth and shell E2E retry exit code: 0
+
+### T-050 integrated gate: just check
+
+```text
+Command: eval "$(scripts/dev-postgres.sh env)" && PATH="$HOME/.cargo/bin:/usr/bin:$PATH" COREPACK_ENABLE_PROJECT_SPEC=0 just check
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 just check exit code: 1
+
+T-050 disk snapshots emitted by just check:
+```text
+```
+
+### T-050 integrated gate: just check retry after cargo fmt
+
+```text
+Command: eval "$(scripts/dev-postgres.sh env)" && PATH="$HOME/.cargo/bin:/usr/bin:$PATH" COREPACK_ENABLE_PROJECT_SPEC=0 just check
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 just check retry exit code: 101
+
+T-050 disk snapshots emitted by just check:
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+### T-050 integrated gate: just check retry after safe descriptor access
+
+```text
+Command: eval "$(scripts/dev-postgres.sh env)" && PATH="$HOME/.cargo/bin:/usr/bin:$PATH" COREPACK_ENABLE_PROJECT_SPEC=0 just check
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 just check safe-access retry exit code: 0
+
+T-050 disk snapshots emitted by just check:
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+### T-050 web typecheck after Canvas route registration
+
+```text
+Command: pnpm --dir web typecheck (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 web typecheck after Canvas route registration exit code: 0
+
+### T-050 focused shell tests after Canvas route registration
+
+```text
+Command: pnpm --dir web exec vitest run src/app/Shell.test.tsx
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 focused shell test after Canvas route registration exit code: 1
+
+### T-050 focused shell tests after translated forbidden-state assertion fix
+
+```text
+Command: pnpm --dir web exec vitest run src/app/Shell.test.tsx
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 focused shell test forbidden-state retry exit code: 0
+
+### T-050 Chromium shell, disabled-module and auth E2E
+
+```text
+Command: pnpm --dir web exec playwright test tests/e2e/auth.spec.ts tests/e2e/shell.a11y.spec.ts --project=chromium (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 Chromium shell/disabled/auth E2E exit code: 1
+
+### T-050 Chromium shell, disabled-module and auth E2E retry
+
+```text
+Command: pnpm --dir web exec playwright test tests/e2e/auth.spec.ts tests/e2e/shell.a11y.spec.ts --project=chromium (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 Chromium E2E retry exit code: 0
+
+### T-050 final integrated gate: just check
+
+```text
+Command: eval "$(scripts/dev-postgres.sh env)" && PATH="$HOME/.cargo/bin:/usr/bin:$PATH" COREPACK_ENABLE_PROJECT_SPEC=0 just check
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 final just check exit code: 0
+
+T-050 final disk snapshots emitted by just check:
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  354G  109G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  354G  109G  77% /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  354G  109G  77% /
+```
+
+### T-050 Firefox shell browser availability check
+
+```text
+Command: pnpm --dir web exec playwright test tests/e2e/shell.a11y.spec.ts --project=firefox --grep shell.a11y::ds_a11y_08_reflow_320 (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 Firefox availability exit code: 1
+
+### T-050 WebKit shell browser availability check
+
+```text
+Command: pnpm --dir web exec playwright test tests/e2e/shell.a11y.spec.ts --project=webkit --grep shell.a11y::ds_a11y_08_reflow_320 (PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0)
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+
+T-050 WebKit availability exit code: 1
+
+### T-050 final disk checkpoint after all test attempts
+
+```text
+Command: df -h /
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  353G  110G  77% /
+```
+
+## T-050 task result
+
+- Issue: #74. Branch: `dev`. Task status: `review`.
+- Final `just check`: exit 0; nextest 387 passed / 1 skipped; web Vitest 65 passed; cargo deny and all spec/OpenAPI/index gates passed.
+- Chromium E2E: 4 passed, including disabled Canvas direct route, 320/360 px reflow, landmarks/axe, and auth redirect.
+- Environment-limited browser checks: Firefox binary absent at `/home/kepolu/.cache/ms-playwright/firefox-1555/firefox/firefox`; WebKit host is missing `libicu74` and `libflite1`. See the exact commands and Playwright errors above.
+- Implementer decisions awaiting architect review: D-130 and D-131. No task gate failed.
+- Next topological todo: T-051.

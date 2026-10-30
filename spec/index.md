@@ -11,7 +11,7 @@ Each file depends only on files above it (its header says `Depends on:`).
 | # | File | Prefix | What it fixes |
 |---|---|---|---|
 | — | [`00-verdict.md`](00-verdict.md) | — | Phase 0 analysis of the legacy repo; measured baseline; keep/rewrite/drop |
-| — | [`decisions.md`](decisions.md) | `D` | Decision log D-01…D-129 and owner-only open items OWNER-01…07 |
+| — | [`decisions.md`](decisions.md) | `D` | Decision log D-01…D-131 and owner-only open items OWNER-01…07 |
 | — | [`adr/`](adr/) | `ADR` | Architecture decision records (see §4) |
 | 01 | [`01-product.md`](01-product.md) | `PRD` | Problem, personas, principles, scope, non-goals (PROVISIONAL until V1) |
 | 02 | [`02-architecture.md`](02-architecture.md) | `ARCH` | Modular monolith, crates, ports, events, tenancy, runtime |
@@ -122,6 +122,8 @@ A new ADR is numbered next in sequence, starts as `Proposed`, and becomes `Accep
 - D-127 fixes the E2E clock override name and input format under the D-42 `e2e` feature.
 - D-128 clarifies that ad-hoc cleanup requests do not broaden the run-wide resource-cleanup scope.
 - D-129 records T-049's schema-typed MSW fixture and cookie-refresh handling for the two documented registration success shapes.
+- D-130 resolves T-050's owner-visible Policies entry and identity settings-panel permissions from the existing server permission registry.
+- D-131 registers a gated `/think/canvas` placeholder so disabled Canvas routes can show the shared module state before M8.
 - Tasks are `T-nnn` (`tasks/`); commit subjects reference them as `[T-nnn]`.
 - Error codes are `snake_case` strings in the `ERR` registry; permission keys are `<module>.<resource>.<action>` in the `RBAC` registry; policy keys are dotted (`auth.refresh.grace`) in `04-policies.md`.
 - Consistency is checked by `scripts/spec_tool.py` (`codes`, `perms`, `check`).

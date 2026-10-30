@@ -17,7 +17,8 @@ use app::{
 use kinevo_db::{Tx, jobs::JobHandler, migrate::MigrationSource, outbox::Subscriber};
 use kinevo_http::route::RouteTable;
 use kinevo_ports::module::{
-    AccountExporter, AccountProvisioner, JobSchedule, ModuleDescriptor, ModuleKind, PermissionDef,
+    AccountExporter, AccountProvisioner, JobSchedule, ModuleDescriptor, ModuleKind, NavItem,
+    PermissionDef,
 };
 use kinevo_ports::platform::PolicyReader;
 
@@ -116,6 +117,44 @@ const JOB_SCHEDULES: &[JobSchedule] = &[
     },
 ];
 
+const NAV: &[NavItem] = &[
+    NavItem {
+        key: "modules",
+        label_key: "nav.admin.modules",
+        route: "/admin/modules",
+        order: 1,
+        required_permission: "admin.modules.manage",
+    },
+    NavItem {
+        key: "policies",
+        label_key: "nav.admin.policies",
+        route: "/admin/policies",
+        order: 2,
+        required_permission: "admin.policies.instance.read",
+    },
+    NavItem {
+        key: "audit",
+        label_key: "nav.admin.audit",
+        route: "/admin/audit",
+        order: 3,
+        required_permission: "admin.audit.read",
+    },
+    NavItem {
+        key: "jobs",
+        label_key: "nav.admin.jobs",
+        route: "/admin/jobs",
+        order: 4,
+        required_permission: "admin.jobs.read",
+    },
+    NavItem {
+        key: "secrets",
+        label_key: "nav.admin.secrets",
+        route: "/admin/secrets",
+        order: 5,
+        required_permission: "admin.secrets.manage",
+    },
+];
+
 /// Static metadata for the instance administration module.
 pub const MODULE: ModuleDescriptor = ModuleDescriptor {
     key: "admin",
@@ -123,7 +162,7 @@ pub const MODULE: ModuleDescriptor = ModuleDescriptor {
     requires: &["identity"],
     permissions: PERMISSIONS,
     policy_keys: POLICY_KEYS,
-    nav: &[],
+    nav: NAV,
     settings_panels: &[],
     message_namespaces: &[],
     jobs: JOBS,

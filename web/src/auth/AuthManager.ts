@@ -163,7 +163,7 @@ export class AuthManager {
       headers,
       credentials: init?.credentials ?? "include",
     });
-    const response = await this.fetcher(request.clone());
+    const response = this.redirectToSetup(await this.fetcher(request.clone()));
     if (response.status !== 401 || authPath || !request.headers.has("Authorization"))
       return response;
 
@@ -174,11 +174,13 @@ export class AuthManager {
       retryHeaders.set("Idempotency-Key", request.headers.get("Idempotency-Key") ?? "");
     }
     retryHeaders.set("Authorization", `Bearer ${this.token}`);
-    return this.fetcher(new Request(request, { headers: retryHeaders }));
+    return this.redirectToSetup(
+      await this.fetcher(new Request(request, { headers: retryHeaders })),
+    );
   }
 
   private async postAuth(path: string, body: unknown): Promise<Response> {
-    return this.fetcher(
+    const response = await this.fetcher(
       new Request(new URL(path, currentOrigin()), {
         method: "POST",
         credentials: "include",
@@ -190,6 +192,26 @@ export class AuthManager {
         body: JSON.stringify(body),
       }),
     );
+    return this.redirectToSetup(response);
+  }
+
+  private redirectToSetup(response: Response): Response {
+    if (response.status === 409 && typeof window !== "undefined") {
+      void response
+        .clone()
+        .json()
+        .then((problem: unknown) => {
+          if (
+            isRecord(problem) &&
+            problem.code === "setup_required" &&
+            window.location.pathname !== "/setup"
+          ) {
+            window.location.assign("/setup");
+          }
+        })
+        .catch(() => undefined);
+    }
+    return response;
   }
 
   private refreshSingleFlight(reason: RefreshReason): Promise<boolean> {

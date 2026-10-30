@@ -3,7 +3,7 @@ id: T-050
 title: Build the module-driven shell, navigation, Today placeholder and descriptor nav entries
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-049, T-034, T-046]
 requirements: [MOD-01, MOD-09, FE-01, FE-11, FE-12, DS-A11Y-07, DS-A11Y-08, DS-A11Y-12, UXS-02]
 branch: m1-t050-web-shell-and-navigation
@@ -104,8 +104,61 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Result
+
+Implemented the module-driven shell, server-filtered navigation, mobile bottom bar and More sheet, account menu, Help & shortcuts dialog, Today empty state, module-gated placeholders, and identity/admin descriptor metadata. All eight acceptance tests pass on this environment; `just check` passes.
+
+### Acceptance
+
+| Test | Result |
+|---|---|
+| `shell::mod_01_nav_only_from_response` | PASS |
+| `shell::mod_09_unknown_module_ignored` | PASS |
+| `shell::fe_01_disabled_route_shows_state` | PASS |
+| `shell::admin_items_follow_permissions` | PASS |
+| `descriptor::mod_08_nav_keys_exist` | PASS (identity and admin descriptor suites) |
+| `shell.a11y::ds_a11y_08_reflow_320` | PASS (Chromium, 320 px and 360 px) |
+| `shell.a11y::ds_a11y_12_landmarks_skip_link_help` | PASS (Chromium and axe) |
+| `shell::fe_11_chords_not_in_inputs` | PASS |
+
+Additional checks: `shell::fe_01_forbidden_route_shows_state`, `shell::fe_12_feature_error_is_local`, `shell.e2e::fe_01_disabled_module_route_has_way_back`, and the updated auth redirect E2E all pass.
+
+### Commands and counts
+
+- `pnpm --dir web typecheck`: pass; Node 26.12.1 emitted the package engine warning (package requests 26.13.0).
+- `pnpm --dir web lint`: pass; i18n checked 523 messages with no findings. Biome reported four existing `!important` warnings in `web/src/styles/base.css`.
+- `pnpm --dir web test`: 31 files, 65 passed.
+- `cargo nextest run -p kinevo-mod-identity -p kinevo-mod-admin --test descriptor`: 5 passed.
+- `pnpm --dir web exec playwright test tests/e2e/auth.spec.ts tests/e2e/shell.a11y.spec.ts --project=chromium`: 4 passed.
+- `eval "$(scripts/dev-postgres.sh env)" && PATH="$HOME/.cargo/bin:/usr/bin:$PATH" COREPACK_ENABLE_PROJECT_SPEC=0 just check`: exit 0; Rust 387 passed / 1 skipped, web 65 passed, cargo deny advisories/bans/licenses/sources passed, OpenAPI check passed, `spec_tool.py check` reported 0 findings in 60 files, contrast reported 0 failures, and `tasks_index.py --check` reported 0 problems in 132 tasks.
+- `git diff --check`: pass. A first `just check` attempt caught formatting and then a Clippy test-index warning; `cargo fmt --all` and safe `.first()` access fixed both before the passing final gate.
+
+### Environment-limited
+
+- Firefox: `PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0 pnpm --dir web exec playwright test tests/e2e/shell.a11y.spec.ts --project=firefox --grep shell.a11y::ds_a11y_08_reflow_320` — Playwright error: `Executable doesn't exist at /home/kepolu/.cache/ms-playwright/firefox-1555/firefox/firefox`.
+- WebKit: `PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0 pnpm --dir web exec playwright test tests/e2e/shell.a11y.spec.ts --project=webkit --grep shell.a11y::ds_a11y_08_reflow_320` — Playwright reports missing host dependencies `libicu74` and `libflite1`. No packages or browser binaries were installed.
+
+`cargo clippy` and `cargo deny` emitted existing warnings (`rand::thread_rng` entry and unmatched BSD-2-Clause/MPL-2.0 allowances); neither gate failed. The workspace used the existing disposable PostgreSQL container; no image was built or pulled.
+
+### Deviations and decisions
+
+- **D-130, pending architect review:** preserve the API-filtered owner-visible Policies entry; identity settings panels use their existing registry permissions. The UI trusts the response and does not re-check permissions.
+- **D-131, pending architect review:** register `/think/canvas` as a gated placeholder because AC-3 requires a direct disabled-module route but does not specify its path. Canvas stays out of navigation unless the API returns its item.
+- Today is a fixed shell route for the M1 placeholder and bottom bar; all module navigation and settings panels are built from `GET /modules` and the route registry.
+- Minimal routing/auth wiring changed `web/src/app/router.tsx` and `web/src/auth/AuthManager.ts`; `web/tests/e2e/auth.spec.ts` was updated to expect `/today` and mock the new `/modules` request. These files are outside the task Files table but are required to wire its route and setup redirects and keep the existing E2E contract accurate.
+- D-130 and D-131 were added to `spec/decisions.md` and mapped in `spec/index.md`, per the D-56 implementer-resolution rule.
+- The line budget was exceeded; D-55 makes it guidance, and generated files are not blockers.
+
+### Files touched
+
+`crates/kinevo-mod-identity/src/lib.rs`, `crates/kinevo-mod-identity/tests/descriptor.rs`, `crates/kinevo-mod-admin/src/lib.rs`, `crates/kinevo-mod-admin/tests/descriptor.rs`, `web/src/app/Shell.tsx`, `web/src/app/Shell.test.tsx`, `web/src/app/router.tsx`, `web/src/auth/AuthManager.ts`, `web/src/features/shell/Chords.tsx`, `web/src/features/shell/ModuleGate.tsx`, `web/src/features/shell/MoreSheet.tsx`, `web/src/features/shell/Nav.tsx`, `web/src/features/shell/routes.tsx`, `web/src/features/shell/useModules.ts`, `web/src/features/today/TodayPage.tsx`, `web/src/i18n/en.json`, `web/src/i18n/id.json`, `web/scripts/i18n.allow`, `web/tests/e2e/auth.spec.ts`, `web/tests/e2e/shell.a11y.spec.ts`, `spec/decisions.md`, `spec/index.md`, and `tasks/RUN_REPORT.md`.
 
 ## Questions
 
-_None yet._
+### Q-1 — Owner-visible Policies navigation
+
+Task detail gives the Policies nav item permission `admin.policies.instance.read`, and the admin permission spec grants that key to `account_owner`, while AC-4 says Admin items are absent for an owner. Resolved by implementer, pending architect review (D-130): keep the server-filtered Policies item visible to owners, hide the five admin-only entries and the Accounts item, and show all six items to an instance admin. The identity settings panels use existing permissions: profile → `identity.account.read`, security → `identity.session.manage`, data → `identity.account.export`. Hiding Policies in the client or changing its declared permission was rejected because the client must trust the server response.
+
+### Q-2 — Disabled Canvas route path
+
+The task requires a route registry and a disabled-module route state, but it does not name a Canvas route. Resolved by implementer, pending architect review (D-131): register `/think/canvas` as a placeholder gated by the server's `canvas` module item. This lets a direct visit show `state.module.disabled` when Canvas is off and keeps Canvas out of navigation unless its item is returned by `GET /modules`. The alternative was to defer all Canvas routes until M8, which would leave AC-3 without a registered toggleable module route.

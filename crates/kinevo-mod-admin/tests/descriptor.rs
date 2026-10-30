@@ -42,3 +42,35 @@ fn mod_08_admin_descriptor_valid() {
         );
     }
 }
+
+#[test]
+fn mod_08_nav_keys_exist() {
+    let english: serde_json::Value =
+        serde_json::from_str(include_str!("../../../web/src/i18n/en.json"))
+            .expect("English catalogue should be valid JSON");
+    let indonesian: serde_json::Value =
+        serde_json::from_str(include_str!("../../../web/src/i18n/id.json"))
+            .expect("Indonesian catalogue should be valid JSON");
+
+    assert_eq!(MODULE.nav.len(), 5);
+    for item in MODULE.nav {
+        assert!(
+            MODULE
+                .permissions
+                .iter()
+                .any(|permission| permission.key == item.required_permission),
+            "unregistered admin nav permission: {}",
+            item.required_permission
+        );
+        assert!(
+            english.get(item.label_key).is_some(),
+            "English key {}",
+            item.label_key
+        );
+        assert!(
+            indonesian.get(item.label_key).is_some(),
+            "Indonesian key {}",
+            item.label_key
+        );
+    }
+}

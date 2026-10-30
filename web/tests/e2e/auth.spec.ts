@@ -49,12 +49,19 @@ test("auth.e2e::sec_ac_01b_no_token_in_storage", async ({ page }) => {
       }),
     });
   });
+  await page.route("**/api/v1/modules", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ items: [] }),
+    });
+  });
 
   await page.goto("/login?next=%2F");
   await page.getByRole("textbox", { name: "Email address" }).fill("person@example.test");
   await page.getByLabel("Password").fill("synthetic-password");
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/today$/);
   await page.reload();
 
   const storage = await page.evaluate(async () => {

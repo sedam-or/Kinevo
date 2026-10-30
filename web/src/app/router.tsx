@@ -1,17 +1,24 @@
 import {
+  type AnyRoute,
   createRootRoute,
   createRoute,
   createRouter,
   Outlet,
   redirect,
+  useRouterState,
 } from "@tanstack/react-router";
+import { Suspense } from "react";
 import { authManager } from "../auth/AuthManager";
 import { isPublicAuthPath, redirectIfAnonymous } from "../auth/guards";
 import { LoginPage } from "../features/identity/LoginPage";
 import { RegisterPage } from "../features/identity/RegisterPage";
 import { ResetPage } from "../features/identity/ResetPage";
 import { SessionRevokedPage } from "../features/identity/SessionRevokedPage";
+import { modulePageRoutes, RegisteredModulePage } from "../features/shell/routes";
+import { useModules } from "../features/shell/useModules";
+import { TodayPage } from "../features/today/TodayPage";
 import { useT } from "../i18n";
+import { Shell } from "./Shell";
 
 const rootRoute = createRootRoute({
   beforeLoad: async ({ location }) => {
@@ -22,20 +29,22 @@ const rootRoute = createRootRoute({
     const target = await redirectIfAnonymous(authManager, location.href);
     if (target) throw redirect({ href: target });
   },
-  component: Outlet,
+  component: RootLayout,
 });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: function HomePage() {
-    const t = useT();
-    return (
-      <main>
-        <h1>{t("app.name")}</h1>
-      </main>
-    );
+  beforeLoad: () => {
+    throw redirect({ href: "/today" });
   },
+  component: Outlet,
+});
+
+const todayRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/today",
+  component: TodayPage,
 });
 
 const loginRoute = createRoute({
@@ -77,18 +86,90 @@ const revokedRoute = createRoute({
   component: SessionRevokedPage,
 });
 
+const setupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/setup",
+  component: function SetupRequiredPage() {
+    const t = useT();
+    return (
+      <main className="grid min-h-screen place-items-center p-4">
+        <h1>{t("setup.heading")}</h1>
+      </main>
+    );
+  },
+});
+
+const moduleRoutes = modulePageRoutes.map(({ path, module, titleKey }) =>
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: path as never,
+    component: function ModuleRoute() {
+      const modules = useModules();
+      return (
+        <Suspense fallback={<div role="status" aria-busy="true" />}>
+          <RegisteredModulePage
+            module={module}
+            titleKey={titleKey}
+            modules={modules.data?.items ?? []}
+          />
+        </Suspense>
+      );
+    },
+  }),
+);
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   registerRoute,
   resetRoute,
   revokedRoute,
+  setupRoute,
+  todayRoute,
+  ...(moduleRoutes as unknown as AnyRoute[]),
 ]);
 
 export const router = createRouter({ routeTree });
 
 function navigateTo(path: string) {
   void router.navigate({ href: path });
+}
+
+function RootLayout() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  if (isPublicAuthPath(pathname)) {
+    return <Outlet />;
+  }
+  return <ModuleShell />;
+}
+
+function ModuleShell() {
+  const t = useT();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const modules = useModules();
+  if (modules.isPending) {
+    return (
+      <main id="main-content" aria-busy="true">
+        {t("state.loading")}
+      </main>
+    );
+  }
+  if (modules.isError) {
+    return (
+      <main id="main-content" role="alert">
+        {t("error.service_unavailable.title")}
+      </main>
+    );
+  }
+  return (
+    <Shell
+      modules={modules.data.items}
+      currentPath={pathname}
+      onNavigate={(path) => void router.navigate({ href: path })}
+    >
+      <Outlet />
+    </Shell>
+  );
 }
 
 declare module "@tanstack/react-router" {

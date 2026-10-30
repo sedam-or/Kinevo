@@ -28,3 +28,6 @@ billing.* — Billing screens are implemented by the billing milestone.
 term.* — Terminology keys are reserved for template-aware surfaces.
 error.* — Error-code messages are consumed by the error mapper task T-048.
 email.* — Email messages are consumed by server-side email templates, not web/src.
+nav.* — shell and settings labels
+settings.* — shell and settings labels
+module.canvas.name — T-050 disabled Canvas route placeholder

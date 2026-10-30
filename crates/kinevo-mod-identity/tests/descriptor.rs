@@ -44,3 +44,64 @@ fn mod_08_policy_keys_registered() {
         );
     }
 }
+
+#[test]
+fn mod_08_nav_keys_exist() {
+    let english: serde_json::Value =
+        serde_json::from_str(include_str!("../../../web/src/i18n/en.json"))
+            .expect("English catalogue should be valid JSON");
+    let indonesian: serde_json::Value =
+        serde_json::from_str(include_str!("../../../web/src/i18n/id.json"))
+            .expect("Indonesian catalogue should be valid JSON");
+
+    assert_eq!(MODULE.nav.len(), 1);
+    assert_eq!(
+        MODULE
+            .nav
+            .first()
+            .expect("identity nav entry should exist")
+            .key,
+        "accounts"
+    );
+    assert_eq!(MODULE.settings_panels.len(), 3);
+    for item in MODULE.nav {
+        assert!(
+            MODULE
+                .permissions
+                .iter()
+                .any(|permission| permission.key == item.required_permission),
+            "unregistered identity nav permission: {}",
+            item.required_permission
+        );
+        assert!(
+            english.get(item.label_key).is_some(),
+            "English key {}",
+            item.label_key
+        );
+        assert!(
+            indonesian.get(item.label_key).is_some(),
+            "Indonesian key {}",
+            item.label_key
+        );
+    }
+    for panel in MODULE.settings_panels {
+        assert!(
+            MODULE
+                .permissions
+                .iter()
+                .any(|permission| permission.key == panel.required_permission),
+            "unregistered identity panel permission: {}",
+            panel.required_permission
+        );
+        assert!(
+            english.get(panel.label_key).is_some(),
+            "English key {}",
+            panel.label_key
+        );
+        assert!(
+            indonesian.get(panel.label_key).is_some(),
+            "Indonesian key {}",
+            panel.label_key
+        );
+    }
+}
