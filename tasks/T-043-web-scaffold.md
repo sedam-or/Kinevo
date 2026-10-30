@@ -3,12 +3,12 @@ id: T-043
 title: Scaffold the React + Vite web app and serve it from the binary
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-041, T-039]
 requirements: [D-07, D-48, FE-01, FE-09, FE-10, FE-13, FE-16, ARCH-02]
 branch: m1-t043-web-scaffold
 budget_lines: 380
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-043: Scaffold the React + Vite web app and serve it from the binary
