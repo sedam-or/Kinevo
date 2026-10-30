@@ -3,12 +3,12 @@ id: T-049
 title: Build the AuthManager, the API client auth wiring and the login, register and reset pages
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-048, T-045, T-046, T-024, T-025, T-026]
 requirements: [FE-02, FE-03, FE-04, ID-FR-03, ID-FR-05, ID-FR-06, SEC-AC-01, DS-A11Y-05, DS-A11Y-14, D-37]
 branch: m1-t049-web-auth-client-and-login
 budget_lines: 400
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-049: Build the AuthManager, the API client auth wiring and the login, register and reset pages
