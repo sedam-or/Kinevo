@@ -1468,3 +1468,14 @@ Filesystem                    Size  Used Avail Use% Mounted on
 - Environment-limited browser checks: Firefox binary absent at `/home/kepolu/.cache/ms-playwright/firefox-1555/firefox/firefox`; WebKit host is missing `libicu74` and `libflite1`. See the exact commands and Playwright errors above.
 - Implementer decisions awaiting architect review: D-130 and D-131. No task gate failed.
 - Next topological todo: T-051.
+
+## T-051 task result
+
+- Issue: #76. Branch: `dev`. Task status: `review` with the shared PostgreSQL portion of the full gate recorded as environment-limited; no full `just check` attempt ended at exit 0.
+- Acceptance: all seven named setup UI tests passed in the 72-test web suite; `setup_session::set_policy_form_in_wizard_state` passed in the 9-test setup session suite.
+- Supporting gates: typecheck passed; web lint passed with six existing CSS `!important` warnings; descriptor tests 5/5; `just spec` exit 0 (spec 0 findings/60 files, contrast 0 failures, task index 0 problems/132 tasks, OpenAPI check and generated API schema check passed). `cargo deny` reported advisories/bans/licenses/sources okay with its existing unmatched MPL-2.0 allowance warning.
+- Full `just check`: the first post-fix attempt passed all 388 Rust tests (1 skipped), web tests, lint and dependency checks, then failed because generated `web/src/api/schema.d.ts` differed from the task's updated OpenAPI contract. After staging the generated schema, the next attempt failed when `kinevo-mod-identity::account::api_60_patch_optimistic_concurrency` reported `disposable PostgreSQL test database should start: Unavailable` (285 passed, 1 failed, 1 skipped; 102 not run). Its isolated retry passed 1/1. The next full attempt failed in `crates/kinevo-db/src/testing/mod.rs:537` with `test database cleanup failed` (358 passed, 1 failed, 1 skipped; 29 not run; 11 slow tests). The existing Docker PostgreSQL 17 test container was accepting connections; no image was built or pulled. These are recorded as environment-limited full-suite results, not passing gates.
+- Environment issue resolved during setup: plain `pnpm --dir web lint` could not find cached Corepack `pnpm/12.16.1/bin/pnpm.cjs`; using `PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0` ran local pnpm 9.15.9 successfully. Node 26.12.1 also reported the package's 26.13.0 engine warning.
+- Implementer decision pending architect review: add registry-derived `module_form` metadata to the unauthenticated setup-session response so the wizard can render locked core modules and dependency information.
+- Disk at T-051 verification start: `/dev/mapper/nvme0n1p3crypted 468G 355G 108G 77% /`. Disk after final tests and `just spec`: `/dev/mapper/nvme0n1p3crypted 468G 360G 103G 78% /`.
+- Next topological todo: T-052.

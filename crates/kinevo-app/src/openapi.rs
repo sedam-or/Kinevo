@@ -227,6 +227,7 @@ fn success_response_schema(spec: &RouteSpec, path: &str) -> Option<&'static str>
         ("GET", "/api/v1/account/sessions") => Some("SessionsPage"),
         ("GET", "/api/v1/modules") => Some("ModuleList"),
         ("GET", "/api/v1/policies") => Some("PolicyListResponse"),
+        ("GET" | "PUT", "/api/v1/setup/session/{id}") => Some("WizardStateResponse"),
         ("POST", "/api/v1/admin/invites") => Some("InviteResponse"),
         ("POST", "/api/v1/admin/accounts/{id}/password-reset") => Some("ResetResponse"),
         ("POST", "/api/v1/account/export") => Some("ExportRequestResponse"),

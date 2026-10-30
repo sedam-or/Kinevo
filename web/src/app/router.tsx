@@ -14,6 +14,7 @@ import { LoginPage } from "../features/identity/LoginPage";
 import { RegisterPage } from "../features/identity/RegisterPage";
 import { ResetPage } from "../features/identity/ResetPage";
 import { SessionRevokedPage } from "../features/identity/SessionRevokedPage";
+import { SetupPage } from "../features/setup/SetupPage";
 import { modulePageRoutes, RegisteredModulePage } from "../features/shell/routes";
 import { useModules } from "../features/shell/useModules";
 import { TodayPage } from "../features/today/TodayPage";
@@ -89,14 +90,7 @@ const revokedRoute = createRoute({
 const setupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/setup",
-  component: function SetupRequiredPage() {
-    const t = useT();
-    return (
-      <main className="grid min-h-screen place-items-center p-4">
-        <h1>{t("setup.heading")}</h1>
-      </main>
-    );
-  },
+  component: () => <SetupPage onComplete={navigateTo} />,
 });
 
 const moduleRoutes = modulePageRoutes.map(({ path, module, titleKey }) =>

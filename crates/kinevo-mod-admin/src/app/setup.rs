@@ -12,9 +12,9 @@ use kinevo_db::{
 };
 use kinevo_kernel::{
     crypto::{ct_eq, hash_token},
-    errors::{AppError, Details, ErrorCode, FieldCode, FieldError},
+    errors::{AppError, DetailValue, Details, ErrorCode, FieldCode, FieldError},
     id::{AccountId, IdGen, TokenGen},
-    policy::{PolicySpec, validate_value},
+    policy::{PolicySpec, PolicyType, Scope, validate_value},
     secret::Secret,
     time::Clock,
     validate::{net::HttpsUrl, tz::Locale},
@@ -68,6 +68,46 @@ pub struct WizardState {
     pub base_url: Option<String>,
     pub modules: BTreeMap<String, bool>,
     pub policies: BTreeMap<String, Value>,
+}
+
+/// A policy preset with the metadata needed to render an unauthenticated setup form.
+#[derive(Clone, Debug, PartialEq, Serialize, utoipa::ToSchema)]
+pub struct PolicyFormField {
+    pub key: String,
+    #[serde(rename = "type")]
+    #[schema(rename = "type")]
+    pub type_name: &'static str,
+    #[schema(value_type = serde_json::Value)]
+    pub bounds: Value,
+    pub label_key: String,
+    #[schema(value_type = serde_json::Value)]
+    pub value: Value,
+    pub scope: String,
+}
+
+/// A module switch with kind and dependency metadata from the compiled registry.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, utoipa::ToSchema)]
+pub struct SetupModuleField {
+    pub key: String,
+    pub label_key: String,
+    pub kind: String,
+    pub enabled: bool,
+    pub requires: Vec<String>,
+}
+
+/// Full setup-session response with server-generated form metadata.
+#[derive(Clone, Debug, PartialEq, Serialize, utoipa::ToSchema)]
+pub struct WizardStateResponse {
+    pub session_id: String,
+    pub step: u8,
+    pub template_id: String,
+    pub locale: String,
+    pub base_url: Option<String>,
+    pub modules: BTreeMap<String, bool>,
+    #[schema(value_type = serde_json::Value)]
+    pub policies: BTreeMap<String, Value>,
+    pub module_form: Vec<SetupModuleField>,
+    pub policy_form: Vec<PolicyFormField>,
 }
 
 /// Partial wizard update. Omitted fields preserve the current validated value.
@@ -280,6 +320,68 @@ impl SetupService {
         self.wizard.get(id)
     }
 
+    /// Adds policy and module form metadata derived from the compiled registries.
+    #[must_use]
+    pub fn response(&self, state: WizardState) -> WizardStateResponse {
+        let module_form = self
+            .modules
+            .iter()
+            .map(|descriptor| {
+                let is_core = descriptor.kind == ModuleKind::Core;
+                SetupModuleField {
+                    key: descriptor.key.to_owned(),
+                    label_key: format!("module.{}.name", descriptor.key),
+                    kind: if is_core {
+                        "core".to_owned()
+                    } else {
+                        "toggleable".to_owned()
+                    },
+                    enabled: is_core || state.modules.get(descriptor.key).copied().unwrap_or(false),
+                    requires: descriptor
+                        .requires
+                        .iter()
+                        .map(|required| (*required).to_owned())
+                        .collect(),
+                }
+            })
+            .collect();
+        let template = self.templates.get(&state.template_id);
+        let policy_form = state
+            .policies
+            .iter()
+            .filter_map(|(key, value)| {
+                let spec = self.policies.iter().find(|spec| spec.key == key)?;
+                let scopes = template
+                    .and_then(|template| template.policy_scopes.get(key))
+                    .map_or(spec.scopes, Vec::as_slice);
+                Some(scopes.iter().map(move |scope| PolicyFormField {
+                    key: key.clone(),
+                    type_name: setup_policy_type(spec.ty),
+                    bounds: setup_policy_bounds(spec.ty),
+                    label_key: format!("admin.policy.{}", spec.key),
+                    value: value.clone(),
+                    scope: match scope {
+                        Scope::Instance => "instance".to_owned(),
+                        Scope::Account => "account".to_owned(),
+                    },
+                }))
+            })
+            .flatten()
+            .collect();
+
+        WizardStateResponse {
+            session_id: state.session_id.0,
+            step: state.step,
+            template_id: state.template_id,
+            locale: state.locale,
+            base_url: state.base_url,
+            modules: state.modules,
+            policies: state.policies,
+            module_form,
+            policy_form,
+        }
+    }
+
     /// Validates and stores a wizard update without writing business tables.
     pub async fn update(&self, id: SessionId, patch: WizardPatch) -> Result<WizardState, AppError> {
         if self.instance.get().await?.setup_completed {
@@ -361,6 +463,33 @@ fn state_from_template(session_id: SessionId, template: &Template) -> WizardStat
     }
 }
 
+fn setup_policy_type(policy_type: PolicyType) -> &'static str {
+    match policy_type {
+        PolicyType::Int { .. } => "int",
+        PolicyType::Bool => "bool",
+        PolicyType::Enum { .. } => "enum",
+        PolicyType::DurationSeconds { .. } => "duration_seconds",
+        PolicyType::LocalTime => "local_time",
+        PolicyType::Bp => "bp",
+        PolicyType::TextKey => "text_key",
+        PolicyType::Json { .. } => "json",
+    }
+}
+
+fn setup_policy_bounds(policy_type: PolicyType) -> Value {
+    match policy_type {
+        PolicyType::Int { min, max } | PolicyType::DurationSeconds { min, max } => {
+            serde_json::json!({ "min": min, "max": max })
+        }
+        PolicyType::Bool => serde_json::json!({ "type": "bool" }),
+        PolicyType::Enum { allowed } => serde_json::json!({ "allowed": allowed }),
+        PolicyType::LocalTime => serde_json::json!({ "format": "HH:MM" }),
+        PolicyType::Bp => serde_json::json!({ "min": 0, "max": 10_000 }),
+        PolicyType::TextKey => serde_json::json!({ "type": "text_key" }),
+        PolicyType::Json { schema } => serde_json::json!({ "schema": schema }),
+    }
+}
+
 fn validate_base_url(raw: &str) -> Result<String, AppError> {
     let parsed = HttpsUrl::parse(raw).map_err(|code| validation_error("base_url", code))?;
     let rest = raw
@@ -409,12 +538,15 @@ fn validate_modules(
         let descriptor = descriptors
             .get(key.as_str())
             .ok_or_else(|| AppError::new(ErrorCode::TemplateInvalid))?;
-        if descriptor
+        let missing = descriptor
             .requires
             .iter()
-            .any(|required| !enabled.contains(*required))
-        {
-            return Err(AppError::new(ErrorCode::ModuleDependencyUnmet));
+            .filter(|required| !enabled.contains(**required))
+            .map(|required| (*required).to_owned())
+            .collect::<Vec<_>>();
+        if !missing.is_empty() {
+            return Err(AppError::new(ErrorCode::ModuleDependencyUnmet)
+                .with_detail("missing", DetailValue::StrList(missing)));
         }
     }
     Ok(())

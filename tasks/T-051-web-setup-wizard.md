@@ -3,7 +3,7 @@ id: T-051
 title: Build the setup wizard UI (token gate, template, modules, rules and first account)
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-050, T-037, T-035]
 requirements: [SET-01, SET-02, SET-03, SET-05, SEC-AC-08, DS-A11Y-06, FE-04, UXS-02]
 branch: m1-t051-web-setup-wizard
@@ -108,8 +108,66 @@ cargo nextest run -p kinevo-mod-admin --test setup_session --features kinevo-db/
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Result
+
+Implemented the first-run setup wizard from token entry through the first account, including template, locale, base URL, module and policy forms, inline validation, retry-safe Finish, in-memory authentication, and navigation to Today. The backend returns policy and module form metadata from the existing registries. All eight named acceptance tests pass; `just check` did not finish cleanly because the shared Docker-backed PostgreSQL suite failed intermittently during database startup/cleanup under the full parallel run.
+
+### Acceptance
+
+| Criterion | Test | Result |
+|---|---|---|
+| AC-1 | `setup_ui::set_token_hidden_and_language_default` | PASS |
+| AC-2 | `setup_ui::set_01_next_next_finish` | PASS |
+| AC-3 | `setup_ui::sec_ac_08_lockout_message` | PASS |
+| AC-4 | `setup_ui::module_dependency_inline` | PASS |
+| AC-5 | `setup_ui::set_03_retry_reuses_key_and_banner` | PASS |
+| AC-6 | `setup_ui::set_05_reload_resumes_step` | PASS |
+| AC-7 | `setup_ui::password_policy_error_inline` | PASS |
+| AC-8 | `setup_session::set_policy_form_in_wizard_state` | PASS |
+
+### Commands and counts
+
+- `pnpm --dir web test -- src/features/setup/SetupPage.test.tsx` before implementation: exit 1 as expected; `SetupPage` was unresolved and 0 tests ran.
+- `eval "$(scripts/dev-postgres.sh env)" && cargo nextest run -p kinevo-mod-admin --test setup_session --features kinevo-db/testing set_policy_form_in_wizard_state` before implementation: exit 100 as expected; the new named assertion failed because policy form metadata was absent.
+- `PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0 pnpm --dir web typecheck`: exit 0; Node 26.12.1 emitted the package's Node 26.13.0 engine warning.
+- `PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0 pnpm --dir web lint`: final exit 0; Biome reported six existing CSS `!important` warnings and nine informational findings. The first unqualified `pnpm --dir web lint` exited 1 because Corepack's cached `pnpm/12.16.1/bin/pnpm.cjs` was absent; the local pnpm invocation was used thereafter. A lint retry caught untranslated language names and import ordering; both were fixed.
+- `PATH=/usr/bin:$PATH COREPACK_ENABLE_PROJECT_SPEC=0 pnpm --dir web test`: exit 0; 32 files, 72 tests passed.
+- `cargo nextest run -p kinevo-mod-identity -p kinevo-mod-admin --test descriptor`: exit 0; 5 passed.
+- `eval "$(scripts/dev-postgres.sh env)" && cargo nextest run -p kinevo-mod-admin --test setup_session --features kinevo-db/testing`: exit 0; 9 passed, including AC-8.
+- `cargo fmt --all`: exit 0.
+- `eval "$(scripts/dev-postgres.sh env)" && cargo nextest run -p kinevo-mod-identity --test account --test-threads 1 api_60_patch_optimistic_concurrency`: exit 0; 1 passed on isolated retry after the workspace run reported PostgreSQL unavailable.
+- `eval "$(scripts/dev-postgres.sh env)" && PATH="$HOME/.cargo/bin:/usr/bin:$PATH" COREPACK_ENABLE_PROJECT_SPEC=0 just check`: first post-fix run exited 1 after all 388 Rust tests (388 passed, 1 skipped), web tests, lint, cargo-deny and spec checks passed; the final generated-schema diff check detected the expected un-staged `web/src/api/schema.d.ts` update. The generated schema was then staged for the next run.
+- The same `just check` command after staging the generated schema exited 100: nextest ran 286/388 tests, 285 passed and one failed at `crates/kinevo-mod-identity/tests/account.rs:165` with `disposable PostgreSQL test database should start: Unavailable`; 102 tests were not run, 1 test was skipped. The isolated retry above passed.
+- A further run of the same `just check` command exited 100: 359/388 tests ran, 358 passed and one failed at `crates/kinevo-db/src/testing/mod.rs:537` with `test database cleanup failed`; 29 tests were not run and 1 was skipped. Eleven tests exceeded 60 seconds. PostgreSQL was accepting connections and the existing `postgres:17-alpine` container was reused; no image was built or pulled.
+- `PATH="$HOME/.cargo/bin:/usr/bin:$PATH" COREPACK_ENABLE_PROJECT_SPEC=0 just spec`: exit 0; `spec_tool.py` found 0 issues in 60 spec files, contrast reported 0 failures, `tasks_index.py --check` reported 0 problems in 132 tasks, OpenAPI check passed, and regenerated API types matched the staged output.
+- `python3 scripts/tasks_index.py && python3 scripts/tasks_index.py --check && python3 scripts/spec_tool.py check`: exit 0; both task-index checks reported 0 problems in 132 tasks and the spec checker reported 0 findings in 60 files.
+- `git diff HEAD --check`: exit 0.
+
+### Files changed
+
+Application files (`git diff HEAD --numstat` at review): `contracts/openapi.json` +131/-0; `crates/kinevo-app/src/openapi.rs` +1/-0; `crates/kinevo-mod-admin/src/app/setup.rs` +138/-6; `crates/kinevo-mod-admin/src/http/openapi.rs` +3/-0; `crates/kinevo-mod-admin/src/http/setup.rs` +9/-2; `crates/kinevo-mod-admin/tests/setup_session.rs` +54/-4; `web/src/api/schema.d.ts` +38/-2; `web/src/app/router.tsx` +2/-8; `web/src/auth/AuthManager.ts` +4/-0; `web/src/i18n/en.json` +19/-0; `web/src/i18n/id.json` +19/-0. New setup files: `DonePage.tsx` 10 lines, `ModulesStep.tsx` 56, `RulesStep.tsx` 212, `SetupPage.test.tsx` 300, `SetupPage.tsx` 237, `TemplateStep.tsx` 63, `TokenStep.tsx` 37, `schemas.ts` 10, and `useWizard.ts` 307. `tasks/T-051-web-setup-wizard.md` and `tasks/RUN_REPORT.md` record task status and run evidence.
+
+### Deviations
+
+- **Resolved by implementer, pending architect review:** added `module_form` metadata (kind, label key, enabled state, and requirements) to the setup-session response. The unauthenticated wizard needs these existing registry values to render locked core switches and dependency messages; the prior boolean map did not carry them.
+- `crates/kinevo-mod-admin/src/http/openapi.rs`, `crates/kinevo-app/src/openapi.rs`, `web/src/app/router.tsx`, `web/src/auth/AuthManager.ts`, and both locale catalogues are minimal wiring required to expose the response contract, register `/setup`, accept the returned token in memory, and render translated labels; these paths were not individually listed in Files.
+- `budget_lines: 400` was exceeded; recorded under D-55 as guidance, not a blocker.
+- The final full `just check` attempts remain environment-limited by the shared PostgreSQL test harness startup/cleanup failures described above. The focused setup suite, acceptance tests, web suite, descriptor tests, and `just spec` passed; no failed test is reported as passing.
+
+### Spec issues noticed
+
+No direct task/spec contradiction was found. The task interface did not describe how an unauthenticated module step obtains registry kind and dependency metadata; the additive `module_form` response resolves that gap pending architect review.
+
+### Not done / not verified
+
+- A clean end-to-end `just check` exit was not obtained because the full parallel PostgreSQL-backed workspace run failed during database startup/cleanup; see the exact commands and errors above.
+- Browser E2E for the setup journey was not run; T-057 owns that journey. The seven UI acceptance tests ran in Vitest/jsdom.
+- Firefox/WebKit browser execution was not attempted for this task.
+
+### Follow-up suggestions
+
+Review the additive `module_form` field and consider whether the shared PostgreSQL test harness should expose the underlying cleanup error instead of its current generic failure.
 
 ## Questions
 
-_None yet._
+- **Q-1 (resolved by implementer, pending architect review):** the unauthenticated setup wizard needs module kind and dependency metadata, while the session state previously exposed only enabled booleans. Added `module_form` from the compiled registry. Review whether this additive response shape should be retained.

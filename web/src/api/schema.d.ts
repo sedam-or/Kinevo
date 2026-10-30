@@ -788,6 +788,15 @@ export interface components {
         PasswordResetRequest: {
             email: string;
         };
+        /** @description A policy preset with the metadata needed to render an unauthenticated setup form. */
+        PolicyFormField: {
+            bounds: unknown;
+            key: string;
+            label_key: string;
+            scope: string;
+            type: string;
+            value: unknown;
+        };
         PolicyListQuery: {
             scope: string;
         };
@@ -847,6 +856,14 @@ export interface components {
             limit?: string | null;
             sort?: string | null;
         };
+        /** @description A module switch with kind and dependency metadata from the compiled registry. */
+        SetupModuleField: {
+            enabled: boolean;
+            key: string;
+            kind: string;
+            label_key: string;
+            requires: string[];
+        };
         SetupTokenInput: {
             token: string;
         };
@@ -869,6 +886,21 @@ export interface components {
             path: string;
         };
         ValidationProblem: components["schemas"]["Problem"];
+        /** @description Full setup-session response with server-generated form metadata. */
+        WizardStateResponse: {
+            base_url?: string | null;
+            locale: string;
+            module_form: components["schemas"]["SetupModuleField"][];
+            modules: {
+                [key: string]: boolean;
+            };
+            policies: unknown;
+            policy_form: components["schemas"]["PolicyFormField"][];
+            session_id: string;
+            /** Format: int32 */
+            step: number;
+            template_id: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -6272,7 +6304,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["WizardStateResponse"];
+                };
             };
             /** @description RFC 9457 problem response */
             400: {
@@ -6418,7 +6452,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["WizardStateResponse"];
+                };
             };
             /** @description RFC 9457 problem response */
             400: {

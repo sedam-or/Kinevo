@@ -616,10 +616,9 @@ async fn put_validates_modules_and_url() {
         .await
         .expect("setup session endpoint responds");
     assert_eq!(dependency.status(), StatusCode::CONFLICT);
-    assert_eq!(
-        response_json(dependency).await["code"],
-        "module_dependency_unmet"
-    );
+    let body = response_json(dependency).await;
+    assert_eq!(body["code"], "module_dependency_unmet");
+    assert_eq!(body["details"]["missing"][0], "goals");
     let url = router
         .oneshot(request(
             Method::PUT,
@@ -633,6 +632,57 @@ async fn put_validates_modules_and_url() {
     let body = response_json(url).await;
     assert_eq!(body["code"], "validation_failed");
     assert_eq!(body["errors"][0]["path"], "base_url");
+}
+
+#[tokio::test]
+async fn set_policy_form_in_wizard_state() {
+    let h = harness().await;
+    let service = Arc::new(h.service);
+    let token = service
+        .ensure_token()
+        .await
+        .expect("token bootstrap succeeds")
+        .expect("fresh token exists");
+    let router = http_router(&h.app, service);
+    let opened = open_setup_session(&router, token.expose()).await;
+    let session_id = opened["session_id"]
+        .as_str()
+        .expect("created response includes a session id");
+    let response = router
+        .oneshot(request(
+            Method::PUT,
+            &format!("/api/v1/setup/session/{session_id}"),
+            Body::from(json!({"step": 1, "template_id": "professional"}).to_string()),
+            false,
+        ))
+        .await
+        .expect("setup session endpoint responds");
+    assert_eq!(response.status(), StatusCode::OK);
+    let state = response_json(response).await;
+    let fields = state["policy_form"]
+        .as_array()
+        .expect("wizard response includes policy form metadata");
+    let registration = fields
+        .iter()
+        .find(|field| field["key"] == "auth.registration.mode" && field["scope"] == "instance")
+        .expect("instance registration preset is listed");
+    assert_eq!(registration["type"], "enum");
+    assert_eq!(
+        registration["label_key"],
+        "admin.policy.auth.registration.mode"
+    );
+    assert_eq!(registration["value"], "closed");
+    assert_eq!(registration["bounds"]["allowed"][0], "open");
+    assert_eq!(registration["bounds"]["allowed"][1], "closed");
+    let account_default = fields
+        .iter()
+        .find(|field| {
+            field["key"] == "scheduler.anchor.earliest_time" && field["scope"] == "account"
+        })
+        .expect("first-account scheduler preset is listed");
+    assert_eq!(account_default["type"], "local_time");
+    assert_eq!(account_default["value"], "08:00");
+    assert_eq!(account_default["bounds"]["format"], "HH:MM");
 }
 
 #[tokio::test]

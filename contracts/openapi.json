@@ -401,6 +401,34 @@
         ],
         "type": "object"
       },
+      "PolicyFormField": {
+        "description": "A policy preset with the metadata needed to render an unauthenticated setup form.",
+        "properties": {
+          "bounds": {},
+          "key": {
+            "type": "string"
+          },
+          "label_key": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {}
+        },
+        "required": [
+          "key",
+          "type",
+          "bounds",
+          "label_key",
+          "value",
+          "scope"
+        ],
+        "type": "object"
+      },
       "PolicyListQuery": {
         "additionalProperties": false,
         "properties": {
@@ -627,6 +655,37 @@
         },
         "type": "object"
       },
+      "SetupModuleField": {
+        "description": "A module switch with kind and dependency metadata from the compiled registry.",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "key": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "label_key": {
+            "type": "string"
+          },
+          "requires": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "label_key",
+          "kind",
+          "enabled",
+          "requires"
+        ],
+        "type": "object"
+      },
       "SetupTokenInput": {
         "additionalProperties": false,
         "properties": {
@@ -710,6 +769,64 @@
             "$ref": "#/components/schemas/Problem"
           }
         ]
+      },
+      "WizardStateResponse": {
+        "description": "Full setup-session response with server-generated form metadata.",
+        "properties": {
+          "base_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "locale": {
+            "type": "string"
+          },
+          "module_form": {
+            "items": {
+              "$ref": "#/components/schemas/SetupModuleField"
+            },
+            "type": "array"
+          },
+          "modules": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "policies": {},
+          "policy_form": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyFormField"
+            },
+            "type": "array"
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "step": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "template_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "step",
+          "template_id",
+          "locale",
+          "modules",
+          "policies",
+          "module_form",
+          "policy_form"
+        ],
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -12529,6 +12646,13 @@
         ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WizardStateResponse"
+                }
+              }
+            },
             "description": "Successful response"
           },
           "400": {
@@ -12841,6 +12965,13 @@
         ],
         "responses": {
           "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WizardStateResponse"
+                }
+              }
+            },
             "description": "Successful response"
           },
           "400": {

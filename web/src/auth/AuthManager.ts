@@ -48,6 +48,10 @@ export class AuthManager {
     return this.token;
   }
 
+  acceptSession(session: AuthSuccess): void {
+    this.setToken(session.access_token);
+  }
+
   subscribe(listener: () => void): () => void {
     this.subscribers.add(listener);
     return () => this.subscribers.delete(listener);

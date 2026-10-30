@@ -112,7 +112,10 @@ fn routes_inner(service: Arc<SetupService>, finish: Option<Arc<FinishSetup>>) ->
         let service = Arc::clone(&get_service);
         async move {
             let id = SessionId::parse(&id).map_err(ApiError)?;
-            service.get(&id).map(Json).map_err(ApiError)
+            service
+                .get(&id)
+                .map(|state| Json(service.response(state)))
+                .map_err(ApiError)
         }
     });
 
@@ -122,7 +125,11 @@ fn routes_inner(service: Arc<SetupService>, finish: Option<Arc<FinishSetup>>) ->
             let service = Arc::clone(&update_service);
             async move {
                 let id = SessionId::parse(&id).map_err(ApiError)?;
-                service.update(id, patch).await.map(Json).map_err(ApiError)
+                service
+                    .update(id, patch)
+                    .await
+                    .map(|state| Json(service.response(state)))
+                    .map_err(ApiError)
             }
         },
     );
