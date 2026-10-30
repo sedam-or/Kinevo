@@ -3,12 +3,12 @@ id: T-042
 title: Add the architecture tests, the check scripts and the RBAC matrix test
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-041, T-038, T-030]
 requirements: [CA-02, CA-03, CA-04, CA-05, CA-09, CQ-20, TST-09, TST-12, MOD-08, D-38]
 branch: m1-t042-app-architecture-tests-and-checks
 budget_lines: 400
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-042: Add the architecture tests, the check scripts and the RBAC matrix test
