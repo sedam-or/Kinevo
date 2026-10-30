@@ -3,12 +3,12 @@ id: T-053
 title: Build the data settings (export and account deletion)
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-052, T-029]
 requirements: [ID-FR-10, ID-FR-11, ID-FR-12, UXS-04, UXS-02]
 branch: m1-t053-web-settings-data-export-delete
 budget_lines: 300
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-053: Build the data settings (export and account deletion)
