@@ -3,12 +3,12 @@ id: T-050
 title: Build the module-driven shell, navigation, Today placeholder and descriptor nav entries
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-049, T-034, T-046]
 requirements: [MOD-01, MOD-09, FE-01, FE-11, FE-12, DS-A11Y-07, DS-A11Y-08, DS-A11Y-12, UXS-02]
 branch: m1-t050-web-shell-and-navigation
 budget_lines: 390
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-050: Build the module-driven shell, navigation, Today placeholder and descriptor nav entries
