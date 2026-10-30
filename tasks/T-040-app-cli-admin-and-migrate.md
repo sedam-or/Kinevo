@@ -3,12 +3,12 @@ id: T-040
 title: Add the migrate, admin and setup-token CLI commands
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-039, T-029, T-028, T-032, T-035]
 requirements: [ADM-FR-09, ADM-FR-06, SET-04, TPL-04, ARCH-01, ARCH-21, D-47, D-50]
 branch: m1-t040-app-cli-admin-and-migrate
 budget_lines: 360
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-040: Add the migrate, admin and setup-token CLI commands
