@@ -150,3 +150,25 @@ Disk after the review and documentation checks:
 Filesystem                    Size  Used Avail Use% Mounted on
 /dev/mapper/nvme0n1p3crypted  468G  330G  133G  72% /
 ```
+
+### T-042 architecture checks (2026-10-30)
+
+Before the final targeted acceptance diagnostic:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  341G  122G  74% /
+```
+
+The targeted `architecture` and `rbac_matrix` diagnostic ran 9 tests: 7 passed and 2 failed on the existing CA-02 / CA-04 findings recorded in `T-042` Q-1. PostgreSQL was not started for that diagnostic. An earlier exploratory full `just check` reused the existing disposable PostgreSQL server; it did not pull or build images. Out-of-scope experimental changes were reverted. No containers, images, volumes, registry cache, or `target/` files were removed.
+
+Cleanup: none. No environment-limited checks.
+
+After the T-042 diagnostic and documentation updates:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  341G  122G  74% /
+```
+
+Cleanup: none. The disk stayed above the 20 GB cleanup threshold; no container, image, volume, registry cache, or build output was removed.
