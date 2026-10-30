@@ -358,3 +358,12 @@ No cleanup was performed; the shared PostgreSQL 17 container and all Docker reso
 - `pnpm --dir web exec playwright test tests/e2e/components.a11y.spec.ts --project=chromium`: 2 passed, including axe serious/critical scan and target-size check.
 - Exact all-project command `pnpm --dir web exec playwright test tests/e2e/components.a11y.spec.ts`: 2 Chromium tests passed; Firefox and WebKit could not launch due to environment dependencies. Firefox error: `Executable doesn't exist at /home/kepolu/.cache/ms-playwright/firefox-1555/firefox/firefox` (Playwright suggested `pnpm exec playwright install`; not run). WebKit error: `Host system is missing dependencies to run browsers`; suggested dependencies were `libicu74` and `libflite1` (the tool also suggested sudo commands; none were run).
 - `budget_lines: 400` was exceeded: the measured change was approximately 1,469 added/removed lines excluding `web/pnpm-lock.yaml` (includes the run log and stack allowance update). Per D-55, this is guidance and not a blocker.
+
+### T-046 checkpoint before tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.

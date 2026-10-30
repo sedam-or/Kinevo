@@ -3,12 +3,12 @@ id: T-046
 title: Build Dialog, Sheet, Toast, Banner, Card, EmptyState, Skeleton and Tabs
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-045]
 requirements: [CA-15, DS-A11Y-02, DS-A11Y-09, DS-A11Y-12, FE-12, FE-16]
 branch: m1-t046-web-overlays-and-feedback
 budget_lines: 390
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-046: Build Dialog, Sheet, Toast, Banner, Card, EmptyState, Skeleton and Tabs
