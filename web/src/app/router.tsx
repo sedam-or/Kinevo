@@ -1,4 +1,5 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
+import { useT } from "../i18n";
 
 const rootRoute = createRootRoute({
   component: Outlet,
@@ -7,11 +8,14 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: () => (
-    <main>
-      <h1>Nivaras</h1>
-    </main>
-  ),
+  component: function HomePage() {
+    const t = useT();
+    return (
+      <main>
+        <h1>{t("app.name")}</h1>
+      </main>
+    );
+  },
 });
 
 const routeTree = rootRoute.addChildren([indexRoute]);

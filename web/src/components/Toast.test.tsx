@@ -6,19 +6,19 @@ function ToastActions() {
   const toast = useToast();
   return (
     <>
-      <button type="button" onClick={() => toast.success("Saved")}>
+      <button type="button" onClick={() => toast.success("state.synced")}>
         Success
       </button>
       <button
         type="button"
-        onClick={() => toast.error({ messageKey: "Failed", requestId: "request-1" })}
+        onClick={() => toast.error({ messageKey: "sync.rejected", requestId: "request-1" })}
       >
         Error
       </button>
-      <button type="button" onClick={() => toast.success("Another")}>
+      <button type="button" onClick={() => toast.success("state.synced")}>
         Another success
       </button>
-      <button type="button" onClick={() => toast.success("Last")}>
+      <button type="button" onClick={() => toast.success("state.synced")}>
         Last success
       </button>
     </>
@@ -45,7 +45,7 @@ describe("overlays", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(6100);
     });
-    expect(screen.getByRole("alert")).toHaveTextContent("Failed");
+    expect(screen.getByRole("alert")).toHaveTextContent("The server didn't accept this change");
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 

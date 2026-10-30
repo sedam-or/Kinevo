@@ -7,14 +7,15 @@ import {
   useRef,
   useState,
 } from "react";
+import { type MessageKey, useT } from "../i18n";
 import { Button } from "./Button";
 
 type ToastKind = "success" | "info" | "error";
-type ToastItem = { id: number; kind: ToastKind; message: string; requestId?: string };
-type ToastInput = { messageKey: string; requestId: string };
+type ToastItem = { id: number; kind: ToastKind; messageKey: MessageKey; requestId?: string };
+type ToastInput = { messageKey: MessageKey; requestId: string };
 type ToastApi = {
-  success: (messageKey: string) => void;
-  info: (messageKey: string) => void;
+  success: (messageKey: MessageKey) => void;
+  info: (messageKey: MessageKey) => void;
   error: (input: ToastInput) => void;
 };
 
@@ -32,8 +33,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
   const sequence = useRef(0);
 
-  const enqueue = useCallback((kind: ToastKind, message: string, requestId?: string) => {
-    const item = { id: ++sequence.current, kind, message, ...(requestId ? { requestId } : {}) };
+  const enqueue = useCallback((kind: ToastKind, messageKey: MessageKey, requestId?: string) => {
+    const item = { id: ++sequence.current, kind, messageKey, ...(requestId ? { requestId } : {}) };
     setItems((current) => {
       if (current.length < toastLimit) return [...current, item];
       const discardIndex = current.findIndex((queued) => queued.kind !== "error");
@@ -51,12 +52,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     info: (messageKey) => enqueue("info", messageKey),
     error: ({ messageKey, requestId }) => enqueue("error", messageKey, requestId),
   };
+  const t = useT();
 
   return (
     <ToastContext.Provider value={api}>
       {children}
       <section
-        aria-label="Notifications"
+        aria-label={t("action.notifications")}
         className="fixed right-4 top-4 z-[60] grid w-[min(24rem,calc(100vw-2rem))] gap-2"
       >
         {items.map((item) => (
@@ -68,6 +70,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 function ToastMessage({ item, onDismiss }: { item: ToastItem; onDismiss: (id: number) => void }) {
+  const t = useT();
   const messageRef = useRef<HTMLElement>(null);
   const [remaining, setRemaining] = useState(toastDuration);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -155,18 +158,22 @@ function ToastMessage({ item, onDismiss }: { item: ToastItem; onDismiss: (id: nu
       className={`grid gap-1 rounded-md border-l-4 bg-surface p-4 text-ink shadow-raised ${style}`}
     >
       <div className="flex items-start justify-between gap-3">
-        <span>{item.message}</span>
+        <span>
+          {t(item.messageKey, item.requestId ? { request_id: item.requestId } : undefined)}
+        </span>
         <Button
           variant="quiet"
           className="min-h-6 min-w-6 px-2 py-1 text-sm"
-          aria-label="Dismiss notification"
+          aria-label={t("action.dismiss_notification")}
           onPress={() => onDismiss(item.id)}
         >
-          ×
+          <span aria-hidden="true">×</span>
         </Button>
       </div>
       {item.requestId && (
-        <span className="text-xs text-ink-muted">Reference: {item.requestId}</span>
+        <span className="text-xs text-ink-muted">
+          {t("feedback.section_error.reference", { request_id: item.requestId })}
+        </span>
       )}
     </section>
   );

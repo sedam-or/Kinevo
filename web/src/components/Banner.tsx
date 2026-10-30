@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useT } from "../i18n";
 import { Button } from "./Button";
 
 export type BannerVariant = "info" | "warning" | "danger" | "success";
@@ -28,6 +29,7 @@ export function Banner({
   onDismiss,
 }: BannerProps) {
   const style = variants[variant];
+  const t = useT();
   return (
     <div
       role={style.role}
@@ -38,8 +40,13 @@ export function Banner({
         <div>{children}</div>
       </div>
       {isDismissable && !isCritical && onDismiss && (
-        <Button variant="quiet" aria-label="Dismiss banner" onPress={onDismiss} className="px-2">
-          ×
+        <Button
+          variant="quiet"
+          aria-label={t("action.dismiss_banner")}
+          onPress={onDismiss}
+          className="px-2"
+        >
+          <span aria-hidden="true">×</span>
         </Button>
       )}
     </div>

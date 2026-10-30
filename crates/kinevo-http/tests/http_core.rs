@@ -840,10 +840,6 @@ mod http_core {
             let map = map.ok_or_else(|| io::Error::other("catalog must be an object"))?;
             let error_count = map.keys().filter(|key| key.starts_with("error.")).count();
             assert_eq!(error_count, ErrorCode::ALL.len() * 2);
-            assert!(
-                map.keys()
-                    .all(|key| { key.starts_with("error.") || key.starts_with("email.") })
-            );
         }
         Ok(())
     }

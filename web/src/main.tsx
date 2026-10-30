@@ -4,6 +4,7 @@ import { App } from "./app/providers";
 import "./styles/base.css";
 import { ComponentsDemo } from "./app/components-demo";
 import { ToastProvider } from "./components/Toast";
+import "./i18n";
 
 const root = document.getElementById("root");
 

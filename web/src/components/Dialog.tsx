@@ -6,6 +6,7 @@ import {
   Modal,
   ModalOverlay,
 } from "react-aria-components";
+import { useT } from "../i18n";
 import { Button } from "./Button";
 
 export type DialogProps = {
@@ -25,6 +26,7 @@ export function Dialog({
   isDismissable = true,
   panelClassName,
 }: DialogProps) {
+  const t = useT();
   return (
     <AriaDialogTrigger>
       {trigger}
@@ -47,8 +49,13 @@ export function Dialog({
                 </p>
               </div>
               {isDismissable && (
-                <Button slot="close" variant="quiet" aria-label="Close dialog" className="px-3">
-                  ×
+                <Button
+                  slot="close"
+                  variant="quiet"
+                  aria-label={t("action.close_dialog")}
+                  className="px-3"
+                >
+                  <span aria-hidden="true">×</span>
                 </Button>
               )}
             </div>

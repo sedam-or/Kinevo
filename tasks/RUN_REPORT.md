@@ -611,3 +611,225 @@ Filesystem                    Size  Used Avail Use% Mounted on
 Final `just check` completed with exit 0: nextest 385 passed / 1 skipped, Vitest 34 passed, production web build and the consistency/drift gates passed. The shared PostgreSQL 17 service was reused. Cleanup: none.
 
 The strengthened ErrorBoundary recovery test first failed because a one-shot throwing child recovered during React's concurrent fallback. It now models the owning section's `onReload` callback; the final web suite passes 34/34 and verifies the section recovers without losing the sibling shell.
+
+### T-047 checkpoint before red acceptance tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before red tests with pinned Node/pnpm (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before focused post-implementation tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before focused test retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before web typecheck (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before web typecheck retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before web lint (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before web lint retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before full web test suite (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before full web test retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before just check and PostgreSQL reuse/start (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before final web test suite (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before final just check retry and PostgreSQL reuse (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before final green just check (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before full gate after Rust catalogue-test alignment (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  345G  118G  75% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before strict parser/terminology regression tests (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before strict parser test retry (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before strict parser test retry 2 (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before final strict-parser just check (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before final green just check after formatting (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+No cleanup or container operation was performed.
+
+### T-047 checkpoint before isolated retry of id_fr_05_grace_returns_same_pair (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-047 checkpoint before full just check retry after isolated DB test passed (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+
+### T-047 checkpoint before full just check retry with pinned Node 26 toolchain (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+### T-047 verification outcomes (2026-10-30)
+
+- `pnpm --dir web exec vitest run src/i18n/i18n.test.ts`: exit 0, 7/7 named acceptance tests passed.
+- `pnpm --dir web typecheck`: exit 0. `pnpm --dir web lint`: exit 0, `check-i18n: 442 messages, no findings`; four existing reduced-motion `!important` warnings.
+- `pnpm --dir web test`: exit 0, 41 passed.
+- Final `eval "$(scripts/dev-postgres.sh env)"` followed by `just check` with Node 26.13.0 and pnpm 12.16.1: exit 0; cargo nextest 385 passed / 1 skipped; web tests 41 passed; cargo deny, contrast, spec consistency, task index, generated OpenAPI and drift checks passed.
+- `python3 scripts/spec_tool.py check`: exit 0, 0 findings across 60 files. `python3 scripts/tasks_index.py --check`: exit 0, 0 problems across 132 tasks.
+- Earlier full gate attempt: nextest stopped at 340/385 after `id_fr_05_grace_returns_same_pair` reported test database cleanup failure; that test passed alone (1 passed), and a subsequent complete `just check` passed. A separate retry selected Node 22 and failed at web lint because Corepack could not find `/home/kepolu/.cache/node/corepack/v1/pnpm/12.16.1/bin/pnpm.cjs`; the final run used the pinned Node/pnpm binaries explicitly.
+- No environment-limited acceptance checks. No browser E2E was required by T-047. No cleanup or container operation was performed.
+
+### T-047 task completion disk checkpoint (2026-10-30)
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  348G  115G  76% /
+```
+
+Cleanup: none. The existing shared PostgreSQL 17 service was reused; no image was built or pulled, and no container, image, volume, or `target/` content was removed.

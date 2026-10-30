@@ -1,0 +1,30 @@
+# State messages are declared ahead of the modules that render them (M2–M11).
+state.* — Global/session notices are reserved for screens and flows implemented in later milestones.
+auth.* — Authentication and account-security screens are implemented by later identity tasks.
+setup.* — Setup wizard messages are implemented by later admin/setup tasks.
+today.* — Today screen messages are implemented by the execution milestone.
+progress.* — Progress screens are implemented by the execution milestone.
+session.* — Focus-session messages are implemented by the execution milestone.
+task.* — Task surfaces and state transitions are implemented by the planning and execution milestones.
+tasks.* — Task-list empty states are implemented by the planning milestone.
+goal.* — Goal surfaces are implemented by the planning milestone.
+goals.* — Goal-list empty states are implemented by the planning milestone.
+workspace.* — Workspace surfaces are implemented by the planning milestone.
+conflict.* — Conflict states are consumed by later module screens.
+stale.* — Stale-data states are consumed by later module screens.
+schedule.* — Schedule states are implemented by the scheduler milestone.
+placement.* — Placement explanations are implemented by the scheduler milestone.
+unplaced.* — Scheduler explanation states are implemented by the scheduler milestone.
+landscape.* — Fixed-commitment and calendar-import screens are implemented by the landscape milestone.
+sync.* — Offline sync surfaces are implemented by the sync milestone.
+notes.* — Note surfaces are implemented by the knowledge milestone.
+note.* — Note save states are implemented by the knowledge milestone.
+search.* — Note search is implemented by the knowledge milestone.
+canvas.* — Canvas surfaces are implemented by the canvas milestone.
+ai.* — AI states are implemented by the AI milestone.
+data.* — Data export and deletion screens are implemented by the admin milestone.
+admin.* — Admin screens are implemented by the admin milestone.
+billing.* — Billing screens are implemented by the billing milestone.
+term.* — Terminology keys are reserved for template-aware surfaces.
+error.* — Error-code messages are consumed by the error mapper task T-048.
+email.* — Email messages are consumed by server-side email templates, not web/src.

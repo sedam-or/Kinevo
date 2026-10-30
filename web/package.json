@@ -12,18 +12,23 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "tokens": "node scripts/build-tokens.ts && biome format --write --css-parse-tailwind-directives=true src/styles/tokens.css src/styles/tokens.d.ts",
-    "lint": "pnpm tokens && biome check --css-parse-tailwind-directives=true . && git diff --exit-code -- src/styles/tokens.css src/styles/tokens.d.ts",
+    "check:i18n": "node scripts/check-i18n.ts",
+    "lint": "pnpm tokens && pnpm check:i18n && biome check --css-parse-tailwind-directives=true . && git diff --exit-code -- src/styles/tokens.css src/styles/tokens.d.ts",
     "test": "vitest run",
     "gen:api": "openapi-typescript ../contracts/openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "5.105.0",
     "@tanstack/react-router": "1.170.46",
+    "i18next": "26.5.10",
+    "i18next-icu": "2.6.1",
+    "intl-messageformat": "12.1.4",
     "openapi-fetch": "0.17.0",
     "react": "19.3.1",
     "react-aria-components": "1.22.1",
     "react-dom": "19.3.1",
     "react-hook-form": "7.91.0",
+    "react-i18next": "17.1.8",
     "zod": "4.6.7"
   },
   "devDependencies": {

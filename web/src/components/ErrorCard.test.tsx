@@ -21,7 +21,7 @@ describe("error feedback", () => {
     );
 
     expect(screen.getByText("This section could not be loaded.")).toBeInTheDocument();
-    expect(screen.getByText("request-123")).toBeInTheDocument();
+    expect(screen.getByText("Request reference: request-123")).toBeInTheDocument();
     expect(screen.queryByText("private stack detail")).not.toBeInTheDocument();
     expect(screen.queryByText("Untrusted server title")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Copy request id" }));
