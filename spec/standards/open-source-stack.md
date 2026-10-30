@@ -1,6 +1,6 @@
 # Standard — Open-source stack map ("adopt, don't build")
 
-Rule (CQ-16): every dependency appears here with its reason; a dependency not on this map needs a task that adds it (and an entry) first. **Versions marked ✔ were read from the official registries (crates.io / npm) on 2026-10-25**; every other version is chosen by `cargo add` / `npm install` in the first task that needs it and pinned by the lockfile. Licences are **expected** values from the project's own metadata and must be confirmed by `cargo-deny` / `license-checker` in M1 (the repository is AGPL-3.0-only; all entries below are AGPL-compatible: MIT, Apache-2.0, ISC, BSD, MPL-2.0 for tools only, OFL-1.1 for fonts).
+Rule (CQ-16): every dependency appears here with its reason; a dependency not on this map needs a task that adds it (and an entry) first. **Versions marked ✔ were read from the official registries (crates.io / npm) on the date noted in the first task that pins them**; every other version is chosen by `cargo add` / `npm install` in the first task that needs it and pinned by the lockfile. Licences are **expected** values from the project's own metadata and must be confirmed by `cargo-deny` / `license-checker` in M1 (the repository is AGPL-3.0-only; all entries below are AGPL-compatible: MIT, Apache-2.0, ISC, BSD, MPL-2.0 for tools only, OFL-1.1 for fonts).
 
 ## 1. Rust (server, scheduler)
 
@@ -69,12 +69,12 @@ Deliberately **not** adopted: an ORM, a DI framework, a job-queue crate (the DB 
 
 | Capability | Choice | Version ✔ | Licence (expected) | Why / alternatives | Main risk |
 |---|---|---|---|---|---|
-| Package manager | **pnpm** (via corepack) | resolve in T-043 | MIT | D-48; strict dependency tree, committed lockfile (SEC-13) | — |
+| Package manager | **pnpm** (via corepack) | 12.16.1 ✔ (2026-10-30) | MIT | D-48; strict dependency tree, committed lockfile (SEC-13) | — |
 | UI library | **React** + react-dom | 19.3.1 ✔ | MIT | Excalidraw and Tiptap React bindings are first-class (D-07); Vue/Svelte need bridges | — |
 | Build | **Vite** | 8.3.5 ✔ | MIT | fast dev, WASM + PWA plugin support | major upgrades |
 | Language | **TypeScript** — start on **6.0.3** (latest 6.x ✔); evaluate 7.x (7.0.2 ✔ exists) in a dedicated upgrade task once tooling (Biome, Vite, vue-tsc-equivalents, vitest) is confirmed compatible | 6.0.3 ✔ | Apache-2.0 | stability first | tooling lag for 7 |
 | Routing | **@tanstack/react-router** | 1.170.46 ✔ | MIT | typed routes + search params as state | pre-2.0 API churn |
-| Server state | **@tanstack/react-query** (+ persist) | 5.104.5 ✔ | MIT | caching, retries, offline persistence | — |
+| Server state | **@tanstack/react-query** (+ persist) | 5.105.0 ✔ | MIT | caching, retries, offline persistence | — |
 | Accessible primitives | **react-aria-components** | 1.22.1 ✔ | Apache-2.0 | WCAG-focused behaviours, i18n, date/time pickers; Radix/Headless UI considered | bundle size ⇒ code split |
 | Styling | **Tailwind CSS 4** + CSS variables (tokens) | 4.3.3 ✔ | MIT | design-token driven utilities | — |
 | Forms / validation | **react-hook-form** + **zod** | zod 4.6.7 ✔ | MIT | VAL-C1 | zod major changes |
@@ -85,9 +85,12 @@ Deliberately **not** adopted: an ORM, a DI framework, a job-queue crate (the DB 
 | Rich text | **Tiptap** (`@tiptap/react`, starter-kit, link, task-list, task-item) | 3.32.0 ✔ | MIT | D-07, legacy ADR-004/009 | schema drift ⇒ `note_doc_v1` validation |
 | Drawing | **@excalidraw/excalidraw** | 0.18.1 ✔ | MIT | legacy ADR-005/010 | large bundle ⇒ lazy route; React 19 compat verified in the M8 task |
 | Icons | **lucide-react** | resolve in M1 | ISC | DS §11 | — |
-| Lint/format | **Biome** | 2.6.3 ✔ | MIT/Apache-2.0 | one fast tool | rule coverage for custom restrictions ⇒ small custom checks |
+| Lint/format | **Biome** | 2.6.4 ✔ | MIT/Apache-2.0 | one fast tool | rule coverage for custom restrictions ⇒ small custom checks |
 | Tokens | **culori** (build-time colour conversion), own script | 4.0.2 ✔ | MIT | OKLCH → hex fallbacks | — |
 | Unit tests | **Vitest**, Testing Library, **MSW**, fake-indexeddb | vitest 5.0.5 ✔, @testing-library/react 16.3.3 ✔ | MIT | FE-16 | — |
+| React transform | **@vitejs/plugin-react** | 6.1.2 ✔ | MIT | official Vite React transform and refresh integration | Vite compatibility |
+| React types | **@types/react**, **@types/react-dom** | 19.3.0 ✔ | MIT | TypeScript types for React and the DOM renderer | — |
+| DOM test environment | **jsdom** | 30.1.3 ✔ | MIT | browser DOM implementation for Vitest | keep test environment isolated |
 | E2E / a11y | **Playwright**, **@axe-core/playwright** | 1.64.1 ✔ / 4.14.0 ✔ | Apache-2.0 / MPL-2.0 (dev-only) | 3 engines, axe tags | browsers need install in CI |
 | Fonts | **Fraunces**, **Inter**, **JetBrains Mono** (self-hosted subsets) | — | SIL OFL-1.1 | DS §4 | provenance ledger entries |
 

@@ -8,4 +8,5 @@ pub mod health;
 pub mod openapi;
 pub mod runtime;
 pub mod serve;
+pub mod web_assets;
 pub mod worker;

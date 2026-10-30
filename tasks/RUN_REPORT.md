@@ -172,3 +172,23 @@ Filesystem                    Size  Used Avail Use% Mounted on
 ```
 
 Cleanup: none. The disk stayed above the 20 GB cleanup threshold; no container, image, volume, registry cache, or build output was removed.
+
+### T-043 web scaffold continuation start
+
+Captured immediately before the final T-043 `just check` attempt on 2026-10-30:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  342G  120G  75% /
+```
+
+### T-043 web scaffold continuation final
+
+Captured after the successful full `just check` and the isolated web-assets acceptance suite on 2026-10-30:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  342G  120G  75% /
+```
+
+Cleanup: none. Reused the existing disposable PostgreSQL 17 server. No Docker image was built or pulled, and no container, image, volume, Cargo target, or shared package cache was removed. The first retry used a broken Node 22/Corepack path and stopped at web typecheck; the gate passed after selecting the pinned Node 26.13.0 and pnpm 12.16.1 toolchain under `/tmp`.

@@ -362,6 +362,7 @@ pub async fn prepare(cfg: Config, clock: Arc<dyn Clock>) -> Result<PreparedApp, 
         )
     };
     route_specs.extend(crate::openapi::active_health_route_specs());
+    let router = crate::web_assets::with_fallback(router, true);
     Ok(PreparedApp {
         router,
         route_specs,
