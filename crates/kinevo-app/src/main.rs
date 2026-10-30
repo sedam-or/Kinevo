@@ -1,36 +1,87 @@
 #![forbid(unsafe_code)]
-#![cfg_attr(
-    test,
-    allow(
-        clippy::unwrap_used,
-        clippy::expect_used,
-        clippy::indexing_slicing,
-        clippy::panic,
-        clippy::todo,
-        clippy::unimplemented,
-        reason = "unit tests assert the CLI contract"
-    )
-)]
 
 use clap::Parser;
-use std::io::{self, Write};
+use kinevo_app::{cli, config::LogFormat};
+use std::process::ExitCode;
+use tracing::Level;
+use tracing_subscriber::util::SubscriberInitExt;
 
-#[allow(
-    dead_code,
-    reason = "T-002 wires runtime ports before later consumers are implemented"
-)]
-mod runtime;
-
-#[path = "cli.rs"]
-mod kinevo_app;
-
-fn main() -> io::Result<()> {
-    let cli = kinevo_app::cli::Cli::parse();
-    match cli.command {
-        kinevo_app::cli::Command::Version => {
-            let mut output = io::stdout().lock();
-            output.write_all(kinevo_app::cli::version_line().as_bytes())?;
-            output.write_all(b"\n")
+#[tokio::main]
+async fn main() -> ExitCode {
+    match cli::Cli::parse().command {
+        cli::Command::Version => {
+            println!("{}", cli::version_line());
+            ExitCode::SUCCESS
+        }
+        cli::Command::Health => match cli::health_from_process().await {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(message) => {
+                eprintln!("{message}");
+                ExitCode::FAILURE
+            }
+        },
+        cli::Command::Serve => {
+            let config = match cli::config_from_process() {
+                Ok(config) => config,
+                Err(issues) => {
+                    eprintln!("{}", cli::config_error(&issues));
+                    return ExitCode::FAILURE;
+                }
+            };
+            init_tracing(config.logging.level, config.logging.format);
+            let clock = match kinevo_app::runtime::clock_from_process() {
+                Ok(clock) => clock,
+                Err(message) => {
+                    eprintln!("{message}");
+                    return ExitCode::FAILURE;
+                }
+            };
+            match kinevo_app::serve::serve(config, clock, shutdown_signal()).await {
+                Ok(()) => ExitCode::SUCCESS,
+                Err(error) => {
+                    eprintln!("{}", error.code());
+                    ExitCode::FAILURE
+                }
+            }
         }
     }
+}
+
+fn init_tracing(level: kinevo_app::config::LogLevel, format: LogFormat) {
+    let level = match level {
+        kinevo_app::config::LogLevel::Trace => Level::TRACE,
+        kinevo_app::config::LogLevel::Debug => Level::DEBUG,
+        kinevo_app::config::LogLevel::Info => Level::INFO,
+        kinevo_app::config::LogLevel::Warn => Level::WARN,
+        kinevo_app::config::LogLevel::Error => Level::ERROR,
+    };
+    match format {
+        LogFormat::Json => tracing_subscriber::fmt()
+            .json()
+            .with_max_level(level)
+            .finish()
+            .try_init(),
+        LogFormat::Pretty => tracing_subscriber::fmt()
+            .pretty()
+            .with_max_level(level)
+            .finish()
+            .try_init(),
+    }
+    .ok();
+}
+
+async fn shutdown_signal() {
+    #[cfg(unix)]
+    {
+        use tokio::signal::unix::{SignalKind, signal};
+
+        if let Ok(mut terminate) = signal(SignalKind::terminate()) {
+            tokio::select! {
+                _ = tokio::signal::ctrl_c() => {},
+                _ = terminate.recv() => {},
+            }
+            return;
+        }
+    }
+    let _ = tokio::signal::ctrl_c().await;
 }

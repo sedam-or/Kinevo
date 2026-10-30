@@ -184,6 +184,23 @@ pub fn router_with_audit_jobs(
         .merge(http::jobs::routes(jobs))
 }
 
+/// Returns the admin routes with the atomic first-account Finish endpoint.
+#[must_use]
+pub fn router_with_finish_and_audit_jobs(
+    secrets: Arc<SecretsService>,
+    policies: Arc<PolicyService>,
+    modules: Arc<ModuleService>,
+    setup: Arc<SetupService>,
+    finish: Arc<app::finish_setup::FinishSetup>,
+    audit: Arc<app::audit::AuditService>,
+    jobs: Arc<app::jobs_admin::JobsAdminService>,
+) -> RouteTable {
+    router_with_modules(secrets, policies, modules)
+        .merge(http::setup::routes_with_finish(setup, finish))
+        .merge(http::audit::routes(audit))
+        .merge(http::jobs::routes(jobs))
+}
+
 /// Returns admin job handlers once their use cases are implemented.
 #[must_use]
 pub fn jobs(policies: Arc<dyn PolicyReader>) -> Vec<Arc<dyn JobHandler>> {

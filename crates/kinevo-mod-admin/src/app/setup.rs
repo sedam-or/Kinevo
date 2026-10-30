@@ -209,12 +209,11 @@ impl SetupService {
         .await
         .map_err(|_| AppError::new(ErrorCode::ServiceUnavailable))?;
         tx.commit().await?;
-        let setup_url = Secret::new(format!(
-            "{}/setup?token={}",
-            self.setup_url_origin.trim_end_matches('/'),
-            token.expose()
-        ));
-        tracing::info!(target: "kinevo::setup", setup_url = %setup_url.expose(), "one-time setup URL");
+        let setup_url = format!(
+            "{}/setup?token=<redacted>",
+            self.setup_url_origin.trim_end_matches('/')
+        );
+        tracing::info!(target: "kinevo::setup", setup_url = %setup_url, "one-time setup URL created; token redacted");
         Ok(Some(token))
     }
 

@@ -167,6 +167,8 @@ pub struct TestDb {
     migrator_pool: PgPool,
     admin_pool: PgPool,
     migrator_url: Secret<String>,
+    app_url: Secret<String>,
+    system_url: Secret<String>,
     database_name: String,
     cluster: PgCluster,
     lease: DatabaseLease,
@@ -260,6 +262,8 @@ impl TestDb {
         let db = Db::connect(&db_config, &TokioSleeper)
             .await
             .map_err(|_| Unavailable)?;
+        let app_url = Secret::new(db_config.app_url.expose().to_owned());
+        let system_url = Secret::new(db_config.system_url.expose().to_owned());
         let app_pool = db.app_pool_for_health().clone();
         let migrator_options = migrator_url
             .expose()
@@ -282,6 +286,8 @@ impl TestDb {
             migrator_pool,
             admin_pool,
             migrator_url,
+            app_url,
+            system_url,
             database_name,
             cluster,
             lease,
@@ -308,6 +314,24 @@ impl TestDb {
         &self.database_name
     }
 
+    /// Returns the synthetic app-role URL for tests that exercise the application composition root.
+    #[must_use]
+    pub fn app_database_url(&self) -> &str {
+        self.app_url.expose()
+    }
+
+    /// Returns the synthetic system-role URL for tests that exercise the application composition root.
+    #[must_use]
+    pub fn system_database_url(&self) -> &str {
+        self.system_url.expose()
+    }
+
+    /// Returns the synthetic migrator-role URL for tests that exercise startup migrations.
+    #[must_use]
+    pub fn migrator_database_url(&self) -> &str {
+        self.migrator_url.expose()
+    }
+
     pub async fn run_migrations(
         &self,
         sources: &[MigrationSource],
@@ -332,6 +356,9 @@ impl TestDb {
             admin_pool: self.admin_pool,
             migrator_pool: self.migrator_pool,
             database_name: self.database_name,
+            app_url: self.app_url,
+            system_url: self.system_url,
+            migrator_url: self.migrator_url,
             clock,
             ids,
             tokens,
@@ -352,6 +379,9 @@ pub struct TestApp {
     admin_pool: PgPool,
     migrator_pool: PgPool,
     database_name: String,
+    app_url: Secret<String>,
+    system_url: Secret<String>,
+    migrator_url: Secret<String>,
     _lease: DatabaseLease,
 }
 
@@ -386,6 +416,24 @@ impl TestApp {
     #[must_use]
     pub fn database_name(&self) -> &str {
         &self.database_name
+    }
+
+    /// Returns the synthetic app-role URL for tests that exercise the application composition root.
+    #[must_use]
+    pub fn app_database_url(&self) -> &str {
+        self.app_url.expose()
+    }
+
+    /// Returns the synthetic system-role URL for tests that exercise the application composition root.
+    #[must_use]
+    pub fn system_database_url(&self) -> &str {
+        self.system_url.expose()
+    }
+
+    /// Returns the synthetic migrator-role URL for tests that exercise startup migrations.
+    #[must_use]
+    pub fn migrator_database_url(&self) -> &str {
+        self.migrator_url.expose()
     }
 }
 

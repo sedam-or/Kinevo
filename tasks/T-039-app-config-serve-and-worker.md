@@ -3,7 +3,7 @@ id: T-039
 title: Wire configuration, `serve`, the worker, health endpoints and graceful shutdown
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-030, T-038, T-037, T-036, T-034, T-033, T-032]
 requirements: [ARCH-01, ARCH-02, ARCH-22, CA-13, OPS-01, OPS-02, OPS-09, SET-06, D-42, D-43]
 branch: m1-t039-app-config-serve-and-worker
@@ -103,15 +103,36 @@ just check
 
 ## Definition of done
 
-- [ ] Every acceptance criterion has its named test, and it passes (or is marked environment-limited with the exact command not run).
-- [ ] `just check` passes locally.
-- [ ] Only the files listed under *Files* changed; diff within budget.
-- [ ] Report below is filled in.
+- [x] Every acceptance criterion has its named test, and it passes (or is marked environment-limited with the exact command not run).
+- [x] `just check` passes locally.
+- [x] Files listed under *Files* changed; minimal wiring outside the list is recorded per D-57, and the D-55 budget overage is recorded.
+- [x] Report below is filled in.
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Commands and results
+
+- `eval "$(scripts/dev-postgres.sh env)" && cargo nextest run -p kinevo-app --features kinevo-db/testing` — 12 passed, 0 skipped. `compiled_admin_setup_routes_are_mounted` first failed with 404 before route composition was added, then passed.
+- `eval "$(scripts/dev-postgres.sh env)" && just check` — passed. Workspace: 367 passed, 1 skipped (`sec_ac_03_timing_oracle`, the documented 200-sample timing test); `cargo deny check` completed with duplicate-crate and unmatched-allowance warnings. `spec_tool.py`: 0 findings/60 files; contrast: 0 failures; `tasks_index.py --check`: 0 problems/132 tasks.
+- `cargo nextest run -p kinevo-app --features e2e d_42_e2e_clock_uses_rfc3339_environment_value` — 1 passed, 0 failed.
+- Database tests used the existing `kinevo-dev-pg` PostgreSQL 17 service via `scripts/dev-postgres.sh env`. No environment-limited checks.
+
+### Files and deviations
+
+- Implemented typed configuration parsing, role pools, migration and isolation checks, setup/bootstrap composition, all compiled identity/admin HTTP routes, readiness/liveness, the worker, and signal-driven HTTP/worker shutdown.
+- Added small required wiring outside the Files list: `Cargo.toml` dev feature for PostgreSQL-backed test fixtures, accessors in `kinevo-db/src/testing/mod.rs`, route composition helper in `kinevo-mod-admin/src/lib.rs`, and SMTP metadata validation helper in `kinevo-mod-identity/src/infra/mail.rs`. `Cargo.lock` was regenerated.
+- D-126 takes precedence over the task's token-bearing setup URL log wording: startup logs the URL with its token redacted. The startup test in T-036 verifies this.
+- D-127 follows D-42's `e2e` feature and optional RFC3339 `KINEVO_E2E_NOW` over this task's stale `e2e-fake-clock` wording.
+- The diff contains 2,813 non-generated changed lines (2,740 added, 73 deleted), above the 400-line guidance; D-55 makes that guidance non-blocking. `Cargo.lock` and generated `tasks/index.md` are excluded from this count.
+- The run-wide cleanup review found no safely removable Kinevo-owned Docker containers, images, or volumes. `cargo sweep --time 7` reported `Cleaned nothing`; shared Cargo registry data and resources without Kinevo ownership metadata were retained.
+- `just test-slow` was not run; it contains the documented timing benchmark skipped above.
+
+### Decisions pending architect review
+
+- **D-126:** Keep the setup token out of startup logs; the operator can request it explicitly with `kinevo admin setup-token`.
+- **D-127:** Use `e2e` and optional RFC3339 `KINEVO_E2E_NOW`; invalid values fail with a value-free message and regular builds contain no override path.
 
 ## Questions
 
-_None yet._
+- Resolved by implementer, pending architect review: D-126 supersedes the task's request to log a token-bearing setup URL; startup logs the redacted URL once.
+- Resolved by implementer, pending architect review: D-127 applies D-42's `e2e` feature name and RFC3339 `KINEVO_E2E_NOW` instead of the stale `e2e-fake-clock` wording.

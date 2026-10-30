@@ -409,8 +409,8 @@ async fn set_04_token_printed_once_hash_stored() {
     assert_ne!(stored.as_deref(), Some(token.expose().as_bytes()));
     let logs =
         String::from_utf8_lossy(&buffer.0.lock().expect("log buffer lock").to_vec()).into_owned();
-    assert_eq!(logs.matches(token.expose()).count(), 1);
-    assert!(logs.contains("/setup?token="));
+    assert!(!logs.contains(token.expose()));
+    assert_eq!(logs.matches("/setup?token=<redacted>").count(), 1);
 }
 
 #[tokio::test]

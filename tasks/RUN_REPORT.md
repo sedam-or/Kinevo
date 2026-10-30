@@ -94,3 +94,41 @@ Filesystem                    Size  Used Avail Use% Mounted on
 ```
 
 Cleanup: none. Free space remained above 20 GB; no Docker cleanup, image operation, build, test, or container start was performed for this documentation update.
+
+### Requested cleanup review (2026-10-30)
+
+Before Kinevo target sweep:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  405G   61G  87% /
+```
+
+`CARGO_TARGET_DIR=/home/kepolu/project/open-source/nivaras/Kinevo/target cargo sweep --time 7` exited 0 and reported `Cleaned nothing`. The shared Cargo registry cache was 247 MB and registry sources were 1.7 GB; they were retained because they are shared with other projects. Docker inventory showed the active Kinevo PostgreSQL 17 and app containers, stopped containers labeled only as Testcontainers-managed, and dangling images without Kinevo ownership metadata. No container, image, or volume was removed; volumes were retained as required by D-125.
+
+After cleanup review:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  405G   61G  87% /
+```
+
+### T-039 continuation start
+
+Captured immediately before the first T-039 build on 2026-10-30:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  327G  136G  71% /
+```
+
+### T-039 continuation final
+
+Captured after `just check` and the D-42 E2E clock test on 2026-10-30:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  329G  134G  72% /
+```
+
+Cleanup: none. Reused the already-running `kinevo-dev-pg` PostgreSQL 17 container. No image was built or pulled; no containers, images, volumes, or `target/` files were removed.

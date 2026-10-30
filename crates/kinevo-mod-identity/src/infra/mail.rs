@@ -86,6 +86,14 @@ impl SmtpConfig {
         reason = "T-030 defines the resolved secret as an owned boundary input"
     )]
     pub fn parse(url: &str, password: Option<Secret<String>>) -> Result<Self, ConfigError> {
+        Self::parse_with_password_configured(url, password.is_some())
+    }
+
+    /// Parses SMTP metadata while allowing the caller to keep its redacting password value.
+    pub fn parse_with_password_configured(
+        url: &str,
+        password_configured: bool,
+    ) -> Result<Self, ConfigError> {
         let parsed = Url::parse(url).map_err(|_| {
             ConfigError("KINEVO_SMTP_URL must be a valid smtp or smtps URL with a from address")
         })?;
@@ -109,7 +117,7 @@ impl SmtpConfig {
             ));
         }
         let user = (!parsed.username().is_empty()).then(|| parsed.username().to_owned());
-        if user.is_some() && password.is_none() {
+        if user.is_some() && !password_configured {
             return Err(ConfigError(
                 "KINEVO_SMTP_URL has a user but no SMTP password is configured",
             ));

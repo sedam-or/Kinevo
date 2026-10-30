@@ -113,7 +113,7 @@ just check
 
 ### Summary
 
-Fresh instances now create one 128-bit setup token, persist only its hash, and log its setup URL once. The public setup routes expose status and bounded, expiring wizard sessions; invalid-token attempts are audited and locked out, while wizard updates validate templates, modules, policies, locale and base URL without applying account data.
+Fresh instances now create one 128-bit setup token, persist only its hash, and return it once to the first caller while startup logs only a redacted setup URL. The public setup routes expose status and bounded, expiring wizard sessions; invalid-token attempts are audited and locked out, while wizard updates validate templates, modules, policies, locale and base URL without applying account data.
 
 ### Acceptance results
 
@@ -186,6 +186,7 @@ The 1,823 changed lines exceed the 400-line guidance; the task's bounded store, 
 - **D-122:** Inject the configured public origin into `SetupService` and use lowercase 32-character hex for 128-bit setup/session values. Deriving a host from an untrusted request or adding another ID-encoding dependency were rejected. Files: `crates/kinevo-mod-admin/src/app/setup.rs`, `crates/kinevo-mod-admin/src/http/setup.rs`. Rollback: replace the encoding/origin source with the architect's chosen contract; no schema migration is needed.
 - **D-123:** Persist the singleton setup-token hash through the app-role `Tx`, supplying a fresh non-persisted `AccountId` only for its required transaction context; no account row or tenant data is created or accessed. Granting the system role update permission or adding an unscoped app transaction were rejected to preserve existing role boundaries. Files: `crates/kinevo-mod-admin/src/app/setup.rs`. Rollback: replace this access path with an approved pre-account transaction API and adjust the adapter tests.
 - **D-124:** Cap cached setup-attempt source keys at 4,096 so IP churn cannot grow the process-local counter map without bound; the wizard store remains limited to eight sessions. An unbounded attempt map was rejected. File: `crates/kinevo-mod-admin/src/infra/wizard_store.rs`. Rollback: change the capacity under an architect-approved replacement decision.
+- **D-126:** Startup logs redact the setup token; the first generated token is returned once to the caller and can be explicitly displayed by the `kinevo admin setup-token` command. This follows SEC-03/SEC-04 over the conflicting SET-04/task wording that requests a token-bearing URL in logs. The setup-session acceptance test verifies the token is absent from logs and the redacted URL is logged once.
 
 ## Questions
 
