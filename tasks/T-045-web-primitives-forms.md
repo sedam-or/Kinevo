@@ -3,12 +3,12 @@ id: T-045
 title: Build the form primitives and button set on React Aria Components
 milestone: M1
 kind: feature
-status: todo
+status: in_progress
 depends_on: [T-044, T-005]
 requirements: [CA-15, DS-A11Y-01, DS-A11Y-03, DS-A11Y-05, FE-04, FE-16]
 branch: m1-t045-web-primitives-forms
 budget_lines: 400
-assignee: ""
+assignee: "OpenAI Codex"
 ---
 
 # T-045: Build the form primitives and button set on React Aria Components
