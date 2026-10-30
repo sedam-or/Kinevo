@@ -90,6 +90,7 @@ const REGISTRY_DETAIL_KEYS: &[&str] = &[
     "supported",
     "task_id",
     "to",
+    "via",
     "violations",
     "window",
 ];

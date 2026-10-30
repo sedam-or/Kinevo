@@ -1,6 +1,9 @@
 use clap::{Parser, Subcommand};
 use std::{net::SocketAddr, path::Path};
 
+pub mod admin;
+pub mod migrate;
+
 #[derive(Parser)]
 #[command(name = "kinevo", disable_help_subcommand = true)]
 pub struct Cli {
@@ -16,6 +19,10 @@ pub enum Command {
     Health,
     /// Print the package version.
     Version,
+    /// Apply or check the merged database migrations.
+    Migrate(migrate::MigrateArgs),
+    /// Run an audited operator action.
+    Admin(admin::AdminArgs),
 }
 
 /// Return the stable version command output.

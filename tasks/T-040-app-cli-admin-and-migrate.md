@@ -3,7 +3,7 @@ id: T-040
 title: Add the migrate, admin and setup-token CLI commands
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-039, T-029, T-028, T-032, T-035]
 requirements: [ADM-FR-09, ADM-FR-06, SET-04, TPL-04, ARCH-01, ARCH-21, D-47, D-50]
 branch: m1-t040-app-cli-admin-and-migrate
@@ -106,8 +106,24 @@ just check
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Commands and results
+
+- `eval "$(scripts/dev-postgres.sh env)" && cargo nextest run -p kinevo-app --features kinevo-db/testing` — the first final rerun reported 20 passed and `cli::d_50_bootstrap_creates_roles_and_migrates` failed with the generic `database_bootstrap_failed`; the isolated retry of that acceptance test passed 1/1. The subsequent full `just check` passed all 376 workspace tests, including all nine T-040 acceptance tests; one documented timing test (`sec_ac_03_timing_oracle`) was skipped.
+- `just check` — passed: formatting, Clippy, Nextest, `cargo deny check`, `python3 scripts/spec_tool.py check` (0 findings in 60 files), `python3 scripts/contrast.py` (0 failures), and `python3 scripts/tasks_index.py --check` (0 problems in 132 tasks). Clippy emitted the existing `rand::thread_rng` reachability warning from `clippy.toml`; cargo-deny completed with duplicate-crate and unmatched-license-allowance warnings.
+- Tests used the shared PostgreSQL 17 service started/reused with `scripts/dev-postgres.sh env`; no Docker image was built or pulled. No environment-limited checks.
+
+### Files and deviations
+
+- Added the `migrate` and `admin` CLI command trees and handlers, including bootstrap-and-migrate, setup-token rotation, reset links, metadata-only account listing, resumable secret-key rotation, idempotent template application, module switching, and CLI audit entries. Added the named CLI acceptance tests AC-1 through AC-9.
+- Added minimal wiring outside the task's four-file list: command dispatch in `main.rs`, the current secret-key version constant and template registry access in `serve.rs`, CLI audit action names in `kinevo-db/src/audit.rs`, the registered safe `via` detail key in `kinevo-kernel/src/errors/mod.rs`, and the required `assert_cmd`/`predicates` test dependency stack-map entries. `Cargo.lock` was regenerated.
+- Secret-key rotation derives the next database key id from the active secret-key version already used by the composition root (currently version 1), so reruns use the same target id. This is implementation wiring for the existing D-47 resumable rotation contract.
+- The initial 20/21 CLI-only run had the bootstrap failure noted above; the focused retry and final full gate passed. This transient failure is retained here rather than omitted.
+- The diff has 1,247 non-generated changed lines (1,238 added, 9 deleted), above `budget_lines: 360`; D-55 makes the line budget guidance. Generated `Cargo.lock` and `tasks/index.md` are excluded from that count.
+
+### Decisions pending architect review
+
+- None for T-040.
 
 ## Questions
 
-_None yet._
+_None. The one bootstrap test failure was isolated and passed on retry and in the final full gate._

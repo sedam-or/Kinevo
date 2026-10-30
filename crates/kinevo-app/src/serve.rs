@@ -74,11 +74,12 @@ use tokio::{net::TcpListener, sync::watch, time::timeout};
 use crate::{config::Config, health};
 
 const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(30);
+pub(crate) const ACTIVE_SECRET_KEY_VERSION: u8 = 1;
 
 const EMPTY_PERMISSIONS: &[PermissionDef] = &[];
 const EMPTY_KEYS: &[&str] = &[];
 const BOTH_SCOPES: &[Scope] = &[Scope::Instance, Scope::Account];
-const TERMS: &[&str] = &[
+pub(crate) const TERMS: &[&str] = &[
     "term.goal",
     "term.milestone",
     "term.task",
@@ -129,7 +130,7 @@ static TEMPLATE_CANVAS: ModuleDescriptor =
 static TEMPLATE_BILLING: ModuleDescriptor =
     template_module("billing", ModuleKind::Toggleable, &["identity"]);
 
-static TEMPLATE_MODULES: &[&ModuleDescriptor] = &[
+pub(crate) static TEMPLATE_MODULES: &[&ModuleDescriptor] = &[
     &IDENTITY,
     &TEMPLATE_WORKSPACES,
     &ADMIN,
@@ -170,7 +171,7 @@ static SCHEDULER_EARLIEST: PolicySpec = PolicySpec {
     snapshot: true,
 };
 
-fn template_policies() -> &'static [&'static PolicySpec] {
+pub(crate) fn template_policies() -> &'static [&'static PolicySpec] {
     static POLICIES: OnceLock<Vec<&'static PolicySpec>> = OnceLock::new();
     POLICIES
         .get_or_init(|| {
@@ -514,8 +515,8 @@ fn module_router(
     ));
     let secret_store = Arc::new(AdminSecretStore::new(
         db.clone(),
-        derive_subkey(secret_key, KeyLabel::Secrets, 1),
-        1,
+        derive_subkey(secret_key, KeyLabel::Secrets, ACTIVE_SECRET_KEY_VERSION),
+        u16::from(ACTIVE_SECRET_KEY_VERSION),
         Arc::clone(ids),
         Arc::clone(tokens),
         Arc::clone(clock),
@@ -768,7 +769,7 @@ fn token_codec(
     Ok(Arc::new(TokenCodec::new(key_ring)))
 }
 
-fn default_policy_seconds(key: &str) -> Option<i64> {
+pub(crate) fn default_policy_seconds(key: &str) -> Option<i64> {
     registry::all_specs()
         .iter()
         .find(|spec| spec.key == key)

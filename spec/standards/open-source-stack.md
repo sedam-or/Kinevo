@@ -36,6 +36,7 @@ Rule (CQ-16): every dependency appears here with its reason; a dependency not on
 | IP network parsing | **ipnet** | 2.12.2 ✔ | MIT/Apache-2.0 | parse trusted reverse-proxy CIDR ranges | — |
 | Embedded web assets | **rust-embed** | 8.13.0 ✔ | MIT | single binary (ARCH-02) | — |
 | CLI | **clap** (derive) | 4.6.7 ✔ | MIT/Apache-2.0 | `kinevo` subcommands | — |
+| CLI integration tests | **assert_cmd**, **predicates** | 2.2.2, 3.1.4 | MIT/Apache-2.0 | Exercise the compiled CLI and assert its output in acceptance tests | dev dependencies only |
 | Outbound HTTP | **reqwest** (rustls, no default features, no redirects for AI) | 0.13.5 ✔ | MIT/Apache-2.0 | AI/gateway/SMTP-adjacent calls | SSRF controls are ours (SEC-15) |
 | TLS | **rustls** (via sqlx/reqwest; optional built-in listener) | resolve in M1 | MIT/Apache-2.0 | no OpenSSL dependency (static musl) | — |
 | Email | **lettre** (SMTP, rustls) — optional | 0.11.23 ✔ | MIT | D-27; defaults off, features `builder`, `smtp-transport`, `tokio1-rustls`, `rustls-native-certs`, `ring` | Rustls verifies against platform roots; avoids native TLS/OpenSSL and webpki-roots' CDLA-Permissive license |

@@ -31,6 +31,12 @@ pub enum AuditAction {
     OutboxRetried,
     OutboxDead,
     Startup,
+    CliSetupToken,
+    CliPasswordReset,
+    CliListAccounts,
+    CliRotateSecretKey,
+    CliApplyTemplate,
+    CliModuleSwitch,
 }
 
 impl AuditAction {
@@ -53,6 +59,12 @@ impl AuditAction {
             Self::OutboxRetried => "outbox.retried",
             Self::OutboxDead => "outbox.dead",
             Self::Startup => "startup",
+            Self::CliSetupToken => "admin.cli.setup_token",
+            Self::CliPasswordReset => "admin.cli.password_reset",
+            Self::CliListAccounts => "admin.cli.list_accounts",
+            Self::CliRotateSecretKey => "admin.cli.rotate_secret_key",
+            Self::CliApplyTemplate => "admin.cli.apply_template",
+            Self::CliModuleSwitch => "admin.cli.module_switch",
         }
     }
 }

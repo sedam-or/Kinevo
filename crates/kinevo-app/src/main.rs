@@ -13,6 +13,20 @@ async fn main() -> ExitCode {
             println!("{}", cli::version_line());
             ExitCode::SUCCESS
         }
+        cli::Command::Migrate(args) => match cli::migrate::run(args).await {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(code) => {
+                eprintln!("{code}");
+                ExitCode::FAILURE
+            }
+        },
+        cli::Command::Admin(args) => match cli::admin::run(args).await {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(code) => {
+                eprintln!("{code}");
+                ExitCode::FAILURE
+            }
+        },
         cli::Command::Health => match cli::health_from_process().await {
             Ok(()) => ExitCode::SUCCESS,
             Err(message) => {
