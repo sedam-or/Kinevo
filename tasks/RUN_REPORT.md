@@ -192,3 +192,23 @@ Filesystem                    Size  Used Avail Use% Mounted on
 ```
 
 Cleanup: none. Reused the existing disposable PostgreSQL 17 server. No Docker image was built or pulled, and no container, image, volume, Cargo target, or shared package cache was removed. The first retry used a broken Node 22/Corepack path and stopped at web typecheck; the gate passed after selecting the pinned Node 26.13.0 and pnpm 12.16.1 toolchain under `/tmp`.
+
+### T-044 token and font continuation start
+
+Captured before the first T-044 font subset, build, or test on 2026-10-30:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  342G  120G  75% /
+```
+
+### T-044 token and font continuation final
+
+Captured after the final successful `just check` on 2026-10-30:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  343G  120G  75% /
+```
+
+Cleanup: none. Reused the existing `kinevo-dev-pg` PostgreSQL 17 container; no image was built or pulled, and no container, image, volume, `target/`, or shared cache was removed. All recorded T-044 pre-operation checks showed 120 GB available, above the D-128 cleanup and stop thresholds.

@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Compute sRGB gamut membership and WCAG 2.x contrast ratios for the Nivaras OKLCH palette.
+"""Check gamut and WCAG 2.x contrast for the design tokens in tokens.json.
 
 Usage: python3 scripts/contrast.py [--markdown]
-The palette below is the single source for spec/09-design-system.md section 3; the
-spec tables are pasted from this script's --markdown output (never typed by hand).
+The JSON is the source for spec/09-design-system.md section 3; its generated
+tables are pasted from this script's --markdown output (never typed by hand).
 Exit code 1 if any required pair fails or any colour is outside the sRGB gamut.
 """
+import json
 import math
 import sys
+from pathlib import Path
 
 
 def oklch_to_linear_srgb(L, C, h):
@@ -54,22 +56,6 @@ def to_hex(rgb):
     return "#%02x%02x%02x" % tuple(encode(c) for c in rgb)
 
 
-LIGHT = {
-    "paper": (0.965, 0.012, 85), "surface": (0.985, 0.007, 85), "sunken": (0.935, 0.016, 85),
-    "ink": (0.24, 0.02, 60), "ink-muted": (0.44, 0.02, 60), "ink-subtle": (0.52, 0.018, 60),
-    "rule": (0.80, 0.02, 80), "rule-strong": (0.55, 0.02, 70),
-    "accent": (0.52, 0.19, 33), "accent-ink": (0.985, 0.007, 85), "accent-subtle": (0.93, 0.03, 40),
-    "success": (0.46, 0.10, 155), "warning": (0.47, 0.085, 75), "danger": (0.50, 0.19, 25), "info": (0.47, 0.12, 250),
-    "focus-ring": (0.45, 0.14, 258),
-}
-DARK = {
-    "paper": (0.19, 0.012, 60), "surface": (0.23, 0.012, 60), "sunken": (0.16, 0.012, 60),
-    "ink": (0.94, 0.012, 85), "ink-muted": (0.76, 0.015, 80), "ink-subtle": (0.68, 0.015, 80),
-    "rule": (0.34, 0.015, 60), "rule-strong": (0.62, 0.015, 70),
-    "accent": (0.74, 0.16, 40), "accent-ink": (0.19, 0.012, 60), "accent-subtle": (0.30, 0.05, 35),
-    "success": (0.76, 0.14, 155), "warning": (0.80, 0.13, 80), "danger": (0.74, 0.14, 25), "info": (0.76, 0.11, 250),
-    "focus-ring": (0.78, 0.09, 250),
-}
 # (foreground, background, minimum ratio): text 4.5, graphics/focus 3.0
 PAIRS = [
     ("ink", "paper", 4.5), ("ink", "surface", 4.5), ("ink", "sunken", 4.5),
@@ -81,10 +67,37 @@ PAIRS = [
 ]
 
 
+def read_palette():
+    path = Path(__file__).resolve().parents[1] / "web/src/styles/tokens.json"
+    with path.open(encoding="utf-8") as source:
+        tokens = json.load(source)
+
+    palette = {}
+    for theme in ("light", "dark"):
+        colors = {}
+        for name, token in tokens["color"][theme].items():
+            value = token["$value"]
+            if token.get("$type") != "color" or value.get("colorSpace") != "oklch":
+                raise ValueError(f"{theme}.{name} must be an OKLCH color token")
+            components = value["components"]
+            if len(components) != 3:
+                raise ValueError(f"{theme}.{name} must have three OKLCH components")
+            colors[name] = tuple(components)
+        palette[theme] = colors
+    return palette
+
+
 def main():
     markdown = "--markdown" in sys.argv
+    try:
+        palette = read_palette()
+    except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError) as error:
+        print(f"contrast: unable to read token JSON: {error}", file=sys.stderr)
+        return 1
+
     failures = 0
-    for name, theme in (("light", LIGHT), ("dark", DARK)):
+    for name in ("light", "dark"):
+        theme = palette[name]
         cols = {k: oklch_to_linear_srgb(*v) for k, v in theme.items()}
         if markdown:
             print(f"\n#### {name} tokens\n\n| Token | OKLCH | sRGB hex (fallback) |\n|---|---|---|")

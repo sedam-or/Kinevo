@@ -1,0 +1,32 @@
+@font-face {
+  font-family: Fraunces;
+  src: url("/fonts/fraunces-latin-ext.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0100-024F, U+0300-036F, U+1E00-1EFF, U+2C60-2C7F, U+A720-A7FF, U+AB30-AB6F,
+    U+2000-206F, U+20AC, U+2122, U+2212;
+}
+
+@font-face {
+  font-family: Inter;
+  src: url("/fonts/inter-latin-ext.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0100-024F, U+0300-036F, U+1E00-1EFF, U+2C60-2C7F, U+A720-A7FF, U+AB30-AB6F,
+    U+2000-206F, U+20AC, U+2122, U+2212;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-latin-ext.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0100-024F, U+0300-036F, U+1E00-1EFF, U+2C60-2C7F, U+A720-A7FF, U+AB30-AB6F,
+    U+2000-206F, U+20AC, U+2122, U+2212;
+}

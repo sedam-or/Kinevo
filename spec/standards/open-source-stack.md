@@ -87,6 +87,7 @@ Deliberately **not** adopted: an ORM, a DI framework, a job-queue crate (the DB 
 | Icons | **lucide-react** | resolve in M1 | ISC | DS §11 | — |
 | Lint/format | **Biome** | 2.6.4 ✔ | MIT/Apache-2.0 | one fast tool | rule coverage for custom restrictions ⇒ small custom checks |
 | Tokens | **culori** (build-time colour conversion), own script | 4.0.2 ✔ | MIT | OKLCH → hex fallbacks | — |
+| Token generator types | **@types/culori** | 4.0.1 ✔ (2026-10-30) | MIT | types the build-time color conversion API | — |
 | Unit tests | **Vitest**, Testing Library, **MSW**, fake-indexeddb | vitest 5.0.5 ✔, @testing-library/react 16.3.3 ✔ | MIT | FE-16 | — |
 | React transform | **@vitejs/plugin-react** | 6.1.2 ✔ | MIT | official Vite React transform and refresh integration | Vite compatibility |
 | React types | **@types/react**, **@types/react-dom** | 19.3.0 ✔ | MIT | TypeScript types for React and the DOM renderer | — |

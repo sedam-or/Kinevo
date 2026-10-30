@@ -119,8 +119,6 @@ Colours are defined in **OKLCH** (perceptual) with an sRGB hex fallback for brow
 | `rule-strong` | `paper` | 5.07 | 3.0 | pass |
 | `focus-ring` | `paper` | 9.29 | 3.0 | pass |
 | `focus-ring` | `surface` | 8.50 | 3.0 | pass |
-
-
 ### Semantic usage
 
 | Token | Use |
