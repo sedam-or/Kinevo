@@ -3,7 +3,7 @@ id: T-052
 title: Build the profile and security settings (password, two-step verification, sessions)
 milestone: M1
 kind: feature
-status: in_progress
+status: review
 depends_on: [T-050, T-027, T-026, T-045]
 requirements: [ID-FR-02, ID-FR-07, ID-FR-08, ID-FR-14, SEC-AC-01, DS-A11Y-05, UXS-04, UXS-02]
 branch: m1-t052-web-settings-profile-security
@@ -96,14 +96,37 @@ just check
 
 ## Definition of done
 
-- [ ] Every acceptance criterion has its named test, and it passes (or is marked environment-limited with the exact command not run).
-- [ ] `just check` passes locally.
-- [ ] Only the files listed under *Files* changed; diff within budget.
-- [ ] Report below is filled in.
+- [x] Every acceptance criterion has its named test, and it passes.
+- [x] `just check` passes locally.
+- [x] Task files were changed along with the minimal wiring recorded below; D-55 says the line budget is guidance.
+- [x] Report below is filled in.
 
 ## Report
 
-_Filled in by the implementer (WORKFLOW.md §4)._
+### Verification
+
+- All eight named acceptance tests passed in `settings.test.tsx` (8/8); the panel accessibility scan passed with zero serious/critical axe violations.
+- `PATH=/tmp/kinevo-pnpm-shim:/usr/bin:$PATH pnpm --dir web typecheck`: passed.
+- `PATH=/tmp/kinevo-pnpm-shim:/usr/bin:$PATH pnpm --dir web lint`: passed; Biome printed six warnings and nine infos in pre-existing files, with no diagnostics in the T-052 components.
+- `PATH=/tmp/kinevo-pnpm-shim:/usr/bin:$PATH pnpm --dir web test`: 33 files, 80 tests passed.
+- `cargo nextest run -p kinevo-mod-identity -p kinevo-mod-admin --test descriptor`: 5 passed.
+- `eval "$(scripts/dev-postgres.sh env)" && PATH=/tmp/kinevo-pnpm-shim:/usr/bin:$PATH just check`: passed. Rust nextest: 388 passed, 1 skipped; web: 80 passed. Formatting, clippy, typecheck, lint, API generation/build, cargo-deny, contrast, OpenAPI and generated API checks completed. `scripts/spec_tool.py check`: 0 findings in 60 files. `scripts/tasks_index.py --check`: 0 problems in 132 tasks.
+- `git diff --check`: passed.
+
+### Retries and warnings
+
+- A full suite run without the exported shared `KINEVO_TEST_DATABASE_URL` failed in `d_37_android_receives_token_in_body` during disposable-database cleanup (326 passed, 1 failed, 1 skipped). The isolated test then reported PostgreSQL `Unavailable` without that variable; rerunning it with `scripts/dev-postgres.sh env` passed 1/1. The final full `just check` used that shared database and passed.
+- One retry with the default login PATH stopped at web lint because Corepack resolved a missing `pnpm.cjs`. The passing run used the cached pnpm 12 shim and Node 26 from `/usr/bin`.
+- Non-failing diagnostics: clippy warned that the existing `rand::thread_rng` lint entry is unreachable; Vite reported a 918.60 kB bundle and the existing `ModuleGate` static/dynamic import overlap; Biome reported six warnings and nine infos. `cargo deny check` exited successfully with its existing dependency warnings.
+
+### Deviations
+
+- Minimal wiring outside the task's explicit file table was needed in `web/src/app/router.tsx`, `web/src/api/client.ts`, and `web/src/i18n/{en,id}.json` to mount the routes, resolve the API base URL, and display localized settings. `web/package.json` and `web/pnpm-lock.yaml` pin the QR library listed in the stack map. D-56 allows necessary small wiring files; D-55 makes the line budget non-blocking.
+- The generated OpenAPI type for `PATCH /api/v1/account` has no request-body type although the task and Rust handler require the profile patch fields. The request uses a narrow local type cast at that boundary, preserving the server contract. Resolved by implementer, pending architect review.
+
+## Questions
+
+- Q-1 (Resolved by implementer, pending architect review): `contracts/openapi.json` omits the request body for `PATCH /api/v1/account`, while the task and server handler require it. The implementation uses a narrow typed boundary cast and sends the documented `If-Match` header; the profile acceptance tests and full suite pass. Recommend aligning the OpenAPI contract in a follow-up task.
 
 ## Questions
 

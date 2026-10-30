@@ -1479,3 +1479,34 @@ Filesystem                    Size  Used Avail Use% Mounted on
 - Implementer decision pending architect review: add registry-derived `module_form` metadata to the unauthenticated setup-session response so the wizard can render locked core modules and dependency information.
 - Disk at T-051 verification start: `/dev/mapper/nvme0n1p3crypted 468G 355G 108G 77% /`. Disk after final tests and `just spec`: `/dev/mapper/nvme0n1p3crypted 468G 360G 103G 78% /`.
 - Next topological todo: T-052.
+
+### T-052 continuation disk checkpoints (2026-10-30 to 2026-10-31)
+
+Before the first T-052 package installation/build/test:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  360G  103G  78% /
+```
+
+After the final successful `just check` (2026-10-31 00:11 WIB):
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  361G  102G  79% /
+```
+
+No cleanup, image build, or image pull. The shared PostgreSQL test server was supplied by `scripts/dev-postgres.sh env`.
+
+## T-052 task result
+
+- Issue: #77 (duplicate issue #95 remains open). Branch: `dev`. Task status: `review` after commit/push.
+- Acceptance: eight named settings tests passed, including the axe check; descriptor tests 5/5.
+- Final `just check`: exit 0; Rust 388 passed / 1 skipped, web 80 passed, cargo-deny and all formatting, lint, build, OpenAPI, contrast, spec and task-index gates completed. `spec_tool.py check` reported 0 findings in 60 files; `tasks_index.py --check` reported 0 problems in 132 tasks.
+- Retry history: a full run without `KINEVO_TEST_DATABASE_URL` failed during disposable PostgreSQL cleanup (326 passed / 1 failed / 1 skipped); the isolated failure passed once run with the shared URL. A separate retry using the default PATH stopped because Corepack could not find cached `pnpm.cjs`. The final full gate passed with `scripts/dev-postgres.sh env` and `PATH=/tmp/kinevo-pnpm-shim:/usr/bin:$PATH`.
+- Environment-limited checks: none for T-052.
+- Non-failing warnings: clippy's existing unreachable `rand::thread_rng` lint entry; Vite bundle size 918.60 kB and `ModuleGate` import overlap; Biome six warnings/nine infos; cargo-deny dependency warnings.
+- Resolved by implementer, pending architect review: generated OpenAPI types omit the profile request body for `PATCH /api/v1/account`; a narrow cast at the client boundary follows the task and server handler. The mismatch is also recorded in T-052 Questions.
+- Minimal wiring deviation: router, API base URL, and EN/ID settings messages; QR package and lockfile added alongside the allowed stack-map entry. No secrets or user data used.
+- Disk checkpoints are recorded above. No cleanup was required.
+- Next topological todo: T-053.

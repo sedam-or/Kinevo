@@ -79,6 +79,7 @@ Deliberately **not** adopted: an ORM, a DI framework, a job-queue crate (the DB 
 | Styling | **Tailwind CSS 4** + **@tailwindcss/vite** + CSS variables (tokens) | 4.3.3 ✔ (both packages) | MIT | design-token driven utilities via Vite | — |
 | Forms / validation | **react-hook-form** + **zod** | react-hook-form 7.91.0 ✔ / zod 4.6.7 ✔ | MIT | VAL-C1 | zod major changes |
 | i18n | **i18next**, **react-i18next** (ICU via `i18next-icu`) | 26.5.10 ✔ / 17.1.8 ✔ | MIT | FE-05 | — |
+| QR rendering | **qrcode-generator** | 2.0.4 ✔ (2026-10-30) | MIT | Render TOTP setup URIs as inline SVG without sending the secret to a remote service | — |
 | Offline storage | **idb** (IndexedDB wrapper) | 8.0.4 ✔ | ISC | queue + cache persister | — |
 | PWA | **vite-plugin-pwa** (Workbox) | 2.0.0 ✔ | MIT | manifest + service worker | SW caching bugs ⇒ tests |
 | API client | **openapi-typescript** + **openapi-fetch** | 7.13.0 ✔ / 0.17.0 ✔ | MIT | generated types, no hand-written DTOs | — |
