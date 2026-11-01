@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/sedam-or/Kinevo/security/advisories/new
+    about: Report vulnerabilities privately. Do not open a public issue for a security problem.
+  - name: Questions and discussion
+    url: https://github.com/sedam-or/Kinevo/discussions
+    about: Ask how to use or set up Nivaras.

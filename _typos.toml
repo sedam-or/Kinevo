@@ -1,0 +1,32 @@
+# typos configuration (CI job "hygiene"). Keep this file small; every entry explains itself.
+[files]
+# The legacy archive is never read by agents (AGENTS.md rule 1). Generated files and data lists are not prose.
+# The Indonesian catalogue is not English text; its keys are checked by `pnpm --dir web check:i18n`.
+extend-exclude = [
+  "legacy/**",
+  "Cargo.lock",
+  "web/pnpm-lock.yaml",
+  "contracts/openapi.json",
+  "web/src/api/schema.d.ts",
+  "LICENSE",
+  "crates/kinevo-mod-identity/data/common-passwords.txt",
+  "web/src/i18n/id.json",
+]
+
+[default.extend-words]
+# Identifiers: OPS-14 recovery time objective; spec id prefixes for knowledge (KNW) and threat model (THR).
+RTO = "RTO"
+KNW = "KNW"
+THR = "THR"
+knw = "knw"
+thr = "thr"
+# SQL CHECK constraints in plural form (CHECKs).
+CHEC = "CHEC"
+# Indonesian UI terms quoted in spec and task text (templat = template, paket = plan, mata uang = currency).
+templat = "templat"
+Templat = "Templat"
+paket = "paket"
+Paket = "Paket"
+mata = "mata"
+# Accepted English variant.
+unparseable = "unparseable"
