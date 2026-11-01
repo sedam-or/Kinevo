@@ -160,6 +160,7 @@ means the owner's standing "decide for me" instruction was applied.
 | D-146 | **Continuity: two administrators, a named backup maintainer before v1.0, and a written secret-recovery procedure held by two people. The repository is self-describing, and the AGPL allows any fork to continue the work.** Until the owner names a backup, the backup slot is vacant and marked `M-BUS`. Rejected: treating a single owner's memory as an acceptable process. | Architect (2026-11-01) | `GOVERNANCE.md` §5; `MAINTAINERS.md`; `.github/CODEOWNERS` |
 | D-147 | **The trademark policy covers the name and logo only, and it is advisory until the name clearance (`M-NAME`, D-03) is complete.** The AGPL does not license the name. Rejected: a trademark licence that restricts code use. | Architect (2026-11-01) | `TRADEMARK.md`; D-03; D-04 |
 | D-148 | **`BRANCHING.md` is reconciled: D-57 defines the branches and D-15 defines the protection and `ci-ok`; the release path is `dev → staging → main`, each step by pull request; external contributions target `dev`.** The earlier file mixed trunk-based and three-branch rules on the same page. Rejected: keeping both models with a note, which is the contradiction the audit found. | Architect (2026-11-01) | `BRANCHING.md`; `CONTRIBUTING.md`; `AGENTS.md` rule 9 |
+| D-149 | **The first promotion to `main` replaces the legacy Laravel tree in one maintainer-merged pull request from `staging`, with a linear history (squash or rebase merge). No agent performs it.** Before merging, the maintainer checks that `legacy-v0` (annotated tag, object `5c63f1d5`, peeling to commit `c3bab8c9b557a0873550627c3673f7a7c644fcdf`) and `archive/legacy-v0` exist on `origin`, and that `staging` passed `ci-ok`. Nothing is lost: the legacy tree stays reachable from that tag and branch, and `legacy/kinevo-legacy-v0.zip` stays in the repository. Rejected: keeping the legacy tree beside the new code on `main` (two project layouts on the default branch, and the old workflows keep running), and copying the new tree over `main` by a direct push (`main` is never pushed directly). The legacy workflows on `main` (`ci.yml`, `release.yml`, `security.yml`) are removed by the same merge. **Status: decided on process; the merge itself waits for the maintainer (`M-LEGACY`).** | Architect (2026-11-01; evidence: 15 files differ between `origin/main` and `origin/dev`, 1 330 files exist only on `main`, 608 only on `dev`) | `BRANCHING.md` §1, §2; `RELEASING.md`; `spec/decisions.md` (M-LEGACY) |
 
 ## Maintainer actions (process and governance)
 
@@ -177,6 +178,7 @@ The architect cannot perform these. Each is recorded so a missing step shows up 
 | M-RIGHTS | Confirm the right to relicense the legacy code to AGPL-3.0-only (ADR-0002) | D-135 |
 | M-SEC | Commission the pre-1.0 security review (D-140 §5) | 1.0.0 |
 | M-CLOUD-PRIVACY | Write the hosted-service privacy notice with counsel (D-142) | cloud launch |
+| M-LEGACY | Merge the first `staging → main` pull request after the checks in D-149 (replaces the legacy tree on `main`) | first release on `main` |
 
 ## Owner-only open items
 

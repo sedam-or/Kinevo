@@ -18,7 +18,7 @@ Decisions: D-57 defines the branch model (`main`, `dev`, `staging`). D-15 still 
 ## 2. Working rules
 
 - Implementation happens on `dev`. A milestone reaches `staging` through a draft promotion PR from `dev` after its integration task passes.
-- `staging` reaches `main` through a maintainer-merged PR when a release is cut.
+- `staging` reaches `main` through a maintainer-merged PR when a release is cut. The first such merge replaces the legacy tree on `main` under the checks in D-149 (`M-LEGACY`).
 - Never rebase or rewrite pushed history. Never force-push.
 - Pushes to a shared branch are fast-forward only. If a push is rejected, fetch and rebase your own unpushed commits; never overwrite someone else's commits.
 - Never commit directly to `main`. Never merge your own pull request.
