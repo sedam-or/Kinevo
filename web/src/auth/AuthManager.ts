@@ -143,6 +143,11 @@ export class AuthManager {
     }
   }
 
+  clearSessionAfterAccountDeletion(): void {
+    this.clearToken();
+    this.setState("anonymous");
+  }
+
   async fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     const normalized = input instanceof Request ? input : new URL(String(input), currentOrigin());
     const headers = new Headers(normalized instanceof Request ? normalized.headers : undefined);

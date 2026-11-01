@@ -14,6 +14,7 @@ import { LoginPage } from "../features/identity/LoginPage";
 import { RegisterPage } from "../features/identity/RegisterPage";
 import { ResetPage } from "../features/identity/ResetPage";
 import { SessionRevokedPage } from "../features/identity/SessionRevokedPage";
+import { AccountDeletedPage, DataPanel } from "../features/identity/settings/DataPanel";
 import { ProfilePanel } from "../features/identity/settings/ProfilePanel";
 import { SecurityPanel } from "../features/identity/settings/SecurityPanel";
 import { SetupPage } from "../features/setup/SetupPage";
@@ -97,7 +98,7 @@ const setupRoute = createRoute({
   component: () => <SetupPage onComplete={navigateTo} />,
 });
 
-const settingsPaths = new Set(["/settings/profile", "/settings/security"]);
+const settingsPaths = new Set(["/settings/profile", "/settings/security", "/settings/data"]);
 
 const settingsRoutes = [
   createRoute({
@@ -109,6 +110,21 @@ const settingsRoutes = [
     getParentRoute: () => rootRoute,
     path: "/settings/security",
     component: () => <SettingsRoute activePanel="security" />,
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/settings/data",
+    component: () => (
+      <SettingsRoute
+        activePanel="data"
+        onDeleted={() => void router.navigate({ href: "/account/deleted" })}
+      />
+    ),
+  }),
+  createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/account/deleted",
+    component: AccountDeletedPage,
   }),
 ];
 
@@ -188,7 +204,13 @@ function ModuleShell() {
   );
 }
 
-function SettingsRoute({ activePanel }: { activePanel: "profile" | "security" }) {
+function SettingsRoute({
+  activePanel,
+  onDeleted,
+}: {
+  activePanel: "profile" | "security" | "data";
+  onDeleted?: () => void;
+}) {
   const t = useT();
   const modules = useModules();
   if (modules.isPending) return <p role="status">{t("state.loading")}</p>;
@@ -197,7 +219,13 @@ function SettingsRoute({ activePanel }: { activePanel: "profile" | "security" })
   return (
     <ModuleGate module="identity" modules={modules.data.items}>
       <SettingsLayout activePanel={activePanel} panels={identity?.settings_panels ?? []}>
-        {activePanel === "profile" ? <ProfilePanel /> : <SecurityPanel />}
+        {activePanel === "profile" ? (
+          <ProfilePanel />
+        ) : activePanel === "security" ? (
+          <SecurityPanel />
+        ) : (
+          <DataPanel {...(onDeleted ? { onDeleted } : {})} />
+        )}
       </SettingsLayout>
     </ModuleGate>
   );

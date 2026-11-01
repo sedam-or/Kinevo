@@ -26,6 +26,7 @@ export function isPublicAuthPath(path: string): boolean {
     path === "/register" ||
     path.startsWith("/reset/") ||
     path === "/session/revoked" ||
+    path === "/account/deleted" ||
     path === "/setup"
   );
 }

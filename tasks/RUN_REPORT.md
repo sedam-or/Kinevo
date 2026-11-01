@@ -68,10 +68,10 @@ Cleanup: none. Reused the already-running `kinevo-dev-pg` PostgreSQL 17 containe
 
 | Decision | Rule recorded | Current evidence/status |
 |---|---|---|
-| D-102 | One shared PostgreSQL server; each database test gets and drops a unique database; no Testcontainers fallback. | Reused active `kinevo-dev-pg` (`postgres:17-alpine`) for T-038; T-011's original Testcontainers run is historical and documented as superseded. |
+| D-102 | One shared PostgreSQL server; each database test gets and drops a unique database; no Testcontainers fallback. | Reused the existing `kinevo-dev-pg` (`postgres:17-alpine`) for T-038 and T-053; T-011's original Testcontainers run is historical and documented as superseded. T-053 restored the missing helper metadata from this same container and restarted it; no second server/container was created. |
 | D-103 | Root development profile uses `debug = 0`; `CARGO_PROFILE_DEV_DEBUG=2` is the local override. | Verified in root `Cargo.toml`. |
-| D-104 | Install `cargo-sweep` once and sweep at milestone boundaries; never use `cargo clean` or manually delete `target/`. | `cargo-sweep` is installed and `cargo sweep --help` exited 0; M1 boundary sweep remains due after its integration task. |
-| D-105 / D-109 / D-125 | No Docker image builds or pulls; check disk before operations; prune only verified Kinevo resources below 20 GB, stop below 15 GB, and preserve exact run-start/end measurements and cleanup records. | This continuation began at 53 GB free, above the cleanup threshold. No resources were pruned. |
+| D-104 | Install `cargo-sweep` once and sweep at milestone boundaries; never use `cargo clean` or manually delete `target/`. | `cargo-sweep-sweep 0.8.0` is installed. The M1 boundary sweep remains due after its integration task. |
+| D-105 / D-109 / D-125 | No Docker image builds or pulls; check disk before operations; prune only verified Kinevo resources below 20 GB, stop below 15 GB, and preserve exact run-start/end measurements and cleanup records. | T-053 resumed at 96 GB free and ended at 95 GB; both exceed the cleanup threshold. No resources were pruned. Exact initial-run and current task checkpoints are recorded below. |
 
 ### D-125 documentation continuation start
 
@@ -1510,3 +1510,40 @@ No cleanup, image build, or image pull. The shared PostgreSQL test server was su
 - Minimal wiring deviation: router, API base URL, and EN/ID settings messages; QR package and lockfile added alongside the allowed stack-map entry. No secrets or user data used.
 - Disk checkpoints are recorded above. No cleanup was required.
 - Next topological todo: T-053.
+
+### T-053 continuation disk checkpoints (2026-11-01)
+
+Before T-053's resumed gate attempts:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  367G   96G  80% /
+```
+
+Before and after the final successful `just check`:
+
+```text
+Filesystem                    Size  Used Avail Use% Mounted on
+/dev/mapper/nvme0n1p3crypted  468G  368G   95G  80% /
+```
+
+No cleanup was needed: free space remained above 20 GB. The existing `kinevo-dev-pg` container was stopped when first inspected. `scripts/dev-postgres.sh env` first reported exactly `environment-limited: container kinevo-dev-pg already exists without a script state file; refusing to replace it`. Its mode, port and password metadata were restored from that existing container without displaying the credential, then that same container was started and reused. The first immediate `psql` probe raced startup and reported `server closed the connection unexpectedly`; `pg_isready` then reported `/var/run/postgresql:5432 - accepting connections`, and the next `psql` query returned PostgreSQL `17.11`. No image was built or pulled; no container, image, volume, shared cache or `target/` file was removed.
+
+### T-053 verification history
+
+- Final focused acceptance command: `df -h / && PATH=/tmp/kinevo-pnpm-shim:/usr/bin:$PATH pnpm --dir web exec vitest run src/features/identity/settings/data.test.tsx` — 1 file, 7 tests passed.
+- Descriptor command: `df -h / && eval "$(scripts/dev-postgres.sh env)" && cargo nextest run -p kinevo-mod-identity -p kinevo-mod-admin --test descriptor` — 5/5 passed.
+- Final integrated gate: `df -h / && eval "$(scripts/dev-postgres.sh env)" && PATH=/tmp/kinevo-pnpm-shim:/usr/bin:$PATH just check` — `JUST_CHECK_EXIT=0`; 388 Rust tests passed, 1 skipped; 87 web tests passed across 34 files. Formatting, clippy, typecheck, lint, build, API generation/drift, cargo-deny, spec, contrast and task-index gates completed.
+- `python3 scripts/spec_tool.py check` — exit 0, `0 finding(s) in 60 spec files`.
+- `python3 scripts/tasks_index.py --check` — exit 0, `0 problem(s) in 132 task(s)`.
+- Earlier retries were not counted as passing: the helper metadata error above interrupted the first attempt; the then-missing shim caused Corepack's `Cannot find module '/home/kepolu/.cache/node/corepack/v1/pnpm/12.16.1/bin/pnpm.cjs'`; and invoking the cached pnpm shell entry directly from Vitest produced `spawnSync pnpm ENOEXEC`. A temporary executable wrapper to the already cached pnpm native binary resolved the last two without downloads or repository changes.
+
+## T-053 task result
+
+- Issue: #81 (duplicate issue #96 remains open). Branch: `dev`. Status: `review` after its implementation/report commit is pushed.
+- Acceptance: all six named acceptance tests pass; the focused web file passed 7/7 including axe; descriptor tests passed 5/5.
+- Final `just check`: exit 0; 388 Rust tests passed / 1 skipped, 87 web tests passed, `spec_tool.py check` found 0 issues in 60 files, and `tasks_index.py --check` found 0 issues in 132 tasks. `cargo deny check` exited successfully with existing duplicate-package/unmatched-allowance warnings.
+- Transient setup issues were resolved; no remaining environment-limited acceptance checks. The existing PostgreSQL 17 container was reused; no new container, image build/pull or cleanup occurred.
+- Implementer decision pending architect review: D-132 records the task/module/handler response contract followed by the UI while the generated OpenAPI snapshot remains stale.
+- Deviations: minimal router, session, locale and UI polling wiring beyond the four listed UI paths; implementation line budget exceeds 300, which is guidance under D-55. No generated contract or dependency changed.
+- Next topological todo: T-054.
