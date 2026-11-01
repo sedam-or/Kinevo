@@ -32,7 +32,7 @@ A task may narrow the spec but never contradict it. If task and spec disagree, t
 | `android/` | Capacitor shell + Kotlin plugins | M10 |
 | `legacy/` | `kinevo-legacy-v0.zip` + `SHA256SUMS`: **archive only** | M0 |
 | `.github/` | CI workflows, issue/PR templates, Dependabot, CODEOWNERS | M0 |
-| root files | `AGENTS.md`, `CLAUDE.md`, `WORKFLOW.md`, `COMMIT_CONVENTION.md`, `BRANCHING.md`, governance files, `LICENSE` | M0 |
+| root files | `AGENTS.md`, `CLAUDE.md`, `WORKFLOW.md`, `COMMIT_CONVENTION.md`, `BRANCHING.md`; governance and public documents `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `GOVERNANCE.md`, `MAINTAINERS.md`, `RELEASING.md`, `SUPPORT.md`, `TRADEMARK.md`, `PRIVACY.md`, `CHANGELOG.md`, `NOTICE`, `LICENSE` (AGPL-3.0-only, D-04) | M0 |
 
 ## Commands
 
@@ -49,7 +49,7 @@ Until M1 creates the `justfile` (D-38):
 
 From M1 on: `just setup` (one-time), `just dev`, `just fmt`, `just lint`, `just test`, `just check` (everything CI runs; must pass before a task goes to `review`), and `just spec` (the three scripts above).
 
-For the maintainer-authorised implementation run (D-125/D-128), run `df -h /` immediately before every build, test, or container start. Do not build Docker images or pull from a registry; database tests use one shared server started with `eval "$(scripts/dev-postgres.sh env)"`, using the existing `postgres:17-alpine` image with pulls disabled or local PostgreSQL. Each database test owns a unique disposable database; Testcontainers is not a fallback. See `WORKFLOW.md` §2 for the 20 GB cleanup threshold, 15 GB hard stop, `cargo-sweep` milestone command, and preservation rules; ad-hoc cleanup requests do not broaden them.
+Before every build, test or container start, apply the resource guard in `WORKFLOW.md` §2 (`df -h /`, 20 GB cleanup threshold, 15 GB hard stop, one shared database server, no Docker image builds or pulls). Ad-hoc cleanup requests do not widen it (D-128).
 
 ## Non-negotiables
 
@@ -66,7 +66,7 @@ For the maintainer-authorised implementation run (D-125/D-128), run `df -h /` im
 
 ## Mapping rule (rule M)
 
-A change to any document updates, in the same commit: `spec/index.md`, this file (repository map, if paths change), `.github/CODEOWNERS`, `spec/13-roadmap.md` and affected task files. Evidence is the output of `python3 scripts/spec_tool.py check` and `python3 scripts/tasks_index.py --check`, quoted in the PR.
+A change to a document updates its own cross-references in the same commit (ids, file links, decision entries). `spec/index.md`, the repository map above, `.github/CODEOWNERS` and `spec/13-roadmap.md` are updated only when the change adds, moves or re-owns a document, or changes a milestone. Evidence is the output of `python3 scripts/spec_tool.py check` and `python3 scripts/tasks_index.py --check`, which the gate runs (D-133; supersedes the all-documents wording of the earlier rule M).
 
 ## Legacy archive (D-06)
 
