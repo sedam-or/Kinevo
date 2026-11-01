@@ -54,6 +54,8 @@ jobs:
           package_json_file: web/package.json
       - name: Install web dependencies
         run: pnpm --dir web install --frozen-lockfile
+      - name: Install Playwright Chromium for web unit tests
+        run: pnpm --dir web exec playwright install --with-deps chromium
       - name: Gate
         run: just check
 
