@@ -1,0 +1,14 @@
+Nivaras
+Copyright (C) 2026 Nivaras contributors
+
+Nivaras is free software licensed under the GNU Affero General Public License,
+version 3 only (AGPL-3.0-only). The full licence text is in LICENSE.
+
+The project's technical identifiers (crate names, binary, environment variables,
+HTTP headers) keep the `kinevo` name; the brand name in prose is Nivaras (D-57b).
+
+Third-party dependencies are licence-checked by cargo-deny (deny.toml) and by the
+web lockfile review in CI. A complete third-party licence report is generated at
+release time (see RELEASING.md).
+
+Trademarks: see TRADEMARK.md. The AGPL does not grant rights to the name or logo.
