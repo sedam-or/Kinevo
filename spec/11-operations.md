@@ -56,6 +56,9 @@ Invalid configuration fails startup with an error that names the variable and th
 | OPS-12 | **Runbooks** (in `docs/operations/` created in Phase 5): locked-out admin (`kinevo admin reset-password`), lost `KINEVO_SECRET_KEY` (secrets must be re-entered; content intact), dead outbox deliveries, stuck jobs/leases, database full, slow argon2 (tune concurrency), clock skew, upgrade failure/rollback, suspected token theft (revoke sessions, rotate key). | Docs review. |
 | OPS-13 | **Retention jobs** run daily (audit, idempotency, jobs, outbox, ledger, drafts, proposals, exports); their cadence and bounds come from policies; failures are visible in `GET /admin/jobs/summary`. | Job tests. |
 | OPS-14 | **Cloud SLO draft** `[ASSUMED]`: availability 99.5 % monthly, RPO 24 h (daily backups) improving to ≤ 1 h with WAL archiving, RTO 4 h; published only after measured. | `15-cloud.md` |
+| OPS-15 | **API latency budget** `[ASSUMED]`: on the OPS-08 reference host with 5 000 tasks for one user, server-side p95 ≤ 300 ms for Today and ≤ 150 ms for every other core read. Measured by TST-17 benchmarks; a CI gate only after two consecutive baselines are recorded. | TST-17 |
+| OPS-16 | **Scheduler budget** `[ASSUMED]`: a 500-task, 28-day draft computes in ≤ 1 s p95 on the reference host, in both the server and the WASM build. Same measurement and gate rule as OPS-15. | TST-17, `modules/scheduler.md` |
+| OPS-17 | **Client budget** `[ASSUMED]`: on a mid-range Android profile with network and CPU throttling, first contentful paint ≤ 2.0 s and interactive ≤ 3.0 s for Today from a cold start; the cached shell opens offline. Measured with the Playwright performance check, not gated before the baseline exists. | `08-frontend.md` FE-08 |
 
 ## 4. Data migration from the legacy implementation
 

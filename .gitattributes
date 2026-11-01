@@ -1,0 +1,17 @@
+# Normalise text to LF in the repository.
+* text=auto eol=lf
+
+# Binary archives and images are never diffed or normalised.
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.woff2 binary
+*.bundle binary
+
+# Generated files: collapsed in review diffs (they remain reviewable).
+Cargo.lock linguist-generated=true
+web/pnpm-lock.yaml linguist-generated=true
+contracts/openapi.json linguist-generated=true
+web/src/api/schema.d.ts linguist-generated=true

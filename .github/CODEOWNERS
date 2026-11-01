@@ -1,0 +1,11 @@
+# Review ownership. Every path currently requires the lead maintainer's review.
+# Add a second handle here when a backup maintainer is named (M-BUS in spec/decisions.md).
+*                         @sedam-or
+/spec/                    @sedam-or
+/tasks/                   @sedam-or
+/.github/                 @sedam-or
+/crates/kinevo-kernel/    @sedam-or
+/crates/kinevo-db/        @sedam-or
+/crates/kinevo-mod-identity/ @sedam-or
+/SECURITY.md              @sedam-or
+/LICENSE                  @sedam-or

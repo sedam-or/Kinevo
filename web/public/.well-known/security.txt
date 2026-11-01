@@ -1,0 +1,4 @@
+Contact: https://github.com/sedam-or/Kinevo/security/advisories/new
+Expires: 2027-11-01T00:00:00.000Z
+Preferred-Languages: en, id
+Policy: https://github.com/sedam-or/Kinevo/blob/main/SECURITY.md
